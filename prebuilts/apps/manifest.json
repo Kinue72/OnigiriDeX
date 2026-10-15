@@ -1,0 +1,28 @@
+{
+  "assets": [
+    {
+      "path": "system/system/preload/GoodLock/GoodLock.apk",
+      "sha256": "a615e23c1fbcc84e3f4ea6769bbb9c5d34b20ae77daf8eca50c1f6ff1046e61d",
+      "bytes": 11459461,
+      "source": "corsicanu/goodlock_dump@4b80259ea617ab96cb9ef70e198fe0db85ef518c",
+      "url": "https://raw.githubusercontent.com/corsicanu/goodlock_dump/4b80259ea617ab96cb9ef70e198fe0db85ef518c/GoodLock_patched.apk",
+      "publisher_digest_verified": false
+    },
+    {
+      "path": "system/system/preload/me.weishu.kernelsu-Onigiri/base.apk",
+      "sha256": "b4a059ace71de2fa65cc7f12b1c58d55fc23ab25e057ee4230ce779742abe450",
+      "bytes": 13637206,
+      "source": "tiann/KernelSU v3.3.1",
+      "url": "https://github.com/tiann/KernelSU/releases/download/v3.3.1/KernelSU_v3.3.1_32680-release.apk",
+      "publisher_digest_verified": true
+    },
+    {
+      "path": "system/system/preload/SBrowser/SBrowser.apk",
+      "sha256": "7cb6a12122398801353e26ef94aed6fb6058bef307664f35e1010e3fea35e53c",
+      "bytes": 324803609,
+      "source": "Samsung Galaxy Store SDK35/OneUI70000",
+      "url": "https://aka-dn.gw.samsungapps.com/astore_bin/atom/2026/0922/prePost_20260922014801104.apk?ctnt_id=000005006635&bsize=324803609&cpi=1953420016&ch=V&__gda__=1791960423_bd5d76ce82d6e5268bb51f90453eda69",
+      "publisher_digest_verified": false
+    }
+  ]
+}
