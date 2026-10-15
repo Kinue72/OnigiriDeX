@@ -1,0 +1,81 @@
+From: Onigiri
+Subject: [PATCH 4/4] fix(audio): retry DSP sound card registration
+
+diff --git a/vendor/qcom/opensource/audio-kernel/dsp/spf-core.c b/vendor/qcom/opensource/audio-kernel/dsp/spf-core.c
+index 1bdce3a9..38dd1800 100755
+--- a/vendor/qcom/opensource/audio-kernel/dsp/spf-core.c
++++ b/vendor/qcom/opensource/audio-kernel/dsp/spf-core.c
+@@ -20,6 +20,7 @@
+ #include <linux/of.h>
+ #include <linux/of_platform.h>
+ #include <linux/jiffies.h>
++#include <linux/workqueue.h>
+ #include <ipc/gpr-lite.h>
+ #include <dsp/spf-core.h>
+ #include <dsp/digital-cdc-rsc-mgr.h>
+@@ -28,6 +29,7 @@
+ #endif
+ 
+ #define APM_STATE_READY_TIMEOUT_MS    10000
++#define APM_RETRY_DELAY_MS 1000
+ #define Q6_READY_TIMEOUT_MS 1000
+ #define Q6_CLOSE_ALL_TIMEOUT_MS 5000
+ #define APM_CMD_GET_SPF_STATE 0x01001021
+@@ -49,7 +51,7 @@ struct spf_core_private {
+ 	struct mutex lock;
+         struct spf_core *spf_core_drv;
+         bool is_initial_boot;
+-        struct work_struct add_chld_dev_work;
++        struct delayed_work add_chld_dev_work;
+ };
+ 
+ static struct spf_core_private *spf_core_priv;
+@@ -302,7 +304,7 @@ static int spf_core_probe(struct gpr_device *adev)
+ 	init_waitqueue_head(&core->wait);
+ 	spf_core_priv->spf_core_drv = core;
+ 	if (spf_core_priv->is_initial_boot)
+-		schedule_work(&spf_core_priv->add_chld_dev_work);
++		schedule_delayed_work(&spf_core_priv->add_chld_dev_work, 0);
+ 	mutex_unlock(&spf_core_priv->lock);
+ 
+ 	return 0;
+@@ -341,15 +343,21 @@ static struct gpr_driver qcom_spf_core_driver = {
+ static void spf_core_add_child_devices(struct work_struct *work)
+ {
+ 	int ret;
++	if (!spf_core_priv->is_initial_boot)
++		return;
++
+         pr_err("%s:enumarate machine driver\n", __func__);
+ 
+ 	if(spf_core_is_apm_ready()) {
+ 		dev_err(spf_core_priv->dev, "%s: apm is up\n",
+ 			__func__);
+ 	} else {
+-		dev_err(spf_core_priv->dev, "%s: apm is not up\n",
++		dev_err_ratelimited(spf_core_priv->dev, "%s: apm is not up, retrying\n",
+ 			__func__);
+ 		sdp_boot_print("%s: apm is not up\n", __func__);
++		/* DSP startup can outlast the first readiness query window. */
++		schedule_delayed_work(&spf_core_priv->add_chld_dev_work,
++			msecs_to_jiffies(APM_RETRY_DELAY_MS));
+ 		return;
+ 	}
+ 
+@@ -376,7 +384,7 @@ static int spf_core_platform_driver_probe(struct platform_device *pdev)
+ 
+ 	mutex_init(&spf_core_priv->lock);
+ 
+-	INIT_WORK(&spf_core_priv->add_chld_dev_work, spf_core_add_child_devices);
++	INIT_DELAYED_WORK(&spf_core_priv->add_chld_dev_work, spf_core_add_child_devices);
+ 
+ 	spf_core_priv->is_initial_boot = true;
+ 	ret = gpr_driver_register(&qcom_spf_core_driver);
+@@ -403,6 +411,7 @@ static int spf_core_platform_driver_remove(struct platform_device *pdev)
+ {
+ 	//snd_event_client_deregister(&pdev->dev);
+         gpr_driver_unregister(&qcom_spf_core_driver);
++	cancel_delayed_work_sync(&spf_core_priv->add_chld_dev_work);
+ 	spf_core_priv = NULL;
+     digital_cdc_rsc_mgr_exit();
+ 	return 0;

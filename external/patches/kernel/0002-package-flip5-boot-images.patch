@@ -1,0 +1,101 @@
+From: Onigiri
+Subject: [PATCH 2/4] build(kernel): package Flip5 boot and DLKM images
+
+diff --git a/prebuilts/anykernel.sh b/prebuilts/anykernel.sh
+index 50f1a900fa7b6454a96abd736b4dd498a7a45ab7..83467d009ae2ffc22383cca30920f0595be423e9 100755
+--- a/prebuilts/anykernel.sh
++++ b/prebuilts/anykernel.sh
+@@ -1,19 +1,13 @@
+ #!/bin/sh
+ 
+-### GoRhanHee SM8550 universal kernel AnyKernel3 installer
+-
+ properties() { '
+-kernel.string=GoRhanHee Kernel for Samsung SM8550 (@ROM_VARIANT@)
++kernel.string=Onigiri Kernel for SM-F731B (@ROM_VARIANT@)
+ do.devicecheck=1
+ do.modules=0
+ do.systemless=0
+ do.cleanup=1
+ do.cleanuponabort=0
+-device.name1=dm1q
+-device.name2=dm2q
+-device.name3=dm3q
+-device.name4=q5q
+-device.name5=b5q
++device.name1=b5q
+ supported.versions=
+ supported.patchlevels=
+ supported.vendorpatchlevels=
+@@ -43,27 +37,6 @@ prepare_dlkm_partition() {
+   fi;
+ }
+ 
+-patch_dlkm_fstab() {
+-  local fstab="$1" output="$1.tmp";
+-
+-  [ -f "$fstab" ] || abort "vendor_boot fstab.qcom was not found. Aborting...";
+-  awk '
+-    BEGIN { OFS = "\t" }
+-    $1 == "vendor_dlkm" || $1 == "system_dlkm" {
+-      count = split($5, flags, ",")
+-      value = ""
+-      for (i = 1; i <= count; i++) {
+-        if (flags[i] ~ /^avb(=|$)/)
+-          continue
+-        value = value (value == "" ? "" : ",") flags[i]
+-      }
+-      $5 = value
+-    }
+-    { print }
+-  ' "$fstab" >"$output" || abort "Failed to patch DLKM AVB flags. Aborting...";
+-  cat "$output" >"$fstab" || abort "Failed to write patched fstab.";
+-  rm -f "$output" || abort "Failed to remove temporary fstab.";
+-}
+ 
+ ui_print "- ROM profile: @ROM_VARIANT@";
+ 
+diff --git a/prebuilts/sm8550-repack.sh b/prebuilts/sm8550-repack.sh
+index 4f9f93cfdd90fd17cdff78d2468ab6b70f2c981d..0a489fd5d6931064095bd751277322a8af607a40 100644
+--- a/prebuilts/sm8550-repack.sh
++++ b/prebuilts/sm8550-repack.sh
+@@ -142,3 +142,26 @@ sm8550_flash_prepared() {
+     abort "Flashing $label failed.";
+   [ "$isro" != 1 ] || blockdev --setro "$block" 2>/dev/null;
+ }
++
++patch_dlkm_fstab() {
++  local fstab="$1" output="$1.tmp";
++
++  [ -f "$fstab" ] || abort "vendor_boot fstab.qcom was not found. Aborting...";
++  awk '
++    BEGIN { OFS = "\t" }
++    $1 == "vendor_dlkm" || $1 == "system_dlkm" {
++      count = split($5, flags, ",")
++      value = ""
++      for (i = 1; i <= count; i++) {
++        if (flags[i] ~ /^avb(=|$)/)
++          continue
++        value = value (value == "" ? "" : ",") flags[i]
++      }
++      $5 = value
++    }
++    { print }
++  ' "$fstab" >"$output" || abort "Failed to patch DLKM AVB flags. Aborting...";
++  cat "$output" >"$fstab" || abort "Failed to write patched fstab.";
++  rm -f "$output" || abort "Failed to remove temporary fstab.";
++}
++
+diff --git a/scripts/lib/build_dlkm_image.sh b/scripts/lib/build_dlkm_image.sh
+index 5894db50cb05e683a7e41138aa3423fb5e68a3c3..820c37adf4bec38461d42552b9f8eb98d766f58a 100755
+--- a/scripts/lib/build_dlkm_image.sh
++++ b/scripts/lib/build_dlkm_image.sh
+@@ -145,7 +145,7 @@ main() {
+     fi
+ 
+     printf '%s\n' \
+-        "ro.product.${partition}.name=GoRhanHee SM8550 universal" \
++        "ro.product.${partition}.name=Onigiri SM-F731B" \
+         "ro.product.${partition}.device=universal" \
+         "ro.product.${partition}.build.date.utc=${epoch}" \
+         >"${root_dir}/etc/build.prop"
