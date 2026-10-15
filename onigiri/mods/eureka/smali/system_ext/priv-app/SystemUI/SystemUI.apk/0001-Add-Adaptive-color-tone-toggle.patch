@@ -1,0 +1,639 @@
+From: Onigiri
+Subject: [PATCH] Add the Android 15 adaptive-colour brightness control
+
+Adapted from SM-S921B S921BXXS9BYH1 SystemUI.
+
+diff --git a/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1.smali b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1.smali
+@@ -0,0 +1,118 @@
++.class public final Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;
++.super Ljava/lang/Object;
++.source "qb/99305652 993ccf4f5440c22beb02472f57969e39fcdada6d994b613b4fa8be6ce31edce5"
++
++.implements Landroid/view/View$OnClickListener;
++
++
++.field public final synthetic $context:Landroid/content/Context;
++
++.field public final synthetic $this_apply:Lcom/android/systemui/qs/SecQSSwitchPreference;
++
++.field public final synthetic this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++
++.method public constructor <init>(Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;Lcom/android/systemui/qs/SecQSSwitchPreference;Landroid/content/Context;)V
++    .locals 0
++
++    iput-object p1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;->this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    iput-object p2, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;->$this_apply:Lcom/android/systemui/qs/SecQSSwitchPreference;
++
++    iput-object p3, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;->$context:Landroid/content/Context;
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    return-void
++.end method
++
++
++.method public final onClick(Landroid/view/View;)V
++    .locals 7
++
++    iget-object p1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;->this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    iget-object v0, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;->$this_apply:Lcom/android/systemui/qs/SecQSSwitchPreference;
++
++    iget-object v1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;->$context:Landroid/content/Context;
++
++    sget v2, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->$r8$clinit:I
++
++    invoke-virtual {p1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    const v2, 0x7f0a0d3d
++
++    invoke-virtual {v0, v2}, Landroid/widget/LinearLayout;->findViewById(I)Landroid/view/View;
++
++    move-result-object v0
++
++    check-cast v0, Landroidx/appcompat/widget/SwitchCompat;
++
++    const-string v2, "ead_enabled"
++
++    const/4 v3, -0x2
++
++    const/4 v4, 0x1
++
++    if-eqz v0, :cond_1
++
++    invoke-virtual {v1}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v5
++
++    const/4 v6, 0x0
++
++    invoke-static {v5, v2, v6, v3}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++
++    move-result v5
++
++    if-ne v5, v4, :cond_0
++
++    move v6, v4
++
++    :cond_0
++    invoke-virtual {v0, v6}, Landroidx/appcompat/widget/SwitchCompat;->setChecked(Z)V
++
++    new-instance v5, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1;
++
++    invoke-direct {v5, v0, p1, v1}, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1;-><init>(Landroidx/appcompat/widget/SwitchCompat;Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;Landroid/content/Context;)V
++
++    invoke-virtual {v0, v5}, Landroid/widget/CompoundButton;->setOnClickListener(Landroid/view/View$OnClickListener;)V
++
++    new-instance v5, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;
++
++    invoke-direct {v5, v0, p1, v1}, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;-><init>(Landroidx/appcompat/widget/SwitchCompat;Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;Landroid/content/Context;)V
++
++    invoke-virtual {v0, v5}, Landroid/widget/CompoundButton;->setOnCheckedChangeListener(Landroid/widget/CompoundButton$OnCheckedChangeListener;)V
++
++    goto :goto_0
++
++    :cond_1
++    const/4 v0, 0x0
++
++    :goto_0
++    if-eqz v0, :cond_2
++
++    iget-object p1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;->this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    iget-object p0, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;->$context:Landroid/content/Context;
++
++    invoke-virtual {v0}, Landroid/widget/CompoundButton;->isChecked()Z
++
++    move-result v1
++
++    xor-int/2addr v1, v4
++
++    invoke-virtual {v0, v1}, Landroidx/appcompat/widget/SwitchCompat;->setChecked(Z)V
++
++    invoke-virtual {p1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object p0
++
++    invoke-static {p0, v2, v1, v3}, Landroid/provider/Settings$System;->putIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)Z
++
++    :cond_2
++    return-void
++.end method
+diff --git a/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1.smali b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1.smali
+@@ -0,0 +1,58 @@
++.class public final Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1;
++.super Ljava/lang/Object;
++.source "qb/99305652 993ccf4f5440c22beb02472f57969e39fcdada6d994b613b4fa8be6ce31edce5"
++
++.implements Landroid/content/DialogInterface$OnDismissListener;
++
++
++.field public final synthetic $this_createDialog:Landroid/content/Context;
++
++.field public final synthetic this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++
++.method public constructor <init>(Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;Landroid/content/Context;)V
++    .locals 0
++
++    iput-object p1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1;->this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    iput-object p2, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1;->$this_createDialog:Landroid/content/Context;
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    return-void
++.end method
++
++
++.method public final onDismiss(Landroid/content/DialogInterface;)V
++    .locals 3
++
++    iget-object p1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1;->this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    iget-object v0, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1;->$this_createDialog:Landroid/content/Context;
++
++    sget v1, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->$r8$clinit:I
++
++    invoke-virtual {p1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object p1
++
++    const/4 v0, -0x2
++
++    const-string v1, "notified_ead_camera_use"
++
++    const/4 v2, 0x1
++
++    invoke-static {p1, v1, v2, v0}, Landroid/provider/Settings$System;->putIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)Z
++
++    iget-object p0, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1;->this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    const/4 p1, 0x0
++
++    iput-object p1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->dialogCameraInUse:Lcom/android/systemui/statusbar/phone/SystemUIDialog;
++
++    iput-boolean v2, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->cameraInUse:Z
++
++    return-void
++.end method
+diff --git a/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1.smali b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1.smali
+@@ -0,0 +1,83 @@
++.class public final Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1;
++.super Ljava/lang/Object;
++.source "qb/99305652 993ccf4f5440c22beb02472f57969e39fcdada6d994b613b4fa8be6ce31edce5"
++
++.implements Landroid/view/View$OnClickListener;
++
++
++.field public final synthetic $context:Landroid/content/Context;
++
++.field public final synthetic $this_apply:Landroidx/appcompat/widget/SwitchCompat;
++
++.field public final synthetic this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++
++.method public constructor <init>(Landroidx/appcompat/widget/SwitchCompat;Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;Landroid/content/Context;)V
++    .locals 0
++
++    iput-object p1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1;->$this_apply:Landroidx/appcompat/widget/SwitchCompat;
++
++    iput-object p2, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1;->this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    iput-object p3, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1;->$context:Landroid/content/Context;
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    return-void
++.end method
++
++
++.method public final onClick(Landroid/view/View;)V
++    .locals 2
++
++    instance-of v0, p1, Landroidx/appcompat/widget/SwitchCompat;
++
++    if-eqz v0, :cond_0
++
++    check-cast p1, Landroidx/appcompat/widget/SwitchCompat;
++
++    goto :goto_0
++
++    :cond_0
++    const/4 p1, 0x0
++
++    :goto_0
++    const/4 v0, 0x0
++
++    if-eqz p1, :cond_1
++
++    invoke-virtual {p1}, Landroid/widget/CompoundButton;->isChecked()Z
++
++    move-result p1
++
++    const/4 v1, 0x1
++
++    if-ne p1, v1, :cond_1
++
++    move v0, v1
++
++    :cond_1
++    iget-object p1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1;->$this_apply:Landroidx/appcompat/widget/SwitchCompat;
++
++    iget-object v1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1;->this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    iget-object p0, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$1;->$context:Landroid/content/Context;
++
++    invoke-virtual {p1, v0}, Landroidx/appcompat/widget/SwitchCompat;->setChecked(Z)V
++
++    sget p1, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->$r8$clinit:I
++
++    invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object p0
++
++    const-string p1, "ead_enabled"
++
++    const/4 v1, -0x2
++
++    invoke-static {p0, p1, v0, v1}, Landroid/provider/Settings$System;->putIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)Z
++
++    return-void
++.end method
+diff --git a/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$Companion.smali b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$Companion.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$Companion.smali
+@@ -0,0 +1,20 @@
++.class public final Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$Companion;
++.super Ljava/lang/Object;
++.source "qb/99305652 993ccf4f5440c22beb02472f57969e39fcdada6d994b613b4fa8be6ce31edce5"
++
++
++.method private constructor <init>()V
++    .locals 0
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    return-void
++.end method
++
++.method public synthetic constructor <init>(Lkotlin/jvm/internal/DefaultConstructorMarker;)V
++    .locals 0
++
++    invoke-direct {p0}, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$Companion;-><init>()V
++
++    return-void
++.end method
+diff --git a/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView.smali b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView.smali
+@@ -0,0 +1,121 @@
++.class public final Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++.super Ljava/lang/Object;
++.source "qb/99305652 993ccf4f5440c22beb02472f57969e39fcdada6d994b613b4fa8be6ce31edce5"
++
++
++.field public static final synthetic $r8$clinit:I
++
++
++.field public cameraInUse:Z
++
++.field public dialogCameraInUse:Lcom/android/systemui/statusbar/phone/SystemUIDialog;
++
++
++.method static constructor <clinit>()V
++    .locals 2
++
++    new-instance v0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$Companion;
++
++    const/4 v1, 0x0
++
++    invoke-direct {v0, v1}, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$Companion;-><init>(Lkotlin/jvm/internal/DefaultConstructorMarker;)V
++
++    return-void
++.end method
++
++.method public constructor <init>()V
++    .locals 0
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    return-void
++.end method
++
++.method public final initBrightnessDetail(Landroid/content/Context;Landroid/view/ViewGroup;)V
++    .locals 6
++
++    invoke-static {p1, p2}, Lcom/android/systemui/qs/SecQSSwitchPreference;->inflateSwitch(Landroid/content/Context;Landroid/view/ViewGroup;)Lcom/android/systemui/qs/SecQSSwitchPreference;
++
++    move-result-object v0
++
++    if-eqz v0, :onigiri_ead_done
++
++    const v1, 0x7f0a0d35
++
++    invoke-virtual {v0, v1}, Landroid/widget/LinearLayout;->findViewById(I)Landroid/view/View;
++
++    move-result-object v1
++
++    check-cast v1, Landroid/widget/TextView;
++
++    if-eqz v1, :onigiri_ead_summary
++
++    const v2, 0x7f130309
++
++    invoke-virtual {v1, v2}, Landroid/widget/TextView;->setText(I)V
++
++    :onigiri_ead_summary
++    const v1, 0x7f0a0d3c
++
++    invoke-virtual {v0, v1}, Landroid/widget/LinearLayout;->findViewById(I)Landroid/view/View;
++
++    move-result-object v1
++
++    check-cast v1, Landroid/widget/TextView;
++
++    if-eqz v1, :onigiri_ead_switch
++
++    const v2, 0x7f130308
++
++    invoke-virtual {v1, v2}, Landroid/widget/TextView;->setText(I)V
++
++    const/4 v2, 0x0
++
++    invoke-virtual {v1, v2}, Landroid/widget/TextView;->setVisibility(I)V
++
++    :onigiri_ead_switch
++    const v1, 0x7f0a0d3d
++
++    invoke-virtual {v0, v1}, Landroid/widget/LinearLayout;->findViewById(I)Landroid/view/View;
++
++    move-result-object v1
++
++    check-cast v1, Landroidx/appcompat/widget/SwitchCompat;
++
++    if-eqz v1, :onigiri_ead_listener
++
++    invoke-virtual {p1}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v2
++
++    const-string v3, "ead_enabled"
++
++    const/4 v4, 0x0
++
++    const/4 v5, -0x2
++
++    invoke-static {v2, v3, v4, v5}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++
++    move-result v2
++
++    const/4 v3, 0x1
++
++    if-ne v2, v3, :onigiri_ead_initial_state
++
++    move v4, v3
++
++    :onigiri_ead_initial_state
++    invoke-virtual {v1, v4}, Landroidx/appcompat/widget/SwitchCompat;->setChecked(Z)V
++
++    :onigiri_ead_listener
++    new-instance v1, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;
++
++    invoke-direct {v1, p0, v0, p1}, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$initBrightnessDetail$1$1$1;-><init>(Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;Lcom/android/systemui/qs/SecQSSwitchPreference;Landroid/content/Context;)V
++
++    invoke-virtual {v0, v1}, Landroid/widget/LinearLayout;->setOnClickListener(Landroid/view/View$OnClickListener;)V
++
++    invoke-virtual {p2, v0}, Landroid/view/ViewGroup;->addView(Landroid/view/View;)V
++
++    :onigiri_ead_done
++    return-void
++.end method
+diff --git a/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2.smali b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes2/com/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2.smali
+@@ -0,0 +1,162 @@
++.class public final Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;
++.super Ljava/lang/Object;
++.source "qb/99305652 993ccf4f5440c22beb02472f57969e39fcdada6d994b613b4fa8be6ce31edce5"
++
++.implements Landroid/widget/CompoundButton$OnCheckedChangeListener;
++
++
++.field public final synthetic $context:Landroid/content/Context;
++
++.field public final synthetic $this_apply:Landroidx/appcompat/widget/SwitchCompat;
++
++.field public final synthetic this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++
++.method public constructor <init>(Landroidx/appcompat/widget/SwitchCompat;Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;Landroid/content/Context;)V
++    .locals 0
++
++    iput-object p1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;->$this_apply:Landroidx/appcompat/widget/SwitchCompat;
++
++    iput-object p2, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;->this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    iput-object p3, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;->$context:Landroid/content/Context;
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    return-void
++.end method
++
++
++.method public final onCheckedChanged(Landroid/widget/CompoundButton;Z)V
++    .locals 6
++
++    iget-object p1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;->$this_apply:Landroidx/appcompat/widget/SwitchCompat;
++
++    iget-object v0, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;->this$0:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    iget-object v1, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;->$context:Landroid/content/Context;
++
++    const/4 v2, -0x2
++
++    if-eqz p2, :cond_3
++
++    iget-boolean v3, v0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->cameraInUse:Z
++
++    if-eqz v3, :cond_0
++
++    goto :goto_0
++
++    :cond_0
++    invoke-virtual {v1}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v3
++
++    const-string v4, "notified_ead_camera_use"
++
++    const/4 v5, 0x0
++
++    invoke-static {v3, v4, v5, v2}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++
++    move-result v3
++
++    const/4 v4, 0x1
++
++    if-ne v3, v4, :cond_1
++
++    move v5, v4
++
++    :cond_1
++    iput-boolean v5, v0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->cameraInUse:Z
++
++    if-nez v5, :cond_4
++
++    iget-object v3, v0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->dialogCameraInUse:Lcom/android/systemui/statusbar/phone/SystemUIDialog;
++
++    if-nez v3, :cond_2
++
++    new-instance v3, Lcom/android/systemui/statusbar/phone/SystemUIDialog;
++
++    const v4, 0x7f140604
++
++    invoke-direct {v3, v1, v4}, Lcom/android/systemui/statusbar/phone/SystemUIDialog;-><init>(Landroid/content/Context;I)V
++
++    invoke-virtual {v1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v4
++
++    const v5, 0x7f131091
++
++    invoke-virtual {v4, v5}, Landroid/content/res/Resources;->getString(I)Ljava/lang/String;
++
++    move-result-object v4
++
++    invoke-virtual {v3, v4}, Landroid/app/AlertDialog;->setMessage(Ljava/lang/CharSequence;)V
++
++    const v4, 0x104000a
++
++    const/4 v5, 0x0
++
++    invoke-virtual {v3, v4, v5}, Lcom/android/systemui/statusbar/phone/SystemUIDialog;->setPositiveButton(ILandroid/content/DialogInterface$OnClickListener;)V
++
++    new-instance v4, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1;
++
++    invoke-direct {v4, v0, v1}, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$createDialog$1$1;-><init>(Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;Landroid/content/Context;)V
++
++    invoke-virtual {v3, v4}, Landroid/app/AlertDialog;->setOnDismissListener(Landroid/content/DialogInterface$OnDismissListener;)V
++
++    iput-object v3, v0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->dialogCameraInUse:Lcom/android/systemui/statusbar/phone/SystemUIDialog;
++
++    sget-object v3, Lkotlin/Unit;->INSTANCE:Lkotlin/Unit;
++
++    :cond_2
++    iget-object v3, v0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->dialogCameraInUse:Lcom/android/systemui/statusbar/phone/SystemUIDialog;
++
++    if-eqz v3, :cond_4
++
++    invoke-virtual {v3}, Landroid/app/AlertDialog;->show()V
++
++    goto :goto_0
++
++    :cond_3
++    sget v3, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->$r8$clinit:I
++
++    invoke-virtual {v0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    :cond_4
++    :goto_0
++    sget v3, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->$r8$clinit:I
++
++    invoke-virtual {v0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    invoke-virtual {v1}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v1, "ead_enabled"
++
++    invoke-static {v0, v1, p2, v2}, Landroid/provider/Settings$System;->putIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)Z
++
++    invoke-virtual {p1, p2}, Landroidx/appcompat/widget/SwitchCompat;->setChecked(Z)V
++
++    if-eqz p2, :cond_5
++
++    const p1, 0x7f131321
++
++    goto :goto_1
++
++    :cond_5
++    const p1, 0x7f131320
++
++    :goto_1
++    iget-object p2, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;->$this_apply:Landroidx/appcompat/widget/SwitchCompat;
++
++    iget-object p0, p0, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView$brightnessSeadSwitch$1$2;->$context:Landroid/content/Context;
++
++    invoke-virtual {p0, p1}, Landroid/content/Context;->getString(I)Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-virtual {p2, p0}, Landroid/widget/CompoundButton;->announceForAccessibility(Ljava/lang/CharSequence;)V
++
++    return-void
++.end method
+diff --git a/smali_classes2/com/android/systemui/settings/brightness/BrightnessDetailAdapter.smali b/smali_classes2/com/android/systemui/settings/brightness/BrightnessDetailAdapter.smali
+--- a/smali_classes2/com/android/systemui/settings/brightness/BrightnessDetailAdapter.smali
++++ b/smali_classes2/com/android/systemui/settings/brightness/BrightnessDetailAdapter.smali
+@@ -31,6 +31,8 @@
+ 
+ .field public final factory:Lcom/android/systemui/settings/brightness/BrightnessController$Factory;
+ 
++.field public final quickBrightnessSeadView:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
+ .field public final quickBarBrightnessExtraBrightness:Lcom/android/systemui/settings/brightness/QuickBarBrightnessExtraBrightness;
+ 
+ .field public final quickKnox:Lcom/android/systemui/knox/KnoxStateMonitor;
+@@ -118,6 +120,12 @@
+ 
+     iput-object p1, p0, Lcom/android/systemui/settings/brightness/BrightnessDetailAdapter;->sensorPrivacyManager$delegate:Lkotlin/Lazy;
+ 
++    new-instance p1, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    invoke-direct {p1}, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;-><init>()V
++
++    iput-object p1, p0, Lcom/android/systemui/settings/brightness/BrightnessDetailAdapter;->quickBrightnessSeadView:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
+     return-void
+ .end method
+ 
+@@ -868,6 +876,16 @@
+     invoke-virtual {v1, p2}, Lcom/android/systemui/settings/brightness/QuickBarBrightnessExtraBrightness;->setExtraBrightnessLayoutVisibilityLogic(Ljava/lang/Boolean;)V
+ 
+     :cond_1b
++    move-object v0, p3
++
++    check-cast v0, Landroid/view/ViewGroup;
++
++    invoke-static {p0, v0}, Lcom/android/systemui/settings/brightness/BrightnessDetailAdapter;->access$addDividerView(Lcom/android/systemui/settings/brightness/BrightnessDetailAdapter;Landroid/view/ViewGroup;)Landroid/view/View;
++
++    iget-object v1, p0, Lcom/android/systemui/settings/brightness/BrightnessDetailAdapter;->quickBrightnessSeadView:Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;
++
++    invoke-virtual {v1, p1, v0}, Lcom/android/systemui/settings/brightness/QuickBrightnessSeadView;->initBrightnessDetail(Landroid/content/Context;Landroid/view/ViewGroup;)V
++
+     new-instance p2, Lcom/android/systemui/settings/brightness/BrightnessDetailAdapter$createDetailView$1$2;
+ 
+     invoke-direct {p2, p0, p1}, Lcom/android/systemui/settings/brightness/BrightnessDetailAdapter$createDetailView$1$2;-><init>(Lcom/android/systemui/settings/brightness/BrightnessDetailAdapter;Landroid/content/Context;)V

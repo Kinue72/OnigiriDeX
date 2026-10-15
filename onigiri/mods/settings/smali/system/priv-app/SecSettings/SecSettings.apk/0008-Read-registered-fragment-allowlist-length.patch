@@ -1,0 +1,14 @@
+Subject: [PATCH] Read the registered Samsung fragment allowlist length
+
+diff --git a/smali_classes2/com/android/settings/SettingsActivity.smali b/smali_classes2/com/android/settings/SettingsActivity.smali
+--- a/smali_classes2/com/android/settings/SettingsActivity.smali
++++ b/smali_classes2/com/android/settings/SettingsActivity.smali
+@@ -967,7 +967,7 @@
+     sget-object v1, Lcom/android/settings/core/gateway/SettingsGateway;->SAMSUNG_ENTRY_FRAGMENTS:[Ljava/lang/String;
+ 
+-    const/16 v2, 0x8b
++    array-length v2, v1
+ 
+     if-ge v0, v2, :cond_3
+ 
+     aget-object v1, v1, v0

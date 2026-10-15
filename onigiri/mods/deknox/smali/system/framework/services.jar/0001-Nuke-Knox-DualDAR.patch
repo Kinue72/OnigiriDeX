@@ -1,0 +1,753 @@
+From: Onigiri
+Subject: [PATCH] Disable DualDAR activation while preserving ordinary credential and enterprise services
+
+diff --git a/smali/com/android/server/devicepolicy/DualDarProvisioningHelper.smali b/smali/com/android/server/devicepolicy/DualDarProvisioningHelper.smali
+--- a/smali/com/android/server/devicepolicy/DualDarProvisioningHelper.smali
++++ b/smali/com/android/server/devicepolicy/DualDarProvisioningHelper.smali
+@@ -164,152 +164,26 @@
+ .end method
+ 
+ .method public static isDualDARConfigured(Landroid/content/Context;Landroid/os/PersistableBundle;)Z
+-    .locals 3
+-
+-    const/4 v0, 0x1
+-
+-    const-string v1, "DualDarProvisioningHelper"
+-
+-    if-eqz p1, :cond_0
+-
+-    const-string/jumbo v2, "dualdar-config"
+-
+-    invoke-virtual {p1, v2}, Landroid/os/PersistableBundle;->getBoolean(Ljava/lang/String;)Z
+-
+-    move-result p1
+-
+-    if-eqz p1, :cond_0
+-
+-    const-string/jumbo p0, "isDualDARConfigured from provisioning params"
+-
+-    invoke-static {v1, p0}, Lcom/android/server/utils/Slogf;->d(Ljava/lang/String;Ljava/lang/String;)I
++    .locals 1
++
++    const/4 v0, 0x0
+ 
+     return v0
+-
+-    :cond_0
+-    invoke-static {p0}, Lcom/android/server/devicepolicy/DualDarProvisioningHelper;->getDualDARProfile(Landroid/content/Context;)Landroid/os/Bundle;
+-
+-    move-result-object p0
+-
+-    if-eqz p0, :cond_1
+-
+-    const-string/jumbo p0, "isDualDARConfigured from preset params"
+-
+-    invoke-static {v1, p0}, Lcom/android/server/utils/Slogf;->d(Ljava/lang/String;Ljava/lang/String;)I
++.end method
++
++.method public static isDualDARIntentProvisioned(Landroid/os/PersistableBundle;)Z
++    .locals 1
++
++    const/4 v0, 0x0
+ 
+     return v0
+-
+-    :cond_1
+-    const/4 p0, 0x0
+-
+-    return p0
+-.end method
+-
+-.method public static isDualDARIntentProvisioned(Landroid/os/PersistableBundle;)Z
+-    .locals 1
+-
+-    if-eqz p0, :cond_0
+-
+-    const-string/jumbo v0, "dualdar-config"
+-
+-    invoke-virtual {p0, v0}, Landroid/os/PersistableBundle;->getBoolean(Ljava/lang/String;)Z
+-
+-    move-result p0
+-
+-    if-eqz p0, :cond_0
+-
+-    const-string p0, "DualDarProvisioningHelper"
+-
+-    const-string/jumbo v0, "isDualDARIntentProvisioned from provisioning params"
+-
+-    invoke-static {p0, v0}, Lcom/android/server/utils/Slogf;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    const/4 p0, 0x1
+-
+-    return p0
+-
+-    :cond_0
+-    const/4 p0, 0x0
+-
+-    return p0
+ .end method
+ 
+ .method public static isDualDARNativeCrypto(Landroid/content/Context;Landroid/os/PersistableBundle;)Z
+-    .locals 5
++    .locals 1
+ 
+     const/4 v0, 0x0
+ 
+-    const-string/jumbo v1, "dualdar-config-client-package"
+-
+-    const-string v2, "DualDarProvisioningHelper"
+-
+-    if-eqz p1, :cond_0
+-
+-    invoke-virtual {p1, v1}, Landroid/os/PersistableBundle;->getString(Ljava/lang/String;)Ljava/lang/String;
+-
+-    move-result-object v3
+-
+-    invoke-static {v3}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
+-
+-    move-result v3
+-
+-    if-nez v3, :cond_0
+-
+-    const-string p0, "Custom crypto from provisioning params"
+-
+-    invoke-static {v2, p0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    return v0
+-
+-    :cond_0
+-    const/4 v3, 0x1
+-
+-    if-eqz p1, :cond_1
+-
+-    const-string/jumbo v4, "dualdar-config"
+-
+-    invoke-virtual {p1, v4}, Landroid/os/PersistableBundle;->getBoolean(Ljava/lang/String;)Z
+-
+-    move-result p1
+-
+-    if-eqz p1, :cond_1
+-
+-    const-string/jumbo p0, "native crypto from provisioning params"
+-
+-    invoke-static {v2, p0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    return v3
+-
+-    :cond_1
+-    invoke-static {p0}, Lcom/android/server/devicepolicy/DualDarProvisioningHelper;->getDualDARProfile(Landroid/content/Context;)Landroid/os/Bundle;
+-
+-    move-result-object p1
+-
+-    if-eqz p1, :cond_2
+-
+-    invoke-static {p0}, Lcom/android/server/devicepolicy/DualDarProvisioningHelper;->getDualDARProfile(Landroid/content/Context;)Landroid/os/Bundle;
+-
+-    move-result-object p0
+-
+-    invoke-virtual {p0, v1}, Landroid/os/Bundle;->getString(Ljava/lang/String;)Ljava/lang/String;
+-
+-    move-result-object p0
+-
+-    const-string/jumbo p1, "default"
+-
+-    invoke-virtual {p1, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+-
+-    move-result p0
+-
+-    if-eqz p0, :cond_2
+-
+-    const-string/jumbo p0, "isDualDARNativeCrypto from preset params"
+-
+-    invoke-static {v2, p0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    return v3
+-
+-    :cond_2
+     return v0
+ .end method
+ 
+diff --git a/smali/com/android/server/knox/dar/DarManagerService.smali b/smali/com/android/server/knox/dar/DarManagerService.smali
+--- a/smali/com/android/server/knox/dar/DarManagerService.smali
++++ b/smali/com/android/server/knox/dar/DarManagerService.smali
+@@ -158,17 +158,9 @@
+ 
+     iput-object v0, p0, Lcom/android/server/knox/dar/DarManagerService;->mVirtualLockImpl:Lcom/android/server/knox/dar/VirtualLockImpl;
+ 
+-    new-instance v0, Lcom/android/server/knox/dar/ddar/core/DualDarDoManagerImpl;
+-
+-    invoke-direct {v0, p1}, Lcom/android/server/knox/dar/ddar/core/DualDarDoManagerImpl;-><init>(Lcom/android/server/knox/dar/DarManagerService$Injector;)V
++    const/4 v0, 0x0
+ 
+     iput-object v0, p0, Lcom/android/server/knox/dar/DarManagerService;->mDualDarDoManagerImpl:Lcom/android/server/knox/dar/ddar/core/DualDarDoManagerImpl;
+-
+-    const-string p1, "DarManagerService_DUAL_DAR"
+-
+-    const-string/jumbo v0, "prepare DualDAR DO Service"
+-
+-    invoke-static {p1, v0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+ 
+     const-class p1, Landroid/app/ActivityManagerInternal;
+ 
+diff --git a/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali b/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
+--- a/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
++++ b/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
+@@ -4910,38 +4910,6 @@
+     invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+ 
+     invoke-static {v7, v2}, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;->addSystemService(Lcom/android/server/enterprise/EnterpriseServiceCallback;Ljava/lang/String;)V
+-
+-    invoke-static {v0}, Lcom/android/server/enterprise/EnterpriseService;->getPolicyService(Ljava/lang/String;)Ljava/lang/Object;
+-
+-    move-result-object v1
+-
+-    if-nez v1, :cond_2
+-
+-    iget-object v1, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mInjector:Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;
+-
+-    new-instance v2, Lcom/android/server/knox/dar/ddar/proxy/DualDARComnService;
+-
+-    iget-object v7, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mContext:Landroid/content/Context;
+-
+-    invoke-direct {v2, v7}, Lcom/android/server/knox/dar/ddar/proxy/DualDARComnService;-><init>(Landroid/content/Context;)V
+-
+-    invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-
+-    invoke-static {v2, v0}, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;->addSystemService(Lcom/android/server/enterprise/EnterpriseServiceCallback;Ljava/lang/String;)V
+-
+-    iget-object v0, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mInjector:Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;
+-
+-    const-string v1, "DualDARPolicy"
+-
+-    new-instance v2, Lcom/android/server/enterprise/dualdar/DualDARPolicy;
+-
+-    iget-object v7, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mContext:Landroid/content/Context;
+-
+-    invoke-direct {v2, v7}, Lcom/android/server/enterprise/dualdar/DualDARPolicy;-><init>(Landroid/content/Context;)V
+-
+-    invoke-virtual {v0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-
+-    invoke-static {v2, v1}, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;->addSystemService(Lcom/android/server/enterprise/EnterpriseServiceCallback;Ljava/lang/String;)V
+ 
+     goto :goto_1
+ 
+@@ -14697,63 +14665,6 @@
+ 
+     if-ne v0, v1, :cond_2
+ 
+-    const-string v0, "EnterpriseDeviceManagerService"
+-
+-    const-string v1, "Start DualDAR Services"
+-
+-    invoke-static {v0, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    iget-boolean v1, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mDeferredServicesCreated:Z
+-
+-    if-nez v1, :cond_0
+-
+-    iget-object v1, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mInternalHandler:Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$InternalHandler;
+-
+-    if-eqz v1, :cond_1
+-
+-    const-string v1, "Add DualDAR services and request to be ready"
+-
+-    invoke-static {v0, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    iget-object v0, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mInternalHandler:Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$InternalHandler;
+-
+-    new-instance v1, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$$ExternalSyntheticLambda0;
+-
+-    const/4 v2, 0x0
+-
+-    invoke-direct {v1, p0, v2}, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$$ExternalSyntheticLambda0;-><init>(Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;I)V
+-
+-    invoke-virtual {v0, v1}, Landroid/os/Handler;->postAtFrontOfQueue(Ljava/lang/Runnable;)Z
+-
+-    sget-object p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mServiceAdditionCondition:Landroid/os/ConditionVariable;
+-
+-    invoke-virtual {p0}, Landroid/os/ConditionVariable;->block()V
+-
+-    goto :goto_0
+-
+-    :cond_0
+-    const-string p0, "Deferred services have already created. set initial state DualDAR"
+-
+-    invoke-static {v0, p0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    :try_start_0
+-    invoke-static {}, Lcom/samsung/android/knox/dar/ddar/fsm/StateMachine;->setInitialState()V
+-    :try_end_0
+-    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
+-
+-    goto :goto_0
+-
+-    :catch_0
+-    move-exception p0
+-
+-    const-string v1, "DualDAR stateMachine initiate failed!"
+-
+-    invoke-static {v0, v1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    invoke-virtual {p0}, Ljava/lang/Exception;->printStackTrace()V
+-
+-    :cond_1
+-    :goto_0
+     return-void
+ 
+     :cond_2
+diff --git a/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$$ExternalSyntheticLambda0.smali b/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$$ExternalSyntheticLambda0.smali
+--- a/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$$ExternalSyntheticLambda0.smali
++++ b/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$$ExternalSyntheticLambda0.smali
+@@ -104,50 +104,6 @@
+     return-void
+ 
+     :pswitch_1
+-    sget-object v0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->EXCLUDED_ADMINS:Ljava/util/List;
+-
+-    invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-
+-    new-instance v0, Lcom/android/server/knox/dar/ddar/proxy/DualDARComnService;
+-
+-    iget-object v1, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mContext:Landroid/content/Context;
+-
+-    invoke-direct {v0, v1}, Lcom/android/server/knox/dar/ddar/proxy/DualDARComnService;-><init>(Landroid/content/Context;)V
+-
+-    iget-object v1, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mInjector:Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;
+-
+-    invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-
+-    const-string/jumbo v1, "knox_adapter_service"
+-
+-    invoke-static {v0, v1}, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;->addSystemService(Lcom/android/server/enterprise/EnterpriseServiceCallback;Ljava/lang/String;)V
+-
+-    iget-object v2, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mInjector:Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;
+-
+-    invoke-virtual {v2}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-
+-    invoke-static {v0, v1}, Lcom/android/server/enterprise/EnterpriseService;->invokeSystemReadyIfNeeded(Lcom/android/server/enterprise/EnterpriseServiceCallback;Ljava/lang/String;)V
+-
+-    new-instance v0, Lcom/android/server/enterprise/dualdar/DualDARPolicy;
+-
+-    iget-object v1, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mContext:Landroid/content/Context;
+-
+-    invoke-direct {v0, v1}, Lcom/android/server/enterprise/dualdar/DualDARPolicy;-><init>(Landroid/content/Context;)V
+-
+-    iget-object v1, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mInjector:Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;
+-
+-    invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-
+-    const-string v1, "DualDARPolicy"
+-
+-    invoke-static {v0, v1}, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;->addSystemService(Lcom/android/server/enterprise/EnterpriseServiceCallback;Ljava/lang/String;)V
+-
+-    iget-object p0, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mInjector:Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;
+-
+-    invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-
+-    invoke-static {v0, v1}, Lcom/android/server/enterprise/EnterpriseService;->invokeSystemReadyIfNeeded(Lcom/android/server/enterprise/EnterpriseServiceCallback;Ljava/lang/String;)V
+-
+     sget-object p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mServiceAdditionCondition:Landroid/os/ConditionVariable;
+ 
+     invoke-virtual {p0}, Landroid/os/ConditionVariable;->open()V
+diff --git a/smali_classes2/com/android/server/pm/UserManagerService.smali b/smali_classes2/com/android/server/pm/UserManagerService.smali
+--- a/smali_classes2/com/android/server/pm/UserManagerService.smali
++++ b/smali_classes2/com/android/server/pm/UserManagerService.smali
+@@ -5145,6 +5145,26 @@
+ 
+ .method public final createUserInternalUncheckedNoTracing(Ljava/lang/String;Ljava/lang/String;IIZ[Ljava/lang/String;Lcom/android/server/utils/TimingsTraceAndSlog;Ljava/lang/Object;)Landroid/content/pm/UserInfo;
+     .locals 47
++
++    move/from16 v0, p3
++
++    const/high16 v1, 0x6000000
++
++    and-int/2addr v0, v1
++
++    if-eqz v0, :onigiri_standard_user
++
++    new-instance v0, Landroid/os/UserManager$CheckedUserOperationException;
++
++    const-string v1, "DualDAR profiles are unavailable"
++
++    const/4 v2, 0x1
++
++    invoke-direct {v0, v1, v2}, Landroid/os/UserManager$CheckedUserOperationException;-><init>(Ljava/lang/String;I)V
++
++    throw v0
++
++    :onigiri_standard_user
+ 
+     move-object/from16 v1, p0
+ 
+@@ -18364,7 +18384,7 @@
+ 
+     iget v0, v0, Landroid/content/pm/UserInfo;->flags:I
+ 
+-    const/high16 v4, 0x6000000
++    const/4 v4, 0x0
+ 
+     and-int/2addr v0, v4
+ 
+@@ -21027,7 +21047,7 @@
+ 
+     iget v0, v2, Landroid/content/pm/UserInfo;->flags:I
+ 
+-    const/high16 v1, 0x6000000
++    const/4 v1, 0x0
+ 
+     and-int/2addr v0, v1
+ 
+diff --git a/smali_classes2/com/android/server/pm/UserManagerService$LocalService.smali b/smali_classes2/com/android/server/pm/UserManagerService$LocalService.smali
+--- a/smali_classes2/com/android/server/pm/UserManagerService$LocalService.smali
++++ b/smali_classes2/com/android/server/pm/UserManagerService$LocalService.smali
+@@ -2351,120 +2351,11 @@
+ .end method
+ 
+ .method public final setDualDarInfo(II)Z
+-    .locals 6
+-
+-    const-string v0, "Set DUAL_DAR flag as samsung crypto for user "
+-
+-    const-string v1, "Set DUAL_DAR flag as custom crypto for user "
+-
+-    iget-object v2, p0, Lcom/android/server/pm/UserManagerService$LocalService;->this$0:Lcom/android/server/pm/UserManagerService;
+-
+-    iget-object v2, v2, Lcom/android/server/pm/UserManagerService;->mUsersLock:Ljava/lang/Object;
+-
+-    monitor-enter v2
+-
+-    :try_start_0
+-    iget-object v3, p0, Lcom/android/server/pm/UserManagerService$LocalService;->this$0:Lcom/android/server/pm/UserManagerService;
+-
+-    iget-object v3, v3, Lcom/android/server/pm/UserManagerService;->mUsers:Landroid/util/SparseArray;
+-
+-    invoke-virtual {v3, p1}, Landroid/util/SparseArray;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v3
+-
+-    check-cast v3, Lcom/android/server/pm/UserManagerService$UserData;
+-
+-    const/4 v4, 0x0
+-
+-    if-eqz v3, :cond_2
+-
+-    const/high16 v5, 0x6000000
+-
+-    and-int/2addr v5, p2
+-
+-    if-eqz v5, :cond_2
+-
+-    const/high16 v5, 0x4000000
+-
+-    and-int/2addr v5, p2
+-
+-    if-eqz v5, :cond_0
+-
+-    const-string v0, "UserManagerService"
+-
+-    new-instance v5, Ljava/lang/StringBuilder;
+-
+-    invoke-direct {v5, v1}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+-
+-    invoke-virtual {v5, p1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
+-
+-    invoke-virtual {v5}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    move-result-object p1
+-
+-    invoke-static {v0, p1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    goto :goto_0
+-
+-    :catchall_0
+-    move-exception p0
+-
+-    goto :goto_1
+-
+-    :cond_0
+-    const/high16 v1, 0x2000000
+-
+-    and-int/2addr v1, p2
+-
+-    if-eqz v1, :cond_1
+-
+-    const-string v1, "UserManagerService"
+-
+-    new-instance v5, Ljava/lang/StringBuilder;
+-
+-    invoke-direct {v5, v0}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+-
+-    invoke-virtual {v5, p1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
+-
+-    invoke-virtual {v5}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    move-result-object p1
+-
+-    invoke-static {v1, p1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    goto :goto_0
+-
+-    :cond_1
+-    move p2, v4
+-
+-    :goto_0
+-    if-eqz p2, :cond_2
+-
+-    iget-object p1, v3, Lcom/android/server/pm/UserManagerService$UserData;->info:Landroid/content/pm/UserInfo;
+-
+-    iget v0, p1, Landroid/content/pm/UserInfo;->flags:I
+-
+-    or-int/2addr p2, v0
+-
+-    iput p2, p1, Landroid/content/pm/UserInfo;->flags:I
+-
+-    iget-object p0, p0, Lcom/android/server/pm/UserManagerService$LocalService;->this$0:Lcom/android/server/pm/UserManagerService;
+-
+-    invoke-virtual {p0, v3}, Lcom/android/server/pm/UserManagerService;->writeUserLP(Lcom/android/server/pm/UserManagerService$UserData;)V
+-
+-    const/4 v4, 0x1
+-
+-    :cond_2
+-    monitor-exit v2
+-
+-    return v4
+-
+-    :goto_1
+-    monitor-exit v2
+-    :try_end_0
+-    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+-
+-    throw p0
++    .locals 1
++
++    const/4 v0, 0x0
++
++    return v0
+ .end method
+ 
+ .method public final setForceEphemeralUsers(Z)V
+diff --git a/smali/com/android/server/StorageManagerService.smali b/smali/com/android/server/StorageManagerService.smali
+--- a/smali/com/android/server/StorageManagerService.smali
++++ b/smali/com/android/server/StorageManagerService.smali
+@@ -14726,24 +14726,6 @@
+ 
+     :cond_1
+     :goto_0
+-    :try_start_0
+-    iget-object p0, p0, Lcom/android/server/StorageManagerService;->mVold:Landroid/os/IVold;
+-
+-    invoke-interface {p0, p1, p2}, Landroid/os/IVold;->setDualDARPolicyCmd(II)Z
+-
+-    move-result p0
+-    :try_end_0
+-    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
+-
+-    return p0
+-
+-    :catch_0
+-    move-exception p0
+-
+-    const-string p1, "StorageManagerService"
+-
+-    invoke-static {p1, p0}, Landroid/util/sysfwutil/Slog;->wtf(Ljava/lang/String;Ljava/lang/Throwable;)I
+-
+     const/4 p0, 0x0
+ 
+     return p0
+diff --git a/smali/com/android/server/knox/dar/EnterprisePartitionManager.smali b/smali/com/android/server/knox/dar/EnterprisePartitionManager.smali
+--- a/smali/com/android/server/knox/dar/EnterprisePartitionManager.smali
++++ b/smali/com/android/server/knox/dar/EnterprisePartitionManager.smali
+@@ -227,183 +227,19 @@
+ .end method
+ 
+ .method public static setDualDARPolicyDir(IILjava/lang/String;)Z
+-    .locals 4
+-
+-    const-string v0, "EnterprisePartitionManager"
+-
+-    const-string/jumbo v1, "setDualDARPolicyDir(user:"
+-
+-    const-string v2, " flags:"
+-
+-    const-string v3, " path:"
+-
+-    invoke-static {p0, p1, v1, v2, v3}, Lcom/android/internal/util/jobs/ArrayUtils$$ExternalSyntheticOutline0;->m(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v1, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    const-string v2, ")"
+-
+-    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    move-result-object v1
+-
+-    invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    sget-object v0, Lcom/android/server/knox/dar/EnterprisePartitionManager;->mInstallLock:Ljava/lang/Object;
+-
+-    monitor-enter v0
+-
+-    :try_start_0
+-    sget-object v1, Lcom/android/server/knox/dar/EnterprisePartitionManager;->mPackageTasker:Lcom/android/server/pm/Installer;
+-
+-    invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-    :try_end_0
+-    .catch Lcom/android/server/pm/Installer$InstallerException; {:try_start_0 .. :try_end_0} :catch_1
+-    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+-
+-    :try_start_1
+-    iget-object v1, v1, Lcom/android/server/pm/Installer;->mInstalld:Landroid/os/IInstalld;
+-
+-    invoke-interface {v1, p0, p1, p2}, Landroid/os/IInstalld;->setDualDARPolicyDir(IILjava/lang/String;)Z
+-
+-    move-result p0
+-    :try_end_1
+-    .catch Ljava/lang/Exception; {:try_start_1 .. :try_end_1} :catch_0
+-    .catchall {:try_start_1 .. :try_end_1} :catchall_0
+-
+-    :try_start_2
+-    monitor-exit v0
+-    :try_end_2
+-    .catchall {:try_start_2 .. :try_end_2} :catchall_0
+-
+-    return p0
+-
+-    :catchall_0
+-    move-exception p0
+-
+-    goto :goto_0
+-
+-    :catch_0
+-    move-exception p0
+-
+-    :try_start_3
+-    invoke-static {p0}, Lcom/android/server/pm/Installer$InstallerException;->from(Ljava/lang/Exception;)V
+-
+-    const/4 p0, 0x0
+-
+-    throw p0
+-    :try_end_3
+-    .catch Lcom/android/server/pm/Installer$InstallerException; {:try_start_3 .. :try_end_3} :catch_1
+-    .catchall {:try_start_3 .. :try_end_3} :catchall_0
+-
+-    :catch_1
+-    :try_start_4
+-    monitor-exit v0
+-
+-    const/4 p0, 0x0
+-
+-    return p0
+-
+-    :goto_0
+-    monitor-exit v0
+-    :try_end_4
+-    .catchall {:try_start_4 .. :try_end_4} :catchall_0
+-
+-    throw p0
++    .locals 1
++
++    const/4 v0, 0x0
++
++    return v0
+ .end method
+ 
+ .method public static setDualDARPolicyDirRecursively(IILjava/lang/String;)Z
+-    .locals 4
+-
+-    const-string v0, "EnterprisePartitionManager"
+-
+-    const-string/jumbo v1, "setDualDARPolicyDirRecursively(user:"
+-
+-    const-string v2, " flags:"
+-
+-    const-string v3, " path:"
+-
+-    invoke-static {p0, p1, v1, v2, v3}, Lcom/android/internal/util/jobs/ArrayUtils$$ExternalSyntheticOutline0;->m(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v1, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    const-string v2, ")"
+-
+-    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    move-result-object v1
+-
+-    invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    sget-object v0, Lcom/android/server/knox/dar/EnterprisePartitionManager;->mInstallLock:Ljava/lang/Object;
+-
+-    monitor-enter v0
+-
+-    :try_start_0
+-    sget-object v1, Lcom/android/server/knox/dar/EnterprisePartitionManager;->mPackageTasker:Lcom/android/server/pm/Installer;
+-
+-    invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-    :try_end_0
+-    .catch Lcom/android/server/pm/Installer$InstallerException; {:try_start_0 .. :try_end_0} :catch_1
+-    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+-
+-    :try_start_1
+-    iget-object v1, v1, Lcom/android/server/pm/Installer;->mInstalld:Landroid/os/IInstalld;
+-
+-    invoke-interface {v1, p0, p1, p2}, Landroid/os/IInstalld;->setDualDARPolicyDirRecursively(IILjava/lang/String;)Z
+-
+-    move-result p0
+-    :try_end_1
+-    .catch Ljava/lang/Exception; {:try_start_1 .. :try_end_1} :catch_0
+-    .catchall {:try_start_1 .. :try_end_1} :catchall_0
+-
+-    :try_start_2
+-    monitor-exit v0
+-    :try_end_2
+-    .catchall {:try_start_2 .. :try_end_2} :catchall_0
+-
+-    return p0
+-
+-    :catchall_0
+-    move-exception p0
+-
+-    goto :goto_0
+-
+-    :catch_0
+-    move-exception p0
+-
+-    :try_start_3
+-    invoke-static {p0}, Lcom/android/server/pm/Installer$InstallerException;->from(Ljava/lang/Exception;)V
+-
+-    const/4 p0, 0x0
+-
+-    throw p0
+-    :try_end_3
+-    .catch Lcom/android/server/pm/Installer$InstallerException; {:try_start_3 .. :try_end_3} :catch_1
+-    .catchall {:try_start_3 .. :try_end_3} :catchall_0
+-
+-    :catch_1
+-    :try_start_4
+-    monitor-exit v0
+-
+-    const/4 p0, 0x0
+-
+-    return p0
+-
+-    :goto_0
+-    monitor-exit v0
+-    :try_end_4
+-    .catchall {:try_start_4 .. :try_end_4} :catchall_0
+-
+-    throw p0
++    .locals 1
++
++    const/4 v0, 0x0
++
++    return v0
+ .end method
+ 
+ .method public static setInstaller(Lcom/android/server/pm/Installer;Lcom/android/server/pm/PackageManagerTracedLock;)V

@@ -1,0 +1,274 @@
+From: Onigiri
+Subject: [PATCH] Apply custom eye comfort offsets and restore colour on disable
+
+diff --git a/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService.smali b/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService.smali
+--- a/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService.smali
++++ b/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService.smali
+@@ -579,6 +579,22 @@
+     invoke-virtual {v5, v4, v2, v7, v6}, Landroid/content/ContentResolver;->registerContentObserver(Landroid/net/Uri;ZLandroid/database/ContentObserver;I)V
+ 
+     const-string v4, "ead_enabled"
++
++    invoke-static {v4}, Landroid/provider/Settings$System;->getUriFor(Ljava/lang/String;)Landroid/net/Uri;
++
++    move-result-object v4
++
++    invoke-virtual {v5, v4, v2, v7, v6}, Landroid/content/ContentResolver;->registerContentObserver(Landroid/net/Uri;ZLandroid/database/ContentObserver;I)V
++
++    const-string v4, "onigiri_ead_custom_offset"
++
++    invoke-static {v4}, Landroid/provider/Settings$System;->getUriFor(Ljava/lang/String;)Landroid/net/Uri;
++
++    move-result-object v4
++
++    invoke-virtual {v5, v4, v2, v7, v6}, Landroid/content/ContentResolver;->registerContentObserver(Landroid/net/Uri;ZLandroid/database/ContentObserver;I)V
++
++    const-string v4, "blue_light_filter_adaptive_mode"
+ 
+     invoke-static {v4}, Landroid/provider/Settings$System;->getUriFor(Ljava/lang/String;)Landroid/net/Uri;
+ 
+@@ -2314,7 +2330,11 @@
+ .end method
+ 
+ .method public final setNightDimOffMode(IZ)Z
+-    .locals 6
++    .locals 7
++
++    invoke-virtual {p0, p1}, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->getEadNightModeIndex(I)I
++
++    move-result v6
+ 
+     iget-object v0, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mContext:Landroid/content/Context;
+ 
+@@ -2362,7 +2382,7 @@
+ 
+     invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+ 
+-    add-int/lit8 v2, p1, 0x66
++    add-int/lit8 v2, v6, 0x66
+ 
+     invoke-static {v0, v2}, Lcom/android/server/am/ProcessList$$ExternalSyntheticOutline0;->m(Ljava/lang/StringBuilder;I)Ljava/lang/String;
+ 
+@@ -2383,7 +2403,7 @@
+ 
+     invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+ 
+-    invoke-static {p1}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
++    invoke-static {v6}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
+ 
+     move-result-object v2
+ 
+@@ -2393,7 +2413,7 @@
+ 
+     move-result-object v0
+ 
+-    move v2, p1
++    move v2, v6
+ 
+     :goto_1
+     iget-boolean v4, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mSupportBlueFilter:Z
+@@ -2487,7 +2507,11 @@
+ .end method
+ 
+ .method public final setNightMode(ZI)Z
+-    .locals 6
++    .locals 7
++
++    invoke-virtual {p0, p2}, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->getEadNightModeIndex(I)I
++
++    move-result v6
+ 
+     iget-object v0, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mContext:Landroid/content/Context;
+ 
+@@ -2561,7 +2585,7 @@
+ 
+     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+ 
+-    add-int/lit16 v1, p2, 0xcc
++    add-int/lit16 v1, v6, 0xcc
+ 
+     invoke-static {v0, v1}, Lcom/android/server/am/ProcessList$$ExternalSyntheticOutline0;->m(Ljava/lang/StringBuilder;I)Ljava/lang/String;
+ 
+@@ -2582,7 +2606,7 @@
+ 
+     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+ 
+-    add-int/lit8 v1, p2, 0x66
++    add-int/lit8 v1, v6, 0x66
+ 
+     invoke-static {v0, v1}, Lcom/android/server/am/ProcessList$$ExternalSyntheticOutline0;->m(Ljava/lang/StringBuilder;I)Ljava/lang/String;
+ 
+@@ -2603,7 +2627,7 @@
+ 
+     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+ 
+-    invoke-static {p2}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
++    invoke-static {v6}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
+ 
+     move-result-object v1
+ 
+@@ -2613,7 +2637,7 @@
+ 
+     move-result-object v0
+ 
+-    move v1, p2
++    move v1, v6
+ 
+     :goto_2
+     iget-boolean v3, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mSupportBlueFilter:Z
+@@ -3926,3 +3950,68 @@
+     :onigiri_ead_done
+     return-void
+ .end method
++
++.method public final getEadNightModeIndex(I)I
++    .locals 5
++
++    if-ltz p1, :onigiri_custom_done
++
++    const/16 v4, 0xa
++
++    if-gt p1, v4, :onigiri_custom_done
++
++    iget-object v0, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mContext:Landroid/content/Context;
++
++    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v1, "ead_enabled"
++
++    const/4 v2, 0x0
++
++    const/4 v3, -0x2
++
++    invoke-static {v0, v1, v2, v3}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++
++    move-result v1
++
++    const/4 v2, 0x1
++
++    if-ne v1, v2, :onigiri_custom_done
++
++    const-string v1, "blue_light_filter_adaptive_mode"
++
++    const/4 v2, 0x0
++
++    invoke-static {v0, v1, v2, v3}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++
++    move-result v1
++
++    if-nez v1, :onigiri_custom_done
++
++    const-string v1, "onigiri_ead_custom_offset"
++
++    invoke-static {v0, v1, v2, v3}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++
++    move-result v0
++
++    invoke-static {v0, v2}, Ljava/lang/Math;->max(II)I
++
++    move-result v0
++
++    const/4 v1, 0x1
++
++    invoke-static {v0, v1}, Ljava/lang/Math;->min(II)I
++
++    move-result v0
++
++    add-int/2addr p1, v0
++
++    invoke-static {p1, v4}, Ljava/lang/Math;->min(II)I
++
++    move-result p1
++
++    :onigiri_custom_done
++    return p1
++.end method
+diff --git a/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver.smali b/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver.smali
+--- a/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver.smali
++++ b/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver.smali
+@@ -6,6 +6,10 @@
+ # instance fields
+ .field public final AOD_SHOW_STATE_URI:Landroid/net/Uri;
+ 
++.field public final CUSTOM_OFFSET_URI:Landroid/net/Uri;
++
++.field public final ADAPTIVE_MODE_URI:Landroid/net/Uri;
++
+ .field public final EAD_ENABLED_URI:Landroid/net/Uri;
+ 
+ .field public final NIGHT_DIM_URI:Landroid/net/Uri;
+@@ -69,6 +73,22 @@
+ 
+     iput-object p1, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver;->VIVIDNESS_STATE_URI:Landroid/net/Uri;
+ 
++    const-string p1, "onigiri_ead_custom_offset"
++
++    invoke-static {p1}, Landroid/provider/Settings$System;->getUriFor(Ljava/lang/String;)Landroid/net/Uri;
++
++    move-result-object p1
++
++    iput-object p1, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver;->CUSTOM_OFFSET_URI:Landroid/net/Uri;
++
++    const-string p1, "blue_light_filter_adaptive_mode"
++
++    invoke-static {p1}, Landroid/provider/Settings$System;->getUriFor(Ljava/lang/String;)Landroid/net/Uri;
++
++    move-result-object p1
++
++    iput-object p1, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver;->ADAPTIVE_MODE_URI:Landroid/net/Uri;
++
+     return-void
+ .end method
+ 
+@@ -77,6 +97,35 @@
+ .method public final onChange(ZLandroid/net/Uri;)V
+     .locals 11
+ 
++    iget-object v0, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver;->CUSTOM_OFFSET_URI:Landroid/net/Uri;
++
++    invoke-virtual {v0, p2}, Landroid/net/Uri;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :onigiri_custom_refresh
++
++    iget-object v0, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver;->ADAPTIVE_MODE_URI:Landroid/net/Uri;
++
++    invoke-virtual {v0, p2}, Landroid/net/Uri;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-eqz v0, :onigiri_custom_native
++
++    :onigiri_custom_refresh
++    iget-object v0, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver;->this$0:Lcom/samsung/android/hardware/display/SemMdnieManagerService;
++
++    iget-boolean v1, v0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mNightMode:Z
++
++    iget v2, v0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mNightModeIndex:I
++
++    invoke-virtual {v0, v1, v2}, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->setNightMode(ZI)Z
++
++    return-void
++
++    :onigiri_custom_native
++
+     iget-object p1, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver;->this$0:Lcom/samsung/android/hardware/display/SemMdnieManagerService;
+ 
+     iget-object p1, p1, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->FP_FEATURE_SENSOR_IS_OPTICAL:Ljava/lang/String;
+@@ -262,6 +311,12 @@
+ 
+     iget-object p0, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService$SettingsObserver;->this$0:Lcom/samsung/android/hardware/display/SemMdnieManagerService;
+ 
+-    invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++    invoke-virtual {p0}, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->setting_is_changed()V
++
++    iget-boolean p1, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mNightMode:Z
++
++    iget p2, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mNightModeIndex:I
++
++    invoke-virtual {p0, p1, p2}, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->setNightMode(ZI)Z
+ 
+     goto/16 :goto_2

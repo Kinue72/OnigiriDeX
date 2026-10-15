@@ -1,0 +1,24 @@
+From: Onigiri
+Subject: [PATCH] Better device model detection in CoreRune
+
+diff --git a/smali_classes6/com/samsung/android/rune/CoreRune.smali b/smali_classes6/com/samsung/android/rune/CoreRune.smali
+--- a/smali_classes6/com/samsung/android/rune/CoreRune.smali
++++ b/smali_classes6/com/samsung/android/rune/CoreRune.smali
+@@ -4700,7 +4700,7 @@
+ 
+     sput-boolean v0, Lcom/samsung/android/rune/CoreRune;->SUPPORT_APP_JUMP_BLOCK:Z
+ 
+-    const-string v0, "ro.product.device"
++    const-string v0, "ro.product.vendor.device"
+ 
+     invoke-static {v0}, Landroid/os/SystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;
+ 
+@@ -4878,7 +4878,7 @@
+ 
+     if-eqz v0, :cond_44
+ 
+-    const-string v0, "ro.product.model"
++    const-string v0, "ro.product.vendor.model"
+ 
+     invoke-static {v0}, Landroid/os/SystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;
+ 

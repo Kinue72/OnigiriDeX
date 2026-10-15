@@ -1,0 +1,15 @@
+From: Onigiri
+Subject: [PATCH] Disable the file cache reclamation feature flag
+
+diff --git a/smali_classes6/com/samsung/android/rune/CoreRune.smali b/smali_classes6/com/samsung/android/rune/CoreRune.smali
+--- a/smali_classes6/com/samsung/android/rune/CoreRune.smali
++++ b/smali_classes6/com/samsung/android/rune/CoreRune.smali
+@@ -2064,7 +2064,7 @@
+ 
+ .field public static final blacklist SYSTEM_FCA_FOR_GENIE:Z = true
+ 
+-.field public static final blacklist SYSTEM_FCA_ON_FREEZE:Z = true
++.field public static final blacklist SYSTEM_FCA_ON_FREEZE:Z = false
+ 
+ .field public static final blacklist SYSTEM_MEMORY_GENIE_ENABLED:Z = true
+ 

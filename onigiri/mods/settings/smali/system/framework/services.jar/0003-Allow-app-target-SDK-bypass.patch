@@ -1,0 +1,29 @@
+From: Onigiri
+Subject: [PATCH] Allow the optional app target SDK bypass
+
+diff --git a/smali_classes2/com/android/server/pm/InstallPackageHelper.smali b/smali_classes2/com/android/server/pm/InstallPackageHelper.smali
+--- a/smali_classes2/com/android/server/pm/InstallPackageHelper.smali
++++ b/smali_classes2/com/android/server/pm/InstallPackageHelper.smali
+@@ -17150,6 +17150,22 @@
+     const/4 v2, 0x1
+ 
+     :cond_14
++    if-nez v2, :cond_16
++
++    iget-object v14, v1, Lcom/android/server/pm/InstallPackageHelper;->mContext:Landroid/content/Context;
++
++    invoke-virtual {v14}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v14
++
++    const-string v2, "onigiri_allow_sdkbypass"
++
++    const/4 v5, 0x0
++
++    invoke-static {v14, v2, v5}, Landroid/provider/Settings$System;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
++
++    move-result v2
++
+     if-nez v2, :cond_16
+ 
+     invoke-interface {v13}, Lcom/android/internal/pm/parsing/pkg/ParsedPackage;->getTargetSdkVersion()I

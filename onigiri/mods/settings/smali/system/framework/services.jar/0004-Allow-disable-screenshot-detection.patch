@@ -1,0 +1,38 @@
+From: Onigiri
+Subject: [PATCH] Allow optional screenshot detection suppression
+
+diff --git a/smali_classes2/com/android/server/wm/WindowManagerService.smali b/smali_classes2/com/android/server/wm/WindowManagerService.smali
+--- a/smali_classes2/com/android/server/wm/WindowManagerService.smali
++++ b/smali_classes2/com/android/server/wm/WindowManagerService.smali
+@@ -24031,6 +24031,31 @@
+ 
+     if-eqz v0, :cond_1
+ 
++    iget-object v0, p0, Lcom/android/server/wm/WindowManagerService;->mContext:Landroid/content/Context;
++
++    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v1, "onigiri_ss_detection"
++
++    const/4 v3, 0x0
++
++    invoke-static {v0, v1, v3}, Landroid/provider/Settings$System;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
++
++    move-result v3
++
++    if-eqz v3, :onigiri_screenshot_listeners
++
++    invoke-static {}, Ljava/util/Collections;->emptyList()Ljava/util/List;
++
++    move-result-object v0
++
++    return-object v0
++
++    :onigiri_screenshot_listeners
++    const-string v0, "android.permission.STATUS_BAR_SERVICE"
++
+     iget-object v0, p0, Lcom/android/server/wm/WindowManagerService;->mGlobalLock:Lcom/android/server/wm/WindowManagerGlobalLock;
+ 
+     invoke-static {}, Lcom/android/server/wm/WindowManagerService;->boostPriorityForLockedSection()V

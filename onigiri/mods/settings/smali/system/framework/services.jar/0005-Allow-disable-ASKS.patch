@@ -1,0 +1,47 @@
+From: Onigiri
+Subject: [PATCH] Allow optional ASKS control at all release policy checks
+
+diff --git a/smali/com/android/server/asks/ASKSManagerService.smali b/smali/com/android/server/asks/ASKSManagerService.smali
+--- a/smali/com/android/server/asks/ASKSManagerService.smali
++++ b/smali/com/android/server/asks/ASKSManagerService.smali
+@@ -5736,9 +5736,9 @@
+     move-object v6, v5
+ 
+     :goto_0
+-    const-string/jumbo v7, "ro.build.official.release"
+-
+-    const-string/jumbo v8, "false"
++    const-string/jumbo v7, "persist.sys.onigiri.asks"
++
++    const-string/jumbo v8, "true"
+ 
+     invoke-static {v7, v8}, Landroid/os/SystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ 
+@@ -23841,9 +23841,9 @@
+     invoke-static {v4, v0}, Landroid/util/Slog;->d(Ljava/lang/String;Ljava/lang/String;)I
+ 
+     :cond_6
+-    const-string/jumbo v0, "ro.build.official.release"
+-
+-    const-string/jumbo v3, "false"
++    const-string/jumbo v0, "persist.sys.onigiri.asks"
++
++    const-string/jumbo v3, "true"
+ 
+     invoke-static {v0, v3}, Landroid/os/SystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ 
+@@ -25708,9 +25708,11 @@
+ 
+     invoke-virtual {v14, v11}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+ 
+-    const-string/jumbo v11, "ro.build.official.release"
+-
+-    invoke-static {v11}, Landroid/os/SystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;
++    const-string/jumbo v11, "persist.sys.onigiri.asks"
++
++    const-string/jumbo v14, "true"
++
++    invoke-static {v11, v14}, Landroid/os/SystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ 
+     move-result-object v11
+ 

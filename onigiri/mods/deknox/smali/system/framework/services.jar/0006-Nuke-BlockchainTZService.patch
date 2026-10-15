@@ -1,0 +1,15 @@
+From: Onigiri
+Subject: [PATCH] Disable lazy blockchain service registration
+
+diff --git a/smali/com/android/server/SystemServer$$ExternalSyntheticLambda10.smali b/smali/com/android/server/SystemServer$$ExternalSyntheticLambda10.smali
+--- a/smali/com/android/server/SystemServer$$ExternalSyntheticLambda10.smali
++++ b/smali/com/android/server/SystemServer$$ExternalSyntheticLambda10.smali
+@@ -84,7 +84,7 @@
+ 
+     invoke-direct {v4, v5}, Lcom/android/server/SystemServer$4;-><init>(I)V
+ 
+-    invoke-static {v3, v4}, Landroid/os/ServiceManager;->addService(Ljava/lang/String;Landroid/os/IServiceCreator;)V
++
+     :try_end_1
+     .catchall {:try_start_1 .. :try_end_1} :catchall_1
+ 

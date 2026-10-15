@@ -1,0 +1,15 @@
+From: Onigiri
+Subject: [PATCH] Better model detection in FreecessController
+
+diff --git a/smali/com/android/server/am/FreecessController.smali b/smali/com/android/server/am/FreecessController.smali
+--- a/smali/com/android/server/am/FreecessController.smali
++++ b/smali/com/android/server/am/FreecessController.smali
+@@ -199,7 +199,7 @@
+ 
+     sput-object v2, Lcom/android/server/am/FreecessController;->productModel:Ljava/lang/String;
+ 
+-    const-string/jumbo v2, "ro.product.model"
++    const-string/jumbo v2, "ro.product.vendor.model"
+ 
+     invoke-static {v2}, Landroid/os/SystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;
+ 

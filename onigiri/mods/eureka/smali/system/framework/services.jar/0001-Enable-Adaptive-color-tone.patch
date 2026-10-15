@@ -1,0 +1,219 @@
+From: Onigiri
+Subject: [PATCH] Apply adaptive colour to the Flip5 cover and integrate eye comfort
+
+diff --git a/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService.smali b/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService.smali
+--- a/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService.smali
++++ b/smali_classes2/com/samsung/android/hardware/display/SemMdnieManagerService.smali
+@@ -2076,11 +2076,15 @@
+ .method public final setEadMode(I[I)V
+     .locals 0
+ 
++    invoke-virtual {p0, p2}, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->storeEadRgb([I)V
++
+     return-void
+ .end method
+ 
+ .method public final setEadModeSub(I[I)V
+     .locals 0
++
++    invoke-virtual {p0, p2}, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->storeEadRgb([I)V
+ 
+     return-void
+ .end method
+@@ -3407,6 +3411,16 @@
+     :goto_0
+     iput-boolean v4, v0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mEnvironmentAdaptiveDisplayEnabled:Z
+ 
++    if-nez v4, :onigiri_ead_setting_ready
++
++    const-string v9, "/sys/class/mdnie/mdnie1/eadRGB"
++
++    const-string v11, "255 255 255"
++
++    invoke-static {v9, v11}, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->sysfsWriteSting(Ljava/lang/String;Ljava/lang/String;)Z
++
++    :onigiri_ead_setting_ready
++
+     iget-object v4, v0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mContext:Landroid/content/Context;
+ 
+     invoke-virtual {v4}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
+@@ -3816,3 +3830,99 @@
+     :goto_0
+     return-void
+ .end method
++
++.method public final storeEadRgb([I)V
++    .locals 6
++
++    iget-object v0, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mContext:Landroid/content/Context;
++
++    const-string v1, "com.samsung.android.permission.CHANGE_DISPLAY_COLOR"
++
++    const-string v2, "setEadMode"
++
++    invoke-virtual {v0, v1, v2}, Landroid/content/Context;->enforceCallingOrSelfPermission(Ljava/lang/String;Ljava/lang/String;)V
++
++    if-eqz p1, :onigiri_ead_done
++
++    array-length v0, p1
++
++    const/4 v1, 0x3
++
++    if-ne v0, v1, :onigiri_ead_done
++
++    const/4 v0, 0x0
++
++    const/16 v2, 0xff
++
++    :onigiri_ead_validate
++    aget v3, p1, v0
++
++    if-ltz v3, :onigiri_ead_done
++
++    if-gt v3, v2, :onigiri_ead_done
++
++    add-int/lit8 v0, v0, 0x1
++
++    if-lt v0, v1, :onigiri_ead_validate
++
++    iget-object v0, p0, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->mContext:Landroid/content/Context;
++
++    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v1, "ead_enabled"
++
++    const/4 v2, 0x0
++
++    const/4 v3, -0x2
++
++    invoke-static {v0, v1, v2, v3}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++
++    move-result v0
++
++    const-string v1, "/sys/class/mdnie/mdnie1/eadRGB"
++
++    const/4 v3, 0x1
++
++    if-eq v0, v3, :onigiri_ead_active
++
++    const-string v0, "255 255 255"
++
++    goto :onigiri_ead_write
++
++    :onigiri_ead_active
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    aget v2, p1, v2
++
++    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    const-string v2, " "
++
++    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    aget v3, p1, v3
++
++    invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    const/4 v2, 0x2
++
++    aget v2, p1, v2
++
++    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    :onigiri_ead_write
++    invoke-static {v1, v0}, Lcom/samsung/android/hardware/display/SemMdnieManagerService;->sysfsWriteSting(Ljava/lang/String;Ljava/lang/String;)Z
++
++    :onigiri_ead_done
++    return-void
++.end method
+diff --git a/smali_classes2/com/samsung/android/displaysolution/EyeComfortSolutionService.smali b/smali_classes2/com/samsung/android/displaysolution/EyeComfortSolutionService.smali
+--- a/smali_classes2/com/samsung/android/displaysolution/EyeComfortSolutionService.smali
++++ b/smali_classes2/com/samsung/android/displaysolution/EyeComfortSolutionService.smali
+@@ -633,7 +633,7 @@
+ 
+     const-string v13, "EyeComfortSolutionService"
+ 
+-    const-string/jumbo v5, "mEnvironmentAdaptiveDisplaySupported false"
++    const-string/jumbo v5, "mEnvironmentAdaptiveDisplaySupported true"
+ 
+     invoke-static {v13, v5}, Landroid/util/Slog;->i(Ljava/lang/String;Ljava/lang/String;)I
+ 
+@@ -2084,7 +2084,33 @@
+ 
+     if-eqz v0, :cond_2
+ 
+-    add-int/lit8 v1, p1, 0xb
++    iget v1, p0, Lcom/samsung/android/displaysolution/EyeComfortSolutionService;->mBlfIndexEadOffset:I
++
++    add-int/2addr v1, p1
++
++    add-int/lit8 v1, v1, 0xb
++
++    const/4 v2, 0x0
++
++    invoke-static {v1, v2}, Ljava/lang/Math;->max(II)I
++
++    move-result v1
++
++    iget-boolean v2, p0, Lcom/samsung/android/displaysolution/EyeComfortSolutionService;->mBlueLightFilterAdaptiveModeEnabled:Z
++
++    if-eqz v2, :onigiri_ead_blf_custom
++
++    const/16 v2, 0x65
++
++    goto :onigiri_ead_blf_limit
++
++    :onigiri_ead_blf_custom
++    const/16 v2, 0x2f
++
++    :onigiri_ead_blf_limit
++    invoke-static {v1, v2}, Ljava/lang/Math;->min(II)I
++
++    move-result v1
+ 
+     invoke-virtual {v0, v1}, Lcom/samsung/android/hardware/display/SemMdnieManager;->setNightModeStep(I)Z
+ 
+diff --git a/smali_classes2/com/samsung/android/displaysolution/SemDisplaySolutionManagerService.smali b/smali_classes2/com/samsung/android/displaysolution/SemDisplaySolutionManagerService.smali
+--- a/smali_classes2/com/samsung/android/displaysolution/SemDisplaySolutionManagerService.smali
++++ b/smali_classes2/com/samsung/android/displaysolution/SemDisplaySolutionManagerService.smali
+@@ -2398,7 +2398,15 @@
+ .end method
+ 
+ .method public final setEadIndexOffset(I)V
+-    .locals 2
++    .locals 3
++
++    iget-object v0, p0, Lcom/samsung/android/displaysolution/SemDisplaySolutionManagerService;->mContext:Landroid/content/Context;
++
++    const-string v1, "com.samsung.android.permission.CHANGE_DISPLAY_COLOR"
++
++    const-string/jumbo v2, "setEadIndexOffset"
++
++    invoke-virtual {v0, v1, v2}, Landroid/content/Context;->enforceCallingOrSelfPermission(Ljava/lang/String;Ljava/lang/String;)V
+ 
+     iget-object p0, p0, Lcom/samsung/android/displaysolution/SemDisplaySolutionManagerService;->ecsService:Lcom/samsung/android/displaysolution/EyeComfortSolutionService;
+ 
+@@ -2434,6 +2442,12 @@
+     const/4 p1, 0x0
+ 
+     :goto_0
++    const/16 v0, 0x65
++
++    invoke-static {p1, v0}, Ljava/lang/Math;->min(II)I
++
++    move-result p1
++
+     iput p1, p0, Lcom/samsung/android/displaysolution/EyeComfortSolutionService;->mBlfIndexEadOffset:I
+ 
+     iget-boolean p1, p0, Lcom/samsung/android/displaysolution/EyeComfortSolutionService;->mBlueLightFilterModeEnabled:Z

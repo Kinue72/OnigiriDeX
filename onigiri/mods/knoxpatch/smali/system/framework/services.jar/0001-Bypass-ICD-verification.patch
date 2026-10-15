@@ -1,0 +1,15 @@
+From: Onigiri
+Subject: [PATCH] Use verifiable integrity in the optimized attestation parameter constructor
+
+diff --git a/smali_classes2/com/samsung/android/security/keystore/AttestParameterSpec.smali b/smali_classes2/com/samsung/android/security/keystore/AttestParameterSpec.smali
+--- a/smali_classes2/com/samsung/android/security/keystore/AttestParameterSpec.smali
++++ b/smali_classes2/com/samsung/android/security/keystore/AttestParameterSpec.smali
+@@ -67,6 +67,8 @@
+ 
+     iput-boolean p2, p0, Lcom/samsung/android/security/keystore/AttestParameterSpec;->mDeviceAttestation:Z
+ 
++    const/4 p3, 0x1
++
+     iput-boolean p3, p0, Lcom/samsung/android/security/keystore/AttestParameterSpec;->mVerifiableIntegrity:Z
+ 
+     const/4 p1, 0x0

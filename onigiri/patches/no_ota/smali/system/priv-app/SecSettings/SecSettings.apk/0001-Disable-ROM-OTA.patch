@@ -1,0 +1,93 @@
+From: Onigiri
+Subject: [PATCH] Disable ROM software update entry points
+
+diff --git a/res/xml/sec_top_level_settings.xml b/res/xml/sec_top_level_settings.xml
+--- a/res/xml/sec_top_level_settings.xml
++++ b/res/xml/sec_top_level_settings.xml
+@@ -86,7 +86,6 @@
+     <com.android.settings.widget.HomepagePreference android:icon="@drawable/sec_ic_settings_general_device_management" android:title="@string/general_device_management_title" android:key="top_level_general" android:summary="@string/summary_placeholder" android:order="240000" android:fragment="com.samsung.android.settings.general.GeneralDeviceSettings" settings:controller="com.samsung.android.settings.homepage.TopLevelGeneralManagementPreferenceController" settings:highlightableMenuKey="@string/menu_key_general" settings:keywords="@string/keywords_general_device_management_settings" />
+     <com.android.settings.widget.HomepagePreference android:icon="@drawable/sec_ic_settings_accessibility" android:title="@string/accessibility_settings" android:key="top_level_accessibility" android:summary="@string/summary_placeholder" android:order="260000" android:fragment="com.samsung.android.settings.accessibility.home.SecAccessibilitySettings" settings:controller="com.samsung.android.settings.homepage.TopLevelAccessibilityPreferenceController" settings:highlightableMenuKey="@string/menu_key_accessibility" settings:keywords="@string/keywords_accessibility_main" />
+     <com.samsung.android.settings.widget.SecInsetCategoryPreference android:order="300000" />
+-    <com.android.settings.widget.HomepagePreference android:icon="@drawable/sec_ic_settings_software_update" android:layout="@layout/sec_homepage_software_update_preference" android:title="@string/sec_software_update_title" android:key="top_level_software_update" android:summary="@string/summary_placeholder" android:order="320000" android:fragment="com.samsung.android.settings.softwareupdate.SoftwareUpdateSettings" settings:controller="com.samsung.android.settings.homepage.TopLevelSoftwareUpdatePreferenceController" settings:highlightableMenuKey="@string/menu_key_software_update" settings:keywords="@string/keywords_software_update_settings" />
+     <com.android.settings.widget.HomepagePreference android:icon="@drawable/sec_ic_settings_user_manual" android:title="@string/user_manual" android:key="top_level_user_manual" android:summary="@string/summary_placeholder" android:order="340000" settings:controller="com.samsung.android.settings.homepage.TopLevelUserManualPreferenceController" settings:highlightableMenuKey="@string/menu_key_user_manual" />
+     <com.android.settings.widget.HomepagePreference android:icon="@drawable/sec_ic_settings_tips" android:title="@string/sec_tips_title" android:key="top_level_tips" android:summary="@string/summary_placeholder" android:order="340000" settings:controller="com.samsung.android.settings.homepage.TopLevelTipsPreferenceController" settings:highlightableMenuKey="@string/menu_key_tips">
+         <intent android:targetPackage="@string/config_sec_toplevel_tips_package" android:targetClass="@string/config_sec_toplevel_tips_class">
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -4474,7 +4474,7 @@
+                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
+             </intent-filter>
+         </receiver>
+-        <activity android:configChanges="screenLayout|smallestScreenSize" android:exported="true" android:label="@string/sec_software_update_title" android:name="com.android.settings.Settings$SoftwareUpdateSettingActivity" android:parentActivityName="com.android.settings.Settings" android:permission="com.sec.android.fotaclient.permission.FOTA">
++        <activity android:enabled="false" android:configChanges="screenLayout|smallestScreenSize" android:exported="true" android:label="@string/sec_software_update_title" android:name="com.android.settings.Settings$SoftwareUpdateSettingActivity" android:parentActivityName="com.android.settings.Settings" android:permission="com.sec.android.fotaclient.permission.FOTA">
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN"/>
+                 <action android:name="com.samsung.settings.SOFTWARE_UPDATE_SETTINGS"/>
+@@ -4483,7 +4483,7 @@
+             <meta-data android:name="com.android.settings.FRAGMENT_CLASS" android:value="com.samsung.android.settings.softwareupdate.SoftwareUpdateSettings"/>
+             <meta-data android:name="com.android.settings.HIGHLIGHT_MENU_KEY" android:value="@string/menu_key_software_update"/>
+         </activity>
+-        <activity android:exported="true" android:name="com.android.settings.Settings$SoftwareUpdateSettingLaunchActivity" android:taskAffinity="" android:theme="@android:style/Theme.NoDisplay">
++        <activity android:enabled="false" android:exported="true" android:name="com.android.settings.Settings$SoftwareUpdateSettingLaunchActivity" android:taskAffinity="" android:theme="@android:style/Theme.NoDisplay">
+             <intent-filter>
+                 <action android:name="com.samsung.settings.SOFTWARE_UPDATE_SETTINGS_FOR_ALL"/>
+                 <category android:name="android.intent.category.DEFAULT"/>
+diff --git a/smali_classes4/com/samsung/android/settings/homepage/TopLevelSoftwareUpdatePreferenceController.smali b/smali_classes4/com/samsung/android/settings/homepage/TopLevelSoftwareUpdatePreferenceController.smali
+--- a/smali_classes4/com/samsung/android/settings/homepage/TopLevelSoftwareUpdatePreferenceController.smali
++++ b/smali_classes4/com/samsung/android/settings/homepage/TopLevelSoftwareUpdatePreferenceController.smali
+@@ -15,53 +15,9 @@
+ 
+ # virtual methods
+ .method public getAvailabilityStatus()I
+-    .locals 2
+-
+-    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
+-
+-    const-string v1, "com.wssyncmldm"
+-
+-    invoke-static {v0, v1}, Lcom/android/settings/Utils;->isPackageEnabled(Landroid/content/Context;Ljava/lang/String;)Z
+-
+-    move-result v0
+-
+-    if-nez v0, :cond_0
++    .locals 0
+ 
+     const/4 p0, 0x3
+-
+-    return p0
+-
+-    :cond_0
+-    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
+-
+-    invoke-static {p0}, Lcom/android/settings/Utils;->isNewDexMode(Landroid/content/Context;)Z
+-
+-    move-result v0
+-
+-    if-eqz v0, :cond_1
+-
+-    goto :goto_0
+-
+-    :cond_1
+-    invoke-static {p0}, Lcom/samsung/android/settings/Rune;->isSamsungDexMode(Landroid/content/Context;)Z
+-
+-    move-result v0
+-
+-    if-eqz v0, :cond_2
+-
+-    invoke-static {p0}, Lcom/android/settings/Utils;->isDesktopStandaloneMode(Landroid/content/Context;)Z
+-
+-    move-result p0
+-
+-    if-nez p0, :cond_2
+-
+-    const/4 p0, 0x5
+-
+-    return p0
+-
+-    :cond_2
+-    :goto_0
+-    const/4 p0, 0x0
+ 
+     return p0
+ .end method

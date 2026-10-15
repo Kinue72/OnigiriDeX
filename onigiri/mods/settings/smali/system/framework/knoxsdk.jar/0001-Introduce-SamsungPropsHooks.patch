@@ -1,0 +1,48 @@
+From 2b12318a2ea3db7a91290b56f52820a3d94c18c9 Mon Sep 17 00:00:00 2001
+From: BlackMesa123 <giangrecosalvo9@gmail.com>
+Date: Tue, 16 Jan 2024 20:32:56 +0100
+Subject: [PATCH] Introduce SamsungPropsHooks
+
+---
+ .../knox/EnterpriseDeviceManager.smali        | 22 ++-----------------
+ 1 file changed, 2 insertions(+), 20 deletions(-)
+
+diff --git a/smali/com/samsung/android/knox/EnterpriseDeviceManager.smali b/smali/com/samsung/android/knox/EnterpriseDeviceManager.smali
+index a95b7af..b4a6310 100644
+--- a/smali/com/samsung/android/knox/EnterpriseDeviceManager.smali
++++ b/smali/com/samsung/android/knox/EnterpriseDeviceManager.smali
+@@ -599,29 +599,11 @@
+ .end method
+ 
+ .method public static greylist getAPILevel()I
+-    .locals 2
++    .locals 1
+ 
+-    :try_start_0
+-    invoke-static {}, Lcom/samsung/android/knox/EdmUtils;->getAPILevelForInternal()I
++    invoke-static {}, Lio/mesalabs/onigiri/SamsungPropsHooks;->onEDMGetAPILevelHook()I
+ 
+     move-result v0
+-    :try_end_0
+-    .catch Ljava/lang/UnsupportedOperationException; {:try_start_0 .. :try_end_0} :catch_0
+-
+-    return v0
+-
+-    :catch_0
+-    move-exception v0
+-
+-    sget-object v1, Lcom/samsung/android/knox/EnterpriseDeviceManager;->TAG:Ljava/lang/String;
+-
+-    invoke-virtual {v0}, Ljava/lang/UnsupportedOperationException;->getMessage()Ljava/lang/String;
+-
+-    move-result-object v0
+-
+-    invoke-static {v1, v0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    const/4 v0, 0x0
+ 
+     return v0
+ .end method
+-- 
+2.46.0
+

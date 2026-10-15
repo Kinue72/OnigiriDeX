@@ -1,0 +1,26 @@
+From: Onigiri
+Subject: [PATCH] Include Onigiri Settings in the donor search categories
+
+diff --git a/smali_classes2/com/samsung/android/settings/intelligence/search/categorizing/TopLevelKeysCollector.smali b/smali_classes2/com/samsung/android/settings/intelligence/search/categorizing/TopLevelKeysCollector.smali
+--- a/smali_classes2/com/samsung/android/settings/intelligence/search/categorizing/TopLevelKeysCollector.smali
++++ b/smali_classes2/com/samsung/android/settings/intelligence/search/categorizing/TopLevelKeysCollector.smali
+@@ -45,7 +45,7 @@
+ .end method
+ 
+ .method public constructor <init>(Landroid/content/Context;)V
+-    .locals 35
++    .locals 36
+ 
+     move-object/from16 v0, p0
+ 
+@@ -119,7 +119,9 @@
+ 
+     const-string v32, "top_level_tips_for_search"
+ 
+-    filled-new-array/range {v1 .. v34}, [Ljava/lang/String;
++    const-string v35, "top_level_onigiri"
++
++    filled-new-array/range {v1 .. v35}, [Ljava/lang/String;
+ 
+     move-result-object v1
+ 

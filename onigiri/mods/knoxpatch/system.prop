@@ -1,0 +1,5 @@
+# Remove ICCC prop
+ro.config.iccc_version=
+
+# Disable HDCP in WFD
+wlan.wfd.hdcp=disable

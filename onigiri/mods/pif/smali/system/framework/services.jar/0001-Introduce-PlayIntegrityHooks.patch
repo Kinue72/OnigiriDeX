@@ -1,0 +1,46 @@
+From: Salvo Giangreco <giangrecosalvo9@gmail.com>
+Subject: [PATCH] Introduce PlayIntegrityHooks on the Fold5 task manager
+
+diff --git a/smali_classes2/com/android/server/wm/ActivityTaskManagerService.smali b/smali_classes2/com/android/server/wm/ActivityTaskManagerService.smali
+--- a/smali_classes2/com/android/server/wm/ActivityTaskManagerService.smali
++++ b/smali_classes2/com/android/server/wm/ActivityTaskManagerService.smali
+@@ -6764,9 +6764,19 @@
+ .method public final getFocusedRootTaskInfo()Landroid/app/ActivityTaskManager$RootTaskInfo;
+     .locals 5
+ 
++    iget-object v0, p0, Lcom/android/server/wm/ActivityTaskManagerService;->mContext:Landroid/content/Context;
++
++    invoke-static {v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->shouldBypassTaskPermission(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-nez v0, :onigiri_task_permission
++
+     const-string v0, "getFocusedRootTaskInfo()"
+ 
+     invoke-static {v0}, Lcom/android/server/wm/ActivityTaskManagerService;->enforceTaskPermission(Ljava/lang/String;)V
++
++    :onigiri_task_permission
+ 
+     invoke-static {}, Landroid/os/Binder;->clearCallingIdentity()J
+ 
+@@ -12339,9 +12349,19 @@
+ .method public final registerTaskStackListener(Landroid/app/ITaskStackListener;)V
+     .locals 2
+ 
++    iget-object v0, p0, Lcom/android/server/wm/ActivityTaskManagerService;->mContext:Landroid/content/Context;
++
++    invoke-static {v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->shouldBypassTaskPermission(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-nez v0, :onigiri_task_permission
++
+     const-string/jumbo v0, "registerTaskStackListener()"
+ 
+     invoke-static {v0}, Lcom/android/server/wm/ActivityTaskManagerService;->enforceTaskPermission(Ljava/lang/String;)V
++
++    :onigiri_task_permission
+ 
+     iget-object p0, p0, Lcom/android/server/wm/ActivityTaskManagerService;->mTaskChangeNotificationController:Lcom/android/server/wm/TaskChangeNotificationController;
+ 

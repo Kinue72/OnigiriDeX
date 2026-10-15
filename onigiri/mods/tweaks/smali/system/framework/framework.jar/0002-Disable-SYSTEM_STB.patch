@@ -1,0 +1,130 @@
+From: Onigiri
+Subject: [PATCH] Disable synthetic touch boost scheduling and forced drawing
+
+diff --git a/smali_classes4/android/view/Choreographer$FrameDisplayEventReceiver.smali b/smali_classes4/android/view/Choreographer$FrameDisplayEventReceiver.smali
+--- a/smali_classes4/android/view/Choreographer$FrameDisplayEventReceiver.smali
++++ b/smali_classes4/android/view/Choreographer$FrameDisplayEventReceiver.smali
+@@ -71,55 +71,11 @@
+ .end method
+ 
+ .method private blacklist isSTBNeeded()Z
+-    .locals 7
+-
+-    iget-object v0, p0, Landroid/view/Choreographer$FrameDisplayEventReceiver;->this$0:Landroid/view/Choreographer;
+-
+-    invoke-static {v0}, Landroid/view/Choreographer;->-$$Nest$fgetmFlingSTBFlag(Landroid/view/Choreographer;)[Z
+-
+-    move-result-object v0
+-
+-    const/4 v1, 0x0
+-
+-    aget-boolean v0, v0, v1
+-
+-    const/4 v2, 0x1
+-
+-    if-nez v0, :cond_0
+-
+-    iget-object v0, p0, Landroid/view/Choreographer$FrameDisplayEventReceiver;->this$0:Landroid/view/Choreographer;
+-
+-    invoke-static {v0}, Landroid/view/Choreographer;->-$$Nest$fgetmFlingSTBFlag(Landroid/view/Choreographer;)[Z
+-
+-    move-result-object v0
+-
+-    aget-boolean v0, v0, v2
+-
+-    if-eqz v0, :cond_1
+-
+-    :cond_0
+-    invoke-static {}, Ljava/lang/System;->nanoTime()J
+-
+-    move-result-wide v3
+-
+-    iget-object v0, p0, Landroid/view/Choreographer$FrameDisplayEventReceiver;->this$0:Landroid/view/Choreographer;
+-
+-    invoke-static {v0}, Landroid/view/Choreographer;->-$$Nest$fgetmFlingStartTime(Landroid/view/Choreographer;)J
+-
+-    move-result-wide v5
+-
+-    sub-long/2addr v3, v5
+-
+-    const-wide v5, 0xb2d05e00L
+-
+-    cmp-long v0, v3, v5
+-
+-    if-gez v0, :cond_1
+-
+-    move v1, v2
+-
+-    :cond_1
+-    return v1
++    .locals 1
++
++    const/4 v0, 0x0
++
++    return v0
+ .end method
+ 
+ .method private blacklist scheduleSTB()V
+diff --git a/smali/android/graphics/HardwareRenderer.smali b/smali/android/graphics/HardwareRenderer.smali
+--- a/smali/android/graphics/HardwareRenderer.smali
++++ b/smali/android/graphics/HardwareRenderer.smali
+@@ -340,45 +340,8 @@
+ .end method
+ 
+ .method private blacklist forceDrawIfSTBFrame()V
+-    .locals 5
+-
+-    invoke-static {}, Landroid/os/Looper;->myLooper()Landroid/os/Looper;
+-
+-    move-result-object v0
+-
+-    if-eqz v0, :cond_0
+-
+-    invoke-static {}, Landroid/view/Choreographer;->getInstance()Landroid/view/Choreographer;
+-
+-    move-result-object v0
+-
+-    goto :goto_0
+-
+-    :cond_0
+-    const/4 v0, 0x0
+-
+-    :goto_0
+-    if-eqz v0, :cond_1
+-
+-    invoke-virtual {v0}, Landroid/view/Choreographer;->getFramesSinceSTB()J
+-
+-    move-result-wide v1
+-
+-    const-wide/16 v3, 0x0
+-
+-    cmp-long v3, v1, v3
+-
+-    if-lez v3, :cond_1
+-
+-    const-wide/16 v3, 0x2
+-
+-    cmp-long v3, v1, v3
+-
+-    if-gtz v3, :cond_1
+-
+-    invoke-virtual {p0}, Landroid/graphics/HardwareRenderer;->forceDrawNextFrame()V
+-
+-    :cond_1
++    .locals 0
++
+     return-void
+ .end method
+ 
+diff --git a/smali_classes6/com/samsung/android/rune/ViewRune.smali b/smali_classes6/com/samsung/android/rune/ViewRune.smali
+--- a/smali_classes6/com/samsung/android/rune/ViewRune.smali
++++ b/smali_classes6/com/samsung/android/rune/ViewRune.smali
+@@ -122,7 +122,7 @@
+ 
+ .field public static final blacklist SUPPORT_WRITING_TOOLKIT_ACTIVITY:Z
+ 
+-.field public static final blacklist SYSTEM_STB:Z = true
++.field public static final blacklist SYSTEM_STB:Z = false
+ 
+ .field private static final blacklist TAG:Ljava/lang/String; = "ViewRune"
+ 

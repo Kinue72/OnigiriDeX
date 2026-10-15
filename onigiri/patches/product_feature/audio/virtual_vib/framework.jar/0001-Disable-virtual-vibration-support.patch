@@ -1,0 +1,75 @@
+From 6f5422812562bdc5a0c46c3297b8dbee51a39acd Mon Sep 17 00:00:00 2001
+From: BlackMesa123 <giangrecosalvo9@gmail.com>
+Date: Sat, 8 Jun 2024 15:23:28 +0200
+Subject: [PATCH] Disable virtual vibration support
+
+---
+ .../os/VibrationAttributes$Builder.smali        | 17 +----------------
+ .../com/samsung/android/audio/Rune.smali        |  2 +-
+ .../com/samsung/android/vibrator/VibRune.smali  |  2 +-
+ 3 files changed, 3 insertions(+), 18 deletions(-)
+
+diff --git a/smali_classes3/android/os/VibrationAttributes$Builder.smali b/smali_classes3/android/os/VibrationAttributes$Builder.smali
+index 3c940f32..a7badfc4 100644
+--- a/smali_classes3/android/os/VibrationAttributes$Builder.smali
++++ b/smali_classes3/android/os/VibrationAttributes$Builder.smali
+@@ -56,7 +56,7 @@
+ .end method
+ 
+ .method public constructor whitelist <init>(Landroid/media/AudioAttributes;)V
+-    .locals 2
++    .locals 1
+ 
+     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+ 
+@@ -78,21 +78,6 @@
+ 
+     invoke-direct {p0, p1}, Landroid/os/VibrationAttributes$Builder;->setFlags(Landroid/media/AudioAttributes;)V
+ 
+-    invoke-virtual {p1}, Landroid/media/AudioAttributes;->getTags()Ljava/util/Set;
+-
+-    move-result-object v0
+-
+-    const-string v1, "VIRTUAL_VIB_SOUND"
+-
+-    invoke-interface {v0, v1}, Ljava/util/Set;->contains(Ljava/lang/Object;)Z
+-
+-    move-result v0
+-
+-    if-eqz v0, :cond_0
+-
+-    invoke-virtual {p0, v1}, Landroid/os/VibrationAttributes$Builder;->semAddTag(Ljava/lang/String;)Landroid/os/VibrationAttributes$Builder;
+-
+-    :cond_0
+     return-void
+ .end method
+ 
+diff --git a/smali_classes5/com/samsung/android/audio/Rune.smali b/smali_classes5/com/samsung/android/audio/Rune.smali
+index 7ac9ad91..26d7f091 100644
+--- a/smali_classes5/com/samsung/android/audio/Rune.smali
++++ b/smali_classes5/com/samsung/android/audio/Rune.smali
+@@ -276,7 +276,7 @@
+ 
+ .field public static final blacklist SEC_AUDIO_SUPPORT_SOUND_THEME:Z
+ 
+-.field public static final blacklist SEC_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND:Z = true
++.field public static final blacklist SEC_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND:Z = false
+ 
+ .field public static final blacklist SEC_AUDIO_SUPPORT_VOIP_ANTI_HOWLING:Z
+ 
+diff --git a/smali_classes6/com/samsung/android/vibrator/VibRune.smali b/smali_classes6/com/samsung/android/vibrator/VibRune.smali
+index 2db9c622..b83c4c79 100644
+--- a/smali_classes6/com/samsung/android/vibrator/VibRune.smali
++++ b/smali_classes6/com/samsung/android/vibrator/VibRune.smali
+@@ -60,7 +60,7 @@
+ 
+ .field public static final blacklist SUPPORT_VIBRATION_TAG:Z = true
+ 
+-.field public static final blacklist SUPPORT_VIRTUAL_VIBRATION_SOUND:Z = true
++.field public static final blacklist SUPPORT_VIRTUAL_VIBRATION_SOUND:Z = false
+ 
+ .field public static final blacklist TO_DO:Z = false
+ 
+-- 
+2.46.0
+

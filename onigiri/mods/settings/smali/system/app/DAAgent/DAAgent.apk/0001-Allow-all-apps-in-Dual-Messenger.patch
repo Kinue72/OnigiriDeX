@@ -1,0 +1,290 @@
+From: Onigiri
+Subject: [PATCH] Refresh all eligible launcher apps for Dual Messenger on Android 15
+
+diff --git a/smali/com/samsung/android/da/daagent/provider/WhiteListApps.smali b/smali/com/samsung/android/da/daagent/provider/WhiteListApps.smali
+--- a/smali/com/samsung/android/da/daagent/provider/WhiteListApps.smali
++++ b/smali/com/samsung/android/da/daagent/provider/WhiteListApps.smali
+@@ -6,7 +6,7 @@
+ # static fields
+ .field public static final CHINA_SALES_CODES:[Ljava/lang/String;
+ 
+-.field public static final DUAL_APP_WHITELIST_PACKAGES:[Ljava/lang/String;
++.field public static volatile DUAL_APP_WHITELIST_PACKAGES:[Ljava/lang/String;
+ 
+ .field public static final DUAL_APP_WHITELIST_PACKAGES_FOR_CHINA:[Ljava/lang/String;
+ 
+@@ -193,3 +193,142 @@
+ 
+     return-object v0
+ .end method
++
++.method public static synchronized refreshWhiteList(Landroid/content/Context;)Z
++    .locals 8
++
++    new-instance v0, Ljava/util/ArrayList;
++
++    invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
++
++    new-instance v1, Landroid/content/Intent;
++
++    const-string v2, "android.intent.action.MAIN"
++
++    const/4 v3, 0x0
++
++    invoke-direct {v1, v2, v3}, Landroid/content/Intent;-><init>(Ljava/lang/String;Landroid/net/Uri;)V
++
++    const-string v2, "android.intent.category.LAUNCHER"
++
++    invoke-virtual {v1, v2}, Landroid/content/Intent;->addCategory(Ljava/lang/String;)Landroid/content/Intent;
++
++    invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
++
++    move-result-object v2
++
++    const/16 v3, 0x80
++
++    invoke-virtual {v2, v1, v3}, Landroid/content/pm/PackageManager;->queryIntentActivities(Landroid/content/Intent;I)Ljava/util/List;
++
++    move-result-object v1
++
++    const/4 v5, 0x0
++
++    new-instance v3, Landroid/content/pm/ResolveInfo$DisplayNameComparator;
++
++    invoke-direct {v3, v2}, Landroid/content/pm/ResolveInfo$DisplayNameComparator;-><init>(Landroid/content/pm/PackageManager;)V
++
++    invoke-interface {v1, v3}, Ljava/util/List;->sort(Ljava/util/Comparator;)V
++
++    invoke-interface {v1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
++
++    move-result-object v1
++
++    :cond_1
++
++    :goto_0
++
++    invoke-interface {v1}, Ljava/util/Iterator;->hasNext()Z
++
++    move-result v2
++
++    const/4 v3, 0x1
++
++    if-eqz v2, :cond_4
++
++    invoke-interface {v1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++
++    move-result-object v2
++
++    check-cast v2, Landroid/content/pm/ResolveInfo;
++
++    iget-object v2, v2, Landroid/content/pm/ResolveInfo;->activityInfo:Landroid/content/pm/ActivityInfo;
++
++    iget-object v2, v2, Landroid/content/pm/ActivityInfo;->applicationInfo:Landroid/content/pm/ApplicationInfo;
++
++    iget v4, v2, Landroid/content/pm/ApplicationInfo;->flags:I
++
++    and-int/lit16 v4, v4, 0x81
++
++    if-nez v4, :cond_2
++
++    move v4, v3
++
++    goto :goto_1
++
++    :cond_2
++
++    move v4, v5
++
++    :goto_1
++
++    iget-object v6, v2, Landroid/content/pm/ApplicationInfo;->metaData:Landroid/os/Bundle;
++
++    if-eqz v6, :cond_3
++
++    const-string v7, "com.samsung.android.multiuser.install_only_owner"
++
++    invoke-virtual {v6, v7, v5}, Landroid/os/Bundle;->getBoolean(Ljava/lang/String;Z)Z
++
++    move-result v6
++
++    if-eqz v6, :cond_3
++
++    goto :goto_2
++
++    :cond_3
++
++    move v3, v5
++
++    :goto_2
++
++    if-eqz v4, :cond_1
++
++    if-nez v3, :cond_1
++
++    iget-object v2, v2, Landroid/content/pm/ApplicationInfo;->packageName:Ljava/lang/String;
++
++    invoke-interface {v0, v2}, Ljava/util/List;->contains(Ljava/lang/Object;)Z
++
++    move-result v4
++
++    if-nez v4, :cond_1
++
++    invoke-interface {v0, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++
++    goto :goto_0
++
++    :cond_4
++
++    new-array v1, v5, [Ljava/lang/String;
++
++    invoke-interface {v0, v1}, Ljava/util/List;->toArray([Ljava/lang/Object;)[Ljava/lang/Object;
++
++    move-result-object v0
++
++    check-cast v0, [Ljava/lang/String;
++
++    sget-object v1, Lcom/samsung/android/da/daagent/provider/WhiteListApps;->DUAL_APP_WHITELIST_PACKAGES:[Ljava/lang/String;
++
++    invoke-static {v0, v1}, Ljava/util/Arrays;->equals([Ljava/lang/Object;[Ljava/lang/Object;)Z
++
++    move-result v1
++
++    xor-int/lit8 v3, v1, 0x1
++
++    sput-object v0, Lcom/samsung/android/da/daagent/provider/WhiteListApps;->DUAL_APP_WHITELIST_PACKAGES:[Ljava/lang/String;
++
++    return v3
++
++.end method
+diff --git a/smali/com/samsung/android/da/daagent/activity/DualAppActivity.smali b/smali/com/samsung/android/da/daagent/activity/DualAppActivity.smali
+--- a/smali/com/samsung/android/da/daagent/activity/DualAppActivity.smali
++++ b/smali/com/samsung/android/da/daagent/activity/DualAppActivity.smali
+@@ -1508,6 +1508,8 @@
+ 
+     invoke-super {p0}, Landroidx/appcompat/app/AppCompatActivity;->onResume()V
+ 
++    invoke-static {p0}, Lcom/samsung/android/da/daagent/utils/DAUtility;->updateWhitelistAppsInSystemServer(Landroid/content/Context;)V
++
+     invoke-virtual {p0}, Landroidx/appcompat/app/AppCompatActivity;->getResources()Landroid/content/res/Resources;
+ 
+     move-result-object v0
+diff --git a/smali/com/samsung/android/da/daagent/DualAppApplication.smali b/smali/com/samsung/android/da/daagent/DualAppApplication.smali
+--- a/smali/com/samsung/android/da/daagent/DualAppApplication.smali
++++ b/smali/com/samsung/android/da/daagent/DualAppApplication.smali
+@@ -24,6 +24,8 @@
+     invoke-super {p0}, Landroid/app/Application;->onCreate()V
+ 
+     sput-object p0, Lcom/samsung/android/da/daagent/DualAppApplication;->dualAppContext:Lcom/samsung/android/da/daagent/DualAppApplication;
++
++    invoke-static {p0}, Lcom/samsung/android/da/daagent/utils/DAUtility;->updateWhitelistAppsInSystemServer(Landroid/content/Context;)V
+ 
+     sput-object p0, Lcom/samsung/android/da/daagent/utils/SaWrapper;->mContext:Landroid/content/Context;
+ 
+diff --git a/smali/com/samsung/android/da/daagent/utils/DAUtility.smali b/smali/com/samsung/android/da/daagent/utils/DAUtility.smali
+--- a/smali/com/samsung/android/da/daagent/utils/DAUtility.smali
++++ b/smali/com/samsung/android/da/daagent/utils/DAUtility.smali
+@@ -1905,6 +1905,8 @@
+ .method public static updateWhitelistAppsInSystemServer(Landroid/content/Context;)V
+     .locals 10
+ 
++    invoke-static {p0}, Lcom/samsung/android/da/daagent/provider/WhiteListApps;->refreshWhiteList(Landroid/content/Context;)Z
++
+     new-instance v0, Landroid/os/Bundle;
+ 
+     invoke-direct {v0}, Landroid/os/Bundle;-><init>()V
+@@ -1915,40 +1917,8 @@
+ 
+     sget-object v2, Lcom/samsung/android/da/daagent/provider/WhiteListApps;->DUAL_APP_WHITELIST_PACKAGES:[Ljava/lang/String;
+ 
+-    sget-object v3, Lcom/samsung/android/da/daagent/utils/DAUtility;->mSalesCode:Ljava/lang/String;
+-
+     const/4 v4, 0x0
+ 
+-    if-eqz v3, :cond_1
+-
+-    sget-object v5, Lcom/samsung/android/da/daagent/provider/WhiteListApps;->CHINA_SALES_CODES:[Ljava/lang/String;
+-
+-    array-length v6, v5
+-
+-    move v7, v4
+-
+-    :goto_0
+-    if-ge v7, v6, :cond_1
+-
+-    aget-object v8, v5, v7
+-
+-    invoke-virtual {v8, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+-
+-    move-result v8
+-
+-    if-eqz v8, :cond_0
+-
+-    sget-object v2, Lcom/samsung/android/da/daagent/provider/WhiteListApps;->DUAL_APP_WHITELIST_PACKAGES_FOR_CHINA:[Ljava/lang/String;
+-
+-    goto :goto_1
+-
+-    :cond_0
+-    add-int/lit8 v7, v7, 0x1
+-
+-    goto :goto_0
+-
+-    :cond_1
+-    :goto_1
+     array-length v3, v2
+ 
+     move v5, v4
+diff --git a/smali/com/samsung/android/da/daagent/provider/DualAppProvider.smali b/smali/com/samsung/android/da/daagent/provider/DualAppProvider.smali
+--- a/smali/com/samsung/android/da/daagent/provider/DualAppProvider.smali
++++ b/smali/com/samsung/android/da/daagent/provider/DualAppProvider.smali
+@@ -512,44 +512,18 @@
+ 
+     if-ne p2, p3, :cond_f
+ 
++    invoke-virtual {p0}, Landroid/content/ContentProvider;->getContext()Landroid/content/Context;
++
++    move-result-object p3
++
++    invoke-static {p3}, Lcom/samsung/android/da/daagent/provider/WhiteListApps;->refreshWhiteList(Landroid/content/Context;)Z
++
+     new-instance p0, Landroid/database/MatrixCursor;
+ 
+-    invoke-direct {p0, p1, p4}, Landroid/database/MatrixCursor;-><init>([Ljava/lang/String;I)V
++    invoke-direct {p0, p1}, Landroid/database/MatrixCursor;-><init>([Ljava/lang/String;)V
+ 
+     sget-object p1, Lcom/samsung/android/da/daagent/provider/WhiteListApps;->DUAL_APP_WHITELIST_PACKAGES:[Ljava/lang/String;
+ 
+-    sget-object p2, Lcom/samsung/android/da/daagent/utils/DAUtility;->mSalesCode:Ljava/lang/String;
+-
+-    if-eqz p2, :cond_d
+-
+-    sget-object p3, Lcom/samsung/android/da/daagent/provider/WhiteListApps;->CHINA_SALES_CODES:[Ljava/lang/String;
+-
+-    array-length p4, p3
+-
+-    move v0, p5
+-
+-    :goto_8
+-    if-ge v0, p4, :cond_d
+-
+-    aget-object v1, p3, v0
+-
+-    invoke-virtual {v1, p2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+-
+-    move-result v1
+-
+-    if-eqz v1, :cond_c
+-
+-    sget-object p1, Lcom/samsung/android/da/daagent/provider/WhiteListApps;->DUAL_APP_WHITELIST_PACKAGES_FOR_CHINA:[Ljava/lang/String;
+-
+-    goto :goto_9
+-
+-    :cond_c
+-    add-int/lit8 v0, v0, 0x1
+-
+-    goto :goto_8
+-
+-    :cond_d
+-    :goto_9
+     array-length p2, p1
+ 
+     :goto_a

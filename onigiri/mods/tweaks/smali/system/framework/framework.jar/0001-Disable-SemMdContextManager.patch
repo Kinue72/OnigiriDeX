@@ -1,0 +1,23 @@
+From: Onigiri
+Subject: [PATCH] Remove the Mocca service registration while preserving neighboring services
+
+diff --git a/smali/android/app/SystemServiceRegistry.smali b/smali/android/app/SystemServiceRegistry.smali
+--- a/smali/android/app/SystemServiceRegistry.smali
++++ b/smali/android/app/SystemServiceRegistry.smali
+@@ -2003,16 +2003,6 @@
+     invoke-static {v8, v6, v7}, Landroid/app/SystemServiceRegistry;->registerService(Ljava/lang/String;Ljava/lang/Class;Landroid/app/SystemServiceRegistry$ServiceFetcher;)V
+ 
+     :cond_a
+-    const-class v6, Lcom/samsung/android/mocca/SemMdContextManager;
+-
+-    new-instance v7, Landroid/app/SystemServiceRegistry$173;
+-
+-    invoke-direct {v7}, Landroid/app/SystemServiceRegistry$173;-><init>()V
+-
+-    const-string/jumbo v8, "mocca"
+-
+-    invoke-static {v8, v6, v7}, Landroid/app/SystemServiceRegistry;->registerService(Ljava/lang/String;Ljava/lang/Class;Landroid/app/SystemServiceRegistry$ServiceFetcher;)V
+-
+     const-class v6, Lcom/samsung/android/hardware/secinputdev/SemInputDeviceManager;
+ 
+     new-instance v7, Landroid/app/SystemServiceRegistry$174;

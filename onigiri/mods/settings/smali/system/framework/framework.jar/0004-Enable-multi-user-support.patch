@@ -1,0 +1,50 @@
+From: Salvo Giangreco <giangrecosalvo9@gmail.com>
+Subject: [PATCH] Enable multi user support
+
+diff --git a/smali_classes6/com/samsung/android/core/pm/multiuser/MultiUserSupportsHelper.smali b/smali_classes6/com/samsung/android/core/pm/multiuser/MultiUserSupportsHelper.smali
+--- a/smali_classes6/com/samsung/android/core/pm/multiuser/MultiUserSupportsHelper.smali
++++ b/smali_classes6/com/samsung/android/core/pm/multiuser/MultiUserSupportsHelper.smali
+@@ -15,39 +15,13 @@
+ .method static constructor blacklist <clinit>()V
+     .locals 2
+ 
+-    nop
+-
+-    const-string v0, "ro.build.characteristics"
+-
+-    const-string v1, ""
+-
+-    invoke-static {v0, v1}, Landroid/os/SystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+-
+-    move-result-object v0
+-
+-    const-string v1, "tablet"
+-
+-    invoke-virtual {v0, v1}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
+-
+-    move-result v0
++    const/4 v0, 0x1
+ 
+     sput-boolean v0, Lcom/samsung/android/core/pm/multiuser/MultiUserSupportsHelper;->IS_TABLET:Z
+ 
+-    sget-boolean v0, Lcom/samsung/android/core/pm/multiuser/MultiUserSupportsHelper;->IS_TABLET:Z
+-
+-    if-eqz v0, :cond_0
+-
+-    const/16 v0, 0x8
+-
+-    goto :goto_0
+-
+-    :cond_0
+-    const/4 v0, 0x1
+-
+-    :goto_0
+-    sput v0, Lcom/samsung/android/core/pm/multiuser/MultiUserSupportsHelper;->DEFAULT_MAX_USERS:I
+-
+-    sget-boolean v0, Lcom/samsung/android/core/pm/multiuser/MultiUserSupportsHelper;->IS_TABLET:Z
++    const/16 v1, 0x8
++
++    sput v1, Lcom/samsung/android/core/pm/multiuser/MultiUserSupportsHelper;->DEFAULT_MAX_USERS:I
+ 
+     sput-boolean v0, Lcom/samsung/android/core/pm/multiuser/MultiUserSupportsHelper;->DEFAULT_ENABLE_STATUS:Z
+ 

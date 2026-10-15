@@ -1,0 +1,49 @@
+From: Onigiri
+Subject: [PATCH] Apply the project package blocklist during installation and boot scanning
+
+diff --git a/smali_classes2/com/android/server/pm/InstallPackageHelper.smali b/smali_classes2/com/android/server/pm/InstallPackageHelper.smali
+--- a/smali_classes2/com/android/server/pm/InstallPackageHelper.smali
++++ b/smali_classes2/com/android/server/pm/InstallPackageHelper.smali
+@@ -14230,11 +14230,7 @@
+     const/4 v7, 0x0
+ 
+     :try_start_14
+-    sget-object v1, Lcom/samsung/android/server/pm/install/PackageBlockListPolicy;->sIsRduDevice:Ljava/util/concurrent/atomic/AtomicBoolean;
+-
+-    invoke-virtual {v1}, Ljava/util/concurrent/atomic/AtomicBoolean;->get()Z
+-
+-    move-result v1
++    const/4 v1, 0x1
+     :try_end_14
+     .catch Lcom/android/server/pm/PackageManagerException; {:try_start_14 .. :try_end_14} :catch_1
+     .catchall {:try_start_14 .. :try_end_14} :catchall_2
+@@ -14246,7 +14242,7 @@
+ 
+     if-nez v1, :cond_10
+ 
+-    const-string v1, "/system/etc/ldu_blocklist.xml"
++    const-string v1, "/system/etc/onigiri_blocklist.xml"
+ 
+     invoke-static {v1}, Lcom/samsung/android/server/pm/install/PmConfigParser;->parsePackages(Ljava/lang/String;)Ljava/util/List;
+ 
+diff --git a/smali_classes2/com/android/server/pm/ScanPackageUtils.smali b/smali_classes2/com/android/server/pm/ScanPackageUtils.smali
+--- a/smali_classes2/com/android/server/pm/ScanPackageUtils.smali
++++ b/smali_classes2/com/android/server/pm/ScanPackageUtils.smali
+@@ -980,7 +980,7 @@
+ 
+     iget-object v8, v2, Lcom/android/server/pm/ScanRequest;->mUser:Landroid/os/UserHandle;
+ 
+-    sget-boolean v0, Lcom/samsung/android/rune/PMRune;->PM_LDU:Z
++    const/4 v0, 0x1
+ 
+     const-string v13, "PackageManager"
+ 
+@@ -994,7 +994,7 @@
+ 
+     if-nez v9, :cond_0
+ 
+-    const-string v9, "/system/etc/ldu_blocklist.xml"
++    const-string v9, "/system/etc/onigiri_blocklist.xml"
+ 
+     invoke-static {v9}, Lcom/samsung/android/server/pm/install/PmConfigParser;->parsePackages(Ljava/lang/String;)Ljava/util/List;
+ 

@@ -1,0 +1,15 @@
+From: Salvo Giangreco <giangrecosalvo9@gmail.com>
+Subject: [PATCH] Always show One UI minor version
+
+diff --git a/smali_classes4/com/samsung/android/settings/deviceinfo/softwareinfo/OneUIVersionPreferenceController.smali b/smali_classes4/com/samsung/android/settings/deviceinfo/softwareinfo/OneUIVersionPreferenceController.smali
+--- a/smali_classes4/com/samsung/android/settings/deviceinfo/softwareinfo/OneUIVersionPreferenceController.smali
++++ b/smali_classes4/com/samsung/android/settings/deviceinfo/softwareinfo/OneUIVersionPreferenceController.smali
+@@ -283,8 +283,6 @@
+ .method public isDeviceWithMicroVersion()Z
+     .locals 0
+ 
+-    invoke-static {}, Lcom/android/settings/Utils;->isTablet()Z
+-
+     const/4 p0, 0x1
+ 
+     return p0

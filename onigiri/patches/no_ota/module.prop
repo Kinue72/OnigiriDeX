@@ -1,0 +1,4 @@
+id=no_ota
+name=ROM OTA disabled
+author=Onigiri
+description=Removes ROM update applications and their Settings entry points.

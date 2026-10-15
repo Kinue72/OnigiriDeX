@@ -1,0 +1,21 @@
+From: Onigiri
+Subject: [PATCH] Expose the existing outdoor brightness controller
+
+diff --git a/smali_classes4/com/samsung/android/settings/display/controller/SecOutDoorModePreferenceController.smali b/smali_classes4/com/samsung/android/settings/display/controller/SecOutDoorModePreferenceController.smali
+--- a/smali_classes4/com/samsung/android/settings/display/controller/SecOutDoorModePreferenceController.smali
++++ b/smali_classes4/com/samsung/android/settings/display/controller/SecOutDoorModePreferenceController.smali
+@@ -61,13 +61,7 @@
+ .method public final isAvailable()Z
+     .locals 0
+ 
+-    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
+-
+-    invoke-static {p0}, Lcom/samsung/android/settings/Rune;->supportAutoBrightness(Landroid/content/Context;)Z
+-
+-    move-result p0
+-
+-    xor-int/lit8 p0, p0, 0x1
++    const/4 p0, 0x1
+ 
+     return p0
+ .end method

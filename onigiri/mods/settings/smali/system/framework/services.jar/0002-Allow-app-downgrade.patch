@@ -1,0 +1,49 @@
+From: Salvo Giangreco <giangrecosalvo9@gmail.com>
+Subject: [PATCH] Allow selected app downgrades in the shared package policy
+
+diff --git a/smali_classes2/com/android/server/pm/PackageManagerServiceUtils.smali b/smali_classes2/com/android/server/pm/PackageManagerServiceUtils.smali
+--- a/smali_classes2/com/android/server/pm/PackageManagerServiceUtils.smali
++++ b/smali_classes2/com/android/server/pm/PackageManagerServiceUtils.smali
+@@ -2345,6 +2345,42 @@
+ .method public static isDowngradePermitted(IZ)Z
+     .locals 3
+ 
++    :try_start_onigiri_downgrade
++    invoke-static {}, Landroid/app/ActivityThread;->currentActivityThread()Landroid/app/ActivityThread;
++
++    move-result-object v0
++
++    if-eqz v0, :onigiri_downgrade_policy
++
++    invoke-virtual {v0}, Landroid/app/ActivityThread;->getSystemContext()Landroid/app/ContextImpl;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v1, "onigiri_allow_downgrade"
++
++    const/4 v2, 0x0
++
++    invoke-static {v0, v1, v2}, Landroid/provider/Settings$System;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
++
++    move-result v0
++    :try_end_onigiri_downgrade
++    .catch Ljava/lang/RuntimeException; {:try_start_onigiri_downgrade .. :try_end_onigiri_downgrade} :catch_onigiri_downgrade
++
++    if-eqz v0, :onigiri_downgrade_policy
++
++    const/4 v0, 0x1
++
++    return v0
++
++    :catch_onigiri_downgrade
++    move-exception v0
++
++    :onigiri_downgrade_policy
++
+     and-int/lit16 v0, p0, 0x80
+ 
+     const/4 v1, 0x0

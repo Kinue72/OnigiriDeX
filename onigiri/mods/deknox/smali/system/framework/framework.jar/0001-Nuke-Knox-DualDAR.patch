@@ -1,0 +1,389 @@
+From: Onigiri
+Subject: [PATCH] Disable DualDAR activation while preserving ordinary credential and enterprise services
+
+diff --git a/smali_classes6/com/samsung/android/knox/SemPersonaManager.smali b/smali_classes6/com/samsung/android/knox/SemPersonaManager.smali
+--- a/smali_classes6/com/samsung/android/knox/SemPersonaManager.smali
++++ b/smali_classes6/com/samsung/android/knox/SemPersonaManager.smali
+@@ -3381,105 +3381,49 @@
+ .end method
+ 
+ .method public static whitelist isDarDualEncrypted(I)Z
+-    .locals 4
+-
+-    invoke-static {p0}, Lcom/samsung/android/knox/SemPersonaManager;->isDarDualEncryptionEnabled(I)Z
++    .locals 1
++
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
++.method public static whitelist isDarDualEncryptionEnabled(I)Z
++    .locals 1
++
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
++.method public static greylist isDeviceOrProfileOwnerEnabled()Z
++    .locals 3
++
++    const-string v0, "persist.sys.knox.device_owner"
++
++    const/4 v1, 0x0
++
++    invoke-static {v0, v1}, Landroid/os/SystemProperties;->getBoolean(Ljava/lang/String;Z)Z
+ 
+     move-result v0
+ 
+-    const/4 v1, 0x0
+-
+-    if-nez v0, :cond_0
+-
+-    return v1
+-
+-    :cond_0
+-    invoke-static {p0}, Landroid/os/storage/StorageManager;->isCeStorageUnlocked(I)Z
+-
+-    move-result v0
+-
+-    const/4 v2, 0x1
+-
+-    if-nez v0, :cond_1
+-
+-    return v2
+-
+-    :cond_1
+-    invoke-static {p0}, Lcom/samsung/android/knox/dar/ddar/fsm/StateMachine;->getCurrentState(I)Lcom/samsung/android/knox/dar/ddar/fsm/State;
+-
+-    move-result-object v0
+-
+-    sget-object v3, Lcom/samsung/android/knox/dar/ddar/fsm/State;->DEVICE_LOCK_DATA_LOCK:Lcom/samsung/android/knox/dar/ddar/fsm/State;
+-
+-    if-eq v0, v3, :cond_2
+-
+-    sget-object v3, Lcom/samsung/android/knox/dar/ddar/fsm/State;->DEVICE_UNLOCK_DATA_LOCK:Lcom/samsung/android/knox/dar/ddar/fsm/State;
+-
+-    if-ne v0, v3, :cond_3
+-
+-    :cond_2
+-    move v1, v2
+-
+-    :cond_3
+-    return v1
+-.end method
+-
+-.method public static whitelist isDarDualEncryptionEnabled(I)Z
+-    .locals 4
+-
+-    invoke-static {p0}, Lcom/samsung/android/knox/SemPersonaManager;->getUserInfo(I)Landroid/content/pm/UserInfo;
+-
+-    move-result-object v0
+-
+-    const/4 v1, 0x0
++    const/16 v2, 0x20
++
++    invoke-static {v2}, Lcom/samsung/android/knox/SemPersonaManager;->checkContainerType(I)Z
++
++    move-result v2
++
++    if-nez v2, :cond_0
+ 
+     if-eqz v0, :cond_1
+ 
+-    iget v2, v0, Landroid/content/pm/UserInfo;->flags:I
+-
+-    const/high16 v3, 0x6000000
+-
+-    and-int/2addr v2, v3
+-
+-    if-lez v2, :cond_0
+-
++    :cond_0
+     const/4 v1, 0x1
+-
+-    :cond_0
+-    return v1
+ 
+     :cond_1
+     return v1
+ .end method
+ 
+-.method public static greylist isDeviceOrProfileOwnerEnabled()Z
+-    .locals 3
+-
+-    const-string v0, "persist.sys.knox.device_owner"
+-
+-    const/4 v1, 0x0
+-
+-    invoke-static {v0, v1}, Landroid/os/SystemProperties;->getBoolean(Ljava/lang/String;Z)Z
+-
+-    move-result v0
+-
+-    const/16 v2, 0x20
+-
+-    invoke-static {v2}, Lcom/samsung/android/knox/SemPersonaManager;->checkContainerType(I)Z
+-
+-    move-result v2
+-
+-    if-nez v2, :cond_0
+-
+-    if-eqz v0, :cond_1
+-
+-    :cond_0
+-    const/4 v1, 0x1
+-
+-    :cond_1
+-    return v1
+-.end method
+-
+ .method public static greylist isDoEnabled(I)Z
+     .locals 2
+ 
+@@ -3510,59 +3454,19 @@
+ .end method
+ 
+ .method public static greylist isDualDARCustomCrypto(I)Z
+-    .locals 4
+-
+-    invoke-static {p0}, Lcom/samsung/android/knox/SemPersonaManager;->getUserInfo(I)Landroid/content/pm/UserInfo;
+-
+-    move-result-object v0
+-
+-    const/4 v1, 0x0
+-
+-    if-eqz v0, :cond_1
+-
+-    iget v2, v0, Landroid/content/pm/UserInfo;->flags:I
+-
+-    const/high16 v3, 0x4000000
+-
+-    and-int/2addr v2, v3
+-
+-    if-ne v2, v3, :cond_0
+-
+-    const/4 v1, 0x1
+-
+-    :cond_0
+-    return v1
+-
+-    :cond_1
+-    return v1
++    .locals 1
++
++    const/4 v0, 0x0
++
++    return v0
+ .end method
+ 
+ .method public static greylist isDualDARNativeCrypto(I)Z
+-    .locals 4
+-
+-    invoke-static {p0}, Lcom/samsung/android/knox/SemPersonaManager;->getUserInfo(I)Landroid/content/pm/UserInfo;
+-
+-    move-result-object v0
+-
+-    const/4 v1, 0x0
+-
+-    if-eqz v0, :cond_1
+-
+-    iget v2, v0, Landroid/content/pm/UserInfo;->flags:I
+-
+-    const/high16 v3, 0x2000000
+-
+-    and-int/2addr v2, v3
+-
+-    if-ne v2, v3, :cond_0
+-
+-    const/4 v1, 0x1
+-
+-    :cond_0
+-    return v1
+-
+-    :cond_1
+-    return v1
++    .locals 1
++
++    const/4 v0, 0x0
++
++    return v0
+ .end method
+ 
+ .method public static greylist isExternalStorageEnabled(I)Z
+diff --git a/smali_classes6/com/samsung/android/knox/dar/ddar/DualDarManager.smali b/smali_classes6/com/samsung/android/knox/dar/ddar/DualDarManager.smali
+--- a/smali_classes6/com/samsung/android/knox/dar/ddar/DualDarManager.smali
++++ b/smali_classes6/com/samsung/android/knox/dar/ddar/DualDarManager.smali
+@@ -161,44 +161,15 @@
+ .method public static blacklist isOnDeviceOwner(I)Z
+     .locals 1
+ 
+-    if-nez p0, :cond_0
+-
+-    invoke-static {}, Lcom/samsung/android/knox/dar/ddar/DualDarManager;->isOnDeviceOwnerEnabled()Z
+-
+-    move-result v0
+-
+-    if-eqz v0, :cond_0
+-
+-    const/4 v0, 0x1
+-
+-    goto :goto_0
+-
+-    :cond_0
+     const/4 v0, 0x0
+ 
+-    :goto_0
+     return v0
+ .end method
+ 
+ .method public static blacklist isOnDeviceOwnerEnabled()Z
+-    .locals 3
++    .locals 1
+ 
+     const/4 v0, 0x0
+-
+-    const-string v1, "persist.sys.dualdar.do"
+-
+-    const/4 v2, 0x0
+-
+-    invoke-static {v1, v2}, Landroid/os/SystemProperties;->getInt(Ljava/lang/String;I)I
+-
+-    move-result v1
+-
+-    if-eqz v1, :cond_0
+-
+-    const/4 v2, 0x1
+-
+-    :cond_0
+-    move v0, v2
+ 
+     return v0
+ .end method
+@@ -348,63 +319,6 @@
+     return v3
+ 
+     :cond_0
+-    invoke-static {}, Lcom/samsung/android/knox/dar/ddar/DualDarManager;->isOnDeviceOwnerEnabled()Z
+-
+-    move-result v1
+-
+-    if-eqz v1, :cond_1
+-
+-    const-string v1, "enableOnDeviceOwner - Already enabled"
+-
+-    invoke-static {v2, v1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    return v3
+-
+-    :cond_1
+-    const-string v1, "ON_DEVICE_OWNER_PROVISIONING"
+-
+-    invoke-direct {p0, v1, p1}, Lcom/samsung/android/knox/dar/ddar/DualDarManager;->processCommand(Ljava/lang/String;Landroid/os/Bundle;)Landroid/os/Bundle;
+-
+-    move-result-object v1
+-
+-    if-eqz v1, :cond_2
+-
+-    const-string v4, "dual_dar_response"
+-
+-    invoke-virtual {v1, v4, v3}, Landroid/os/Bundle;->getBoolean(Ljava/lang/String;Z)Z
+-
+-    move-result v4
+-
+-    if-eqz v4, :cond_2
+-
+-    const/4 v3, 0x1
+-
+-    goto :goto_0
+-
+-    :cond_2
+-    nop
+-
+-    :goto_0
+-    new-instance v4, Ljava/lang/StringBuilder;
+-
+-    invoke-direct {v4}, Ljava/lang/StringBuilder;-><init>()V
+-
+-    const-string v5, "enableOnDeviceOwner - result : "
+-
+-    invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    move-result-object v4
+-
+-    invoke-virtual {v4, v3}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
+-
+-    move-result-object v4
+-
+-    invoke-virtual {v4}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    move-result-object v4
+-
+-    invoke-static {v2, v4}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+     return v3
+ .end method
+ 
+diff --git a/smali/android/content/pm/UserInfo.smali b/smali/android/content/pm/UserInfo.smali
+--- a/smali/android/content/pm/UserInfo.smali
++++ b/smali/android/content/pm/UserInfo.smali
+@@ -1211,48 +1211,22 @@
+ .end method
+ 
+ .method public blacklist isSuperLocked()Z
+-    .locals 3
+-
+-    iget v0, p0, Landroid/content/pm/UserInfo;->flags:I
+-
+-    const/high16 v1, 0x6000000
+-
+-    and-int/2addr v0, v1
+-
+-    const/4 v1, 0x1
+-
+-    const/4 v2, 0x0
+-
+-    if-lez v0, :cond_1
++    .locals 1
+ 
+     iget v0, p0, Landroid/content/pm/UserInfo;->attributes:I
+ 
+-    and-int/lit8 v0, v0, 0x1c
+-
+-    if-lez v0, :cond_0
+-
+-    goto :goto_0
+-
+-    :cond_0
+-    move v1, v2
+-
+-    :goto_0
+-    return v1
+-
+-    :cond_1
+-    iget v0, p0, Landroid/content/pm/UserInfo;->attributes:I
+-
+     and-int/lit8 v0, v0, 0xc
+ 
+-    if-lez v0, :cond_2
+-
+-    goto :goto_1
+-
+-    :cond_2
+-    move v1, v2
+-
+-    :goto_1
+-    return v1
++    if-eqz v0, :onigiri_unlocked
++
++    const/4 v0, 0x1
++
++    return v0
++
++    :onigiri_unlocked
++    const/4 v0, 0x0
++
++    return v0
+ .end method
+ 
+ .method public blacklist isUserTypeAppSeparation()Z

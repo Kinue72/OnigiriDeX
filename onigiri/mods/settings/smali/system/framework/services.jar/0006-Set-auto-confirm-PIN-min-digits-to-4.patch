@@ -1,0 +1,27 @@
+From: Onigiri
+Subject: [PATCH] Allow four digit PIN auto confirmation during creation and refresh
+
+diff --git a/smali/com/android/server/locksettings/SyntheticPasswordManager.smali b/smali/com/android/server/locksettings/SyntheticPasswordManager.smali
+--- a/smali/com/android/server/locksettings/SyntheticPasswordManager.smali
++++ b/smali/com/android/server/locksettings/SyntheticPasswordManager.smali
+@@ -689,7 +689,7 @@
+ 
+     if-eqz v9, :cond_0
+ 
+-    const/4 v9, 0x6
++    const/4 v9, 0x4
+ 
+     if-ge v5, v9, :cond_1
+ 
+diff --git a/smali/com/android/server/locksettings/LockSettingsService.smali b/smali/com/android/server/locksettings/LockSettingsService.smali
+--- a/smali/com/android/server/locksettings/LockSettingsService.smali
++++ b/smali/com/android/server/locksettings/LockSettingsService.smali
+@@ -13073,7 +13073,7 @@
+ 
+     if-eqz v1, :cond_2
+ 
+-    const/4 v1, 0x6
++    const/4 v1, 0x4
+ 
+     if-ge v3, v1, :cond_3
+ 

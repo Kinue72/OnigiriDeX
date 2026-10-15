@@ -1,0 +1,48 @@
+From: Onigiri
+Subject: [PATCH] Offer and persist four digit PIN auto confirmation
+
+diff --git a/smali_classes2/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali b/smali_classes2/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali
+--- a/smali_classes2/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali
++++ b/smali_classes2/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali
+@@ -2314,7 +2314,7 @@
+ 
+     move-result v2
+ 
+-    const/4 v4, 0x6
++    const/4 v4, 0x4
+ 
+     if-lt v2, v4, :cond_14
+ 
+@@ -6288,7 +6288,7 @@
+ 
+     if-nez p2, :cond_4
+ 
+-    const/4 p2, 0x6
++    const/4 p2, 0x4
+ 
+     if-lt p1, p2, :cond_2
+ 
+diff --git a/smali_classes2/com/android/settings/security/screenlock/AutoPinConfirmPreferenceController.smali b/smali_classes2/com/android/settings/security/screenlock/AutoPinConfirmPreferenceController.smali
+--- a/smali_classes2/com/android/settings/security/screenlock/AutoPinConfirmPreferenceController.smali
++++ b/smali_classes2/com/android/settings/security/screenlock/AutoPinConfirmPreferenceController.smali
+@@ -67,7 +67,7 @@
+ 
+     move-result p0
+ 
+-    const/4 v0, 0x6
++    const/4 v0, 0x4
+ 
+     if-lt p0, v0, :cond_0
+ 
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -5630,7 +5630,7 @@
+     <string name="lock_phone_to_current_sim_success_toast">Phone locked to current SIM.</string>
+     <string name="lock_phone_to_current_sim_summary_off">"Only allow the current SIM card to be used with this phone. You'll need to enter a PIN before you'll be able to use a different SIM card."</string>
+     <string name="lock_phone_to_current_sim_summary_on">Require PIN to turn on or off this.</string>
+-    <string name="lock_screen_auto_pin_confirm_summary">Unlock automatically if you input a correct PIN of 6 digits or more. This is slightly less secure than tapping Enter to confirm.</string>
++    <string name="lock_screen_auto_pin_confirm_summary">Unlock automatically if you input a correct PIN of 4 digits or more. This is slightly less secure than tapping Enter to confirm.</string>
+     <string name="lock_screen_auto_pin_confirm_title">Auto-confirm unlock</string>
+     <string name="lock_screen_doesnt_support_multi_window_text">"Can't use this feature while using Multi window."</string>
+     <string name="lock_screen_intro_skip_dialog_text">Device protection features won’t be turned on. You won’t be able to prevent others from using this phone if it’s lost or stolen.</string>

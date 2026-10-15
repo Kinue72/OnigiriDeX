@@ -1,0 +1,43 @@
+Subject: [PATCH] Default Auto Blocker setup choice off without overwriting saved choices
+
+diff --git a/smali/z2/c.smali b/smali/z2/c.smali
+--- a/smali/z2/c.smali
++++ b/smali/z2/c.smali
+@@ -922,6 +922,19 @@
+ 
+     iget v5, v3, Lz2/b;->B:I
+ 
++    move v8, v5
++
++    const-string v7, "rampart_suw_main_on"
++
++    invoke-virtual {v7, v4}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v7
++
++    if-eqz v7, :onigiri_permission_default
++
++    const/4 v8, 0x0
++
++    :onigiri_permission_default
+     const-string v7, "system"
+ 
+     invoke-virtual {v7, v0}, Ljava/lang/String;->equalsIgnoreCase(Ljava/lang/String;)Z
+@@ -936,7 +949,7 @@
+ 
+     iget v7, v1, Lz2/c;->j:I
+ 
+-    invoke-static {v0, v4, v5, v7}, LE2/e;->b(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++    invoke-static {v0, v4, v8, v7}, LE2/e;->b(Landroid/content/ContentResolver;Ljava/lang/String;II)I
+ 
+     move-result v0
+ 
+@@ -947,7 +960,7 @@
+ 
+     move-result-object v0
+ 
+-    invoke-static {v0, v4, v5}, Landroid/provider/Settings$Global;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
++    invoke-static {v0, v4, v8}, Landroid/provider/Settings$Global;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
+ 
+     move-result v0
+ 

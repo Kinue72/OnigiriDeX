@@ -1,0 +1,56 @@
+From: Onigiri
+Subject: [PATCH] Enable network speed controls while preserving shared register defaults
+
+diff --git a/smali_classes4/com/samsung/android/settings/eternal/provider/items/NotificationsItem.smali b/smali_classes4/com/samsung/android/settings/eternal/provider/items/NotificationsItem.smali
+--- a/smali_classes4/com/samsung/android/settings/eternal/provider/items/NotificationsItem.smali
++++ b/smali_classes4/com/samsung/android/settings/eternal/provider/items/NotificationsItem.smali
+@@ -1450,9 +1450,7 @@
+ 
+     const/4 v3, 0x0
+ 
+-    invoke-virtual {v0, v2, v3}, Lcom/samsung/android/feature/SemCscFeature;->getBoolean(Ljava/lang/String;Z)Z
+-
+-    move-result v0
++    const/4 v0, 0x1
+ 
+     if-eqz v0, :cond_1d
+ 
+@@ -2660,9 +2658,7 @@
+ 
+     const/4 v2, 0x0
+ 
+-    invoke-virtual {v0, v1, v2}, Lcom/samsung/android/feature/SemCscFeature;->getBoolean(Ljava/lang/String;Z)Z
+-
+-    move-result v0
++    const/4 v0, 0x1
+ 
+     if-eqz v0, :cond_2
+ 
+diff --git a/smali_classes4/com/samsung/android/settings/notification/ConfigureNotificationMoreSettings$1.smali b/smali_classes4/com/samsung/android/settings/notification/ConfigureNotificationMoreSettings$1.smali
+--- a/smali_classes4/com/samsung/android/settings/notification/ConfigureNotificationMoreSettings$1.smali
++++ b/smali_classes4/com/samsung/android/settings/notification/ConfigureNotificationMoreSettings$1.smali
+@@ -45,9 +45,7 @@
+ 
+     const/4 v2, 0x0
+ 
+-    invoke-virtual {v0, v1, v2}, Lcom/samsung/android/feature/SemCscFeature;->getBoolean(Ljava/lang/String;Z)Z
+-
+-    move-result v0
++    const/4 v0, 0x1
+ 
+     if-nez v0, :cond_2
+ 
+diff --git a/smali_classes4/com/samsung/android/settings/notification/StatusBarNetworkSpeedController.smali b/smali_classes4/com/samsung/android/settings/notification/StatusBarNetworkSpeedController.smali
+--- a/smali_classes4/com/samsung/android/settings/notification/StatusBarNetworkSpeedController.smali
++++ b/smali_classes4/com/samsung/android/settings/notification/StatusBarNetworkSpeedController.smali
+@@ -32,9 +32,7 @@
+ 
+     const/4 v2, 0x0
+ 
+-    invoke-virtual {v0, v1, v2}, Lcom/samsung/android/feature/SemCscFeature;->getBoolean(Ljava/lang/String;Z)Z
+-
+-    move-result v0
++    const/4 v0, 0x1
+ 
+     sput-boolean v0, Lcom/samsung/android/settings/notification/StatusBarNetworkSpeedController;->SUPPORT_NETWORK_SPEED:Z
+ 

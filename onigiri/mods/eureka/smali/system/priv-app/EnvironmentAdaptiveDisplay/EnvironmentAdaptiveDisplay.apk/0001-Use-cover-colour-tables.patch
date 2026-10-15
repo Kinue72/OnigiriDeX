@@ -1,0 +1,114 @@
+From: Onigiri
+Subject: [PATCH] Use cover colour tables and publish custom eye comfort offsets
+
+diff --git a/smali/com/samsung/android/sead/EnvironmentAdaptiveDisplayService.smali b/smali/com/samsung/android/sead/EnvironmentAdaptiveDisplayService.smali
+--- a/smali/com/samsung/android/sead/EnvironmentAdaptiveDisplayService.smali
++++ b/smali/com/samsung/android/sead/EnvironmentAdaptiveDisplayService.smali
+@@ -891,11 +891,25 @@
+ .end method
+ 
+ .method private adaptBlfOffset()V
+-    .locals 1
++    .locals 2
+ 
+     invoke-direct {p0}, Lcom/samsung/android/sead/EnvironmentAdaptiveDisplayService;->getMode()I
+ 
+     move-result v0
++
++    const/4 v1, 0x3
++
++    if-ne v0, v1, :onigiri_offset_reset
++
++    iget v1, p0, Lcom/samsung/android/sead/EnvironmentAdaptiveDisplayService;->mBlfCustomOffset:I
++
++    goto :onigiri_offset_publish
++
++    :onigiri_offset_reset
++    const/4 v1, 0x0
++
++    :onigiri_offset_publish
++    invoke-direct {p0, v1}, Lcom/samsung/android/sead/EnvironmentAdaptiveDisplayService;->publishBlfCustomOffset(I)V
+ 
+     packed-switch v0, :pswitch_data_0
+ 
+@@ -2289,6 +2303,10 @@
+ 
+     invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+ 
++    const/4 v1, 0x0
++
++    invoke-direct {p0, v1}, Lcom/samsung/android/sead/EnvironmentAdaptiveDisplayService;->publishBlfCustomOffset(I)V
++
+     iget-object v0, p0, Lcom/samsung/android/sead/EnvironmentAdaptiveDisplayService;->mWhiteRGBChanger:Lcom/samsung/android/sead/EnvironmentAdaptiveDisplayService$WhiteRGBChanger;
+ 
+     if-eqz v0, :cond_1
+@@ -2869,6 +2887,10 @@
+ 
+     invoke-super {p0}, Landroid/app/Service;->onCreate()V
+ 
++    const/4 v0, 0x0
++
++    invoke-direct {p0, v0}, Lcom/samsung/android/sead/EnvironmentAdaptiveDisplayService;->publishBlfCustomOffset(I)V
++
+     invoke-virtual {p0}, Lcom/samsung/android/sead/EnvironmentAdaptiveDisplayService;->getApplicationContext()Landroid/content/Context;
+ 
+     move-result-object v0
+@@ -2975,7 +2997,7 @@
+ 
+     move-result-object v1
+ 
+-    const v2, 0x107005d
++    const v2, 0x107005f
+ 
+     invoke-virtual {v1, v2}, Landroid/content/res/Resources;->getStringArray(I)[Ljava/lang/String;
+ 
+@@ -2995,7 +3017,7 @@
+ 
+     move-result-object v1
+ 
+-    const v2, 0x107005e
++    const v2, 0x1070060
+ 
+     invoke-virtual {v1, v2}, Landroid/content/res/Resources;->getStringArray(I)[Ljava/lang/String;
+ 
+@@ -3335,3 +3357,40 @@
+ 
+     return v3
+ .end method
++
++.method private publishBlfCustomOffset(I)V
++    .locals 4
++
++    const/4 v0, 0x0
++
++    invoke-static {p1, v0}, Ljava/lang/Math;->max(II)I
++
++    move-result p1
++
++    const/4 v0, 0x1
++
++    invoke-static {p1, v0}, Ljava/lang/Math;->min(II)I
++
++    move-result p1
++
++    invoke-virtual {p0}, Landroid/app/Service;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v1, "onigiri_ead_custom_offset"
++
++    const/4 v2, 0x0
++
++    const/4 v3, -0x2
++
++    invoke-static {v0, v1, v2, v3}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++
++    move-result v2
++
++    if-eq v2, p1, :onigiri_offset_done
++
++    invoke-static {v0, v1, p1, v3}, Landroid/provider/Settings$System;->putIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)Z
++
++    :onigiri_offset_done
++    return-void
++.end method

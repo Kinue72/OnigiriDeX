@@ -1,0 +1,31 @@
+From: Salvo Giangreco <giangrecosalvo9@gmail.com>
+Subject: [PATCH] Allow secure screenshots when selected by the user
+
+diff --git a/smali_classes2/com/android/server/wm/WindowState.smali b/smali_classes2/com/android/server/wm/WindowState.smali
+--- a/smali_classes2/com/android/server/wm/WindowState.smali
++++ b/smali_classes2/com/android/server/wm/WindowState.smali
+@@ -11392,6 +11392,24 @@
+ 
+     if-eqz v0, :cond_1
+ 
++    iget-object v3, p0, Lcom/android/server/wm/WindowContainer;->mWmService:Lcom/android/server/wm/WindowManagerService;
++
++    iget-object v3, v3, Lcom/android/server/wm/WindowManagerService;->mContext:Landroid/content/Context;
++
++    invoke-virtual {v3}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v3
++
++    const-string v4, "onigiri_secure_ss"
++
++    iget v5, p0, Lcom/android/server/wm/WindowState;->mShowUserId:I
++
++    invoke-static {v3, v4, v1, v5}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++
++    move-result v3
++
++    if-nez v3, :cond_1
++
+     return v2
+ 
+     :cond_1

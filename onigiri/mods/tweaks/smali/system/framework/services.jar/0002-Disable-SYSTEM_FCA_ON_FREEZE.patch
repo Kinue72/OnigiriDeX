@@ -1,0 +1,150 @@
+From: Onigiri
+Subject: [PATCH] Disable all callers of file cache reclamation through its shared scheduler
+
+diff --git a/smali/com/android/server/am/CachedAppOptimizer.smali b/smali/com/android/server/am/CachedAppOptimizer.smali
+--- a/smali/com/android/server/am/CachedAppOptimizer.smali
++++ b/smali/com/android/server/am/CachedAppOptimizer.smali
+@@ -2089,141 +2089,8 @@
+ .end method
+ 
+ .method public final sendMsgForFileCacheReclamation(ILjava/lang/String;)V
+-    .locals 8
+-
+-    iget-object v0, p0, Lcom/android/server/am/CachedAppOptimizer;->mCompactionHandler:Landroid/os/Handler;
+-
+-    if-nez v0, :cond_1
+-
+-    iget-object v0, p0, Lcom/android/server/am/CachedAppOptimizer;->mCachedAppOptimizerThread:Lcom/android/server/ServiceThread;
+-
+-    invoke-virtual {v0}, Landroid/os/HandlerThread;->isAlive()Z
+-
+-    move-result v1
+-
+-    if-nez v1, :cond_0
+-
+-    invoke-virtual {v0}, Landroid/os/HandlerThread;->start()V
+-
+-    :cond_0
+-    new-instance v1, Lcom/android/server/am/CachedAppOptimizer$MemCompactionHandler;
+-
+-    invoke-direct {v1, p0}, Lcom/android/server/am/CachedAppOptimizer$MemCompactionHandler;-><init>(Lcom/android/server/am/CachedAppOptimizer;)V
+-
+-    iput-object v1, p0, Lcom/android/server/am/CachedAppOptimizer;->mCompactionHandler:Landroid/os/Handler;
+-
+-    invoke-virtual {v0}, Landroid/os/HandlerThread;->getThreadId()I
+-
+-    move-result v0
+-
+-    const/4 v1, 0x2
+-
+-    invoke-static {v0, v1}, Landroid/os/Process;->setThreadGroupAndCpuset(II)V
+-
+-    :cond_1
+-    if-eqz p2, :cond_2
+-
+-    goto :goto_0
+-
+-    :cond_2
+-    const-string p2, ""
+-
+-    :goto_0
+-    sget-object v0, Lcom/android/server/chimera/FCAPolicyManager;->mFCASkiplistPackages:[Ljava/lang/String;
+-
+-    invoke-static {v0, p2}, Lcom/android/internal/util/ArrayUtils;->contains([Ljava/lang/Object;Ljava/lang/Object;)Z
+-
+-    move-result v0
+-
+-    const-string v1, "ActivityManager"
+-
+-    if-eqz v0, :cond_3
+-
+-    const-string p0, "FCA:Skip FCA for Skiplist package ("
+-
+-    const-string p1, ")"
+-
+-    invoke-static {p0, p2, p1, v1}, Lcom/android/server/DeviceIdleController$$ExternalSyntheticOutline0;->m(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+-
+-    return-void
+-
+-    :cond_3
+-    iget-object p2, p0, Lcom/android/server/am/CachedAppOptimizer;->mAm:Lcom/android/server/am/ActivityManagerService;
+-
+-    invoke-virtual {p2, p1}, Lcom/android/server/am/ActivityManagerService;->getProcessRecordFromPidLocked(I)Lcom/android/server/am/ProcessRecord;
+-
+-    move-result-object p2
+-
+-    if-nez p2, :cond_4
+-
+-    const-string p0, "FCA:process record failed for pid:"
+-
+-    invoke-static {p1, p0, v1}, Lcom/android/server/AnyMotionDetector$$ExternalSyntheticOutline0;->m(ILjava/lang/String;Ljava/lang/String;)V
+-
+-    return-void
+-
+-    :cond_4
+-    iget-object v0, p0, Lcom/android/server/am/CachedAppOptimizer;->mProcessDependencies:Lcom/android/server/am/CachedAppOptimizer$ProcessDependencies;
+-
+-    invoke-interface {v0, p1}, Lcom/android/server/am/CachedAppOptimizer$ProcessDependencies;->getRss(I)[J
+-
+-    move-result-object v0
+-
+-    const/4 v2, 0x1
+-
+-    aget-wide v2, v0, v2
+-
+-    iget-wide v4, p2, Lcom/android/server/am/ProcessRecord;->mRSSresiduePostFCA:J
+-
+-    sub-long/2addr v2, v4
+-
+-    const/16 v0, 0xa
+-
+-    shr-long v4, v2, v0
+-
+-    const-wide/16 v6, 0x1
+-
+-    cmp-long v0, v4, v6
+-
+-    if-ltz v0, :cond_5
+-
+-    new-instance v0, Ljava/lang/StringBuilder;
+-
+-    const-string v4, "FCA:FCA recordedFileRss = "
+-
+-    invoke-direct {v0, v4}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+-
+-    iget-wide v4, p2, Lcom/android/server/am/ProcessRecord;->mRSSresiduePostFCA:J
+-
+-    invoke-virtual {v0, v4, v5}, Ljava/lang/StringBuilder;->append(J)Ljava/lang/StringBuilder;
+-
+-    const-string p2, ", and changeinRss = "
+-
+-    invoke-virtual {v0, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    invoke-virtual {v0, v2, v3}, Ljava/lang/StringBuilder;->append(J)Ljava/lang/StringBuilder;
+-
+-    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    move-result-object p2
+-
+-    invoke-static {v1, p2}, Landroid/util/Slog;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    iget-object p0, p0, Lcom/android/server/am/CachedAppOptimizer;->mCompactionHandler:Landroid/os/Handler;
+-
+-    const/16 p2, 0x6b
+-
+-    const/4 v0, 0x0
+-
+-    invoke-virtual {p0, p2, p1, v0}, Landroid/os/Handler;->obtainMessage(III)Landroid/os/Message;
+-
+-    move-result-object p1
+-
+-    const-wide/16 v0, 0x7d0
+-
+-    invoke-virtual {p0, p1, v0, v1}, Landroid/os/Handler;->sendMessageDelayed(Landroid/os/Message;J)Z
+-
+-    :cond_5
++    .locals 0
++
+     return-void
+ .end method
+ 

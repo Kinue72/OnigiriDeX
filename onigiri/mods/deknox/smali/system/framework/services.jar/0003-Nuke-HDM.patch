@@ -1,0 +1,23 @@
+From: Onigiri
+Subject: [PATCH] Remove HDM service creation without altering other enterprise services
+
+diff --git a/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali b/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
+--- a/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
++++ b/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
+@@ -2120,16 +2120,6 @@
+     const-string/jumbo v1, "edm_proxy"
+ 
+     invoke-static {v1, p1}, Landroid/os/ServiceManager;->addService(Ljava/lang/String;Landroid/os/IBinder;)V
+-
+-    new-instance p1, Lcom/android/server/enterprise/hdm/HdmService;
+-
+-    iget-object v0, v0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;->mContext:Landroid/content/Context;
+-
+-    invoke-direct {p1, v0}, Lcom/android/server/enterprise/hdm/HdmService;-><init>(Landroid/content/Context;)V
+-
+-    const-string/jumbo v0, "hdm_service"
+-
+-    invoke-static {p1, v0}, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;->addLazySystemService(Lcom/android/server/enterprise/EnterpriseServiceCallback;Ljava/lang/String;)V
+ 
+     iget-object p1, p0, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mContext:Landroid/content/Context;
+ 

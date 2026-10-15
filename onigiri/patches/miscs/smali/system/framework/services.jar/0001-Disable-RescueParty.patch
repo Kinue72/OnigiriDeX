@@ -1,0 +1,79 @@
+From: Onigiri
+Subject: [PATCH] Disable RescueParty
+
+diff --git a/smali/com/android/server/RescueParty.smali b/smali/com/android/server/RescueParty.smali
+--- a/smali/com/android/server/RescueParty.smali
++++ b/smali/com/android/server/RescueParty.smali
+@@ -829,67 +829,11 @@
+ .end method
+ 
+ .method public static -$$Nest$smisDisabled()Z
+-    .locals 4
+-
+-    const-string/jumbo v0, "persist.sys.enable_rescue"
+-
+-    const/4 v1, 0x0
+-
+-    invoke-static {v0, v1}, Landroid/os/SystemProperties;->getBoolean(Ljava/lang/String;Z)Z
+-
+-    move-result v0
+-
+-    if-eqz v0, :cond_0
+-
+-    goto :goto_1
+-
+-    :cond_0
+-    sget-boolean v0, Lcom/samsung/android/rune/CoreRune;->IS_DEBUG_LEVEL_LOW:Z
+-
+-    if-nez v0, :cond_1
+-
+-    goto :goto_1
+-
+-    :cond_1
+-    const-string/jumbo v0, "persist.device_config.configuration.disable_rescue_party"
+-
+-    invoke-static {v0, v1}, Landroid/os/SystemProperties;->getBoolean(Ljava/lang/String;Z)Z
+-
+-    move-result v0
+-
+-    const/4 v2, 0x1
+-
+-    const-string v3, "RescueParty"
+-
+-    if-eqz v0, :cond_2
+-
+-    const-string v0, "Disabled because of DeviceConfig flag"
+-
+-    invoke-static {v3, v0}, Landroid/util/Slog;->v(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    :goto_0
+-    move v1, v2
+-
+-    goto :goto_1
+-
+-    :cond_2
+-    const-string/jumbo v0, "persist.sys.disable_rescue"
+-
+-    invoke-static {v0, v1}, Landroid/os/SystemProperties;->getBoolean(Ljava/lang/String;Z)Z
+-
+-    move-result v0
+-
+-    if-eqz v0, :cond_3
+-
+-    const-string v0, "Disabled because of manual property"
+-
+-    invoke-static {v3, v0}, Landroid/util/Slog;->v(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    goto :goto_0
+-
+-    :cond_3
+-    :goto_1
+-    return v1
++    .locals 1
++
++    const/4 v0, 0x1
++
++    return v0
+ .end method
+ 
+ .method public static -$$Nest$smmapRescueLevelToUserImpact(I)I
