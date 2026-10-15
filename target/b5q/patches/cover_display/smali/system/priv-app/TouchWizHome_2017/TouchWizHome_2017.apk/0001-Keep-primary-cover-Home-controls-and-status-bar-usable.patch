@@ -1,0 +1,167 @@
+Subject: [PATCH] Keep primary cover Home controls and status bar usable
+
+diff --git a/smali_classes2/com/honeyspace/common/context/ContextExtensionKt.smali b/smali_classes2/com/honeyspace/common/context/ContextExtensionKt.smali
+--- a/smali_classes2/com/honeyspace/common/context/ContextExtensionKt.smali
++++ b/smali_classes2/com/honeyspace/common/context/ContextExtensionKt.smali
+@@ -965,4 +965,35 @@
+ .end method
+ 
++.method public static final isPrimaryCoverDisplay(Landroid/content/Context;)Z
++    .locals 1
++
++    invoke-virtual {p0}, Landroid/content/Context;->getDisplayId()I
++
++    move-result v0
++
++    if-nez v0, :cond_0
++
++    invoke-static {p0}, Lcom/honeyspace/common/context/ContextExtensionKt;->isCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_0
++
++    invoke-static {p0}, Lcom/honeyspace/common/context/ContextExtensionKt;->isDexSpace(Landroid/content/Context;)Z
++
++    move-result p0
++
++    if-nez p0, :cond_0
++
++    const/4 p0, 0x1
++
++    return p0
++
++    :cond_0
++    const/4 p0, 0x0
++
++    return p0
++.end method
++
+ .method public static final isCoverDisplay(Landroid/content/Context;)Z
+     .locals 1
+diff --git a/smali_classes3/A2/j.smali b/smali_classes3/A2/j.smali
+--- a/smali_classes3/A2/j.smali
++++ b/smali_classes3/A2/j.smali
+@@ -162,4 +162,32 @@
+     if-le v0, v1, :cond_0
+ 
++    invoke-virtual {p0}, Lcom/honeyspace/ui/common/LayoutInfo;->getContext()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-static {v0}, Lcom/honeyspace/common/context/ContextExtensionKt;->isPrimaryCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :native_landscape
++
++    # Reserve the existing horizontal search row above the navigation bar.
++    invoke-virtual {p0}, Lcom/honeyspace/ui/common/LayoutInfo;->getContext()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v0
++
++    const v1, 0x7f070874
++
++    invoke-virtual {v0, v1}, Landroid/content/res/Resources;->getDimensionPixelSize(I)I
++
++    move-result p0
++
++    return p0
++
++    :native_landscape
+     const/4 p0, 0x0
+ 
+diff --git a/smali_classes3/H2/e.smali b/smali_classes3/H2/e.smali
+--- a/smali_classes3/H2/e.smali
++++ b/smali_classes3/H2/e.smali
+@@ -222,4 +222,16 @@
+ 
+     invoke-static {p1, v0}, Lkotlin/jvm/internal/Intrinsics;->checkNotNullParameter(Ljava/lang/Object;Ljava/lang/String;)V
++
++    invoke-static {p1}, Lcom/honeyspace/common/context/ContextExtensionKt;->isPrimaryCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :native_search_layout
++
++    const/4 v0, 0x0
++
++    return v0
++
++    :native_search_layout
+ 
+     iget-object v0, p0, LH2/e;->d:Ljava/lang/Object;
+diff --git a/smali_classes3/com/honeyspace/ui/common/util/SystemUIControlUtils.smali b/smali_classes3/com/honeyspace/ui/common/util/SystemUIControlUtils.smali
+--- a/smali_classes3/com/honeyspace/ui/common/util/SystemUIControlUtils.smali
++++ b/smali_classes3/com/honeyspace/ui/common/util/SystemUIControlUtils.smali
+@@ -545,4 +545,30 @@
+     if-eqz p0, :cond_2
+ 
++    invoke-virtual {p1}, Landroid/view/Window;->getContext()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-static {v0}, Lcom/honeyspace/common/context/ContextExtensionKt;->isPrimaryCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :native_system_bars
++
++    invoke-static {}, Landroid/view/WindowInsets$Type;->statusBars()I
++
++    move-result v0
++
++    and-int v1, p3, v0
++
++    if-eqz v1, :native_system_bars
++
++    # Cover Home keeps status visible while preserving the requested navigation mask.
++    invoke-interface {p0, v0}, Landroid/view/WindowInsetsController;->show(I)V
++
++    not-int v0, v0
++
++    and-int/2addr p3, v0
++
++    :native_system_bars
+     if-eqz p4, :cond_0
+ 
+diff --git a/smali_classes3/A2/B.smali b/smali_classes3/A2/B.smali
+--- a/smali_classes3/A2/B.smali
++++ b/smali_classes3/A2/B.smali
+@@ -320,4 +320,14 @@
+     if-eqz v1, :cond_0
+ 
++    invoke-virtual {p0}, Lcom/honeyspace/ui/common/LayoutInfo;->getContext()Landroid/content/Context;
++
++    move-result-object v1
++
++    invoke-static {v1}, Lcom/honeyspace/common/context/ContextExtensionKt;->isPrimaryCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v1
++
++    if-nez v1, :cond_0
++
+     iget-boolean p0, p0, LA2/o;->h:Z
+ 
+diff --git a/smali_classes3/com/honeyspace/ui/honeypots/applist/presentation/ApplistFastRecyclerView.smali b/smali_classes3/com/honeyspace/ui/honeypots/applist/presentation/ApplistFastRecyclerView.smali
+--- a/smali_classes3/com/honeyspace/ui/honeypots/applist/presentation/ApplistFastRecyclerView.smali
++++ b/smali_classes3/com/honeyspace/ui/honeypots/applist/presentation/ApplistFastRecyclerView.smali
+@@ -441,4 +441,14 @@
+     if-eqz v0, :cond_1
+ 
++    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-static {v0}, Lcom/honeyspace/common/context/ContextExtensionKt;->isPrimaryCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_1
++
+     const-string v0, "applyInsets, hide top"
+ 

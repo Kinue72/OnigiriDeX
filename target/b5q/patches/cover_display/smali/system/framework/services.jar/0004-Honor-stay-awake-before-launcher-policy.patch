@@ -1,0 +1,29 @@
+Subject: [PATCH] Honor stay-awake preference before launcher fold policy
+
+diff --git a/smali_classes2/com/android/server/utils/FoldSettingProvider$FoldPolicy.smali b/smali_classes2/com/android/server/utils/FoldSettingProvider$FoldPolicy.smali
+--- a/smali_classes2/com/android/server/utils/FoldSettingProvider$FoldPolicy.smali
++++ b/smali_classes2/com/android/server/utils/FoldSettingProvider$FoldPolicy.smali
+@@ -11,6 +11,23 @@
+ .method public final shouldStayAwakeOnFold()Z
+     .locals 2
+ 
++    invoke-virtual {p0}, Lcom/android/server/utils/FoldSettingProvider;->getFoldSettingValue()Ljava/lang/String;
++
++    move-result-object v0
++
++    const-string v1, "stay_awake_on_fold_key"
++
++    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-eqz v0, :onigiri_native_fold_policy
++
++    const/4 v0, 0x1
++
++    return v0
++
++    :onigiri_native_fold_policy
+     iget v0, p0, Lcom/android/server/utils/FoldSettingProvider$FoldPolicy;->mPolicy:I
+ 
+     const/4 v1, -0x1

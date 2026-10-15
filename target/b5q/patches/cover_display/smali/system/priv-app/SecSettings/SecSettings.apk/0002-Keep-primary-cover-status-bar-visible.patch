@@ -1,0 +1,54 @@
+Subject: [PATCH] Keep the primary cover status bar in native app layouts
+
+diff --git a/smali_classes2/com/android/settings/Utils.smali b/smali_classes2/com/android/settings/Utils.smali
+--- a/smali_classes2/com/android/settings/Utils.smali
++++ b/smali_classes2/com/android/settings/Utils.smali
+@@ -141,7 +141,7 @@
+ .end method
+ 
+ .method public static applyLandscapeFullScreen(Landroid/content/Context;Landroid/view/Window;)V
+-    .locals 3
++    .locals 4
+ 
+     if-eqz p0, :cond_2
+ 
+@@ -166,6 +166,39 @@
+ 
+     move-result-object v1
+ 
++    invoke-virtual {v0}, Landroid/content/Context;->getDisplayId()I
++
++    move-result v2
++
++    if-nez v2, :onigiri_native_fullscreen
++
++    iget v2, p0, Landroid/content/res/Configuration;->semDisplayDeviceType:I
++
++    const/4 v3, 0x5
++
++    if-ne v2, v3, :onigiri_native_fullscreen
++
++    invoke-virtual {p0}, Landroid/content/res/Configuration;->isDexMode()Z
++
++    move-result v2
++
++    if-nez v2, :onigiri_native_fullscreen
++
++    invoke-virtual {p0}, Landroid/content/res/Configuration;->isNewDexMode()Z
++
++    move-result v2
++
++    if-nez v2, :onigiri_native_fullscreen
++
++    invoke-virtual {p0}, Landroid/content/res/Configuration;->isDesktopModeEnabled()Z
++
++    move-result v2
++
++    if-nez v2, :onigiri_native_fullscreen
++
++    goto :cond_1
++
++    :onigiri_native_fullscreen
+     invoke-virtual {v0}, Landroid/app/Activity;->isInMultiWindowMode()Z
+ 
+     move-result v0

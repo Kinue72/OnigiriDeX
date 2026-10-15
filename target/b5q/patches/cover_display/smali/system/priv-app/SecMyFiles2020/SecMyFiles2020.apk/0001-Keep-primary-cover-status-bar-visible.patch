@@ -1,0 +1,56 @@
+Subject: [PATCH] Keep the primary cover status bar in native app layouts
+
+diff --git a/smali_classes2/com/sec/android/app/myfiles/ui/utils/UiUtils.smali b/smali_classes2/com/sec/android/app/myfiles/ui/utils/UiUtils.smali
+--- a/smali_classes2/com/sec/android/app/myfiles/ui/utils/UiUtils.smali
++++ b/smali_classes2/com/sec/android/app/myfiles/ui/utils/UiUtils.smali
+@@ -661,7 +661,7 @@
+ .end method
+ 
+ .method private final needToHideIndicator(Landroid/app/Activity;)Z
+-    .locals 1
++    .locals 2
+ 
+     invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+ 
+@@ -671,6 +671,41 @@
+ 
+     move-result-object p0
+ 
++    invoke-virtual {p1}, Landroid/content/Context;->getDisplayId()I
++
++    move-result v0
++
++    if-nez v0, :onigiri_native_indicator
++
++    iget v0, p0, Landroid/content/res/Configuration;->semDisplayDeviceType:I
++
++    const/4 v1, 0x5
++
++    if-ne v0, v1, :onigiri_native_indicator
++
++    invoke-virtual {p0}, Landroid/content/res/Configuration;->isDexMode()Z
++
++    move-result v0
++
++    if-nez v0, :onigiri_native_indicator
++
++    invoke-virtual {p0}, Landroid/content/res/Configuration;->isNewDexMode()Z
++
++    move-result v0
++
++    if-nez v0, :onigiri_native_indicator
++
++    invoke-virtual {p0}, Landroid/content/res/Configuration;->isDesktopModeEnabled()Z
++
++    move-result v0
++
++    if-nez v0, :onigiri_native_indicator
++
++    const/4 p0, 0x0
++
++    return p0
++
++    :onigiri_native_indicator
+     invoke-static {p1}, LQ4/b;->X(Landroid/app/Activity;)Z
+ 
+     move-result p1

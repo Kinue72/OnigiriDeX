@@ -1,0 +1,854 @@
+Subject: [PATCH] Use native compact Quick Settings rows on the primary cover
+
+diff --git a/smali_classes2/com/android/systemui/qs/QSGuideDialog.smali b/smali_classes2/com/android/systemui/qs/QSGuideDialog.smali
+--- a/smali_classes2/com/android/systemui/qs/QSGuideDialog.smali
++++ b/smali_classes2/com/android/systemui/qs/QSGuideDialog.smali
+@@ -199,15 +199,9 @@
+ 
+     move-result-object p1
+ 
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p1
+-
+-    invoke-virtual {p1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p1
+-
+-    iget p1, p1, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p1
+ 
+     iput p1, p0, Lcom/android/systemui/qs/QSGuideDialog;->currentOrientation:I
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/QSPanelHost.smali b/smali_classes2/com/android/systemui/qs/QSPanelHost.smali
+--- a/smali_classes2/com/android/systemui/qs/QSPanelHost.smali
++++ b/smali_classes2/com/android/systemui/qs/QSPanelHost.smali
+@@ -649,15 +649,9 @@
+     goto :goto_0
+ 
+     :cond_0
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v1
+-
+-    iget v1, v1, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v1
+ 
+     :goto_0
+     sget-boolean v2, Lcom/android/systemui/QpRune;->QUICK_PANEL_DEBUG_LOG:Z
+@@ -696,15 +690,9 @@
+ 
+     invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v3
+-
+-    invoke-virtual {v3}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v3
+-
+-    iget v3, v3, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v3
+ 
+     invoke-static {v3}, Lcom/android/systemui/qs/QSPanelHost;->orientationConvertToString(I)Ljava/lang/String;
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/SecQSPanelController$$ExternalSyntheticLambda3.smali b/smali_classes2/com/android/systemui/qs/SecQSPanelController$$ExternalSyntheticLambda3.smali
+--- a/smali_classes2/com/android/systemui/qs/SecQSPanelController$$ExternalSyntheticLambda3.smali
++++ b/smali_classes2/com/android/systemui/qs/SecQSPanelController$$ExternalSyntheticLambda3.smali
+@@ -39,15 +39,9 @@
+ 
+     move-result-object p0
+ 
+-    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++    invoke-static {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
+ 
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget v0, p0, Landroid/content/res/Configuration;->orientation:I
++    move-result v0
+ 
+     :goto_0
+     return v0
+diff --git a/smali_classes2/com/android/systemui/qs/SecQSPanelController.smali b/smali_classes2/com/android/systemui/qs/SecQSPanelController.smali
+--- a/smali_classes2/com/android/systemui/qs/SecQSPanelController.smali
++++ b/smali_classes2/com/android/systemui/qs/SecQSPanelController.smali
+@@ -240,15 +240,9 @@
+ 
+     move-result-object v1
+ 
+-    invoke-virtual {v1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v1
+-
+-    iget v1, v1, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v1
+ 
+     const/4 v2, 0x2
+ 
+@@ -566,15 +560,9 @@
+ 
+     move-result-object v0
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iget-object v1, p0, Lcom/android/systemui/qs/SecQSPanelController;->mLastConfigurationState:Lcom/android/systemui/util/ConfigurationState;
+ 
+@@ -755,15 +743,9 @@
+ 
+     move-result-object v0
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iput v0, p0, Lcom/android/systemui/qs/SecQSPanelController;->mOrientation:I
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/SecQSPanelControllerBase.smali b/smali_classes2/com/android/systemui/qs/SecQSPanelControllerBase.smali
+--- a/smali_classes2/com/android/systemui/qs/SecQSPanelControllerBase.smali
++++ b/smali_classes2/com/android/systemui/qs/SecQSPanelControllerBase.smali
+@@ -505,15 +505,9 @@
+ 
+     move-result-object v0
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iget-object v1, p0, Lcom/android/systemui/qs/SecQSPanelControllerBase;->mLastConfigurationState:Lcom/android/systemui/util/ConfigurationState;
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/SecQSPanelResourcePicker.smali b/smali_classes2/com/android/systemui/qs/SecQSPanelResourcePicker.smali
+--- a/smali_classes2/com/android/systemui/qs/SecQSPanelResourcePicker.smali
++++ b/smali_classes2/com/android/systemui/qs/SecQSPanelResourcePicker.smali
+@@ -528,15 +528,9 @@
+     goto :goto_0
+ 
+     :cond_0
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     invoke-virtual {p0, v0, p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceFoldPicker;->getPanelStartEndPadding(ILandroid/content/Context;)I
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/SecQuickQSPanelController$$ExternalSyntheticLambda1.smali b/smali_classes2/com/android/systemui/qs/SecQuickQSPanelController$$ExternalSyntheticLambda1.smali
+--- a/smali_classes2/com/android/systemui/qs/SecQuickQSPanelController$$ExternalSyntheticLambda1.smali
++++ b/smali_classes2/com/android/systemui/qs/SecQuickQSPanelController$$ExternalSyntheticLambda1.smali
+@@ -39,15 +39,9 @@
+ 
+     move-result-object p0
+ 
+-    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++    invoke-static {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
+ 
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget v0, p0, Landroid/content/res/Configuration;->orientation:I
++    move-result v0
+ 
+     :goto_0
+     return v0
+diff --git a/smali_classes2/com/android/systemui/qs/SecQuickQSPanelController.smali b/smali_classes2/com/android/systemui/qs/SecQuickQSPanelController.smali
+--- a/smali_classes2/com/android/systemui/qs/SecQuickQSPanelController.smali
++++ b/smali_classes2/com/android/systemui/qs/SecQuickQSPanelController.smali
+@@ -171,15 +171,9 @@
+ 
+     move-result-object v0
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iget-object v1, p0, Lcom/android/systemui/qs/SecQuickQSPanelController;->mLastConfigurationState:Lcom/android/systemui/util/ConfigurationState;
+ 
+@@ -306,15 +300,9 @@
+ 
+     move-result-object v0
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iput v0, p0, Lcom/android/systemui/qs/SecQuickQSPanelController;->mOrientation:I
+ 
+@@ -381,15 +369,9 @@
+ 
+     invoke-virtual {v4, v2, v3, v2, v5}, Landroid/widget/LinearLayout;->setPadding(IIII)V
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v2
+-
+-    invoke-virtual {v2}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v2
+-
+-    iget v2, v2, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v2
+ 
+     invoke-virtual {v1, v2, v0}, Lcom/android/systemui/qs/SecQSPanelResourcePicker;->getQQSPanelStartEndPadding(ILandroid/content/Context;)I
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/animator/PanelAffordanceAnimator.smali b/smali_classes2/com/android/systemui/qs/animator/PanelAffordanceAnimator.smali
+--- a/smali_classes2/com/android/systemui/qs/animator/PanelAffordanceAnimator.smali
++++ b/smali_classes2/com/android/systemui/qs/animator/PanelAffordanceAnimator.smali
+@@ -269,15 +269,9 @@
+ 
+     iput p2, p0, Lcom/android/systemui/qs/animator/PanelAffordanceAnimator;->lastDensityDpi:I
+ 
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p2
+-
+-    invoke-virtual {p2}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p2
+-
+-    iget p2, p2, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p2
+ 
+     iput p2, p0, Lcom/android/systemui/qs/animator/PanelAffordanceAnimator;->lastOrientation:I
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/animator/PanelSplitOpenAnimator.smali b/smali_classes2/com/android/systemui/qs/animator/PanelSplitOpenAnimator.smali
+--- a/smali_classes2/com/android/systemui/qs/animator/PanelSplitOpenAnimator.smali
++++ b/smali_classes2/com/android/systemui/qs/animator/PanelSplitOpenAnimator.smali
+@@ -329,15 +329,9 @@
+     :cond_0
+     iget-object p0, p0, Lcom/android/systemui/qs/animator/PanelSplitOpenAnimator;->context:Landroid/content/Context;
+ 
+-    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget p0, p0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p0
+ 
+     const/4 v0, 0x2
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/animator/QsExpandAnimator.smali b/smali_classes2/com/android/systemui/qs/animator/QsExpandAnimator.smali
+--- a/smali_classes2/com/android/systemui/qs/animator/QsExpandAnimator.smali
++++ b/smali_classes2/com/android/systemui/qs/animator/QsExpandAnimator.smali
+@@ -1697,15 +1697,9 @@
+ 
+     move-result v15
+ 
+-    invoke-virtual {v7}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v7
+-
+-    invoke-virtual {v7}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v7
+-
+-    iget v7, v7, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v7}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v7
+ 
+     if-ne v7, v3, :cond_6
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/BarItemImpl.smali b/smali_classes2/com/android/systemui/qs/bar/BarItemImpl.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/BarItemImpl.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/BarItemImpl.smali
+@@ -397,15 +397,9 @@
+ 
+     iget-object p1, p0, Lcom/android/systemui/qs/bar/BarController;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p1
+-
+-    invoke-virtual {p1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p1
+-
+-    iget p1, p1, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p1
+ 
+     const/4 v0, 0x2
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/BrightnessMediaDevicesBar.smali b/smali_classes2/com/android/systemui/qs/bar/BrightnessMediaDevicesBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/BrightnessMediaDevicesBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/BrightnessMediaDevicesBar.smali
+@@ -270,15 +270,9 @@
+     :cond_0
+     iget-object v0, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iget-object v1, p0, Lcom/android/systemui/qs/bar/BrightnessMediaDevicesBar;->mLastConfigurationState:Lcom/android/systemui/util/ConfigurationState;
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/BrightnessVolumeBar.smali b/smali_classes2/com/android/systemui/qs/bar/BrightnessVolumeBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/BrightnessVolumeBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/BrightnessVolumeBar.smali
+@@ -257,15 +257,9 @@
+ 
+     if-nez p0, :cond_0
+ 
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget p0, p0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p0
+ 
+     const/4 p1, 0x2
+ 
+@@ -458,15 +452,9 @@
+     :cond_0
+     iget-object v0, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iget-object v1, p0, Lcom/android/systemui/qs/bar/BrightnessVolumeBar;->mLastConfigurationState:Lcom/android/systemui/util/ConfigurationState;
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/LargeTileBar.smali b/smali_classes2/com/android/systemui/qs/bar/LargeTileBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/LargeTileBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/LargeTileBar.smali
+@@ -307,15 +307,9 @@
+     :cond_0
+     iget-object v0, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iget-object v1, p0, Lcom/android/systemui/qs/bar/LargeTileBar;->mLastConfigurationState:Lcom/android/systemui/util/ConfigurationState;
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/MediaDevicesBar.smali b/smali_classes2/com/android/systemui/qs/bar/MediaDevicesBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/MediaDevicesBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/MediaDevicesBar.smali
+@@ -499,15 +499,9 @@
+     :cond_0
+     iget-object v0, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iget-object v1, p0, Lcom/android/systemui/qs/bar/MediaDevicesBar;->mLastConfigurationState:Lcom/android/systemui/util/ConfigurationState;
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/QSMediaPlayerBar.smali b/smali_classes2/com/android/systemui/qs/bar/QSMediaPlayerBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/QSMediaPlayerBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/QSMediaPlayerBar.smali
+@@ -69,15 +69,9 @@
+ 
+     iget-object p1, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p1
+-
+-    invoke-virtual {p1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p1
+-
+-    iget p1, p1, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p1
+ 
+     iput p1, p0, Lcom/android/systemui/qs/bar/QSMediaPlayerBar;->mCurrentOrientation:I
+ 
+@@ -138,15 +132,9 @@
+ 
+     if-nez p0, :cond_0
+ 
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget p0, p0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p0
+ 
+     const/4 p1, 0x2
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/QuickControlBar.smali b/smali_classes2/com/android/systemui/qs/bar/QuickControlBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/QuickControlBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/QuickControlBar.smali
+@@ -31,15 +31,9 @@
+ 
+     iput-object p1, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p1
+-
+-    invoke-virtual {p1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p1
+-
+-    iget p1, p1, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p1
+ 
+     iput p1, p0, Lcom/android/systemui/qs/bar/QuickControlBar;->mCurrentOrientation:I
+ 
+@@ -136,15 +130,9 @@
+ 
+     if-nez p0, :cond_0
+ 
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget p0, p0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p0
+ 
+     const/4 p1, 0x2
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/SmartViewLargeTileBar.smali b/smali_classes2/com/android/systemui/qs/bar/SmartViewLargeTileBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/SmartViewLargeTileBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/SmartViewLargeTileBar.smali
+@@ -87,15 +87,9 @@
+ 
+     if-nez p0, :cond_0
+ 
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget p0, p0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p0
+ 
+     const/4 p1, 0x2
+ 
+@@ -268,15 +262,9 @@
+ 
+     iget-object v5, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {v5}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v5
+-
+-    invoke-virtual {v5}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v5
+-
+-    iget v5, v5, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v5}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v5
+ 
+     if-ne v5, v3, :cond_2
+ 
+@@ -318,15 +306,9 @@
+ 
+     iget-object v0, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     if-ne v0, v3, :cond_4
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/VideoCallMicModeBar.smali b/smali_classes2/com/android/systemui/qs/bar/VideoCallMicModeBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/VideoCallMicModeBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/VideoCallMicModeBar.smali
+@@ -333,15 +333,9 @@
+     :cond_0
+     iget-object v0, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iget-object v1, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/domain/interactor/BarOrderInteractor.smali b/smali_classes2/com/android/systemui/qs/bar/domain/interactor/BarOrderInteractor.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/domain/interactor/BarOrderInteractor.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/domain/interactor/BarOrderInteractor.smali
+@@ -560,15 +560,9 @@
+     invoke-virtual {p0}, Lcom/android/systemui/qs/bar/domain/interactor/BarOrderInteractor;->sendCollapsedRowStatusLog()V
+ 
+     :cond_0
+-    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p1
+-
+-    invoke-virtual {p1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p1
+-
+-    iget p1, p1, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p1
+ 
+     const/4 p2, 0x2
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/buttons/QSButtonsContainer.smali b/smali_classes2/com/android/systemui/qs/buttons/QSButtonsContainer.smali
+--- a/smali_classes2/com/android/systemui/qs/buttons/QSButtonsContainer.smali
++++ b/smali_classes2/com/android/systemui/qs/buttons/QSButtonsContainer.smali
+@@ -83,15 +83,9 @@
+ 
+     iget-object p0, p0, Landroid/widget/LinearLayout;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget p0, p0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p0
+ 
+     const/4 v0, 0x2
+ 
+@@ -398,15 +392,9 @@
+ 
+     iget-object v2, p0, Landroid/widget/LinearLayout;->mContext:Landroid/content/Context;
+ 
+-    invoke-virtual {v2}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v2
+-
+-    invoke-virtual {v2}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v2
+-
+-    iget v2, v2, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v2}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v2
+ 
+     const/4 v4, 0x1
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/customize/SecQSSettingEditResources.smali b/smali_classes2/com/android/systemui/qs/customize/SecQSSettingEditResources.smali
+--- a/smali_classes2/com/android/systemui/qs/customize/SecQSSettingEditResources.smali
++++ b/smali_classes2/com/android/systemui/qs/customize/SecQSSettingEditResources.smali
+@@ -345,15 +345,9 @@
+     :cond_0
+     iget-object p0, p0, Lcom/android/systemui/qs/customize/SecQSSettingEditResources;->context:Landroid/content/Context;
+ 
+-    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget p0, p0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p0
+ 
+     const/4 v0, 0x2
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController.smali b/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController.smali
+--- a/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController.smali
++++ b/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController.smali
+@@ -97,15 +97,9 @@
+ 
+     iput-object p1, p0, Lcom/android/systemui/qs/customize/viewcontroller/QSCMainViewController;->subContainer:Landroid/widget/FrameLayout;
+ 
+-    invoke-virtual {p2}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object p1
+-
+-    invoke-virtual {p1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p1
+-
+-    iget p1, p1, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p2}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p1
+ 
+     iput p1, p0, Lcom/android/systemui/qs/customize/viewcontroller/QSCMainViewController;->mCurrentOrientation:I
+ 
+@@ -780,15 +774,9 @@
+ 
+     move-result-object v2
+ 
+-    invoke-virtual {v2}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v2
+-
+-    invoke-virtual {v2}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v2
+-
+-    iget v2, v2, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v2}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v2
+ 
+     iput v2, v0, Lcom/android/systemui/qs/customize/viewcontroller/QSCMainViewController;->mCurrentOrientation:I
+ 
+@@ -1687,15 +1675,9 @@
+ 
+     iget-object v0, v5, Lcom/android/systemui/qs/customize/QSCustomizerWindowHelper;->sysUIContext:Landroid/content/Context;
+ 
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     if-ne v0, v3, :cond_6
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion.smali b/smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion.smali
+--- a/smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion.smali
++++ b/smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion.smali
+@@ -18,6 +18,39 @@
+     invoke-direct {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;-><init>()V
+ 
+     return-void
++.end method
++
++.method public static getPanelOrientation(Landroid/content/Context;)I
++    .locals 2
++
++    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
++
++    move-result-object v0
++
++    invoke-virtual {p0}, Landroid/content/Context;->getDisplayId()I
++
++    move-result v1
++
++    if-nez v1, :onigiri_native_orientation
++
++    iget v1, v0, Landroid/content/res/Configuration;->semDisplayDeviceType:I
++
++    const/4 p0, 0x5
++
++    if-ne v1, p0, :onigiri_native_orientation
++
++    const/4 v0, 0x1
++
++    return v0
++
++    :onigiri_native_orientation
++    iget v0, v0, Landroid/content/res/Configuration;->orientation:I
++
++    return v0
+ .end method
+ 
+ .method public static dp(ILandroid/content/Context;)I
+@@ -65,15 +98,9 @@
+ .method public static isLandscape(Landroid/content/Context;)Z
+     .locals 1
+ 
+-    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++    invoke-static {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
+ 
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget p0, p0, Landroid/content/res/Configuration;->orientation:I
++    move-result p0
+ 
+     const/4 v0, 0x2
+ 
+@@ -93,15 +120,9 @@
+ .method public static isPortrait(Landroid/content/Context;)Z
+     .locals 1
+ 
+-    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++    invoke-static {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
+ 
+-    move-result-object p0
+-
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget p0, p0, Landroid/content/res/Configuration;->orientation:I
++    move-result p0
+ 
+     const/4 v0, 0x1
+ 

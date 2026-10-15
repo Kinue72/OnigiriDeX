@@ -1,0 +1,72 @@
+Subject: [PATCH] Keep the physical cover cutout independent of fold sensor state
+
+diff --git a/smali_classes2/com/android/server/wm/DisplayContent.smali b/smali_classes2/com/android/server/wm/DisplayContent.smali
+--- a/smali_classes2/com/android/server/wm/DisplayContent.smali
++++ b/smali_classes2/com/android/server/wm/DisplayContent.smali
+@@ -23997,3 +23997,44 @@
++.method private usesSubDisplayCutout()Z
++    .locals 3
++
++    iget-object v0, p0, Lcom/android/server/wm/DisplayContent;->mNonOverrideDisplayInfo:Landroid/view/DisplayInfo;
++
++    iget v1, v0, Landroid/view/DisplayInfo;->type:I
++
++    const/4 v2, 0x1
++
++    if-ne v1, v2, :onigiri_native_cutout_state
++
++    iget-object v0, v0, Landroid/view/DisplayInfo;->address:Landroid/view/DisplayAddress;
++
++    instance-of v1, v0, Landroid/view/DisplayAddress$Physical;
++
++    if-eqz v1, :onigiri_native_cutout_state
++
++    check-cast v0, Landroid/view/DisplayAddress$Physical;
++
++    invoke-virtual {v0}, Landroid/view/DisplayAddress$Physical;->getPort()I
++
++    move-result v0
++
++    const/16 v1, 0x84
++
++    if-ne v0, v1, :onigiri_native_cutout_state
++
++    const/4 v0, 0x1
++
++    return v0
++
++    :onigiri_native_cutout_state
++    iget-object v0, p0, Lcom/android/server/wm/WindowContainer;->mWmService:Lcom/android/server/wm/WindowManagerService;
++
++    invoke-virtual {v0}, Lcom/android/server/wm/WindowManagerService;->isFolded()Z
++
++    move-result v0
++
++    return v0
++.end method
++
+ .method public final updateBaseDisplayCutout(II)V
+     .locals 13
+ 
+@@ -24030,9 +24071,7 @@
+     :goto_1
+     iget-object v3, v0, Lcom/android/server/wm/UdcCutoutPolicy;->mDisplayContent:Lcom/android/server/wm/DisplayContent;
+ 
+-    iget-object v4, v3, Lcom/android/server/wm/WindowContainer;->mWmService:Lcom/android/server/wm/WindowManagerService;
+-
+-    invoke-virtual {v4}, Lcom/android/server/wm/WindowManagerService;->isFolded()Z
++    invoke-direct {v3}, Lcom/android/server/wm/DisplayContent;->usesSubDisplayCutout()Z
+ 
+     move-result v4
+ 
+@@ -24204,9 +24243,7 @@
+ 
+     iget-object v3, v0, Landroid/view/DisplayInfo;->uniqueId:Ljava/lang/String;
+ 
+-    iget-object v0, p0, Lcom/android/server/wm/WindowContainer;->mWmService:Lcom/android/server/wm/WindowManagerService;
+-
+-    invoke-virtual {v0}, Lcom/android/server/wm/WindowManagerService;->isFolded()Z
++    invoke-direct {p0}, Lcom/android/server/wm/DisplayContent;->usesSubDisplayCutout()Z
+ 
+     move-result v9
+ 

@@ -1,0 +1,26 @@
+Subject: [PATCH] Keep cover awake by default and honor the native fold setting
+
+diff --git a/smali_classes2/com/android/server/utils/FoldSettingProvider.smali b/smali_classes2/com/android/server/utils/FoldSettingProvider.smali
+--- a/smali_classes2/com/android/server/utils/FoldSettingProvider.smali
++++ b/smali_classes2/com/android/server/utils/FoldSettingProvider.smali
+@@ -57,19 +57,8 @@
+ .method public final getFoldSettingValue()Ljava/lang/String;
+     .locals 4
+ 
+-    iget-object v0, p0, Lcom/android/server/utils/FoldSettingProvider;->mFoldLockSettingAvailabilityProvider:Lcom/android/internal/foldables/FoldLockSettingAvailabilityProvider;
++    const-string/jumbo v1, "stay_awake_on_fold_key"
+ 
+-    invoke-virtual {v0}, Lcom/android/internal/foldables/FoldLockSettingAvailabilityProvider;->isFoldLockBehaviorAvailable()Z
+-
+-    move-result v0
+-
+-    const-string/jumbo v1, "sleep_on_fold_key"
+-
+-    if-nez v0, :cond_0
+-
+-    return-object v1
+-
+-    :cond_0
+     iget-object v0, p0, Lcom/android/server/utils/FoldSettingProvider;->mSettingsWrapper:Lcom/android/internal/util/SettingsWrapper;
+ 
+     iget-object p0, p0, Lcom/android/server/utils/FoldSettingProvider;->mContentResolver:Landroid/content/ContentResolver;

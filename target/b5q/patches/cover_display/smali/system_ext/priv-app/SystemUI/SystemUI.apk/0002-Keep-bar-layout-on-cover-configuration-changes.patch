@@ -1,0 +1,50 @@
+Subject: [PATCH] Keep cover bar orientation consistent after configuration changes
+
+diff --git a/smali_classes2/com/android/systemui/qs/bar/QuickControlBar.smali b/smali_classes2/com/android/systemui/qs/bar/QuickControlBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/QuickControlBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/QuickControlBar.smali
+@@ -446,7 +446,11 @@
+ 
+     iget v0, p0, Lcom/android/systemui/qs/bar/QuickControlBar;->mCurrentOrientation:I
+ 
+-    iget p1, p1, Landroid/content/res/Configuration;->orientation:I
++    iget-object p1, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
++
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p1
+ 
+     if-eq v0, p1, :cond_1
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/QSMediaPlayerBar.smali b/smali_classes2/com/android/systemui/qs/bar/QSMediaPlayerBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/QSMediaPlayerBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/QSMediaPlayerBar.smali
+@@ -359,7 +359,11 @@
+ 
+     iget v0, p0, Lcom/android/systemui/qs/bar/QSMediaPlayerBar;->mCurrentOrientation:I
+ 
+-    iget p1, p1, Landroid/content/res/Configuration;->orientation:I
++    iget-object p1, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
++
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p1
+ 
+     if-eq v0, p1, :cond_1
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/bar/MultiSIMPreferredSlotBar.smali b/smali_classes2/com/android/systemui/qs/bar/MultiSIMPreferredSlotBar.smali
+--- a/smali_classes2/com/android/systemui/qs/bar/MultiSIMPreferredSlotBar.smali
++++ b/smali_classes2/com/android/systemui/qs/bar/MultiSIMPreferredSlotBar.smali
+@@ -354,7 +354,11 @@
+ 
+     iget v0, p0, Lcom/android/systemui/qs/bar/MultiSIMPreferredSlotBar;->mCurrentOrientation:I
+ 
+-    iget p1, p1, Landroid/content/res/Configuration;->orientation:I
++    iget-object p1, p0, Lcom/android/systemui/qs/bar/BarItemImpl;->mContext:Landroid/content/Context;
++
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p1
+ 
+     if-eq v0, p1, :cond_2
+ 

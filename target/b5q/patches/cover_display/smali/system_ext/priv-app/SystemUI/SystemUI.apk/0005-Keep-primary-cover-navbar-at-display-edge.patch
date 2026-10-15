@@ -1,0 +1,110 @@
+Subject: [PATCH] Keep the primary cover navbar at its native display edge
+
+diff --git a/smali_classes2/com/android/systemui/navigationbar/NavigationBar.smali b/smali_classes2/com/android/systemui/navigationbar/NavigationBar.smali
+--- a/smali_classes2/com/android/systemui/navigationbar/NavigationBar.smali
++++ b/smali_classes2/com/android/systemui/navigationbar/NavigationBar.smali
+@@ -3927,6 +3927,12 @@
+ 
+     :cond_17
+     :goto_10
++    invoke-static {v2}, Lcom/android/systemui/navigationbar/NavigationBarView;->isPrimaryCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-nez v0, :goto_f
++
+     iget v0, v7, Landroid/view/WindowManager$LayoutParams;->privateFlags:I
+ 
+     or-int/lit16 v0, v0, 0x1000
+diff --git a/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali b/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali
+--- a/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali
++++ b/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali
+@@ -884,9 +884,88 @@
+     return-void
+ .end method
+ 
++.method public static isPrimaryCoverDisplay(Landroid/content/Context;)Z
++    .locals 2
++
++    invoke-virtual {p0}, Landroid/content/Context;->getDisplayId()I
++
++    move-result v0
++
++    if-nez v0, :onigiri_native_display
++
++    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
++
++    move-result-object v0
++
++    iget v1, v0, Landroid/content/res/Configuration;->semDisplayDeviceType:I
++
++    const/4 p0, 0x5
++
++    if-ne v1, p0, :onigiri_native_display
++
++    invoke-virtual {v0}, Landroid/content/res/Configuration;->isDexMode()Z
++
++    move-result p0
++
++    if-nez p0, :onigiri_native_display
++
++    invoke-virtual {v0}, Landroid/content/res/Configuration;->isNewDexMode()Z
++
++    move-result p0
++
++    if-nez p0, :onigiri_native_display
++
++    invoke-virtual {v0}, Landroid/content/res/Configuration;->isDesktopModeEnabled()Z
++
++    move-result p0
++
++    if-nez p0, :onigiri_native_display
++
++    const/4 p0, 0x1
++
++    return p0
++
++    :onigiri_native_display
++    const/4 p0, 0x0
++
++    return p0
++.end method
++
+ .method public onApplyWindowInsets(Landroid/view/WindowInsets;)Landroid/view/WindowInsets;
+     .locals 5
+ 
++    iget-object v0, p0, Landroid/widget/FrameLayout;->mContext:Landroid/content/Context;
++
++    invoke-static {v0}, Lcom/android/systemui/navigationbar/NavigationBarView;->isPrimaryCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :onigiri_native_insets
++
++    # The cover navbar may overlap its camera notch; other windows keep the cutout.
++    new-instance v0, Landroid/view/WindowInsets$Builder;
++
++    invoke-direct {v0, p1}, Landroid/view/WindowInsets$Builder;-><init>(Landroid/view/WindowInsets;)V
++
++    invoke-static {}, Landroid/view/WindowInsets$Type;->displayCutout()I
++
++    move-result v1
++
++    sget-object v2, Landroid/graphics/Insets;->NONE:Landroid/graphics/Insets;
++
++    invoke-virtual {v0, v1, v2}, Landroid/view/WindowInsets$Builder;->setInsets(ILandroid/graphics/Insets;)Landroid/view/WindowInsets$Builder;
++
++    invoke-virtual {v0, v1, v2}, Landroid/view/WindowInsets$Builder;->setInsetsIgnoringVisibility(ILandroid/graphics/Insets;)Landroid/view/WindowInsets$Builder;
++
++    invoke-virtual {v0}, Landroid/view/WindowInsets$Builder;->build()Landroid/view/WindowInsets;
++
++    move-result-object p1
++
++    :onigiri_native_insets
+     invoke-virtual {p1}, Landroid/view/WindowInsets;->getSystemWindowInsetLeft()I
+ 
+     move-result v0

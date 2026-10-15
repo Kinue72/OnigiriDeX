@@ -1,0 +1,2 @@
+on property:ro.persistent_properties.ready=true
+    setprop persist.sys.usb.config mtp,adb

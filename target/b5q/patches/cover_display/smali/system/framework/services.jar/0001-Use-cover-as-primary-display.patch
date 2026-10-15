@@ -1,0 +1,491 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Onigiri <build@onigiri.invalid>
+Subject: [PATCH] Route Flip5 device states to the primary cover display
+
+--- a/smali/com/android/server/display/DeviceStateToLayoutMap.smali
++++ b/smali/com/android/server/display/DeviceStateToLayoutMap.smali
+@@ -75,8 +75,17 @@
+ 
+     const/4 p1, -0x1
+ 
++    iget-object v0, p0, Lcom/android/server/display/DeviceStateToLayoutMap;->mLayoutMap:Landroid/util/SparseArray;
++
++    invoke-virtual {v0, p1}, Landroid/util/SparseArray;->contains(I)Z
++
++    move-result v1
++
++    if-nez v1, :onigiri_layout_ready
++
+     invoke-virtual {p0, p1}, Lcom/android/server/display/DeviceStateToLayoutMap;->createLayout(I)Lcom/android/server/display/layout/Layout;
+ 
++    :onigiri_layout_ready
+     return-void
+ .end method
+ 
+@@ -145,378 +154,113 @@
+ .end method
+ 
+ .method public loadLayoutsFromConfig(Ljava/io/File;)V
+-    .locals 20
+-
+-    move-object/from16 v0, p0
++    .locals 13
+ 
+     invoke-static {}, Landroid/view/SurfaceControl;->getPhysicalDisplayIds()[J
+ 
+-    move-result-object v1
+-
+-    const-string v2, "DeviceStateToLayoutMap"
+-
+-    if-eqz v1, :cond_3
+-
+-    array-length v3, v1
+-
+-    const/4 v4, 0x2
+-
+-    if-eq v3, v4, :cond_0
+-
+-    goto/16 :goto_1
+-
+-    :cond_0
++    move-result-object v0
++
++    if-eqz v0, :onigiri_no_cover
++
++    const/4 v1, 0x0
++
++    const/4 v2, 0x0
++
+     const/4 v3, 0x0
+ 
+-    aget-wide v5, v1, v3
++    :onigiri_physical_loop
++    array-length v4, v0
++
++    if-ge v3, v4, :onigiri_physical_done
++
++    aget-wide v5, v0, v3
++
++    invoke-static {v5, v6}, Landroid/view/SurfaceControl;->getStaticDisplayInfo(J)Landroid/view/SurfaceControl$StaticDisplayInfo;
++
++    move-result-object v7
++
++    if-eqz v7, :onigiri_physical_next
++
++    iget-boolean v8, v7, Landroid/view/SurfaceControl$StaticDisplayInfo;->isInternal:Z
++
++    if-eqz v8, :onigiri_physical_next
+ 
+     invoke-static {v5, v6}, Landroid/view/DisplayAddress;->fromPhysicalDisplayId(J)Landroid/view/DisplayAddress$Physical;
+ 
+-    move-result-object v5
+-
+-    invoke-virtual {v5}, Landroid/view/DisplayAddress$Physical;->getPort()I
+-
+-    move-result v5
+-
+-    const/4 v6, 0x1
+-
+-    aget-wide v7, v1, v6
+-
+-    invoke-static {v7, v8}, Landroid/view/DisplayAddress;->fromPhysicalDisplayId(J)Landroid/view/DisplayAddress$Physical;
+-
+     move-result-object v7
+ 
+     invoke-virtual {v7}, Landroid/view/DisplayAddress$Physical;->getPort()I
+ 
+-    move-result v7
+-
+-    if-le v5, v7, :cond_1
+-
+-    aget-wide v7, v1, v3
+-
+-    aget-wide v9, v1, v6
+-
+-    aput-wide v9, v1, v3
+-
+-    aput-wide v7, v1, v6
+-
+-    new-instance v5, Ljava/lang/StringBuilder;
+-
+-    const-string v7, "Swap the order of physicalDisplayIds() Main="
+-
+-    invoke-direct {v5, v7}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+-
+-    aget-wide v7, v1, v3
+-
+-    invoke-virtual {v5, v7, v8}, Ljava/lang/StringBuilder;->append(J)Ljava/lang/StringBuilder;
+-
+-    const-string v7, ", Extra="
+-
+-    invoke-virtual {v5, v7}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    aget-wide v7, v1, v6
+-
+-    invoke-virtual {v5, v7, v8}, Ljava/lang/StringBuilder;->append(J)Ljava/lang/StringBuilder;
+-
+-    invoke-virtual {v5}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    move-result-object v5
+-
+-    invoke-static {v2, v5}, Landroid/util/Slog;->i(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    :cond_1
+-    const-string v5, "Creating display layouts from feature"
+-
+-    invoke-static {v2, v5}, Landroid/util/Slog;->i(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    new-instance v2, Ljava/util/ArrayList;
+-
+-    invoke-direct {v2}, Ljava/util/ArrayList;-><init>()V
+-
+-    array-length v5, v1
+-
+-    move v7, v3
+-
+-    :goto_0
+-    if-ge v7, v5, :cond_2
+-
+-    aget-wide v8, v1, v7
+-
+-    invoke-static {v8, v9}, Landroid/view/DisplayAddress;->fromPhysicalDisplayId(J)Landroid/view/DisplayAddress$Physical;
+-
+-    move-result-object v8
+-
+-    invoke-virtual {v2, v8}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
+-
+-    add-int/lit8 v7, v7, 0x1
+-
+-    goto :goto_0
+-
+-    :cond_2
+-    invoke-virtual {v0, v3}, Lcom/android/server/display/DeviceStateToLayoutMap;->createLayout(I)Lcom/android/server/display/layout/Layout;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v2, v6}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v5
+-
+-    move-object v9, v5
+-
+-    check-cast v9, Landroid/view/DisplayAddress;
+-
+-    const/4 v11, 0x1
+-
+-    const/4 v13, -0x1
++    move-result v8
++
++    const/16 v9, 0x84
++
++    if-ne v8, v9, :onigiri_inner
++
++    move-object v1, v7
++
++    goto :onigiri_physical_next
++
++    :onigiri_inner
++    const/16 v9, 0x83
++
++    if-ne v8, v9, :onigiri_physical_next
++
++    move-object v2, v7
++
++    :onigiri_physical_next
++    add-int/lit8 v3, v3, 0x1
++
++    goto :onigiri_physical_loop
++
++    :onigiri_physical_done
++    if-eqz v1, :onigiri_no_cover
++
++    const/4 v3, -0x1
++
++    :onigiri_layout_loop
++    const/4 v4, 0x5
++
++    if-gt v3, v4, :onigiri_done
++
++    invoke-virtual {p0, v3}, Lcom/android/server/display/DeviceStateToLayoutMap;->createLayout(I)Lcom/android/server/display/layout/Layout;
++
++    move-result-object v7
++
++    move-object v8, v1
++
++    const/4 v9, 0x1
+ 
+     const/4 v10, 0x1
+ 
+-    iget-object v12, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    move-object v8, v1
+-
+-    invoke-virtual/range {v8 .. v13}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    invoke-virtual {v2, v3}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v5
+-
+-    move-object v9, v5
+-
+-    check-cast v9, Landroid/view/DisplayAddress;
+-
+-    const/4 v11, 0x0
++    iget-object v11, p0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
++
++    const/4 v12, -0x1
++
++    invoke-virtual/range {v7 .. v12}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
++
++    if-eqz v2, :onigiri_layout_next
++
++    move-object v8, v2
++
++    const/4 v9, 0x0
+ 
+     const/4 v10, 0x0
+ 
+-    iget-object v12, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    invoke-virtual/range {v8 .. v13}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    invoke-virtual {v0, v6}, Lcom/android/server/display/DeviceStateToLayoutMap;->createLayout(I)Lcom/android/server/display/layout/Layout;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v2, v6}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v5
+-
+-    move-object v15, v5
+-
+-    check-cast v15, Landroid/view/DisplayAddress;
+-
+-    const/16 v17, 0x1
+-
+-    const/16 v19, -0x1
+-
+-    const/16 v16, 0x1
+-
+-    iget-object v5, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    move-object v14, v1
+-
+-    move-object/from16 v18, v5
+-
+-    invoke-virtual/range {v14 .. v19}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    invoke-virtual {v2, v3}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v5
+-
+-    move-object v15, v5
+-
+-    check-cast v15, Landroid/view/DisplayAddress;
+-
+-    const/16 v17, 0x0
+-
+-    const/16 v16, 0x0
+-
+-    iget-object v5, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    move-object/from16 v18, v5
+-
+-    invoke-virtual/range {v14 .. v19}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    invoke-virtual {v0, v4}, Lcom/android/server/display/DeviceStateToLayoutMap;->createLayout(I)Lcom/android/server/display/layout/Layout;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v2, v3}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v4
+-
+-    move-object v8, v4
+-
+-    check-cast v8, Landroid/view/DisplayAddress;
+-
+-    const/4 v10, 0x1
+-
+-    const/4 v12, -0x1
+-
+-    const/4 v9, 0x1
+-
+-    iget-object v11, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    move-object v7, v1
+-
+     invoke-virtual/range {v7 .. v12}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+ 
+-    invoke-virtual {v2, v6}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v4
+-
+-    move-object v8, v4
+-
+-    check-cast v8, Landroid/view/DisplayAddress;
+-
+-    const/4 v10, 0x0
+-
+-    const/4 v9, 0x0
+-
+-    iget-object v11, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    invoke-virtual/range {v7 .. v12}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    const/4 v1, 0x3
+-
+-    invoke-virtual {v0, v1}, Lcom/android/server/display/DeviceStateToLayoutMap;->createLayout(I)Lcom/android/server/display/layout/Layout;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v2, v3}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v4
+-
+-    move-object v8, v4
+-
+-    check-cast v8, Landroid/view/DisplayAddress;
+-
+-    const/4 v10, 0x1
+-
+-    const/4 v9, 0x1
+-
+-    iget-object v11, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    move-object v7, v1
+-
+-    invoke-virtual/range {v7 .. v12}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    invoke-virtual {v2, v6}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v4
+-
+-    move-object v8, v4
+-
+-    check-cast v8, Landroid/view/DisplayAddress;
+-
+-    const/4 v10, 0x0
+-
+-    const/4 v9, 0x0
+-
+-    iget-object v11, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    invoke-virtual/range {v7 .. v12}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    const/4 v1, 0x4
+-
+-    invoke-virtual {v0, v1}, Lcom/android/server/display/DeviceStateToLayoutMap;->createLayout(I)Lcom/android/server/display/layout/Layout;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v2, v3}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v4
+-
+-    move-object v8, v4
+-
+-    check-cast v8, Landroid/view/DisplayAddress;
+-
+-    const/4 v10, 0x1
+-
+-    const/4 v12, 0x0
+-
+-    const/4 v9, 0x1
+-
+-    iget-object v11, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    move-object v7, v1
+-
+-    invoke-virtual/range {v7 .. v12}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    invoke-virtual {v2, v6}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v4
+-
+-    move-object v8, v4
+-
+-    check-cast v8, Landroid/view/DisplayAddress;
+-
+-    const/4 v12, 0x1
+-
+-    const/4 v9, 0x0
+-
+-    iget-object v11, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    invoke-virtual/range {v7 .. v12}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    const/4 v1, 0x5
+-
+-    invoke-virtual {v0, v1}, Lcom/android/server/display/DeviceStateToLayoutMap;->createLayout(I)Lcom/android/server/display/layout/Layout;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v2, v6}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v4
+-
+-    move-object v8, v4
+-
+-    check-cast v8, Landroid/view/DisplayAddress;
+-
+-    const/4 v12, 0x0
+-
+-    const/4 v9, 0x1
+-
+-    iget-object v11, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    move-object v7, v1
+-
+-    invoke-virtual/range {v7 .. v12}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    invoke-virtual {v2, v3}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v2
+-
+-    move-object v8, v2
+-
+-    check-cast v8, Landroid/view/DisplayAddress;
+-
+-    const/4 v12, 0x1
+-
+-    const/4 v9, 0x0
+-
+-    iget-object v11, v0, Lcom/android/server/display/DeviceStateToLayoutMap;->mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+-
+-    invoke-virtual/range {v7 .. v12}, Lcom/android/server/display/layout/Layout;->createDisplayLocked(Landroid/view/DisplayAddress;ZZLcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;I)V
+-
+-    goto :goto_2
+-
+-    :cond_3
+-    :goto_1
+-    new-instance v0, Ljava/lang/StringBuilder;
+-
+-    const-string/jumbo v3, "physicalDisplayIds is null or not two, "
+-
+-    invoke-direct {v0, v3}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+-
+-    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+-
+-    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    move-result-object v0
+-
+-    invoke-static {v2, v0}, Landroid/util/Slog;->e(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    :goto_2
++    :onigiri_layout_next
++    add-int/lit8 v3, v3, 0x1
++
++    goto :onigiri_layout_loop
++
++    :onigiri_no_cover
++    const-string v0, "OnigiriDisplay"
++
++    const-string v1, "Flip5 cover display port 132 is unavailable"
++
++    invoke-static {v0, v1}, Landroid/util/Slog;->e(Ljava/lang/String;Ljava/lang/String;)I
++
++    :onigiri_done
+     return-void
+ .end method

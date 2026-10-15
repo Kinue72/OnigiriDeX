@@ -1,0 +1,132 @@
+Subject: [PATCH] Keep media routing on the backend selected at provider creation
+
+diff --git a/smali/com/android/server/media/SystemMediaRoute2Provider.smali b/smali/com/android/server/media/SystemMediaRoute2Provider.smali
+index 21a6d99..a3e3b0e 100644
+--- a/smali/com/android/server/media/SystemMediaRoute2Provider.smali
++++ b/smali/com/android/server/media/SystemMediaRoute2Provider.smali
+@@ -123,48 +123,6 @@
+ 
+     iput-object v1, p0, Lcom/android/server/media/SystemMediaRoute2Provider;->mAudioManager:Landroid/media/AudioManager;
+ 
+-    new-instance v1, Lcom/android/server/media/SystemMediaRoute2Provider$$ExternalSyntheticLambda2;
+-
+-    invoke-direct {v1, p0}, Lcom/android/server/media/SystemMediaRoute2Provider$$ExternalSyntheticLambda2;-><init>(Lcom/android/server/media/SystemMediaRoute2Provider;)V
+-
+-    const-class v2, Landroid/bluetooth/BluetoothManager;
+-
+-    invoke-virtual {p1, v2}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
+-
+-    move-result-object v2
+-
+-    check-cast v2, Landroid/bluetooth/BluetoothManager;
+-
+-    invoke-virtual {v2}, Landroid/bluetooth/BluetoothManager;->getAdapter()Landroid/bluetooth/BluetoothAdapter;
+-
+-    move-result-object v2
+-
+-    if-eqz v2, :cond_1
+-
+-    invoke-static {}, Lcom/android/media/flags/Flags;->enableAudioPoliciesDeviceAndBluetoothController()Z
+-
+-    move-result v3
+-
+-    if-eqz v3, :cond_0
+-
+-    goto :goto_0
+-
+-    :cond_0
+-    new-instance v3, Lcom/android/server/media/LegacyBluetoothRouteController;
+-
+-    invoke-direct {v3, p1, v2, v1}, Lcom/android/server/media/LegacyBluetoothRouteController;-><init>(Landroid/content/Context;Landroid/bluetooth/BluetoothAdapter;Lcom/android/server/media/SystemMediaRoute2Provider$$ExternalSyntheticLambda2;)V
+-
+-    goto :goto_1
+-
+-    :cond_1
+-    :goto_0
+-    new-instance v3, Lcom/android/server/media/BluetoothRouteController$NoOpBluetoothRouteController;
+-
+-    invoke-direct {v3}, Ljava/lang/Object;-><init>()V
+-
+-    :goto_1
+-    iput-object v3, p0, Lcom/android/server/media/SystemMediaRoute2Provider;->mBluetoothRouteController:Lcom/android/server/media/BluetoothRouteController;
+-
+     new-instance v10, Lcom/android/server/media/SystemMediaRoute2Provider$$ExternalSyntheticLambda2;
+ 
+     invoke-direct {v10, p0}, Lcom/android/server/media/SystemMediaRoute2Provider$$ExternalSyntheticLambda2;-><init>(Lcom/android/server/media/SystemMediaRoute2Provider;)V
+@@ -235,14 +193,35 @@
+     :cond_4
+     move-object v9, v0
+ 
+-    if-eqz v8, :cond_5
++    const/4 v0, 0x0
+ 
+-    if-eqz v9, :cond_5
++    if-eqz v8, :onigiri_controller_capability
++
++    if-eqz v9, :onigiri_controller_capability
+ 
+     invoke-static {}, Lcom/android/media/flags/Flags;->enableAudioPoliciesDeviceAndBluetoothController()Z
+ 
+     move-result v0
+ 
++    :onigiri_controller_capability
++    if-eqz v9, :cond_1
++
++    if-nez v0, :cond_1
++
++    new-instance v3, Lcom/android/server/media/LegacyBluetoothRouteController;
++
++    invoke-direct {v3, p1, v9, v10}, Lcom/android/server/media/LegacyBluetoothRouteController;-><init>(Landroid/content/Context;Landroid/bluetooth/BluetoothAdapter;Lcom/android/server/media/SystemMediaRoute2Provider$$ExternalSyntheticLambda2;)V
++
++    goto :goto_1
++
++    :cond_1
++    new-instance v3, Lcom/android/server/media/BluetoothRouteController$NoOpBluetoothRouteController;
++
++    invoke-direct {v3}, Ljava/lang/Object;-><init>()V
++
++    :goto_1
++    iput-object v3, p0, Lcom/android/server/media/SystemMediaRoute2Provider;->mBluetoothRouteController:Lcom/android/server/media/BluetoothRouteController;
++
+     if-eqz v0, :cond_5
+ 
+     new-instance p2, Lcom/android/server/media/AudioManagerRouteController;
+@@ -376,9 +355,9 @@
+     goto :goto_0
+ 
+     :cond_1
+-    invoke-static {}, Lcom/android/media/flags/Flags;->enableAudioPoliciesDeviceAndBluetoothController()Z
++    iget-object v2, p0, Lcom/android/server/media/SystemMediaRoute2Provider;->mDeviceRouteController:Lcom/android/server/media/DeviceRouteController;
+ 
+-    move-result v2
++    instance-of v2, v2, Lcom/android/server/media/AudioManagerRouteController;
+ 
+     if-eqz v2, :cond_3
+ 
+@@ -1118,12 +1097,10 @@
+ 
+     invoke-direct {v0}, Landroid/media/MediaRoute2ProviderInfo$Builder;-><init>()V
+ 
+-    invoke-static {}, Lcom/android/media/flags/Flags;->enableAudioPoliciesDeviceAndBluetoothController()Z
+-
+-    move-result v1
+-
+     iget-object v2, p0, Lcom/android/server/media/SystemMediaRoute2Provider;->mDeviceRouteController:Lcom/android/server/media/DeviceRouteController;
+ 
++    instance-of v1, v2, Lcom/android/server/media/AudioManagerRouteController;
++
+     if-eqz v1, :cond_1
+ 
+     invoke-interface {v2}, Lcom/android/server/media/DeviceRouteController;->getAvailableRoutes()Ljava/util/List;
+@@ -1354,9 +1331,9 @@
+ 
+     invoke-virtual {v4, v7}, Landroid/media/RoutingSessionInfo$Builder;->addSelectedRoute(Ljava/lang/String;)Landroid/media/RoutingSessionInfo$Builder;
+ 
+-    invoke-static {}, Lcom/android/media/flags/Flags;->enableAudioPoliciesDeviceAndBluetoothController()Z
++    iget-object v7, p0, Lcom/android/server/media/SystemMediaRoute2Provider;->mDeviceRouteController:Lcom/android/server/media/DeviceRouteController;
+ 
+-    move-result v7
++    instance-of v7, v7, Lcom/android/server/media/AudioManagerRouteController;
+ 
+     if-eqz v7, :cond_3
+ 

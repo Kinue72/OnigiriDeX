@@ -1,0 +1,247 @@
+Subject: [PATCH] Keep primary cover Quick Settings within native side insets
+
+diff --git a/smali_classes2/com/android/systemui/shade/NotificationsQuickSettingsContainer.smali b/smali_classes2/com/android/systemui/shade/NotificationsQuickSettingsContainer.smali
+--- a/smali_classes2/com/android/systemui/shade/NotificationsQuickSettingsContainer.smali
++++ b/smali_classes2/com/android/systemui/shade/NotificationsQuickSettingsContainer.smali
+@@ -12,6 +12,14 @@
+ 
+ 
+ # instance fields
++.field public mCoverSideInsetsApplied:Z
++
++.field public mNativeGravity:I
++
++.field public mNativeLeftMargin:I
++
++.field public mNativeRightMargin:I
++
+ .field public final mBoundingBoxRect:Landroid/graphics/Rect;
+ 
+ .field public mConfigurationChangedListener:Ljava/util/function/Consumer;
+@@ -251,11 +259,137 @@
+ .end method
+ 
+ .method public final onApplyWindowInsets(Landroid/view/WindowInsets;)Landroid/view/WindowInsets;
+-    .locals 0
+-
+-    iget-object p0, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mInsetsChangedListener:Ljava/util/function/Consumer;
+-
+-    invoke-interface {p0, p1}, Ljava/util/function/Consumer;->accept(Ljava/lang/Object;)V
++    .locals 7
++
++    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-static {v0}, Lcom/android/systemui/navigationbar/NavigationBarView;->isPrimaryCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :onigiri_restore_native_sides
++
++    invoke-virtual {p0}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
++
++    move-result-object v0
++
++    check-cast v0, Landroid/widget/FrameLayout$LayoutParams;
++
++    iget-boolean v1, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mCoverSideInsetsApplied:Z
++
++    if-nez v1, :onigiri_cover_insets
++
++    iget v1, v0, Landroid/widget/FrameLayout$LayoutParams;->leftMargin:I
++
++    iput v1, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mNativeLeftMargin:I
++
++    iget v1, v0, Landroid/widget/FrameLayout$LayoutParams;->rightMargin:I
++
++    iput v1, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mNativeRightMargin:I
++
++    iget v1, v0, Landroid/widget/FrameLayout$LayoutParams;->gravity:I
++
++    iput v1, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mNativeGravity:I
++
++    const/4 v1, 0x1
++
++    iput-boolean v1, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mCoverSideInsetsApplied:Z
++
++    :onigiri_cover_insets
++    # Side margins require physical LEFT alignment, preserving other gravity bits.
++    iget v6, v0, Landroid/widget/FrameLayout$LayoutParams;->gravity:I
++
++    const v1, -0x800008
++
++    and-int/2addr v6, v1
++
++    or-int/lit8 v6, v6, 0x3
++
++    invoke-virtual {p0}, Landroid/view/View;->getRootWindowInsets()Landroid/view/WindowInsets;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Landroid/view/WindowInsets;->getDisplayCutout()Landroid/view/DisplayCutout;
++
++    move-result-object v1
++
++    new-instance v2, Lcom/android/systemui/statusbar/NotificationInsetsImpl;
++
++    invoke-direct {v2}, Lcom/android/systemui/statusbar/NotificationInsetsImpl;-><init>()V
++
++    invoke-virtual {v2, p1, v1}, Lcom/android/systemui/statusbar/NotificationInsetsImpl;->getinsets(Landroid/view/WindowInsets;Landroid/view/DisplayCutout;)Landroid/util/Pair;
++
++    move-result-object v1
++
++    iget-object v2, v1, Landroid/util/Pair;->first:Ljava/lang/Object;
++
++    check-cast v2, Ljava/lang/Number;
++
++    invoke-virtual {v2}, Ljava/lang/Number;->intValue()I
++
++    move-result v2
++
++    iget-object v3, v1, Landroid/util/Pair;->second:Ljava/lang/Object;
++
++    check-cast v3, Ljava/lang/Number;
++
++    invoke-virtual {v3}, Ljava/lang/Number;->intValue()I
++
++    move-result v3
++
++    goto :onigiri_apply_sides
++
++    :onigiri_restore_native_sides
++    iget-boolean v0, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mCoverSideInsetsApplied:Z
++
++    if-eqz v0, :onigiri_native_insets
++
++    invoke-virtual {p0}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
++
++    move-result-object v0
++
++    check-cast v0, Landroid/widget/FrameLayout$LayoutParams;
++
++    iget v2, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mNativeLeftMargin:I
++
++    iget v3, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mNativeRightMargin:I
++
++    iget v6, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mNativeGravity:I
++
++    const/4 v1, 0x0
++
++    iput-boolean v1, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mCoverSideInsetsApplied:Z
++
++    :onigiri_apply_sides
++    iget v1, v0, Landroid/widget/FrameLayout$LayoutParams;->gravity:I
++
++    if-ne v1, v6, :onigiri_update_sides
++
++    iget v1, v0, Landroid/widget/FrameLayout$LayoutParams;->leftMargin:I
++
++    if-ne v1, v2, :onigiri_update_sides
++
++    iget v1, v0, Landroid/widget/FrameLayout$LayoutParams;->rightMargin:I
++
++    if-eq v1, v3, :onigiri_native_insets
++
++    :onigiri_update_sides
++    iput v6, v0, Landroid/widget/FrameLayout$LayoutParams;->gravity:I
++
++    iget v4, v0, Landroid/view/ViewGroup$MarginLayoutParams;->topMargin:I
++
++    iget v5, v0, Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I
++
++    invoke-virtual {v0, v2, v4, v3, v5}, Landroid/view/ViewGroup$MarginLayoutParams;->setMargins(IIII)V
++
++    invoke-virtual {p0}, Landroid/view/View;->requestLayout()V
++
++    :onigiri_native_insets
++    iget-object v0, p0, Lcom/android/systemui/shade/NotificationsQuickSettingsContainer;->mInsetsChangedListener:Ljava/util/function/Consumer;
++
++    invoke-interface {v0, p1}, Ljava/util/function/Consumer;->accept(Ljava/lang/Object;)V
+ 
+     return-object p1
+ .end method
+diff --git a/smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceFoldPicker.smali b/smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceFoldPicker.smali
+--- a/smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceFoldPicker.smali
++++ b/smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceFoldPicker.smali
+@@ -323,7 +323,79 @@
+ .end method
+ 
+ .method public final getPanelWidth(Landroid/content/Context;)I
+-    .locals 3
++    .locals 4
++
++    invoke-static {p1}, Lcom/android/systemui/navigationbar/NavigationBarView;->isPrimaryCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :onigiri_native_width
++
++    const-class v0, Landroid/view/WindowManager;
++
++    invoke-virtual {p1, v0}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++
++    move-result-object v0
++
++    check-cast v0, Landroid/view/WindowManager;
++
++    invoke-interface {v0}, Landroid/view/WindowManager;->getCurrentWindowMetrics()Landroid/view/WindowMetrics;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/view/WindowMetrics;->getBounds()Landroid/graphics/Rect;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Landroid/graphics/Rect;->width()I
++
++    move-result v1
++
++    invoke-virtual {v0}, Landroid/view/WindowMetrics;->getWindowInsets()Landroid/view/WindowInsets;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/view/WindowInsets;->getDisplayCutout()Landroid/view/DisplayCutout;
++
++    move-result-object v2
++
++    new-instance v3, Lcom/android/systemui/statusbar/NotificationInsetsImpl;
++
++    invoke-direct {v3}, Lcom/android/systemui/statusbar/NotificationInsetsImpl;-><init>()V
++
++    invoke-virtual {v3, v0, v2}, Lcom/android/systemui/statusbar/NotificationInsetsImpl;->getinsets(Landroid/view/WindowInsets;Landroid/view/DisplayCutout;)Landroid/util/Pair;
++
++    move-result-object v0
++
++    iget-object v2, v0, Landroid/util/Pair;->first:Ljava/lang/Object;
++
++    check-cast v2, Ljava/lang/Number;
++
++    invoke-virtual {v2}, Ljava/lang/Number;->intValue()I
++
++    move-result v2
++
++    sub-int/2addr v1, v2
++
++    iget-object v0, v0, Landroid/util/Pair;->second:Ljava/lang/Object;
++
++    check-cast v0, Ljava/lang/Number;
++
++    invoke-virtual {v0}, Ljava/lang/Number;->intValue()I
++
++    move-result v0
++
++    sub-int/2addr v1, v0
++
++    const/4 v0, 0x0
++
++    invoke-static {v0, v1}, Ljava/lang/Math;->max(II)I
++
++    move-result v0
++
++    return v0
++
++    :onigiri_native_width
+ 
+     new-instance v0, Lkotlin/Pair;
+ 

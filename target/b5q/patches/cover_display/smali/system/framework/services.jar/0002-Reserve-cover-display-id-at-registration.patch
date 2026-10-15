@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Onigiri <build@onigiri.invalid>
+Subject: [PATCH] Reserve physical panel IDs before logical display registration
+
+--- a/smali/com/android/server/display/LogicalDisplayMapper.smali
++++ b/smali/com/android/server/display/LogicalDisplayMapper.smali
+@@ -4,6 +4,46 @@
+ .method public final createNewLogicalDisplayLocked(Lcom/android/server/display/DisplayDevice;I)Lcom/android/server/display/LogicalDisplay;
+     .locals 7
+ 
++    if-eqz p1, :onigiri_display_id_ready
++
++    invoke-virtual {p1}, Lcom/android/server/display/DisplayDevice;->getDisplayDeviceInfoLocked()Lcom/android/server/display/DisplayDeviceInfo;
++
++    move-result-object v0
++
++    iget v1, v0, Lcom/android/server/display/DisplayDeviceInfo;->type:I
++
++    const/4 v2, 0x1
++
++    if-ne v1, v2, :onigiri_display_id_ready
++
++    iget-object v0, v0, Lcom/android/server/display/DisplayDeviceInfo;->address:Landroid/view/DisplayAddress;
++
++    instance-of v1, v0, Landroid/view/DisplayAddress$Physical;
++
++    if-eqz v1, :onigiri_display_id_ready
++
++    check-cast v0, Landroid/view/DisplayAddress$Physical;
++
++    invoke-virtual {v0}, Landroid/view/DisplayAddress$Physical;->getPort()I
++
++    move-result v0
++
++    const/16 v1, 0x84
++
++    if-ne v0, v1, :onigiri_check_inner_id
++
++    const/4 p2, 0x0
++
++    goto :onigiri_display_id_ready
++
++    :onigiri_check_inner_id
++    const/16 v1, 0x83
++
++    if-ne v0, v1, :onigiri_display_id_ready
++
++    const/4 p2, 0x1
++
++    :onigiri_display_id_ready
+     new-instance v6, Lcom/android/server/display/LogicalDisplay;
+ 
+     iget-object v0, p0, Lcom/android/server/display/LogicalDisplayMapper;->mFlags:Lcom/android/server/display/feature/DisplayManagerFlags;

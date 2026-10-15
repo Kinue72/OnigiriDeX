@@ -1,0 +1,39 @@
+Subject: [PATCH] Keep quick tile padding and detail panels consistent on the cover
+
+diff --git a/smali_classes2/com/android/systemui/qs/SecHeaderTileLayout.smali b/smali_classes2/com/android/systemui/qs/SecHeaderTileLayout.smali
+--- a/smali_classes2/com/android/systemui/qs/SecHeaderTileLayout.smali
++++ b/smali_classes2/com/android/systemui/qs/SecHeaderTileLayout.smali
+@@ -800,7 +800,9 @@
+ 
+     iget-object v2, p0, Lcom/android/systemui/qs/SecHeaderTileLayout;->mContext:Landroid/content/Context;
+ 
+-    iget v3, p0, Lcom/android/systemui/qs/SecHeaderTileLayout;->mOrientation:I
++    invoke-static {v2}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v3
+ 
+     invoke-virtual {v0, v3, v2}, Lcom/android/systemui/qs/SecQSPanelResourcePicker;->getQQSPanelStartEndPadding(ILandroid/content/Context;)I
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/SecQSDetailController.smali b/smali_classes2/com/android/systemui/qs/SecQSDetailController.smali
+--- a/smali_classes2/com/android/systemui/qs/SecQSDetailController.smali
++++ b/smali_classes2/com/android/systemui/qs/SecQSDetailController.smali
+@@ -1009,15 +1009,13 @@
+ .method public final isPortrait()Z
+     .locals 1
+ 
+-    invoke-virtual {p0}, Lcom/android/systemui/util/ViewController;->getResources()Landroid/content/res/Resources;
++    invoke-virtual {p0}, Lcom/android/systemui/util/ViewController;->getContext()Landroid/content/Context;
+ 
+     move-result-object p0
+ 
+-    invoke-virtual {p0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object p0
+-
+-    iget p0, p0, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p0
+ 
+     const/4 v0, 0x1
+ 

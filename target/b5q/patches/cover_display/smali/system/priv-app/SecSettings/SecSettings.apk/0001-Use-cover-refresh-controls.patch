@@ -1,0 +1,237 @@
+From: Onigiri
+Subject: [PATCH] Use the supported 60 Hz cover configuration in Settings
+
+diff --git a/smali_classes4/com/samsung/android/settings/display/SecDisplayUtils.smali b/smali_classes4/com/samsung/android/settings/display/SecDisplayUtils.smali
+--- a/smali_classes4/com/samsung/android/settings/display/SecDisplayUtils.smali
++++ b/smali_classes4/com/samsung/android/settings/display/SecDisplayUtils.smali
+@@ -1538,202 +1538,39 @@
+ .end method
+ 
+ .method public static getHighRefreshRateDefaultValue(Landroid/content/Context;I)I
+-    .locals 5
+-
+-    invoke-static {p0, p1}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getHighRefreshRateSeamlessType(Landroid/content/Context;I)I
+-
+-    move-result p1
+-
+-    const/4 v0, 0x0
+-
+-    if-nez p1, :cond_0
+-
+-    return v0
+-
+-    :cond_0
+-    const-string v1, "120"
+-
+-    invoke-static {v1}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
+-
+-    move-result v1
+-
+-    const/16 v2, 0x3c
+-
+-    const/4 v3, 0x1
+-
+-    const/4 v4, 0x2
+-
+-    if-ne p1, v3, :cond_2
+-
+-    if-gt v1, v2, :cond_1
+-
+-    invoke-static {}, Lcom/samsung/android/settings/Rune;->isLDUModel()Z
+-
+-    move-result p1
+-
+-    if-nez p1, :cond_1
+-
+-    invoke-static {p0}, Lcom/samsung/android/settings/Rune;->isShopDemo(Landroid/content/Context;)Z
+-
+-    move-result p0
+-
+-    if-eqz p0, :cond_5
+-
+-    :cond_1
+-    return v4
+-
+-    :cond_2
+-    if-eq p1, v4, :cond_3
+-
+-    const/4 p0, 0x3
+-
+-    if-eq p1, p0, :cond_3
+-
+-    const/4 p0, 0x4
+-
+-    if-ne p1, p0, :cond_5
+-
+-    :cond_3
+-    if-le v1, v2, :cond_5
+-
+-    invoke-static {}, Landroid/os/FactoryTest;->isFactoryBinary()Z
+-
+-    move-result p0
+-
+-    if-nez p0, :cond_4
+-
+-    return v3
+-
+-    :cond_4
+-    return v4
+-
+-    :cond_5
+-    return v0
+-.end method
+-
+-.method public static getHighRefreshRateMaxValue(Landroid/content/Context;)I
+-    .locals 5
+-
+-    const/16 v0, 0x3e7
+-
+-    invoke-static {p0, v0}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getHighRefreshRateSupportedValues(Landroid/content/Context;I)[Ljava/lang/String;
+-
+-    move-result-object p0
+-
+-    array-length v0, p0
+-
+-    const/high16 v1, -0x80000000
+-
+-    const/4 v2, 0x0
+-
+-    :goto_0
+-    if-ge v2, v0, :cond_1
+-
+-    aget-object v3, p0, v2
+-
+-    invoke-virtual {v3}, Ljava/lang/String;->isEmpty()Z
+-
+-    move-result v4
+-
+-    if-nez v4, :cond_0
+-
+-    invoke-static {v3}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
+-
+-    move-result v3
+-
+-    invoke-static {v1, v3}, Ljava/lang/Math;->max(II)I
+-
+-    move-result v1
+-
+-    :cond_0
+-    add-int/lit8 v2, v2, 0x1
+-
+-    goto :goto_0
+-
+-    :cond_1
+-    return v1
+-.end method
+-
+-.method public static getHighRefreshRateSeamlessType(Landroid/content/Context;I)I
+-    .locals 1
+-
+-    const/4 v0, 0x1
+-
+-    if-eq p1, v0, :cond_1
+-
+-    const/16 v0, 0x3e7
+-
+-    if-eq p1, v0, :cond_0
+-
+-    const-string p0, "3"
+-
+-    invoke-static {p0}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
+-
+-    move-result p0
+-
+-    return p0
+-
+-    :cond_0
+-    invoke-static {p0}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getDualDisplayStatus(Landroid/content/Context;)I
+-
+-    move-result p1
+-
+-    invoke-static {p0, p1}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getHighRefreshRateSeamlessType(Landroid/content/Context;I)I
+-
+-    move-result p0
+-
+-    return p0
+-
+-    :cond_1
+-    const-string p0, "2"
+-
+-    invoke-static {p0}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
+-
+-    move-result p0
++    .locals 0
++
++    const/4 p0, 0x0
+ 
+     return p0
+ .end method
+ 
++.method public static getHighRefreshRateMaxValue(Landroid/content/Context;)I
++    .locals 0
++
++    const/16 p0, 0x3c
++
++    return p0
++.end method
++
++.method public static getHighRefreshRateSeamlessType(Landroid/content/Context;I)I
++    .locals 0
++
++    const/4 p0, 0x0
++
++    return p0
++.end method
++
+ .method public static getHighRefreshRateSupportedValues(Landroid/content/Context;I)[Ljava/lang/String;
+-    .locals 2
+-
+-    const/4 v0, 0x1
+-
+-    const-string v1, ","
+-
+-    if-eq p1, v0, :cond_1
+-
+-    const/16 v0, 0x3e7
+-
+-    if-eq p1, v0, :cond_0
+-
+-    const-string p0, "24,10,30,48,60,96,120"
+-
+-    invoke-virtual {p0, v1}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
+-
+-    move-result-object p0
+-
+-    return-object p0
+-
+-    :cond_0
+-    invoke-static {p0}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getDualDisplayStatus(Landroid/content/Context;)I
+-
+-    move-result p1
+-
+-    invoke-static {p0, p1}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getHighRefreshRateSupportedValues(Landroid/content/Context;I)[Ljava/lang/String;
+-
+-    move-result-object p0
+-
+-    return-object p0
+-
+-    :cond_1
+-    const-string p0, "24,30,48,60,96,120"
+-
+-    invoke-virtual {p0, v1}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
+-
+-    move-result-object p0
+-
+-    return-object p0
++    .locals 1
++
++    const-string v0, "60"
++
++    filled-new-array {v0}, [Ljava/lang/String;
++
++    move-result-object v0
++
++    return-object v0
+ .end method
+ 
+ .method public static getIntRefreshRate(Landroid/content/Context;I)I

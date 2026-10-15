@@ -1,0 +1,157 @@
+Subject: [PATCH] Share compact cover policy with tile lists and panel animation
+
+diff --git a/smali_classes2/com/android/systemui/qs/QSTileHost.smali b/smali_classes2/com/android/systemui/qs/QSTileHost.smali
+--- a/smali_classes2/com/android/systemui/qs/QSTileHost.smali
++++ b/smali_classes2/com/android/systemui/qs/QSTileHost.smali
+@@ -361,15 +361,9 @@
+     return-void
+ 
+     :cond_0
+-    invoke-virtual/range {p1 .. p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v1
+-
+-    invoke-virtual {v1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v1
+-
+-    iget v1, v1, Landroid/content/res/Configuration;->orientation:I
++    invoke-static/range {p1 .. p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v1
+ 
+     invoke-virtual {v0, v1, v8}, Lcom/android/systemui/qs/SecQSPanelResourcePicker;->getTopBarTileList(ILandroid/content/Context;)Ljava/lang/String;
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/animator/QsExpandAnimator.smali b/smali_classes2/com/android/systemui/qs/animator/QsExpandAnimator.smali
+--- a/smali_classes2/com/android/systemui/qs/animator/QsExpandAnimator.smali
++++ b/smali_classes2/com/android/systemui/qs/animator/QsExpandAnimator.smali
+@@ -1673,7 +1673,11 @@
+ 
+     move-result-object v6
+ 
+-    iget v12, v6, Landroid/content/res/Configuration;->orientation:I
++    iget-object v12, v0, Lcom/android/systemui/qs/animator/QsExpandAnimator;->mContext:Landroid/content/Context;
++
++    invoke-static {v12}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v12
+ 
+     if-ne v12, v3, :cond_5
+ 
+@@ -1731,11 +1735,11 @@
+ 
+     if-nez v6, :cond_9
+ 
+-    invoke-virtual {v5}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v6
+-
+-    iget v6, v6, Landroid/content/res/Configuration;->orientation:I
++    iget-object v6, v0, Lcom/android/systemui/qs/animator/QsExpandAnimator;->mContext:Landroid/content/Context;
++
++    invoke-static {v6}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v6
+ 
+     if-ne v6, v1, :cond_9
+ 
+@@ -2371,11 +2375,11 @@
+ 
+     iput-object v1, v6, Lcom/android/systemui/qs/animator/QsExpandAnimator;->mHeaderBarAnimator:Lcom/android/systemui/qs/TouchAnimator;
+ 
+-    invoke-virtual {v5}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v1
+-
+-    iget v1, v1, Landroid/content/res/Configuration;->orientation:I
++    iget-object v1, v6, Lcom/android/systemui/qs/animator/QsExpandAnimator;->mContext:Landroid/content/Context;
++
++    invoke-static {v1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v1
+ 
+     const/4 v3, 0x2
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/animator/PanelAffordanceAnimator$configurationListener$1.smali b/smali_classes2/com/android/systemui/qs/animator/PanelAffordanceAnimator$configurationListener$1.smali
+--- a/smali_classes2/com/android/systemui/qs/animator/PanelAffordanceAnimator$configurationListener$1.smali
++++ b/smali_classes2/com/android/systemui/qs/animator/PanelAffordanceAnimator$configurationListener$1.smali
+@@ -32,7 +32,11 @@
+ 
+     iget v0, p0, Lcom/android/systemui/qs/animator/PanelAffordanceAnimator;->lastOrientation:I
+ 
+-    iget v1, p1, Landroid/content/res/Configuration;->orientation:I
++    iget-object v1, p0, Lcom/android/systemui/qs/animator/PanelAffordanceAnimator;->context:Landroid/content/Context;
++
++    invoke-static {v1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v1
+ 
+     const-string v2, "onConfigChange lastOrientation = "
+ 
+@@ -62,7 +66,11 @@
+ 
+     iget v0, p0, Lcom/android/systemui/qs/animator/PanelAffordanceAnimator;->lastOrientation:I
+ 
+-    iget v1, p1, Landroid/content/res/Configuration;->orientation:I
++    iget-object v1, p0, Lcom/android/systemui/qs/animator/PanelAffordanceAnimator;->context:Landroid/content/Context;
++
++    invoke-static {v1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v1
+ 
+     if-ne v0, v1, :cond_0
+ 
+@@ -83,7 +91,11 @@
+ 
+     iput v0, p0, Lcom/android/systemui/qs/animator/PanelAffordanceAnimator;->lastDensityDpi:I
+ 
+-    iget v0, p1, Landroid/content/res/Configuration;->orientation:I
++    iget-object v0, p0, Lcom/android/systemui/qs/animator/PanelAffordanceAnimator;->context:Landroid/content/Context;
++
++    invoke-static {v0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v0
+ 
+     iput v0, p0, Lcom/android/systemui/qs/animator/PanelAffordanceAnimator;->lastOrientation:I
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController.smali b/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController.smali
+--- a/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController.smali
++++ b/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController.smali
+@@ -444,15 +444,13 @@
+ 
+     if-eqz v2, :cond_0
+ 
+-    invoke-virtual {v0}, Landroid/view/View;->getResources()Landroid/content/res/Resources;
++    invoke-virtual {v0}, Landroid/view/View;->getContext()Landroid/content/Context;
+ 
+     move-result-object v2
+ 
+-    invoke-virtual {v2}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v2
+-
+-    iget v2, v2, Landroid/content/res/Configuration;->orientation:I
++    invoke-static {v2}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result v2
+ 
+     const/4 v3, 0x2
+ 
+diff --git a/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController$onViewAttached$1.smali b/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController$onViewAttached$1.smali
+--- a/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController$onViewAttached$1.smali
++++ b/smali_classes2/com/android/systemui/qs/customize/viewcontroller/QSCMainViewController$onViewAttached$1.smali
+@@ -30,7 +30,13 @@
+ 
+     iget v0, p0, Lcom/android/systemui/qs/customize/viewcontroller/QSCMainViewController;->mCurrentOrientation:I
+ 
+-    iget p1, p1, Landroid/content/res/Configuration;->orientation:I
++    invoke-virtual {p0}, Lcom/android/systemui/util/ViewController;->getContext()Landroid/content/Context;
++
++    move-result-object p1
++
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->getPanelOrientation(Landroid/content/Context;)I
++
++    move-result p1
+ 
+     if-eq v0, p1, :cond_3
+ 

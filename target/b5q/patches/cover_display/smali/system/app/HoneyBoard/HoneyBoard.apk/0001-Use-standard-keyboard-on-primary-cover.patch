@@ -1,0 +1,43 @@
+Subject: [PATCH] Use the native standard keyboard on the primary cover
+
+diff --git a/smali_classes2/ck/l.smali b/smali_classes2/ck/l.smali
+--- a/smali_classes2/ck/l.smali
++++ b/smali_classes2/ck/l.smali
+@@ -9146,6 +9146,36 @@
+ .method public final T1()Z
+-    .locals 1
++    .locals 2
++
++    # The promoted cover cannot fit the donor's default split keyboard.
++    invoke-direct {p0}, Lck/l;->o()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/Context;->getDisplayId()I
++
++    move-result v1
++
++    if-nez v1, :native_cover_policy
++
++    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
++
++    move-result-object v0
++
++    iget v0, v0, Landroid/content/res/Configuration;->semDisplayDeviceType:I
++
++    const/4 v1, 0x5
++
++    if-ne v0, v1, :native_cover_policy
++
++    const/4 v0, 0x1
++
++    return v0
+ 
++    :native_cover_policy
+     sget-boolean v0, Lvj/a;->h6:Z
+ 
+     if-eqz v0, :cond_0
