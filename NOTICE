@@ -1,0 +1,30 @@
+Onigiri derives from ArtisanROM and the UN1CA build system.
+Upstream: https://github.com/ArtisanROM/ArtisanROM
+Base revision: 490567057890aa3d5b14693f9dfeadfc6cd69300
+Original code is licensed under GPL-3.0-or-later. See LICENSE.
+Original copyright notices retained below; external dependencies retain their own notices.
+
+buildenv.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/apktool.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/print_modules_info.sh: Copyright (C) 2023 Salvo Giangreco
+scripts/make_rom.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/unsign_bin.sh: Copyright (C) 2023 Salvo Giangreco
+scripts/download_fw.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/build_fs_image.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/extract_fw.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/cleanup.sh: Copyright (C) 2023 Salvo Giangreco
+scripts/utils/build_utils.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/utils/firmware_utils.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/utils/module_utils.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/utils/common_utils.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/utils/log_utils.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/internal/build_flashable_zip.sh: Copyright (C) 2023 Salvo Giangreco
+scripts/internal/apply_modules.sh: Copyright (C) 2023 Salvo Giangreco
+scripts/internal/gen_config_file.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/internal/create_work_dir.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/internal/update_prebuilt_blobs.sh: Copyright (C) 2023 Salvo Giangreco
+onigiri/debloat.sh: Copyright (C) 2025 Salvo Giangreco
+onigiri/configs/version.sh: Copyright (C) 2025 Salvo Giangreco
+onigiri/configs/qssi.sh: Copyright (C) 2025 Salvo Giangreco
+onigiri/configs/essi.sh: Copyright (C) 2025 Salvo Giangreco
+external/make.sh: Copyright (C) 2025 Salvo Giangreco

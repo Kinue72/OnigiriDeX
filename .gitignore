@@ -1,0 +1,15 @@
+out/
+
+security/onigiri_platform.x509.pem
+security/onigiri_platform.pk8
+
+!.gitattributes
+!.gitignore
+!.gitmodules
+
+firmware/
+__pycache__/
+*.pyc
+*.log
+.superpowers/
+/security/.signing.*/

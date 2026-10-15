@@ -1,0 +1,18 @@
+{
+  "target": {
+    "model": "SM-F731B",
+    "csc": "XXV",
+    "version": "F731BXXS5EYI1/F731BOXM5EYD9/F731BXXS5EYI1",
+    "md5": "e3ef1e549d42be28552c4ec057da5e4f",
+    "device": "b5q",
+    "sdk": 35
+  },
+  "donor": {
+    "model": "SM-F946B",
+    "csc": "XXV",
+    "version": "F946BXXS5EYI1/F946BOXM5EYD9/F946BXXS5EYI1",
+    "md5": "173145377f741b2aa64e568d550373fd",
+    "device": "q5q",
+    "sdk": 35
+  }
+}

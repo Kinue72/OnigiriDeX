@@ -1,0 +1,21 @@
+* text eol=lf
+
+
+*.apk binary
+*.apex binary
+*.bin binary
+*.so binary
+*.jar binary
+*.pk8 binary
+*.ogg binary
+*.ico binary
+*.jpg binary
+*.png binary
+*.qmg binary
+*.webp binary
+# Patches preserve upstream formatting.
+*.patch whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab
+
+prebuilts/bootable/deprecated-ota/updater binary
+prebuilts/*/*/*/** binary
+onigiri/mods/pif/system/bin/rezetprop binary

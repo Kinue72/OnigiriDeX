@@ -1,0 +1,1176 @@
+{
+  "source": "https://github.com/salvogiangri/UN1CA",
+  "branch": "fifteen",
+  "commit": "c2fcd66df3d9f846df02cdb50299c9f2135a63ee",
+  "feature_modules": 13,
+  "software_assets": [
+    {
+      "path": "prebuilts/samsung/e1qzcx/.current",
+      "git_blob": "aab6a37c262b795cfbeb443db50c5ea61353f807",
+      "bytes": 41
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/file_context-system",
+      "git_blob": "6610e81ed2ea657f123a2858c0f787615aaf746d",
+      "bytes": 20567
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/fs_config-system",
+      "git_blob": "047d75586552e748ad4f43b3e05af4c997457554",
+      "bytes": 19819
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/etc/permissions/privapp-permissions-com.samsung.android.applock.xml",
+      "git_blob": "51db64dd39e50f0eed45a2ead3bace53d75d9048",
+      "bytes": 879
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/etc/permissions/privapp-permissions-com.samsung.android.sead.xml",
+      "git_blob": "cf43810d798d43d9518f7c946ad30bcff1bc6d9b",
+      "bytes": 1074
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/etc/permissions/privapp-permissions-com.samsung.android.sm.devicesecurity.tcm_v6.xml",
+      "git_blob": "7fa7f1e6a625309e8fb46dbd977d18990d15fa8b",
+      "bytes": 827
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/etc/permissions/privapp-permissions-com.samsung.android.sm_cn.xml",
+      "git_blob": "b8c824ef899515a3704587010019b189f46ffa63",
+      "bytes": 3636
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/etc/permissions/privapp-permissions-com.samsung.android.wallpaper.live.xml",
+      "git_blob": "06944971209c4ecfe8bc5396b340c7618b9c6b48",
+      "bytes": 687
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/etc/ringtones_count_list.txt",
+      "git_blob": "38f6c3819fd2cfdf617379390db38c7d4f312e97",
+      "bytes": 4160
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/hidden/INTERNAL_SDCARD/Music/Samsung/Over_the_Horizon.m4a",
+      "git_blob": "bc7c53e9a3235f01334aab78053412e2941efc8e",
+      "bytes": 20145407
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Calm/ACH_Bells.ogg",
+      "git_blob": "f47d5e825c03be9fcf5d793caebfa0d8f2402e79",
+      "bytes": 55513
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Calm/ACH_Conclusion.ogg",
+      "git_blob": "24a06461bc239601f3538e7b5d84a8ce8a37eb24",
+      "bytes": 47358
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Calm/ACH_Crystal.ogg",
+      "git_blob": "bec6da6797149a12d622237988704a054ad9cd37",
+      "bytes": 64979
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Calm/ACH_Evening.ogg",
+      "git_blob": "4251c634482ea1f8a2796e2406f31ca8ac6ffab0",
+      "bytes": 77551
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Calm/ACH_Guitar.ogg",
+      "git_blob": "8eedb7308ff70b8bee5c5b81a06b70735a09461d",
+      "bytes": 44386
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Calm/ACH_Harp.ogg",
+      "git_blob": "8a3863ce03d7a69d8ab28e6d3b51274286c6be9a",
+      "bytes": 39828
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Calm/ACH_Hop.ogg",
+      "git_blob": "4ea485e3061f9d361d8c069b91772a06e04c2a01",
+      "bytes": 25249
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Calm/ACH_Lucid.ogg",
+      "git_blob": "e7058f0bb16ffeba65e38ecaf448322d68964180",
+      "bytes": 49496
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Calm/ACH_Masterpiece.ogg",
+      "git_blob": "5ff2309676bd2316b047f1fea31382d67a4cf36b",
+      "bytes": 50157
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Calm/ACH_New_World.ogg",
+      "git_blob": "b76c1559327b17276bd23ab6049fbf7b71dbd894",
+      "bytes": 65034
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Fun/ACH_Banjo.ogg",
+      "git_blob": "cf04f00fe3feead932a1518a38959695fe166092",
+      "bytes": 28564
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Fun/ACH_Comic.ogg",
+      "git_blob": "e1ffa34e724cb1a2bd351f16a3c90ef533e584a2",
+      "bytes": 33497
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Fun/ACH_Concertina.ogg",
+      "git_blob": "cced1102881cd55e6e66e47da40d273c028f644d",
+      "bytes": 33430
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Fun/ACH_Funny_Whistle.ogg",
+      "git_blob": "4a16a9fd7417776774f60534d65fafab86b0058c",
+      "bytes": 22228
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Fun/ACH_Harmonica.ogg",
+      "git_blob": "6710703c697ffb402178f54888d90d0b6521fb70",
+      "bytes": 15307
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Fun/ACH_Owl.ogg",
+      "git_blob": "603597883a92f8bd553b8c5ed01e79ef087fe127",
+      "bytes": 17080
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Fun/ACH_Recorder.ogg",
+      "git_blob": "e06334acb4cc54d5fb6444eb54aa112607077dfb",
+      "bytes": 26421
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Fun/ACH_Robot.ogg",
+      "git_blob": "7c8fcb0ce39044fefa4c32a1643b360cb9973da0",
+      "bytes": 52900
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Fun/ACH_Squeeze.ogg",
+      "git_blob": "2e8a451706436f4d49f74755700df2b3fab7ee5f",
+      "bytes": 16625
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Fun/ACH_Toy_Bell.ogg",
+      "git_blob": "f38948cef6f11f47c6b2e80c9f5a3c9d844baea1",
+      "bytes": 20246
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_8-bit_Bounce.ogg",
+      "git_blob": "650dcdcbe8af081dd90416f7ba9796c223b2fe14",
+      "bytes": 25664
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Alien.ogg",
+      "git_blob": "5d232b6c01bb82bc5e0eb23382fda1192d62ff0c",
+      "bytes": 20690
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Alpha.ogg",
+      "git_blob": "b0b86d83494df5ef926ddffa9ceff83f12f854be",
+      "bytes": 23374
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Aurora.ogg",
+      "git_blob": "3fcddad76390639f4d875bb446a5f4014b8bc4e7",
+      "bytes": 56500
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Beep_Once.ogg",
+      "git_blob": "196f93438583f668379ee053146b9f1e18ac2010",
+      "bytes": 35409
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Cassiopeia.ogg",
+      "git_blob": "08d4a5ae6c56c00ff25268716a8dbd546e501835",
+      "bytes": 56856
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Chaos.ogg",
+      "git_blob": "6ec61fa185bb6a1387ad4d0315b4946ade828790",
+      "bytes": 12790
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Contact.ogg",
+      "git_blob": "4356a43fd0253705cf89d62ebcfaf5a4bc6f6dec",
+      "bytes": 19642
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Cosmic_Radio.ogg",
+      "git_blob": "7c1082c981944f481843c2fcacf9bd01dd6a122c",
+      "bytes": 24432
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Crescent.ogg",
+      "git_blob": "50fad79d8e4e9b9ebb8373ab8adc9bde263efe8c",
+      "bytes": 37405
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Glitter.ogg",
+      "git_blob": "ac42f5eee278ec7ffc8abc2d9b534226713d402e",
+      "bytes": 26352
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Luna.ogg",
+      "git_blob": "2681f72f8e6c4ca2757bce0fbbd0eae7bf4195f2",
+      "bytes": 39562
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Meteor.ogg",
+      "git_blob": "cbe374182b16dd7ff7e1e9a23126a4761eef5bff",
+      "bytes": 29852
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Milky_Way.ogg",
+      "git_blob": "509584014bb313f89b609f0bf07dea0fdeeb23a6",
+      "bytes": 29920
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Nebula.ogg",
+      "git_blob": "0cfac45059aaac35ad97fc16fd40a4e908dd147a",
+      "bytes": 37563
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Orion.ogg",
+      "git_blob": "62226eb70aa3f89d4c224a6d4ee7c7672548b060",
+      "bytes": 23963
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Prism.ogg",
+      "git_blob": "29888af18a8689bbed4c9163dc13ee8fee57077a",
+      "bytes": 11637
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Pulse_Beam.ogg",
+      "git_blob": "54aed22073782ffdce76e3517c3a041863b11b35",
+      "bytes": 19269
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Red_Dwarf.ogg",
+      "git_blob": "eb1c298f9d352e83192d4467094602929a74dc14",
+      "bytes": 14530
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Signal.ogg",
+      "git_blob": "4c59cd623d3a1a31bc54bff9ba8be95d4c4579ba",
+      "bytes": 22321
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Spaceline.ogg",
+      "git_blob": "2afd2643bf91474d86741c58bc53b5be54fe4e5a",
+      "bytes": 29773
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Sticky.ogg",
+      "git_blob": "567db7560f2247f24e3f3bec8ad5a578ac7d5602",
+      "bytes": 40584
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Telegraph.ogg",
+      "git_blob": "1622253ec8c9aa82efc2f089d6e64745c6968c2f",
+      "bytes": 11744
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Transmitter.ogg",
+      "git_blob": "a337c8a602a14375786cd43399e317930ef697da",
+      "bytes": 22999
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Galaxy/ACH_Voyager.ogg",
+      "git_blob": "786759dd44ac9606866ee8f1dc34282c2addc6ec",
+      "bytes": 18499
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Retro/ACH_80s_Toms.ogg",
+      "git_blob": "bb93b166279eb46d4f02724327f1595f43baa9c9",
+      "bytes": 18370
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Retro/ACH_Clavinet.ogg",
+      "git_blob": "96e406d5e6a58cf47aba8b9224f831a04ab22c2d",
+      "bytes": 51280
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Retro/ACH_Clue.ogg",
+      "git_blob": "5f01f17add046b5adf75198045612a8599d46fd4",
+      "bytes": 27876
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Retro/ACH_Coin.ogg",
+      "git_blob": "8a3104a17171636044e47114495da32f82f313c0",
+      "bytes": 30555
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Retro/ACH_Disco_Toms.ogg",
+      "git_blob": "40993f65b204b453d05d0350bba55541fc9ad41f",
+      "bytes": 41820
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Retro/ACH_Game.ogg",
+      "git_blob": "6c79589774965db36a6d7451b22a6d7b15c07e50",
+      "bytes": 15269
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Retro/ACH_Hit.ogg",
+      "git_blob": "861dd57d0ede3ce26abb3b412bb7b87e70d2eaab",
+      "bytes": 15121
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Retro/ACH_Old_Camera.ogg",
+      "git_blob": "a3f48a81916fef59b39203e894ebf51577af503e",
+      "bytes": 19771
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Retro/ACH_Retro_Synth.ogg",
+      "git_blob": "dc44d608e734b6a225e83ca7ac0b01f7fa2b0bcc",
+      "bytes": 50691
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/notifications/SoundTheme/Retro/ACH_Synth_Brass.ogg",
+      "git_blob": "1b28114aca55184f0f0377377bc4e0653e3406b2",
+      "bytes": 71120
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Angels_Feather.ogg",
+      "git_blob": "02f93c245a137794cabaf2d40279ed5ce4da9773",
+      "bytes": 568782
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Bach_Siciliano.ogg",
+      "git_blob": "af4b3c7166161926347e25a10aeb07516c807cfe",
+      "bytes": 590442
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Breezy_Dream.ogg",
+      "git_blob": "203cc521dc66a614c0e851b92bc9c8d79e97c5fc",
+      "bytes": 601785
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Cascade.ogg",
+      "git_blob": "624002b035b3265fd9fdb49e0c905e4d36b6af4d",
+      "bytes": 378381
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Crystal_Echo.ogg",
+      "git_blob": "f3b1041e9f8a3b306beee9f4972747865684f79f",
+      "bytes": 109097
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Dvorak_Songs_My_Mother_Taught_Me.ogg",
+      "git_blob": "12c5b06f418a94f938c2a382c9f5aa2f5632ce93",
+      "bytes": 749246
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Erik_Satie_Gymnopedie.ogg",
+      "git_blob": "3e2fbe5966a1968bd3bad266323c55b8ea525a4e",
+      "bytes": 756470
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Fall_Stroll.ogg",
+      "git_blob": "4f325be1c0512a88ff7eee89aec908d554570976",
+      "bytes": 465131
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Morning_Strum.ogg",
+      "git_blob": "755f39e79fb115accacd999788084d6590de7741",
+      "bytes": 275606
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Mozart_Sonata.ogg",
+      "git_blob": "13088ed602daf58cfba204bce78b109c86f7ca76",
+      "bytes": 651194
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Schumann_Piano_Quartet.ogg",
+      "git_blob": "adf552d70d52c2b3d919c0ab5c39199c2ba11409",
+      "bytes": 702053
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Sunrise.ogg",
+      "git_blob": "0ce1d69da9e21c4bb92b06a54ce953accfc30e92",
+      "bytes": 566420
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Calm/ACH_Walk_Home.ogg",
+      "git_blob": "9dcef6ccbead31956d9325ffea1035fce5c1ccec",
+      "bytes": 629529
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Fun/ACH_Baby_Waltz.ogg",
+      "git_blob": "2de21ca9eaf71f630b63bda444eb0171259cc054",
+      "bytes": 343932
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Fun/ACH_Calling_You.ogg",
+      "git_blob": "95c3f6f3e01c5c3c7f50b7347c9148ffc56a7669",
+      "bytes": 23625
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Fun/ACH_Carnival.ogg",
+      "git_blob": "15c5e7b250738a6b1c7f92abdbff9c0064bbe269",
+      "bytes": 362973
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Fun/ACH_Circus.ogg",
+      "git_blob": "6bcb98f46b27ea1f032e68d419560ebf40ad029d",
+      "bytes": 270814
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Fun/ACH_Fun_House.ogg",
+      "git_blob": "367e2d557d61b54030e3649ecc554f3b3f7ef4c0",
+      "bytes": 396799
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Fun/ACH_Jam_Jam.ogg",
+      "git_blob": "505485bc3092be865599f736d6a92049a7a7f02b",
+      "bytes": 231108
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Fun/ACH_Kindergarten.ogg",
+      "git_blob": "45d6ef1132748016efc72f9abac803d83d8c5dbe",
+      "bytes": 247935
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Fun/ACH_Lalala.ogg",
+      "git_blob": "b5d013f967a1e7ee08471d2eb2cf93f6722055c9",
+      "bytes": 268711
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Fun/ACH_Pulse.ogg",
+      "git_blob": "acfa05230063b24b055ccb1c72b22953f8c6e8cd",
+      "bytes": 92468
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Fun/ACH_Raucous.ogg",
+      "git_blob": "818095c4a32b8172d441fd7496bda25fb85b93c7",
+      "bytes": 195980
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Asteroid.ogg",
+      "git_blob": "645a5410173782503359848c7a9bb6b66d26471f",
+      "bytes": 118963
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Atomic_Bell.ogg",
+      "git_blob": "a2caeabad67fe1d0b0b02ada51c3aab24b510005",
+      "bytes": 73521
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Beep-Beep.ogg",
+      "git_blob": "e6f7825afc34e11f37d6587fadb3fb3f6196cf05",
+      "bytes": 36324
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Beep_Once.ogg",
+      "git_blob": "a2d120d53fbb208fc8f12f9a6860e39fed64cba0",
+      "bytes": 35089
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Chime_Time.ogg",
+      "git_blob": "db0b85fff371a7ce563a33d85fbc5b007ea90f20",
+      "bytes": 221146
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Comet.ogg",
+      "git_blob": "495a01eec076affd374013ab1faeb5497ff5e606",
+      "bytes": 732491
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Cosmos.ogg",
+      "git_blob": "383ffbec1dc348e8d322f1695d1a8a68b6c9c2b1",
+      "bytes": 165626
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Finding_Galaxy.ogg",
+      "git_blob": "d80fe09fd2b64f77130bfc05cd977d8dfb3e1ed3",
+      "bytes": 236884
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Galaxy_Bells.ogg",
+      "git_blob": "9800365679ad610c6a1664657286e5f87bfdda27",
+      "bytes": 515953
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Homecoming.ogg",
+      "git_blob": "e6f5a0b197b07e8aadf99789afc8f21ac613ab73",
+      "bytes": 288319
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Moon_Discovery.ogg",
+      "git_blob": "83270cb67dce60480d4895e297227dc887601a00",
+      "bytes": 485539
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Neptune.ogg",
+      "git_blob": "cd6376a23c1cf8d98f4f7aa2449321a26a89b361",
+      "bytes": 331854
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Orbit.ogg",
+      "git_blob": "41545428335ace398e970f273dbba02ecfbac7f3",
+      "bytes": 108511
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Outer_Bell.ogg",
+      "git_blob": "b4ca22c6a9320f5bdf37f43059004076c2265a18",
+      "bytes": 36602
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Over_the_Horizon_2022_produced_by_SUGA_of_BTS.ogg",
+      "git_blob": "b3455be4116b34512e0bf16187c2fde2585e087d",
+      "bytes": 1091577
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Over_the_Horizon_2024.ogg",
+      "git_blob": "6337a522a4532ee0631afd5aad911c17c1401af0",
+      "bytes": 3113153
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Over_the_Horizon_by_SUGA_of_BTS.ogg",
+      "git_blob": "d0b67ff49fa667341880996272b94845b0d99626",
+      "bytes": 1109709
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Planet.ogg",
+      "git_blob": "4c8a2c2fcdcb33bc6a2cf2f1b9e8d23259464e6d",
+      "bytes": 387562
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Pluto.ogg",
+      "git_blob": "f0c2b4bc9b01c2e672df54b3931752865f1ab5d6",
+      "bytes": 268750
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Polaris.ogg",
+      "git_blob": "e26cd2abc65a9be471a1ea9d45a38e492c64ce26",
+      "bytes": 345053
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Puddles.ogg",
+      "git_blob": "79f13cbf11cdd7365d688945c77596f37c28ab0c",
+      "bytes": 283745
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Quantum_Bell.ogg",
+      "git_blob": "8f0801f37f444864866a4cf4c4db478968fb47e5",
+      "bytes": 138236
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Satellite.ogg",
+      "git_blob": "00a2db4100f221475236826914369adb8610e854",
+      "bytes": 479955
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Shooting_Star.ogg",
+      "git_blob": "dd770887e7df090fb775112bc7d7d892071080ed",
+      "bytes": 385474
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Sky_High.ogg",
+      "git_blob": "ad3334d0d2f3e895e8273fa9af51eecca872a349",
+      "bytes": 576039
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Space_Bell.ogg",
+      "git_blob": "41c5391166795a23e0fb60e0b8670f6d67c1f884",
+      "bytes": 101511
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Sunlight.ogg",
+      "git_blob": "5dbf50022f9bdae24f40cc179024c8eb045524ed",
+      "bytes": 588293
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Synth_Bell.ogg",
+      "git_blob": "bcaadc4a4756af14835014fa0c074ce8d166453b",
+      "bytes": 255801
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Galaxy/ACH_Universe_Bell.ogg",
+      "git_blob": "2d92232d6c007e1cd1bad21a310b2e2f8fb983d3",
+      "bytes": 55211
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Retro/ACH_80s_Phone.ogg",
+      "git_blob": "d044ac7d7e9e79b6d2874644352c0cb45cfbeba2",
+      "bytes": 33399
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Retro/ACH_Arcade.ogg",
+      "git_blob": "2cff09cf7be4ced79e1871b6a220cc6b8c7e1d95",
+      "bytes": 271214
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Retro/ACH_Dance.ogg",
+      "git_blob": "01e92cf021cc9b91f82652b5498af143999eb62f",
+      "bytes": 402887
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Retro/ACH_Feels_Good.ogg",
+      "git_blob": "5c00e4771bcdd2b78c0f2d861aa8a1731f85d274",
+      "bytes": 370947
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Retro/ACH_Humoresque.ogg",
+      "git_blob": "ac0b3a058c16a8927cf7612fdcfe9ba040c64b22",
+      "bytes": 449556
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Retro/ACH_Joyful_Steps.ogg",
+      "git_blob": "7eec9274212a10d737202a7ef82308a0aed5f783",
+      "bytes": 376157
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Retro/ACH_Neon.ogg",
+      "git_blob": "4845da3cb478b16a04aeab95ee753e147c5f58a9",
+      "bytes": 576774
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Retro/ACH_Retro_Love.ogg",
+      "git_blob": "2d7e045626d41630fd82cefa8c419652e985744e",
+      "bytes": 484820
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Retro/ACH_Roller_Disco.ogg",
+      "git_blob": "9a24ebae8beaeb3c82287db0832687d6e0ae2cc3",
+      "bytes": 377988
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ringtones/SoundTheme/Retro/ACH_Single_Tone.ogg",
+      "git_blob": "9fff570e1a40cd091dabb192c2d181e6dd6e22c9",
+      "bytes": 54591
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Air_Command_Hover_Focus.ogg",
+      "git_blob": "310715e1acc37d38fad6a35fcbd6105208b91dcf",
+      "bytes": 4636
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Alert_on_call.ogg",
+      "git_blob": "f88045ba73aba699e12bc9e1ee27fb3f05452f05",
+      "bytes": 15135
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Bixby_BOS.ogg",
+      "git_blob": "7370cf4b970d0592a5634be829df0c3b67ede2ba",
+      "bytes": 7392
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Call_Connect.ogg",
+      "git_blob": "8709803ea3568d62ae7e3e922a4f197278bc4755",
+      "bytes": 10097
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Cam_Start.ogg",
+      "git_blob": "480ff7de55edd7fdcf2dd052a42c8d6563c0e1c0",
+      "bytes": 12077
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Cam_Stop.ogg",
+      "git_blob": "266caa16edf07255be3cfca6c40b58dcff5cdbc4",
+      "bytes": 12845
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/ChargingStarted.ogg",
+      "git_blob": "e5042936c7bae5d790a6d55fa7de006dd8f78db6",
+      "bytes": 14691
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/ChargingStarted_Calm.ogg",
+      "git_blob": "f9137efa96b66a8ff4f8fbab611cbe0688610713",
+      "bytes": 19687
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/ChargingStarted_Fast.ogg",
+      "git_blob": "0a2064b115b3ab16b7fdc31b24f4b621f4160b66",
+      "bytes": 56688
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/ChargingStarted_Fast_Calm.ogg",
+      "git_blob": "c660ad11db545d901ccdf1e95b615c632d922fd8",
+      "bytes": 65087
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/ChargingStarted_Fast_Fun.ogg",
+      "git_blob": "f343a71dc5846cc5aa3a81f7c6fad6e3a275f049",
+      "bytes": 55302
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/ChargingStarted_Fast_Retro.ogg",
+      "git_blob": "dd184cd0576133fa8d687b6ef7970b545a18e967",
+      "bytes": 61068
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/ChargingStarted_Fun.ogg",
+      "git_blob": "579e188a96bb021e1d94ead78ea4b3ca2104b19a",
+      "bytes": 24588
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/ChargingStarted_Retro.ogg",
+      "git_blob": "a2a44620240fc68f73324924d1e1ca08e3478716",
+      "bytes": 18534
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Detach.ogg",
+      "git_blob": "3bdadacf043fbd6a179d4477b66d9e1ef8da9701",
+      "bytes": 5661
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Dial_Calm.ogg",
+      "git_blob": "6be66d96d1886d4b4fdc1661a2adf16c58f67fb7",
+      "bytes": 15868
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Dial_Fun.ogg",
+      "git_blob": "5f1254665417f39c491a527c6d0aa4c686a8e0b7",
+      "bytes": 11138
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Dial_Retro.ogg",
+      "git_blob": "4a3e97db0d094fdd1035d1faea680cf5213a3b7e",
+      "bytes": 11474
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Dialer_new.ogg",
+      "git_blob": "782e71491a173c1cbe745cb65d71839bdf9901dc",
+      "bytes": 6773
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Effect_Tick.ogg",
+      "git_blob": "c899a7de2e3db1e0ad137f35fc5842ecc45d91fe",
+      "bytes": 3994
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Gather_Drop.ogg",
+      "git_blob": "ddffe297dd2cde2ef8bf93c46707ec4bbd79183e",
+      "bytes": 13495
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/HoverPointer.ogg",
+      "git_blob": "67a76f3adb4b52991a2f06f98a05d3bd9046e945",
+      "bytes": 6728
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/InCallNotification.ogg",
+      "git_blob": "4481ccb25614687c02f091e80722c363dcb61a4d",
+      "bytes": 6275
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/KeypressDelete.ogg",
+      "git_blob": "738f6aea72f713cafb4decbdecb32fb55da418e4",
+      "bytes": 6193
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/KeypressInvalid_1.ogg",
+      "git_blob": "b140d2b15d4ce8556bd7d4d5d507ec4748ea8f63",
+      "bytes": 6824
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/KeypressReturn.ogg",
+      "git_blob": "6c807b0114ffebec1205dc772f71ca055ca2b5c2",
+      "bytes": 7972
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/KeypressSpacebar.ogg",
+      "git_blob": "b59c8ce4904da7d9123a9090006c140c6864c860",
+      "bytes": 7392
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/KeypressStandard.ogg",
+      "git_blob": "a465cf8f9aa735e0502fe3f720707f2f8addaff2",
+      "bytes": 5194
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Lock.ogg",
+      "git_blob": "6ca7b2c16679eab1db6749fd70ab747d97681aa5",
+      "bytes": 5097
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/LowBattery.ogg",
+      "git_blob": "21f99ee19d1774f9db116b6cf315c841cbbf0dca",
+      "bytes": 19392
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/LowBattery_Calm.ogg",
+      "git_blob": "41bc1586bab0d70f126d45461acdadc1f4476887",
+      "bytes": 36878
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/LowBattery_Fun.ogg",
+      "git_blob": "68b1e4c183b6f6d2cd46eb743738c36cf2110bef",
+      "bytes": 17473
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/LowBattery_Retro.ogg",
+      "git_blob": "f0aed0e766f3be8e2d973d51bee037e72423d3cc",
+      "bytes": 16218
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/MMS.ogg",
+      "git_blob": "8e5f6551e3ec1a58430731d6a4bae6749ef3b69d",
+      "bytes": 13051
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Media_preview_Over_the_horizon.ogg",
+      "git_blob": "7242f3993b1600784ddc1266c71d274084cb63e7",
+      "bytes": 954441
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Multi_window_Floating_buttons.ogg",
+      "git_blob": "fdaf22f7e6c727e657b343145934497217d69b8a",
+      "bytes": 5795
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/No_Key.ogg",
+      "git_blob": "2b3f6dc1e9d1728d719d1a580aeac9a79c307ea3",
+      "bytes": 7654
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Pen_att_noti1.ogg",
+      "git_blob": "709f31e496792616d034a5f68a7573cf3762cceb",
+      "bytes": 9587
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Pen_det_alert.ogg",
+      "git_blob": "177b3b7b41fb4d26700a1a4c92971907f8142c7f",
+      "bytes": 19293
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Pen_det_noti1.ogg",
+      "git_blob": "c586ad31bb3626799331d4dd9f36a3fb09b64f2e",
+      "bytes": 20771
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/SIP_Modifier.ogg",
+      "git_blob": "6718566350d1bbfb94fc78a3ce35d0175f7d851c",
+      "bytes": 9264
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/SIP_Modifier_Calm.ogg",
+      "git_blob": "4e500984a26064ad65ed80bf53570760058616bb",
+      "bytes": 10111
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/SIP_Modifier_Fun.ogg",
+      "git_blob": "1d3eb8a9783f3a836604ee89f78bd490b820b2a3",
+      "bytes": 8368
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/SIP_Modifier_Retro.ogg",
+      "git_blob": "401aca692bcb8ab95346c7991364a2606403fac6",
+      "bytes": 14314
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_Beam_end.ogg",
+      "git_blob": "64b8ab13d4e4c7573c569b18ba8133cfa9499d20",
+      "bytes": 11242
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_Beam_error.ogg",
+      "git_blob": "5ad41e216c1caa05bab178ac66e5c06e79e31538",
+      "bytes": 12070
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_Beam_start.ogg",
+      "git_blob": "c41a247405d12522fdef162c80c401f12e5cb8a8",
+      "bytes": 13673
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_HW_Touch.ogg",
+      "git_blob": "c3d64b2454e4d281a1330940b7f08bf660afecce",
+      "bytes": 5505
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_HW_Touch_Calm.ogg",
+      "git_blob": "0096363a5cc983c0df450427427ba001390f779a",
+      "bytes": 5675
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_HW_Touch_Fun.ogg",
+      "git_blob": "cb9074536cf97e2e463f59cc745bd10f9bdcbfd1",
+      "bytes": 7041
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_HW_Touch_Retro.ogg",
+      "git_blob": "993359e2a0c4db2876a517ca6d3795f4adc59050",
+      "bytes": 13856
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_SIP_Backspace.ogg",
+      "git_blob": "7455f5d9885465febca12e28675efbf957a32a0a",
+      "bytes": 7248
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_SIP_Backspace_Calm.ogg",
+      "git_blob": "499fbf69d7ba174bb7d534941c80fb17e52d7643",
+      "bytes": 5156
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_SIP_Backspace_Fun.ogg",
+      "git_blob": "836a70acf011d391326aea2f952af90d2e7606fe",
+      "bytes": 8484
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/S_SIP_Backspace_Retro.ogg",
+      "git_blob": "74970dd0690cf85d1e6a71d3848b13931fcceecf",
+      "bytes": 12663
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Screen_Capture.ogg",
+      "git_blob": "4ca01ae679199b78fee1e314952baf9b1da38cde",
+      "bytes": 7227
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Shutter.ogg",
+      "git_blob": "663011cb10ab3dc34b8ada566533d76921e20d03",
+      "bytes": 8703
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/SideSync_Connected.ogg",
+      "git_blob": "a87084be4080301746705a47f9b9e1f0874f5062",
+      "bytes": 9207
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Battery_caution.ogg",
+      "git_blob": "87cfe7b6b4d7d2381e6486dc3af95b8799d93ab7",
+      "bytes": 15785
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Battery_swelling_warning.ogg",
+      "git_blob": "36a28e6a7b4dc06c8f84ae5df824ea466e4152d3",
+      "bytes": 6124
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Call_Disconnect.ogg",
+      "git_blob": "406a0cc5fe51165a41a8cf15410add4f5daf2d66",
+      "bytes": 10825
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_SIP.ogg",
+      "git_blob": "08cb29db77652be5e02ee0886355d7e5d94d3942",
+      "bytes": 7530
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_SIP_Calm.ogg",
+      "git_blob": "45895f0f41f8669c9b3ed516469221c57cc99c12",
+      "bytes": 9445
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_SIP_Fun.ogg",
+      "git_blob": "ef70e0d16b0ff67aede5e3624ba6be1107c525f3",
+      "bytes": 6462
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_SIP_Retro.ogg",
+      "git_blob": "5c32461f13b6960f02fa608ab3bc6910a2b04b52",
+      "bytes": 12224
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Silent_mode_off.ogg",
+      "git_blob": "4220304e4a4aa8ed670c461148251eb381d9a5d8",
+      "bytes": 9207
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Silent_mode_off_Calm.ogg",
+      "git_blob": "ecbaaf27e2b20949996c7ffa50c17fb2c80dfd57",
+      "bytes": 53746
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Silent_mode_off_Fun.ogg",
+      "git_blob": "22bdb5ca0b43a980cc6acee719139a64ac4726cb",
+      "bytes": 50075
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Silent_mode_off_Retro.ogg",
+      "git_blob": "32e283de77efad87202ee4fe1f8963d73fd57349",
+      "bytes": 12040
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Touch.ogg",
+      "git_blob": "0d5edcb23061e61c799d06b7a0c307519c50a0fa",
+      "bytes": 5542
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Touch_Calm.ogg",
+      "git_blob": "210255fe23c460a08fc93c40fa685ac6d937cca6",
+      "bytes": 5673
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Touch_Fun.ogg",
+      "git_blob": "e331aaccb158c08f9ed8bd401836b9bde1704eec",
+      "bytes": 7041
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Touch_Retro.ogg",
+      "git_blob": "927321005a9c937558d28ba1f4777f2ebd16728b",
+      "bytes": 13854
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Volume_control.ogg",
+      "git_blob": "9bf6f2ce0822ed993d93027cb21e2e1dc18e7af0",
+      "bytes": 23529
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Volume_control_Calm.ogg",
+      "git_blob": "d22caf50b313a953687d5f30112199303e65072f",
+      "bytes": 24557
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Volume_control_Fun.ogg",
+      "git_blob": "0cb8058cb41a159b68f0330dfeddbdfe6cd179cc",
+      "bytes": 8993
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TW_Volume_control_Retro.ogg",
+      "git_blob": "4efae7a0fdd3085c941bd9bdd1380a9d93175f11",
+      "bytes": 6878
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/TextSelection.ogg",
+      "git_blob": "6b359c5ca856db22d495e0e91cae7c43f414141b",
+      "bytes": 7244
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Timepicker_scroll.ogg",
+      "git_blob": "3097824c55bedbde076bd7465329b0fd90c4a205",
+      "bytes": 5561
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Unlock.ogg",
+      "git_blob": "dc4c7d8f6867a699daba3186dcc1a9432140fdaf",
+      "bytes": 6640
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Unlock_VA_Mode.ogg",
+      "git_blob": "1bb71b0b1a26feace8b772d2e0f95508d10e421a",
+      "bytes": 9535
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/VIB_Vibration_Call.ogg",
+      "git_blob": "3eae2f4380ae9ac2608221103c9277fb1ae9022c",
+      "bytes": 19256
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/VideoRecord.ogg",
+      "git_blob": "480ff7de55edd7fdcf2dd052a42c8d6563c0e1c0",
+      "bytes": 12077
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/VideoStop.ogg",
+      "git_blob": "266caa16edf07255be3cfca6c40b58dcff5cdbc4",
+      "bytes": 12845
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/Water_Protection.ogg",
+      "git_blob": "ec0c874e4cd2de1c16cf2f814d23e3f20c31dc2f",
+      "bytes": 10874
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/WirelessChargingStarted.ogg",
+      "git_blob": "b8022c939c36cea04a53321c9c8e1c8beda11529",
+      "bytes": 19933
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/airbutton_close.ogg",
+      "git_blob": "3b9b913d6d113fbbaae8f2ed6f4d341b427bd27f",
+      "bytes": 6803
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/airbutton_open.ogg",
+      "git_blob": "345a330f8ff819a487326c0b77c961081d5c6f5e",
+      "bytes": 11109
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/camera_click.ogg",
+      "git_blob": "663011cb10ab3dc34b8ada566533d76921e20d03",
+      "bytes": 8703
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/camera_focus.ogg",
+      "git_blob": "0db2683ad5f46b2bf1d53b6bab5bc1c8dd95092c",
+      "bytes": 9376
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/picker_fast.ogg",
+      "git_blob": "b0cd466b1359f0cf706776885b1b4a45e5fba032",
+      "bytes": 5959
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/picker_slow.ogg",
+      "git_blob": "fb467408942944a0257b6194e743d2379ef5c95c",
+      "bytes": 5933
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/simple_ripple_down.ogg",
+      "git_blob": "42a201eecba8f34e24dadc65225ca40c26d374d9",
+      "bytes": 11571
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/media/audio/ui/simple_ripple_up.ogg",
+      "git_blob": "d7054f2064fe4f173bec0ecc0aa3b2408294fc9b",
+      "bytes": 20394
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/AppLock/AppLock.apk",
+      "git_blob": "48b706c53af8c14d2901238df95136a83b0b4d29",
+      "bytes": 1096713
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/EnvironmentAdaptiveDisplay/EnvironmentAdaptiveDisplay.apk",
+      "git_blob": "4d3b283a17493c5810b433817709b31580957860",
+      "bytes": 1959087
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/SmartManagerCN/SmartManagerCN.apk",
+      "git_blob": "81ffecd50c3d387981679ca9c1480558125c226b",
+      "bytes": 34945337
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/SmartManager_v6_DeviceSecurity_CN/SmartManager_v6_DeviceSecurity_CN.apk",
+      "git_blob": "2197675f8f2c6a7efcad43aa6777b150769586bc",
+      "bytes": 4235423
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/SpriteWallpaper/SpriteWallpaper.apk",
+      "git_blob": "52377d44b5dd291e17280b74f5dc96ea108d9868",
+      "bytes": 3755769
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/wallpaper-res/wallpaper-res.apk.00",
+      "git_blob": "19976258934df6f0b0628bad043875cea5b802fa",
+      "bytes": 52428800
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/wallpaper-res/wallpaper-res.apk.01",
+      "git_blob": "0b427fe0c559d5d95bbdf160ddab0df231e64547",
+      "bytes": 52428800
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/wallpaper-res/wallpaper-res.apk.02",
+      "git_blob": "790b7d1b2cf9f33d6945d5f7e97a692c084ca1ca",
+      "bytes": 52428800
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/wallpaper-res/wallpaper-res.apk.03",
+      "git_blob": "dbec8a1d13416543a7bd3116e6124c57b8b450e3",
+      "bytes": 52428800
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/wallpaper-res/wallpaper-res.apk.04",
+      "git_blob": "0114f6b3caf9e32c343c06d21ef80533c4bca5e3",
+      "bytes": 52428800
+    },
+    {
+      "path": "prebuilts/samsung/e1qzcx/system/priv-app/wallpaper-res/wallpaper-res.apk.05",
+      "git_blob": "8b1652877cbb8e0ad8e32236aa707079908528cc",
+      "bytes": 25776316
+    }
+  ],
+  "debloat_source": {
+    "git_blob": "9142c5d727b68ba85364df8b27d99babb9e4d66a",
+    "upstream_path": "unica/debloat.sh",
+    "adaptation": "Retain all donor text-to-speech voices for accessibility."
+  },
+  "excluded_features": [
+    "ROM OTA updater, feed, UI and recovery-ZIP delivery, at owner request"
+  ]
+}
