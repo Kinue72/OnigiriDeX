@@ -1,0 +1,18 @@
+[submodule "external/android-tools"]
+	path = external/android-tools
+	url = https://github.com/salvogiangri/android-tools.git
+[submodule "external/apktool"]
+	path = external/apktool
+	url = https://github.com/iBotPeaches/Apktool.git
+[submodule "external/erofs-utils"]
+	path = external/erofs-utils
+	url = https://github.com/sekaiacg/erofs-utils.git
+[submodule "external/samloader"]
+	path = external/samloader
+	url = https://github.com/ananjaser1211/samloader.git
+[submodule "external/signapk"]
+	path = external/signapk
+	url = https://github.com/salvogiangri/signapk.git
+[submodule "external/kernel"]
+	path = external/kernel
+	url = https://github.com/GoRhanHee/android_kernel_samsung_sm8550.git

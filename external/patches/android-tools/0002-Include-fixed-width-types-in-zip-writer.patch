@@ -1,0 +1,16 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Onigiri Build <build@onigiri.invalid>
+Date: Wed, 14 Oct 2026 07:30:00 +0700
+Subject: [PATCH] Include fixed-width integer types in zip writer
+
+---
+ include/ziparchive/zip_writer.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/ziparchive/zip_writer.h b/include/ziparchive/zip_writer.h
+--- a/include/ziparchive/zip_writer.h
++++ b/include/ziparchive/zip_writer.h
+@@ -19,2 +19,3 @@
++#include <stdint.h>
+ #include <cstdio>
+ #include <ctime>

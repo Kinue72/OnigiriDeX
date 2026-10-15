@@ -1,0 +1,188 @@
+From 378605e8b1d13f9cedc866f1d43ec5bd48de4268 Mon Sep 17 00:00:00 2001
+From: Kofua <1638183271zjn@gmail.com>
+Date: Sat, 30 Mar 2024 22:18:41 +0800
+Subject: [PATCH] feat: support aapt optimization
+
+---
+ .../src/main/java/brut/apktool/Main.java      | 27 ++++++++++++
+ .../src/main/java/brut/androlib/Config.java   | 37 ++++++++++++++++
+ .../java/brut/androlib/res/AaptInvoker.java   | 44 +++++++++++++++++++
+ 3 files changed, 108 insertions(+)
+
+diff --git a/brut.apktool/apktool-cli/src/main/java/brut/apktool/Main.java b/brut.apktool/apktool-cli/src/main/java/brut/apktool/Main.java
+index 68b1ccbf..7dad0339 100644
+--- a/brut.apktool/apktool-cli/src/main/java/brut/apktool/Main.java
++++ b/brut.apktool/apktool-cli/src/main/java/brut/apktool/Main.java
+@@ -159,6 +159,21 @@ public class Main {
+         .desc("Disable repacking of the built files into a new apk.")
+         .build();
+ 
++    private static final Option buildShortenResPathsOption = Option.builder("srp")
++        .longOpt("shorten-res-paths")
++        .desc("Shortens the paths of resources inside the APK.")
++        .build();
++
++    private static final Option buildEnableSparseEncodingOption = Option.builder("ese")
++        .longOpt("enable-sparse-encoding")
++        .desc("Enables encoding of sparse entries using a binary search tree. This option is useful for optimization of APK size but at the cost of resource retrieval performance.")
++        .build();
++
++    private static final Option buildCollapseResNamesOption = Option.builder("crn")
++        .longOpt("collapse-res-names")
++        .desc("Collapses resource names to a single value in the key string pool.")
++        .build();
++
+     private static final Option buildNoCrunchOption = Option.builder()
+         .longOpt("no-crunch")
+         .desc("Disable crunching of resource files during the build step.")
+@@ -264,6 +279,9 @@ public class Main {
+                 buildOptions.addOption(buildDebuggableOption);
+                 buildOptions.addOption(buildNetSecConfOption);
+                 buildOptions.addOption(buildNoApkOption);
++                buildOptions.addOption(buildShortenResPathsOption);
++                buildOptions.addOption(buildEnableSparseEncodingOption);
++                buildOptions.addOption(buildCollapseResNamesOption);
+                 buildOptions.addOption(buildNoCrunchOption);
+             }
+         }
+@@ -549,6 +567,15 @@ public class Main {
+         if (cli.hasOption(buildNoApkOption)) {
+             config.setNoApk(true);
+         }
++        if (cli.hasOption(buildShortenResPathsOption)) {
++            config.setShortenResPaths(true);
++        }
++        if (cli.hasOption(buildEnableSparseEncodingOption)) {
++            config.setEnableSparseEncoding(true);
++        }
++        if (cli.hasOption(buildCollapseResNamesOption)) {
++            config.setCollapseResNames(true);
++        }
+         if (cli.hasOption(buildNoCrunchOption)) {
+             config.setNoCrunch(true);
+         }
+diff --git a/brut.apktool/apktool-lib/src/main/java/brut/androlib/Config.java b/brut.apktool/apktool-lib/src/main/java/brut/androlib/Config.java
+index 63382424..f768c47a 100644
+--- a/brut.apktool/apktool-lib/src/main/java/brut/androlib/Config.java
++++ b/brut.apktool/apktool-lib/src/main/java/brut/androlib/Config.java
+@@ -49,6 +49,12 @@ public class Config {
+     private boolean mNetSecConf;
+     private String mAaptBinary;
+ 
++    // Optimize options, only supported by aapt2.
++    // see https://developer.android.com/tools/aapt2#optimize_options
++    private boolean mShortenResPaths;
++    private boolean mEnableSparseEncoding;
++    private boolean mCollapseResNames;
++
+     public Config(String version) {
+         mVersion = version;
+ 
+@@ -76,6 +82,10 @@ public class Config {
+         mDebuggable = false;
+         mNetSecConf = false;
+         mAaptBinary = null;
++
++        mShortenResPaths = false;
++        mEnableSparseEncoding = false;
++        mCollapseResNames = false;
+     }
+ 
+     public String getVersion() {
+@@ -243,4 +253,31 @@ public class Config {
+     public void setAaptBinary(String aaptBinary) {
+         mAaptBinary = aaptBinary;
+     }
++
++    // Optimize options, only supported by aapt2.
++    // see https://developer.android.com/tools/aapt2#optimize_options
++
++    public boolean isShortenResPaths() {
++        return mShortenResPaths;
++    }
++
++    public void setShortenResPaths(boolean shortenResPaths) {
++        mShortenResPaths = shortenResPaths;
++    }
++
++    public boolean isEnableSparseEncoding() {
++        return mEnableSparseEncoding;
++    }
++
++    public void setEnableSparseEncoding(boolean enableSparseEncoding) {
++        mEnableSparseEncoding = enableSparseEncoding;
++    }
++
++    public boolean isCollapseResNames() {
++        return mCollapseResNames;
++    }
++
++    public void setCollapseResNames(boolean collapseResNames) {
++        mCollapseResNames = collapseResNames;
++    }
+ }
+diff --git a/brut.apktool/apktool-lib/src/main/java/brut/androlib/res/AaptInvoker.java b/brut.apktool/apktool-lib/src/main/java/brut/androlib/res/AaptInvoker.java
+index 85892e71..3e76f11d 100644
+--- a/brut.apktool/apktool-lib/src/main/java/brut/androlib/res/AaptInvoker.java
++++ b/brut.apktool/apktool-lib/src/main/java/brut/androlib/res/AaptInvoker.java
+@@ -23,7 +23,11 @@ import brut.common.BrutException;
+ import brut.util.OS;
+ 
+ import java.io.File;
++import java.io.IOException;
++import java.nio.file.Files;
++import java.nio.file.Path;
+ import java.nio.file.Paths;
++import java.nio.file.StandardCopyOption;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Map;
+@@ -191,5 +195,45 @@ public class AaptInvoker {
+         } catch (BrutException ex) {
+             throw new AndrolibException(ex);
+         }
++
++        if (mConfig.isShortenResPaths() || mConfig.isEnableSparseEncoding() || mConfig.isCollapseResNames()) {
++            Path inputFilePath = new File(apkFile.getParent(), apkFile.getName() + ".tmp").toPath();
++            Path apkFilePath = apkFile.toPath();
++            try {
++                Files.copy(apkFilePath, inputFilePath, StandardCopyOption.REPLACE_EXISTING);
++                Files.delete(apkFilePath);
++            } catch (IOException e) {
++                throw new AndrolibException(e);
++            }
++
++            cmd = new ArrayList<>();
++            cmd.add(aaptPath);
++            cmd.add("optimize");
++
++            cmd.add("-o");
++            cmd.add(apkFilePath.toString());
++
++            if (mConfig.isShortenResPaths()) {
++                cmd.add("--shorten-resource-paths");
++            }
++
++            if (mConfig.isEnableSparseEncoding()) {
++                cmd.add("--enable-sparse-encoding");
++            }
++
++            if (mConfig.isCollapseResNames()) {
++                cmd.add("--collapse-resource-names");
++            }
++
++            cmd.add(inputFilePath.toString());
++
++            try {
++                OS.exec(cmd.toArray(new String[0]));
++                LOGGER.fine("aapt2 optimize command ran: ");
++                LOGGER.fine(cmd.toString());
++            } catch (BrutException ex) {
++                throw new AndrolibException(ex);
++            }
++        }
+     }
+ }
+-- 
+2.51.0
+
