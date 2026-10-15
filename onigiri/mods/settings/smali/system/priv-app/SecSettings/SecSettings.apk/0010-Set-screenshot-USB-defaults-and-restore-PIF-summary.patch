@@ -1,0 +1,114 @@
+From: Onigiri
+Subject: [PATCH] Set screenshot and USB defaults and restore the PIF version summary
+
+diff --git a/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali
+--- a/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali
++++ b/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali
+@@ -109,18 +109,18 @@
+ 
+     const-string v0, "onigiri_ss_detection"
+ 
+-    const/4 v1, 0x0
++    const/4 v1, 0x1
+ 
+     invoke-static {p0, v0, v1}, Landroid/provider/Settings$System;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
+ 
+     move-result p0
+ 
+-    if-ne p0, v1, :cond_0
++    if-eqz p0, :cond_0
+ 
+     goto :goto_0
+ 
+     :cond_0
+-    const/4 v1, 0x1
++    const/4 v1, 0x0
+ 
+     :goto_0
+     return v1
+diff --git a/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali
+--- a/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali
++++ b/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali
+@@ -113,7 +113,7 @@
+ 
+     const/4 v2, 0x0
+ 
+-    invoke-static {p0, v0, v2}, Landroid/provider/Settings$System;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
++    invoke-static {p0, v0, v1}, Landroid/provider/Settings$System;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
+ 
+     move-result p0
+ 
+diff --git a/smali_classes4/com/samsung/android/settings/security/BlockUsbConnectionsPreferenceController.smali b/smali_classes4/com/samsung/android/settings/security/BlockUsbConnectionsPreferenceController.smali
+--- a/smali_classes4/com/samsung/android/settings/security/BlockUsbConnectionsPreferenceController.smali
++++ b/smali_classes4/com/samsung/android/settings/security/BlockUsbConnectionsPreferenceController.smali
+@@ -101,18 +101,18 @@
+ 
+     const-string v0, "block_usb_lock"
+ 
+-    const/4 v1, 0x1
++    const/4 v1, 0x0
+ 
+     invoke-static {p0, v0, v1}, Landroid/provider/Settings$Secure;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
+ 
+     move-result p0
+ 
+-    if-eqz p0, :cond_0
++    if-nez p0, :cond_0
+ 
+     goto :goto_0
+ 
+     :cond_0
+-    const/4 v1, 0x0
++    const/4 v1, 0x1
+ 
+     :goto_0
+     return v1
+diff --git a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
+--- a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
++++ b/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
+@@ -92,6 +92,16 @@
+     return-object p0
+ .end method
+ 
++.method public getSummary()Ljava/lang/CharSequence;
++    .locals 0
++
++    invoke-static {}, Lio/mesalabs/onigiri/pif/PIFUtils;->getFormattedPIFVersion()Ljava/lang/CharSequence;
++
++    move-result-object p0
++
++    return-object p0
++.end method
++
+ .method public handlePreferenceTreeClick(Landroidx/preference/Preference;)Z
+     .locals 2
+ 
+diff --git a/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali
+--- a/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali
++++ b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali
+@@ -215,6 +215,12 @@
+ 
+     invoke-static {p0}, Lio/mesalabs/onigiri/pif/PIFUtils;->killGMS(Landroid/content/Context;)V
+ 
++    invoke-static {}, Lio/mesalabs/onigiri/pif/PIFUtils;->getFormattedPIFVersion()Ljava/lang/CharSequence;
++
++    move-result-object p0
++
++    invoke-virtual {p2, p0}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V
++
+     return-void
+ .end method
+ 
+diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
+--- a/res/xml/onigiri_settings.xml
++++ b/res/xml/onigiri_settings.xml
+@@ -4,7 +4,7 @@
+     <Preference android:title="@string/onigiri_rom_version_title" android:key="onigiri_rom_version" android:summary="@string/summary_placeholder" android:fragment="com.samsung.android.settings.deviceinfo.softwareinfo.SoftwareInfoSettings" settings:controller="io.mesalabs.onigiri.settings.ROMVersionPreferenceController" />
+     <Preference android:title="@string/onigiri_device_name_title" android:key="onigiri_device_name" android:summary="@string/summary_placeholder" settings:controller="io.mesalabs.onigiri.settings.DeviceNamePreferenceController" />
+     <SecPreferenceCategory android:title="@string/onigiri_patch_settings_title">
+-        <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" settings:controller="io.mesalabs.onigiri.settings.PIFVersionPreferenceController" />
++        <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" android:summary="@string/summary_placeholder" settings:controller="io.mesalabs.onigiri.settings.PIFVersionPreferenceController" />
+     </SecPreferenceCategory>
+     <SecPreferenceCategory android:title="@string/onigiri_ui_settings_title">
+         <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="io.mesalabs.onigiri.settings.SleepOnFoldPreferenceController" />
+

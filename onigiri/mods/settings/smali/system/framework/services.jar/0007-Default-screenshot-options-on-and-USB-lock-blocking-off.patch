@@ -1,0 +1,75 @@
+From: Onigiri
+Subject: [PATCH] Default screenshot options on and USB lock blocking off
+
+diff --git a/smali_classes2/com/android/server/wm/WindowState.smali b/smali_classes2/com/android/server/wm/WindowState.smali
+--- a/smali_classes2/com/android/server/wm/WindowState.smali
++++ b/smali_classes2/com/android/server/wm/WindowState.smali
+@@ -11404,7 +11404,7 @@
+ 
+     iget v5, p0, Lcom/android/server/wm/WindowState;->mShowUserId:I
+ 
+-    invoke-static {v3, v4, v1, v5}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
++    invoke-static {v3, v4, v2, v5}, Landroid/provider/Settings$System;->getIntForUser(Landroid/content/ContentResolver;Ljava/lang/String;II)I
+ 
+     move-result v3
+ 
+diff --git a/smali_classes2/com/android/server/wm/WindowManagerService.smali b/smali_classes2/com/android/server/wm/WindowManagerService.smali
+--- a/smali_classes2/com/android/server/wm/WindowManagerService.smali
++++ b/smali_classes2/com/android/server/wm/WindowManagerService.smali
+@@ -24039,7 +24039,7 @@
+ 
+     const-string v1, "onigiri_ss_detection"
+ 
+-    const/4 v3, 0x0
++    const/4 v3, 0x1
+ 
+     invoke-static {v0, v1, v3}, Landroid/provider/Settings$System;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
+ 
+diff --git a/smali_classes2/com/android/server/usb/UsbHostRestrictor.smali b/smali_classes2/com/android/server/usb/UsbHostRestrictor.smali
+--- a/smali_classes2/com/android/server/usb/UsbHostRestrictor.smali
++++ b/smali_classes2/com/android/server/usb/UsbHostRestrictor.smali
+@@ -33,7 +33,7 @@
+ 
+ .field public static mSecureKeyguardShowing:Z = true
+ 
+-.field public static mSettingBlockUsbLock:I = 0x1
++.field public static mSettingBlockUsbLock:I = 0x0
+ 
+ .field public static mStrAllowList:Ljava/lang/String; = ""
+ 
+diff --git a/smali_classes2/com/android/server/usb/UsbHostRestrictor$1.smali b/smali_classes2/com/android/server/usb/UsbHostRestrictor$1.smali
+--- a/smali_classes2/com/android/server/usb/UsbHostRestrictor$1.smali
++++ b/smali_classes2/com/android/server/usb/UsbHostRestrictor$1.smali
+@@ -23,7 +23,7 @@
+ 
+ # virtual methods
+ .method public final onChange(Z)V
+-    .locals 3
++    .locals 4
+ 
+     sget-object p1, Lcom/android/server/usb/UsbHostRestrictor;->mUsbRestrictLock:Ljava/lang/Object;
+ 
+@@ -42,7 +42,9 @@
+ 
+     const/4 v2, 0x1
+ 
+-    invoke-static {v0, v1, v2}, Landroid/provider/Settings$Secure;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
++    const/4 v3, 0x0
++
++    invoke-static {v0, v1, v3}, Landroid/provider/Settings$Secure;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
+ 
+     move-result v0
+ 
+diff --git a/smali_classes2/com/android/server/usb/UsbService$Lifecycle$$ExternalSyntheticLambda0.smali b/smali_classes2/com/android/server/usb/UsbService$Lifecycle$$ExternalSyntheticLambda0.smali
+--- a/smali_classes2/com/android/server/usb/UsbService$Lifecycle$$ExternalSyntheticLambda0.smali
++++ b/smali_classes2/com/android/server/usb/UsbService$Lifecycle$$ExternalSyntheticLambda0.smali
+@@ -376,7 +376,7 @@
+ 
+     const-string v3, "block_usb_lock"
+ 
+-    invoke-static {v1, v3, v4}, Landroid/provider/Settings$Secure;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
++    invoke-static {v1, v3, v2}, Landroid/provider/Settings$Secure;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
+ 
+     move-result v1
+ 
+
