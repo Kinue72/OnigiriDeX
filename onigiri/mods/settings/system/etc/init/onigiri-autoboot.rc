@@ -1,0 +1,17 @@
+# Charger mode cannot load /data/property; mirror the saved choice after normal boot.
+on property:ro.persistent_properties.ready=true && property:persist.sys.onigiri.autoboot=*
+    mkdir /cache/onigiri 0700 root root
+    write /cache/onigiri/autoboot ${persist.sys.onigiri.autoboot}
+    chmod 0600 /cache/onigiri/autoboot
+    restorecon_recursive /cache/onigiri
+
+# Samsung starts this class after mounting /cache in init.sec-charger.rc.
+service onigiri-autoboot /system/bin/sh /system/bin/onigiri-autoboot.sh
+    class sec-charger
+    user root
+    group root
+    seclabel u:r:lpm:s0
+    oneshot
+
+on property:sys.boot_from_charger_mode=1
+    stop onigiri-autoboot

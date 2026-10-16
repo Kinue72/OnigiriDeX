@@ -1,0 +1,41 @@
+From: Onigiri
+Subject: [PATCH] Group device controls under Onigiri settings
+
+diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
+--- a/res/xml/onigiri_settings.xml
++++ b/res/xml/onigiri_settings.xml
+@@ -6,10 +6,12 @@
+     <SecPreferenceCategory android:title="@string/onigiri_patch_settings_title">
+         <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" android:summary="@string/summary_placeholder" settings:controller="io.mesalabs.onigiri.settings.PIFVersionPreferenceController" />
+     </SecPreferenceCategory>
++    <SecPreferenceCategory android:title="@string/onigiri_settings_category_title">
++        <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="io.mesalabs.onigiri.settings.SleepOnFoldPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_autoboot_title" android:key="onigiri_autoboot" settings:controller="io.mesalabs.onigiri.settings.AutobootPreferenceController" />
++    </SecPreferenceCategory>
+     <SecPreferenceCategory android:title="@string/onigiri_ui_settings_title">
+-        <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="io.mesalabs.onigiri.settings.SleepOnFoldPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_boot_sound_title" android:key="onigiri_boot_sound" settings:controller="io.mesalabs.onigiri.settings.BootSoundPreferenceController" />
+-        <SecSwitchPreference android:title="@string/onigiri_autoboot_title" android:key="onigiri_autoboot" android:summary="@string/onigiri_autoboot_summary" settings:controller="io.mesalabs.onigiri.settings.AutobootPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_native_blur_title" android:key="onigiri_native_blur" settings:controller="io.mesalabs.onigiri.settings.LiveBlurPreferenceController" />
+     </SecPreferenceCategory>
+     <SecPreferenceCategory android:title="@string/onigiri_display_settings_title">
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -15387,5 +15387,5 @@
+     <string name="onigiri_display_automatic">Automatic</string>
+     <string name="onigiri_external_reconnect">Reconnect the external display to apply</string>
+     <string name="onigiri_autoboot_title">Power on when power connected</string>
+-    <string name="onigiri_autoboot_summary">Automatically start the phone when a charger or USB power is connected. Waits until the battery reaches 5%.</string>
++    <string name="onigiri_settings_category_title">Onigiri settings</string>
+ </resources>
+diff --git a/res/values/public.xml b/res/values/public.xml
+--- a/res/values/public.xml
++++ b/res/values/public.xml
+@@ -40990,5 +40990,5 @@
+     <public type="string" name="onigiri_display_automatic" id="0x7f14394a" />
+     <public type="string" name="onigiri_external_reconnect" id="0x7f14394b" />
+     <public type="string" name="onigiri_autoboot_title" id="0x7f14394c" />
+-    <public type="string" name="onigiri_autoboot_summary" id="0x7f14394d" />
++    <public type="string" name="onigiri_settings_category_title" id="0x7f14394e" />
+ </resources>

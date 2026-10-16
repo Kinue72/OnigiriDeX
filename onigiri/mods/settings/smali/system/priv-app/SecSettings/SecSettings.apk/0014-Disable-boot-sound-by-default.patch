@@ -1,0 +1,15 @@
+From: Onigiri
+Subject: [PATCH] Default boot sound to disabled
+
+diff --git a/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali
+--- a/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali
++++ b/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali
+@@ -103,7 +103,7 @@
+ 
+     const-string p0, "persist.sys.onigiri.bootsound"
+ 
+-    const/4 v0, 0x1
++    const/4 v0, 0x0
+ 
+     invoke-static {p0, v0}, Landroid/os/SemSystemProperties;->getBoolean(Ljava/lang/String;Z)Z
+ 

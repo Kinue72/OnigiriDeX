@@ -1,2 +1,5 @@
-# Enable boot sound by default
-persist.sys.onigiri.bootsound=true
+# Keep boot sound off unless enabled in Onigiri Software
+persist.sys.onigiri.bootsound=false
+
+# Keep powered-off charging until explicitly enabled in Onigiri Software
+persist.sys.onigiri.autoboot=false
