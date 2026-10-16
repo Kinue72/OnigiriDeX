@@ -1,0 +1,81 @@
+From: Onigiri
+Subject: [PATCH] Keep Camera visible across fixed-cover hinge transitions
+
+The Fold5 layout manager hides the preview and controls during panel handoff.
+This target keeps the cover active in every hinge state, so that handoff
+never restores the UI. Keep the existing layout and hinge updates while
+skipping only this panel-handoff hide callback.
+
+diff --git a/smali_classes4/Q2/l.smali b/smali_classes4/Q2/l.smali
+--- a/smali_classes4/Q2/l.smali
++++ b/smali_classes4/Q2/l.smali
+@@ -252,66 +252,9 @@
+ .end method
+ 
+ .method public final i(Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;)V
+-    .locals 3
+-
+-    iget-object v0, p0, LQ2/d;->d:Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;
+-
+-    sget-object v1, Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;->TENT:Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;
+-
+-    iget-object v2, p0, LQ2/d;->a:Lcom/sec/android/app/camera/interfaces/CameraContext;
+-
+-    if-ne v0, v1, :cond_0
+-
+-    sget-object v0, Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;->HALF_FOLD:Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;
+-
+-    if-ne p1, v0, :cond_0
+-
+-    invoke-interface {v2}, Lcom/sec/android/app/camera/interfaces/CameraContext;->isRearSelfie()Z
+-
+-    move-result v0
+-
+-    if-nez v0, :cond_0
+-
+-    goto :goto_0
+-
+-    :cond_0
+-    invoke-interface {v2}, Lcom/sec/android/app/camera/interfaces/ActivityContext;->getContext()Landroid/content/Context;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->semDisplayDeviceType:I
+-
+-    if-nez v0, :cond_2
+-
+-    iget-object p0, p0, LQ2/d;->d:Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;
+-
+-    sget-object v0, Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;->HALF_FOLD:Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;
+-
+-    if-eq p0, v0, :cond_1
+-
+-    sget-object v0, Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;->DUAL_PREVIEW:Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;
+-
+-    if-ne p0, v0, :cond_2
+-
+-    :cond_1
+-    sget-object p0, Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;->CLOSE:Lcom/sec/android/app/camera/interfaces/DeviceStateManager$DeviceState;
+-
+-    if-ne p1, p0, :cond_2
+-
+-    :goto_0
+-    const/4 p0, 0x0
+-
+-    invoke-interface {v2, p0}, Lcom/sec/android/app/camera/interfaces/CameraContext;->setCameraUiVisibility(Z)V
+-
+-    :cond_2
++    .locals 0
++
++    # The fixed cover and DeX never hand Camera off to another panel.
+     return-void
+ .end method
+ 

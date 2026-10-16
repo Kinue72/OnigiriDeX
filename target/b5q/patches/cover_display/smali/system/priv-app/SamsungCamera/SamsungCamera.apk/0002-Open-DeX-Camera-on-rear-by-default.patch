@@ -1,0 +1,19 @@
+From: Onigiri
+Subject: [PATCH] Open DeX Camera on the rear lens by default
+
+Keep explicit voice-selfie and QR launches, the one-shot DeX facing restore,
+and ordinary camera facing selection. Change only the default DeX launch
+from front (1) to rear (0).
+
+diff --git a/smali_classes4/com/sec/android/app/camera/shootingmode/ShootingModeProviderImpl.smali b/smali_classes4/com/sec/android/app/camera/shootingmode/ShootingModeProviderImpl.smali
+--- a/smali_classes4/com/sec/android/app/camera/shootingmode/ShootingModeProviderImpl.smali
++++ b/smali_classes4/com/sec/android/app/camera/shootingmode/ShootingModeProviderImpl.smali
+@@ -1185,7 +1185,7 @@
+     goto :goto_0
+ 
+     :cond_2
+-    iput v3, p0, Lcom/sec/android/app/camera/shootingmode/ShootingModeProviderImpl;->mInitialFacing:I
++    iput v2, p0, Lcom/sec/android/app/camera/shootingmode/ShootingModeProviderImpl;->mInitialFacing:I
+ 
+     :goto_0
+     return-void

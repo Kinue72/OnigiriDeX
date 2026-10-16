@@ -1,0 +1,20 @@
+From: Onigiri
+Subject: [PATCH] Keep camera IDs stable on the fixed cover
+
+The vendor folded-camera path substitutes the rear sensor for camera 1,
+but its still-capture pipeline retains the original camera mapping and
+crashes. Keep reporting the covered front lens without enabling that
+substitution; rear capture remains available through its normal IDs.
+
+diff --git a/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali b/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali
+--- a/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali
++++ b/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali
+@@ -157,7 +157,7 @@
+     goto :goto_2
+ 
+     :cond_2
+-    const-wide/16 v0, 0x6
++    const-wide/16 v0, 0x2
+ 
+     if-nez v2, :cond_3
+ 
