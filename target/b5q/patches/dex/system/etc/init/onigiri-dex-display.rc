@@ -1,0 +1,9 @@
+on boot
+    write /sys/module/msm_drm/parameters/secdp_high_refresh 1
+
+on property:persist.sys.onigiri.dex_output=*
+    setprop vendor.display.hdmi_cfg_idx ${persist.sys.onigiri.dex_output}
+
+# Empty properties cannot be expanded by init.
+on property:persist.sys.onigiri.dex_output=
+    setprop vendor.display.hdmi_cfg_idx ""

@@ -1,0 +1,23 @@
+From: Onigiri
+Subject: [PATCH] Refresh the installed PIF summary when opening settings
+
+diff --git a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
+--- a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
++++ b/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
+@@ -102,6 +102,16 @@
+     return-object p0
+ .end method
+ 
++.method public updateState(Landroidx/preference/Preference;)V
++    .locals 0
++
++    invoke-super {p0, p1}, Lcom/android/settings/core/TogglePreferenceController;->updateState(Landroidx/preference/Preference;)V
++
++    invoke-virtual {p0, p1}, Lcom/android/settingslib/core/AbstractPreferenceController;->refreshSummary(Landroidx/preference/Preference;)V
++
++    return-void
++.end method
++
+ .method public handlePreferenceTreeClick(Landroidx/preference/Preference;)Z
+     .locals 2
+ 

@@ -1,0 +1,400 @@
+From: Onigiri
+Subject: [PATCH] Unlock native DeX external refresh independently of the cover panel
+
+diff --git a/smali/com/android/server/display/mode/DisplayModeDirector$SettingsObserver.smali b/smali/com/android/server/display/mode/DisplayModeDirector$SettingsObserver.smali
+--- a/smali/com/android/server/display/mode/DisplayModeDirector$SettingsObserver.smali
++++ b/smali/com/android/server/display/mode/DisplayModeDirector$SettingsObserver.smali
+@@ -1088,5 +1088,124 @@
+ 
+     invoke-virtual {p0, v2, v1, v0, p1}, Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;->updateRefreshRateSettingLocked(FFFI)V
+ 
+-    return-void
+-.end method
++    invoke-virtual {p0, p1}, Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;->updateDexRefreshRateLocked(I)V
++
++    return-void
++.end method
++
++.method public static getDexRefreshRate(Landroid/view/DisplayInfo;)F
++    .locals 6
++    const/4 v0, 0x0
++    if-eqz p0, :done
++    iget v1, p0, Landroid/view/DisplayInfo;->type:I
++    const/4 v2, 0x2
++    if-ne v1, v2, :done
++    iget v1, p0, Landroid/view/DisplayInfo;->userPreferredModeId:I
++    const/4 v2, -0x1
++    if-eq v1, v2, :default_mode
++    iget-object v2, p0, Landroid/view/DisplayInfo;->supportedModes:[Landroid/view/Display$Mode;
++    const/4 v3, 0x0
++    :next
++    array-length v5, v2
++    if-ge v3, v5, :default_mode
++    aget-object v4, v2, v3
++    invoke-virtual {v4}, Landroid/view/Display$Mode;->getModeId()I
++    move-result v5
++    if-eq v1, v5, :rate
++    add-int/lit8 v3, v3, 0x1
++    goto :next
++    :default_mode
++    invoke-virtual {p0}, Landroid/view/DisplayInfo;->getDefaultMode()Landroid/view/Display$Mode;
++    move-result-object v4
++    if-eqz v4, :done
++    :rate
++    invoke-virtual {v4}, Landroid/view/Display$Mode;->getRefreshRate()F
++    move-result v0
++    :done
++    return v0
++.end method
++
++.method public final updateDexRefreshRateLocked(I)V
++    .locals 5
++
++    iget-object v0, p0, Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;->this$0:Lcom/android/server/display/mode/DisplayModeDirector;
++
++    iget-object v0, v0, Lcom/android/server/display/mode/DisplayModeDirector;->mDisplayObserver:Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;
++
++    iget-object v0, v0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->mOnigiriDisplayInfos:Landroid/util/SparseArray;
++
++    invoke-virtual {v0, p1}, Landroid/util/SparseArray;->get(I)Ljava/lang/Object;
++
++    move-result-object v0
++
++    check-cast v0, Landroid/view/DisplayInfo;
++
++    if-eqz v0, :onigiri_done
++
++    iget v1, v0, Landroid/view/DisplayInfo;->type:I
++
++    const/4 v2, 0x2
++
++    if-ne v1, v2, :onigiri_done
++
++    invoke-static {v0}, Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;->getDexRefreshRate(Landroid/view/DisplayInfo;)F
++
++    move-result v1
++
++    iget-object p0, p0, Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;->this$0:Lcom/android/server/display/mode/DisplayModeDirector;
++
++    iget-object p0, p0, Lcom/android/server/display/mode/DisplayModeDirector;->mVotesStorage:Lcom/android/server/display/mode/VotesStorage;
++
++    const/4 v2, 0x0
++
++    const/4 v3, 0x0
++
++    const/4 v4, 0x0
++
++    cmpl-float v0, v1, v2
++
++    if-lez v0, :onigiri_clear_default
++
++    # Override the cover panel's default cap only for this external display.
++    new-instance v3, Lcom/android/server/display/mode/RefreshRateVote$RenderVote;
++
++    invoke-direct {v3, v2, v1}, Lcom/android/server/display/mode/RefreshRateVote;-><init>(FF)V
++
++    invoke-virtual {p0, p1, v4, v3}, Lcom/android/server/display/mode/VotesStorage;->updateVote(IILcom/android/server/display/mode/Vote;)V
++
++    const/16 v4, 0xb
++
++    invoke-virtual {p0, p1, v4, v3}, Lcom/android/server/display/mode/VotesStorage;->updateVote(IILcom/android/server/display/mode/Vote;)V
++
++    const/16 v4, 0xd
++
++    invoke-virtual {p0, p1, v4, v3}, Lcom/android/server/display/mode/VotesStorage;->updateVote(IILcom/android/server/display/mode/Vote;)V
++
++    invoke-static {v2, v1}, Lcom/android/server/display/mode/Vote;->forPhysicalRefreshRates(FF)Lcom/android/server/display/mode/CombinedVote;
++
++    move-result-object v3
++
++    const/16 v4, 0xa
++
++    invoke-virtual {p0, p1, v4, v3}, Lcom/android/server/display/mode/VotesStorage;->updateVote(IILcom/android/server/display/mode/Vote;)V
++
++    new-instance v3, Lcom/android/server/display/mode/RefreshRateVote$RenderVote;
++
++    invoke-direct {v3, v1, v1}, Lcom/android/server/display/mode/RefreshRateVote;-><init>(FF)V
++
++    const/4 v4, 0x5
++
++    invoke-virtual {p0, p1, v4, v3}, Lcom/android/server/display/mode/VotesStorage;->updateVote(IILcom/android/server/display/mode/Vote;)V
++
++    return-void
++
++    :onigiri_clear_default
++    invoke-virtual {p0, p1, v4, v3}, Lcom/android/server/display/mode/VotesStorage;->updateVote(IILcom/android/server/display/mode/Vote;)V
++
++    const/16 v4, 0xb
++
++    invoke-virtual {p0, p1, v4, v3}, Lcom/android/server/display/mode/VotesStorage;->updateVote(IILcom/android/server/display/mode/Vote;)V
++
++    :onigiri_done
++    return-void
++.end method
+diff --git a/smali/com/android/server/display/mode/DisplayModeDirector$DisplayObserver.smali b/smali/com/android/server/display/mode/DisplayModeDirector$DisplayObserver.smali
+--- a/smali/com/android/server/display/mode/DisplayModeDirector$DisplayObserver.smali
++++ b/smali/com/android/server/display/mode/DisplayModeDirector$DisplayObserver.smali
+@@ -7,6 +7,9 @@
+ 
+ 
+ # instance fields
++# Listener snapshots avoid taking the DisplayManagerService lock while voting.
++.field public final mOnigiriDisplayInfos:Landroid/util/SparseArray;
++
+ .field public final mExternalDisplayPeakHeight:I
+ 
+ .field public final mExternalDisplayPeakRefreshRate:I
+@@ -31,6 +34,12 @@
+     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+ 
+     iput-object p1, p0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->this$0:Lcom/android/server/display/mode/DisplayModeDirector;
++
++    new-instance p1, Landroid/util/SparseArray;
++
++    invoke-direct {p1}, Landroid/util/SparseArray;-><init>()V
++
++    iput-object p1, p0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->mOnigiriDisplayInfos:Landroid/util/SparseArray;
+ 
+     new-instance p1, Ljava/util/HashSet;
+ 
+@@ -391,6 +400,24 @@
+     monitor-enter v0
+ 
+     :try_start_0
++    iget-object v1, p0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->mOnigiriDisplayInfos:Landroid/util/SparseArray;
++
++    invoke-virtual {v1, p1}, Landroid/util/SparseArray;->remove(I)V
++
++    iget-object v1, p0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->this$0:Lcom/android/server/display/mode/DisplayModeDirector;
++
++    iget-object v1, v1, Lcom/android/server/display/mode/DisplayModeDirector;->mVotesStorage:Lcom/android/server/display/mode/VotesStorage;
++
++    const/16 v2, 0xa
++
++    const/4 v3, 0x0
++
++    invoke-virtual {v1, p1, v2, v3}, Lcom/android/server/display/mode/VotesStorage;->updateVote(IILcom/android/server/display/mode/Vote;)V
++
++    const/16 v2, 0xb
++
++    invoke-virtual {v1, p1, v2, v3}, Lcom/android/server/display/mode/VotesStorage;->updateVote(IILcom/android/server/display/mode/Vote;)V
++
+     iget-object v1, p0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->this$0:Lcom/android/server/display/mode/DisplayModeDirector;
+ 
+     iget-object v1, v1, Lcom/android/server/display/mode/DisplayModeDirector;->mSupportedModesByDisplay:Landroid/util/SparseArray;
+@@ -650,6 +677,10 @@
+     monitor-enter v0
+ 
+     :try_start_0
++    iget-object v1, p0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->mOnigiriDisplayInfos:Landroid/util/SparseArray;
++
++    invoke-virtual {v1, p1, p2}, Landroid/util/SparseArray;->put(ILjava/lang/Object;)V
++
+     iget-object v1, p0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->this$0:Lcom/android/server/display/mode/DisplayModeDirector;
+ 
+     iget-object v1, v1, Lcom/android/server/display/mode/DisplayModeDirector;->mSupportedModesByDisplay:Landroid/util/SparseArray;
+@@ -760,15 +791,21 @@
+ 
+     invoke-virtual {p2}, Lcom/android/server/display/mode/DisplayModeDirector;->notifyDesiredDisplayModeSpecsChangedLocked()V
+ 
+-    iget-object p0, p0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->this$0:Lcom/android/server/display/mode/DisplayModeDirector;
+-
+-    iget-object p0, p0, Lcom/android/server/display/mode/DisplayModeDirector;->mSettingsObserver:Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;
++    iget-object v1, p0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->this$0:Lcom/android/server/display/mode/DisplayModeDirector;
++
++    iget-object v1, v1, Lcom/android/server/display/mode/DisplayModeDirector;->mSettingsObserver:Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;
+ 
+     sget p2, Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;->$r8$clinit:I
+ 
+-    invoke-virtual {p0, p1}, Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;->updateRefreshRateSettingLocked(I)V
++    invoke-virtual {v1, p1}, Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;->updateRefreshRateSettingLocked(I)V
+ 
+     :cond_4
++    iget-object v1, p0, Lcom/android/server/display/mode/DisplayModeDirector$DisplayObserver;->this$0:Lcom/android/server/display/mode/DisplayModeDirector;
++
++    iget-object v1, v1, Lcom/android/server/display/mode/DisplayModeDirector;->mSettingsObserver:Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;
++
++    invoke-virtual {v1, p1}, Lcom/android/server/display/mode/DisplayModeDirector$SettingsObserver;->updateDexRefreshRateLocked(I)V
++
+     monitor-exit v0
+ 
+     return-void
+diff --git a/smali/com/android/server/desktopmode/HardwareManager$5.smali b/smali/com/android/server/desktopmode/HardwareManager$5.smali
+--- a/smali/com/android/server/desktopmode/HardwareManager$5.smali
++++ b/smali/com/android/server/desktopmode/HardwareManager$5.smali
+@@ -147,31 +147,7 @@
+     :cond_0
+     const/4 v0, 0x0
+ 
+-    if-eqz p1, :cond_1
+-
+-    :try_start_0
+-    iget-object p1, p0, Lcom/android/server/desktopmode/HardwareManager;->mIDisplayManager:Landroid/hardware/display/IDisplayManager;
+-
+-    invoke-interface {p1, v0, v1}, Landroid/hardware/display/IDisplayManager;->acquireLowRefreshRateToken(Landroid/os/IBinder;Ljava/lang/String;)Lcom/samsung/android/hardware/display/IRefreshRateToken;
+-
+-    move-result-object p1
+-
+-    iput-object p1, p0, Lcom/android/server/desktopmode/HardwareManager;->mRefreshRateToken:Lcom/samsung/android/hardware/display/IRefreshRateToken;
+-    :try_end_0
+-    .catch Landroid/os/RemoteException; {:try_start_0 .. :try_end_0} :catch_0
+-
+-    goto :goto_0
+-
+-    :catch_0
+-    move-exception p0
+-
+-    const-string p1, "RemoteException is occurred"
+-
+-    invoke-static {v1, p1, p0}, Lcom/android/server/desktopmode/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+-
+-    goto :goto_0
+-
+-    :cond_1
++    # The DeX token imposes a global 60 Hz vote, including manual output modes.
+     :try_start_1
+     iget-object p1, p0, Lcom/android/server/desktopmode/HardwareManager;->mRefreshRateToken:Lcom/samsung/android/hardware/display/IRefreshRateToken;
+ 
+diff --git a/smali/com/android/server/display/LocalDisplayAdapter$LocalDisplayDevice.smali b/smali/com/android/server/display/LocalDisplayAdapter$LocalDisplayDevice.smali
+--- a/smali/com/android/server/display/LocalDisplayAdapter$LocalDisplayDevice.smali
++++ b/smali/com/android/server/display/LocalDisplayAdapter$LocalDisplayDevice.smali
+@@ -3107,7 +3107,9 @@
+ .end method
+ 
+ .method public final setUserPreferredDisplayModeLocked(Landroid/view/Display$Mode;)V
+-    .locals 7
++    .locals 8
++
++    iget v7, p0, Lcom/android/server/display/LocalDisplayAdapter$LocalDisplayDevice;->mUserPreferredModeId:I
+ 
+     iget v0, p0, Lcom/android/server/display/LocalDisplayAdapter$LocalDisplayDevice;->mUserPreferredModeId:I
+ 
+@@ -3220,6 +3222,20 @@
+     :goto_3
+     if-ne v0, p1, :cond_7
+ 
++    # Explicit default-rate selection must also refresh the external policy.
++    iget p1, p0, Lcom/android/server/display/LocalDisplayAdapter$LocalDisplayDevice;->mUserPreferredModeId:I
++
++    if-eq v7, p1, :onigiri_unchanged_preference
++
++    iget-object p1, p0, Lcom/android/server/display/LocalDisplayAdapter$LocalDisplayDevice;->mStaticDisplayInfo:Landroid/view/SurfaceControl$StaticDisplayInfo;
++
++    iget-boolean p1, p1, Landroid/view/SurfaceControl$StaticDisplayInfo;->isInternal:Z
++
++    if-nez p1, :onigiri_unchanged_preference
++
++    invoke-virtual {p0}, Lcom/android/server/display/LocalDisplayAdapter$LocalDisplayDevice;->updateDeviceInfoLocked()V
++
++    :onigiri_unchanged_preference
+     return-void
+ 
+     :cond_7
+diff --git a/smali/com/android/server/display/DisplayManagerService.smali b/smali/com/android/server/display/DisplayManagerService.smali
+--- a/smali/com/android/server/display/DisplayManagerService.smali
++++ b/smali/com/android/server/display/DisplayManagerService.smali
+@@ -6565,6 +6565,40 @@
+     throw p0
+ .end method
+ 
++.method private syncDexRefreshRateLocked(Lcom/android/server/display/DisplayDevice;)V
++    .locals 6
++    invoke-virtual {p1}, Lcom/android/server/display/DisplayDevice;->getDisplayDeviceInfoLocked()Lcom/android/server/display/DisplayDeviceInfo;
++    move-result-object p1
++    iget v0, p1, Lcom/android/server/display/DisplayDeviceInfo;->type:I
++    const/4 v1, 0x2
++    if-ne v0, v1, :done
++    iget-object v0, p0, Lcom/android/server/display/DisplayManagerService;->mEnabledDexDisplay:Lcom/android/server/display/LogicalDisplay;
++    if-eqz v0, :done
++    iget-object v0, v0, Lcom/android/server/display/LogicalDisplay;->mPrimaryDisplayDevice:Lcom/android/server/display/DisplayDevice;
++    instance-of v1, v0, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;
++    if-eqz v1, :done
++    check-cast v0, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;
++    iget-object v1, p1, Lcom/android/server/display/DisplayDeviceInfo;->supportedModes:[Landroid/view/Display$Mode;
++    iget v2, p1, Lcom/android/server/display/DisplayDeviceInfo;->modeId:I
++    const/4 v3, 0x0
++    :next
++    array-length v4, v1
++    if-ge v3, v4, :done
++    aget-object v4, v1, v3
++    invoke-virtual {v4}, Landroid/view/Display$Mode;->getModeId()I
++    move-result v5
++    if-ne v5, v2, :skip
++    invoke-virtual {v4}, Landroid/view/Display$Mode;->getRefreshRate()F
++    move-result v4
++    invoke-virtual {v0, v4}, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;->updateDexRefreshRateLocked(F)V
++    goto :done
++    :skip
++    add-int/lit8 v3, v3, 0x1
++    goto :next
++    :done
++    return-void
++.end method
++
+ .method public final configureDisplayLocked(Landroid/view/SurfaceControl$Transaction;Lcom/android/server/display/DisplayDevice;)V
+     .locals 26
+ 
+@@ -6573,6 +6607,8 @@
+     move-object/from16 v1, p1
+ 
+     move-object/from16 v2, p2
++
++    invoke-direct {v0, v2}, Lcom/android/server/display/DisplayManagerService;->syncDexRefreshRateLocked(Lcom/android/server/display/DisplayDevice;)V
+ 
+     const/4 v3, 0x2
+ 
+diff --git a/smali/com/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice.smali b/smali/com/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice.smali
+--- a/smali/com/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice.smali
++++ b/smali/com/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice.smali
+@@ -461,6 +461,38 @@
+     return p0
+ .end method
+ 
++.method public final updateDexRefreshRateLocked(F)V
++    .locals 10
++    const/4 v0, 0x0
++    cmpl-float v0, p1, v0
++    if-lez v0, :done
++    iget-object v0, p0, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;->mMode:Landroid/view/Display$Mode;
++    invoke-virtual {v0}, Landroid/view/Display$Mode;->getRefreshRate()F
++    move-result v0
++    cmpl-float v0, v0, p1
++    if-eqz v0, :done
++    new-instance v1, Landroid/view/Display$Mode;
++    sget-object v2, Lcom/android/server/display/DisplayAdapter;->NEXT_DISPLAY_MODE_ID:Ljava/util/concurrent/atomic/AtomicInteger;
++    invoke-virtual {v2}, Ljava/util/concurrent/atomic/AtomicInteger;->getAndIncrement()I
++    move-result v2
++    iget v3, p0, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;->mWidth:I
++    iget v4, p0, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;->mHeight:I
++    move v5, p1
++    move v6, p1
++    const/4 v7, 0x0
++    new-array v8, v7, [F
++    new-array v9, v7, [I
++    invoke-direct/range {v1 .. v9}, Landroid/view/Display$Mode;-><init>(IIIFFZ[F[I)V
++    iput-object v1, p0, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;->mMode:Landroid/view/Display$Mode;
++    iput-object v7, p0, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;->mInfo:Lcom/android/server/display/DisplayDeviceInfo;
++    iget-object v1, p0, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;->this$0:Lcom/android/server/display/VirtualDisplayAdapter;
++    const/4 v2, 0x2
++    invoke-virtual {v1, p0, v2}, Lcom/android/server/display/DisplayAdapter;->sendDisplayDeviceEventLocked(Lcom/android/server/display/DisplayDevice;I)V
++    invoke-virtual {v1}, Lcom/android/server/display/DisplayAdapter;->sendTraversalRequestLocked()V
++    :done
++    return-void
++.end method
++
+ .method public final getDisplayDeviceInfoLocked()Lcom/android/server/display/DisplayDeviceInfo;
+     .locals 11
+ 
+@@ -542,7 +574,11 @@
+ 
+     iput v2, v0, Lcom/android/server/display/DisplayDeviceInfo;->yDpi:F
+ 
+-    iget v2, p0, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;->mRequestedRefreshRate:F
++    iget-object v2, p0, Lcom/android/server/display/VirtualDisplayAdapter$VirtualDisplayDevice;->mMode:Landroid/view/Display$Mode;
++
++    invoke-virtual {v2}, Landroid/view/Display$Mode;->getRefreshRate()F
++
++    move-result v2
+ 
+     const/4 v3, 0x0
+ 

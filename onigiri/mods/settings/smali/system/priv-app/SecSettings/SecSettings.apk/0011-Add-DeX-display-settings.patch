@@ -1,0 +1,668 @@
+From: Onigiri
+Subject: [PATCH] Add native external mode and rotation controls under Display settings
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -14,6 +14,8 @@
+     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
+     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
++    <uses-permission android:name="android.permission.MODIFY_USER_PREFERRED_DISPLAY_MODE"/>
++    <uses-permission android:name="android.permission.SET_ORIENTATION"/>
+     <uses-permission android:name="android.permission.DEVICE_POWER"/>
+     <uses-permission android:name="android.permission.CHANGE_CONFIGURATION"/>
+     <uses-permission android:name="android.permission.CONTROL_UI_TRACING"/>
+diff --git a/res/values/arrays.xml b/res/values/arrays.xml
+--- a/res/values/arrays.xml
++++ b/res/values/arrays.xml
+@@ -3625,4 +3625,18 @@
+         <item>Theater</item>
+         <item>Flower</item>
+     </string-array>
++    <string-array name="onigiri_external_rotation_entries">
++        <item>@string/onigiri_display_automatic</item>
++        <item>0°</item>
++        <item>90°</item>
++        <item>180°</item>
++        <item>270°</item>
++    </string-array>
++    <string-array name="onigiri_external_rotation_values">
++        <item>-1</item>
++        <item>0</item>
++        <item>1</item>
++        <item>2</item>
++        <item>3</item>
++    </string-array>
+ </resources>
+diff --git a/res/values/public.xml b/res/values/public.xml
+--- a/res/values/public.xml
++++ b/res/values/public.xml
+@@ -40987,4 +40987,6 @@
+     <public type="string" name="onigiri_ss_detection_title" id="0x7f14393e" />
+     <public type="string" name="onigiri_ui_settings_title" id="0x7f14393f" />
+     <public type="xml" name="onigiri_settings" id="0x7f1702bb" />
++    <public type="string" name="onigiri_display_automatic" id="0x7f14394a" />
++    <public type="string" name="onigiri_external_reconnect" id="0x7f14394b" />
+ </resources>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -15380,4 +15380,10 @@
+     <string name="onigiri_ss_detection_title">Disable screenshot detection</string>
+     <string name="onigiri_ui_settings_title">UI settings</string>
+     <string name="onigiri_sleep_when_folded_title">Sleep when folded</string>
++    <string name="onigiri_display_settings_title">Display settings</string>
++    <string name="onigiri_dex_high_refresh_title">DeX high refresh rate</string>
++    <string name="onigiri_external_mode_title">External display mode</string>
++    <string name="onigiri_external_rotation_title">External display rotation</string>
++    <string name="onigiri_display_automatic">Automatic</string>
++    <string name="onigiri_external_reconnect">Reconnect the external display to apply</string>
+ </resources>
+diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
+--- a/res/xml/onigiri_settings.xml
++++ b/res/xml/onigiri_settings.xml
+@@ -10,7 +10,12 @@
+         <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="io.mesalabs.onigiri.settings.SleepOnFoldPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_boot_sound_title" android:key="onigiri_boot_sound" settings:controller="io.mesalabs.onigiri.settings.BootSoundPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_native_blur_title" android:key="onigiri_native_blur" settings:controller="io.mesalabs.onigiri.settings.LiveBlurPreferenceController" />
++    </SecPreferenceCategory>
++    <SecPreferenceCategory android:title="@string/onigiri_display_settings_title">
+         <SecSwitchPreference android:title="@string/onigiri_max_refresh_rate_title" android:key="onigiri_max_refresh_rate" settings:controller="io.mesalabs.onigiri.settings.ForceMaxRefreshRatePreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_dex_high_refresh_title" android:key="onigiri_dex_high_refresh" settings:controller="io.mesalabs.onigiri.settings.DexHighRefreshPreferenceController" />
++        <ListPreference android:title="@string/onigiri_external_mode_title" android:key="onigiri_external_mode" android:persistent="false" settings:controller="io.mesalabs.onigiri.settings.ExternalDisplayModePreferenceController" />
++        <ListPreference android:title="@string/onigiri_external_rotation_title" android:key="onigiri_external_rotation" android:persistent="false" android:entries="@array/onigiri_external_rotation_entries" android:entryValues="@array/onigiri_external_rotation_values" settings:controller="io.mesalabs.onigiri.settings.ExternalDisplayRotationPreferenceController" />
+     </SecPreferenceCategory>
+     <SecPreferenceCategory android:title="@string/onigiri_spoof_settings_title">
+         <SecSwitchPreference android:title="@string/onigiri_games_spoof_title" android:key="onigiri_games_spoof" settings:controller="io.mesalabs.onigiri.settings.GamesPropsPreferenceController" />
+diff --git a/smali_classes4/io/mesalabs/onigiri/settings/DexHighRefreshPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/DexHighRefreshPreferenceController.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes4/io/mesalabs/onigiri/settings/DexHighRefreshPreferenceController.smali
+@@ -0,0 +1,86 @@
++.class public Lio/mesalabs/onigiri/settings/DexHighRefreshPreferenceController;
++.super Lcom/android/settings/core/TogglePreferenceController;
++.source "DexHighRefreshPreferenceController.java"
++
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .locals 0
++
++    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/TogglePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++
++    return-void
++.end method
++
++.method public getAvailabilityStatus()I
++    .locals 1
++
++    new-instance p0, Ljava/io/File;
++
++    const-string v0, "/sys/module/msm_drm/parameters/secdp_high_refresh"
++
++    invoke-direct {p0, v0}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++
++    invoke-virtual {p0}, Ljava/io/File;->exists()Z
++
++    move-result p0
++
++    if-eqz p0, :onigiri_unsupported
++
++    const/4 p0, 0x0
++
++    return p0
++
++    :onigiri_unsupported
++    const/4 p0, 0x3
++
++    return p0
++.end method
++
++.method public getSliceHighlightMenuRes()I
++    .locals 0
++
++    sget p0, Lcom/android/settings/R$string;->menu_key_onigiri_settings:I
++
++    return p0
++.end method
++
++.method public isChecked()Z
++    .locals 1
++
++    const-string p0, "persist.sys.onigiri.dex_high_refresh"
++
++    const/4 v0, 0x0
++
++    invoke-static {p0, v0}, Landroid/os/SemSystemProperties;->getBoolean(Ljava/lang/String;Z)Z
++
++    move-result p0
++
++    return p0
++.end method
++
++.method public setChecked(Z)Z
++    .locals 3
++
++    :try_start_0
++    const-string v0, "persist.sys.onigiri.dex_high_refresh"
++    invoke-static {p1}, Ljava/lang/Boolean;->toString(Z)Ljava/lang/String;
++    move-result-object v1
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    :try_end_0
++    .catch Ljava/lang/IllegalArgumentException; {:try_start_0 .. :try_end_0} :onigiri_failed
++    .catch Ljava/lang/SecurityException; {:try_start_0 .. :try_end_0} :onigiri_failed
++
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    const v1, 0x7f14394b
++    const/4 v2, 0x0
++    invoke-static {v0, v1, v2}, Landroid/widget/Toast;->makeText(Landroid/content/Context;II)Landroid/widget/Toast;
++    move-result-object v0
++    invoke-virtual {v0}, Landroid/widget/Toast;->show()V
++
++    const/4 p0, 0x1
++    return p0
++
++    :onigiri_failed
++    move-exception p0
++    const/4 p0, 0x0
++    return p0
++.end method
+diff --git a/smali_classes4/io/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes4/io/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController.smali
+@@ -0,0 +1,408 @@
++.class public Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;
++.super Lcom/android/settings/core/BasePreferenceController;
++.implements Landroidx/preference/Preference$OnPreferenceChangeListener;
++.implements Lcom/android/settingslib/core/lifecycle/LifecycleObserver;
++.implements Lcom/android/settingslib/core/lifecycle/events/OnResume;
++.implements Lcom/android/settingslib/core/lifecycle/events/OnPause;
++.implements Landroid/hardware/display/DisplayManager$DisplayListener;
++.source "ExternalDisplayModePreferenceController.java"
++
++.field private mPreference:Landroidx/preference/ListPreference;
++
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .locals 0
++    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/BasePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++    return-void
++.end method
++
++.method public static getExternalDisplay(Landroid/content/Context;)Landroid/view/Display;
++    .locals 4
++    const-class v0, Landroid/hardware/display/DisplayManager;
++    invoke-virtual {p0, v0}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++    move-result-object p0
++    check-cast p0, Landroid/hardware/display/DisplayManager;
++    invoke-virtual {p0}, Landroid/hardware/display/DisplayManager;->getDisplays()[Landroid/view/Display;
++    move-result-object p0
++    const/4 v0, 0x0
++    :next
++    array-length v1, p0
++    if-ge v0, v1, :missing
++    aget-object v1, p0, v0
++    invoke-virtual {v1}, Landroid/view/Display;->getType()I
++    move-result v2
++    const/4 v3, 0x2
++    if-eq v2, v3, :found
++    add-int/lit8 v0, v0, 0x1
++    goto :next
++    :missing
++    const/4 v1, 0x0
++    :found
++    return-object v1
++.end method
++
++.method public static getRotationDisplay(Landroid/content/Context;)Landroid/view/Display;
++    .locals 5
++    invoke-static {p0}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->getExternalDisplay(Landroid/content/Context;)Landroid/view/Display;
++    move-result-object v0
++    if-eqz v0, :fallback
++    const-class v1, Landroid/hardware/display/DisplayManager;
++    invoke-virtual {p0, v1}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++    move-result-object p0
++    check-cast p0, Landroid/hardware/display/DisplayManager;
++    const-string v1, "com.samsung.android.hardware.display.category.DESKTOP"
++    invoke-virtual {p0, v1}, Landroid/hardware/display/DisplayManager;->getDisplays(Ljava/lang/String;)[Landroid/view/Display;
++    move-result-object p0
++    const/4 v1, 0x0
++    :next
++    array-length v2, p0
++    if-ge v1, v2, :fallback
++    aget-object v2, p0, v1
++    invoke-virtual {v2}, Landroid/view/Display;->getType()I
++    move-result v3
++    const/4 v4, 0x5
++    if-ne v3, v4, :skip
++    invoke-virtual {v2}, Landroid/view/Display;->getName()Ljava/lang/String;
++    move-result-object v3
++    const-string v4, "Desktop"
++    invoke-virtual {v4, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v3
++    if-eqz v3, :skip
++    return-object v2
++    :skip
++    add-int/lit8 v1, v1, 0x1
++    goto :next
++    :fallback
++    return-object v0
++.end method
++
++.method private static modeLabel(Landroid/view/Display$Mode;)Ljava/lang/String;
++    .locals 5
++    const/4 v0, 0x3
++    new-array v0, v0, [Ljava/lang/Object;
++    invoke-virtual {p0}, Landroid/view/Display$Mode;->getPhysicalWidth()I
++    move-result v1
++    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v1
++    const/4 v2, 0x0
++    aput-object v1, v0, v2
++    invoke-virtual {p0}, Landroid/view/Display$Mode;->getPhysicalHeight()I
++    move-result v1
++    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v1
++    const/4 v2, 0x1
++    aput-object v1, v0, v2
++    invoke-virtual {p0}, Landroid/view/Display$Mode;->getRefreshRate()F
++    move-result v1
++    invoke-static {v1}, Ljava/lang/Float;->valueOf(F)Ljava/lang/Float;
++    move-result-object v1
++    const/4 v2, 0x2
++    aput-object v1, v0, v2
++    const-string v1, "%d × %d @ %.2f Hz"
++    invoke-static {v1, v0}, Ljava/lang/String;->format(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++.end method
++
++.method private static modeValue(Landroid/view/Display$Mode;)Ljava/lang/String;
++    .locals 5
++    const/4 v0, 0x3
++    new-array v0, v0, [Ljava/lang/Object;
++    invoke-virtual {p0}, Landroid/view/Display$Mode;->getPhysicalWidth()I
++    move-result v1
++    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v1
++    const/4 v2, 0x0
++    aput-object v1, v0, v2
++    invoke-virtual {p0}, Landroid/view/Display$Mode;->getPhysicalHeight()I
++    move-result v1
++    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v1
++    const/4 v2, 0x1
++    aput-object v1, v0, v2
++    invoke-virtual {p0}, Landroid/view/Display$Mode;->getRefreshRate()F
++    move-result v1
++    invoke-static {v1}, Ljava/lang/Float;->valueOf(F)Ljava/lang/Float;
++    move-result-object v1
++    const/4 v2, 0x2
++    aput-object v1, v0, v2
++    const-string v1, "%d:%d:%s"
++    sget-object v2, Ljava/util/Locale;->ROOT:Ljava/util/Locale;
++    invoke-static {v2, v1, v0}, Ljava/lang/String;->format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++.end method
++
++.method public getAvailabilityStatus()I
++    .locals 0
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method private static modeOutputValue(Landroid/view/Display$Mode;)Ljava/lang/String;
++    .locals 4
++    const/4 v0, 0x3
++    new-array v0, v0, [Ljava/lang/Object;
++    invoke-virtual {p0}, Landroid/view/Display$Mode;->getPhysicalWidth()I
++    move-result v1
++    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v1
++    const/4 v2, 0x0
++    aput-object v1, v0, v2
++    invoke-virtual {p0}, Landroid/view/Display$Mode;->getPhysicalHeight()I
++    move-result v1
++    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v1
++    const/4 v2, 0x1
++    aput-object v1, v0, v2
++    invoke-virtual {p0}, Landroid/view/Display$Mode;->getRefreshRate()F
++    move-result v1
++    invoke-static {v1}, Ljava/lang/Math;->round(F)I
++    move-result v1
++    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v1
++    const/4 v2, 0x2
++    aput-object v1, v0, v2
++    const-string v1, "%d:%d:%d"
++    sget-object v2, Ljava/util/Locale;->ROOT:Ljava/util/Locale;
++    invoke-static {v2, v1, v0}, Ljava/lang/String;->format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++.end method
++
++.method private static setOutputMode(Landroid/view/Display$Mode;)V
++    .locals 3
++    const-string v0, ""
++    const-string v1, ""
++    if-eqz p0, :store
++    invoke-static {p0}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->modeValue(Landroid/view/Display$Mode;)Ljava/lang/String;
++    move-result-object v0
++    invoke-static {p0}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->modeOutputValue(Landroid/view/Display$Mode;)Ljava/lang/String;
++    move-result-object v1
++    :store
++    const-string v2, "persist.sys.onigiri.dex_mode"
++    invoke-static {v2, v0}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    const-string v2, "persist.sys.onigiri.dex_output"
++    invoke-static {v2, v1}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    return-void
++.end method
++
++.method public displayPreference(Landroidx/preference/PreferenceScreen;)V
++    .locals 1
++    invoke-super {p0, p1}, Lcom/android/settings/core/BasePreferenceController;->displayPreference(Landroidx/preference/PreferenceScreen;)V
++    invoke-virtual {p0}, Lcom/android/settings/core/BasePreferenceController;->getPreferenceKey()Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {p1, v0}, Landroidx/preference/PreferenceGroup;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
++    move-result-object p1
++    check-cast p1, Landroidx/preference/ListPreference;
++    iput-object p1, p0, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->mPreference:Landroidx/preference/ListPreference;
++    invoke-virtual {p1, p0}, Landroidx/preference/Preference;->setOnPreferenceChangeListener(Landroidx/preference/Preference$OnPreferenceChangeListener;)V
++    invoke-virtual {p0, p1}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->updateState(Landroidx/preference/Preference;)V
++    return-void
++.end method
++
++.method public updateState(Landroidx/preference/Preference;)V
++    .locals 9
++    check-cast p1, Landroidx/preference/ListPreference;
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-static {v0}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->getExternalDisplay(Landroid/content/Context;)Landroid/view/Display;
++    move-result-object v0
++    const/4 v1, 0x0
++    if-eqz v0, :missing
++    const/4 v2, 0x1
++    invoke-virtual {p1, v2}, Landroidx/preference/Preference;->setEnabled(Z)V
++    invoke-virtual {v0}, Landroid/view/Display;->getSupportedModes()[Landroid/view/Display$Mode;
++    move-result-object v3
++    array-length v4, v3
++    add-int/lit8 v4, v4, 0x1
++    new-array v5, v4, [Ljava/lang/CharSequence;
++    new-array v6, v4, [Ljava/lang/CharSequence;
++    iget-object v7, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    const v8, 0x7f14394a
++    invoke-virtual {v7, v8}, Landroid/content/Context;->getString(I)Ljava/lang/String;
++    move-result-object v7
++    aput-object v7, v5, v1
++    const-string v7, "0"
++    aput-object v7, v6, v1
++    :next
++    if-ge v2, v4, :populated
++    add-int/lit8 v7, v2, -0x1
++    aget-object v7, v3, v7
++    invoke-static {v7}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->modeLabel(Landroid/view/Display$Mode;)Ljava/lang/String;
++    move-result-object v8
++    aput-object v8, v5, v2
++    invoke-static {v7}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->modeValue(Landroid/view/Display$Mode;)Ljava/lang/String;
++    move-result-object v7
++    aput-object v7, v6, v2
++    add-int/lit8 v2, v2, 0x1
++    goto :next
++    :populated
++    invoke-virtual {p1, v5}, Landroidx/preference/ListPreference;->setEntries([Ljava/lang/CharSequence;)V
++    iput-object v6, p1, Landroidx/preference/ListPreference;->mEntryValues:[Ljava/lang/CharSequence;
++    invoke-virtual {v0}, Landroid/view/Display;->getUserPreferredDisplayMode()Landroid/view/Display$Mode;
++    move-result-object v2
++    const-string v3, "0"
++    if-nez v2, :preferred
++    const-string v4, "persist.sys.onigiri.dex_mode"
++    invoke-static {v4, v3}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v4
++    invoke-virtual {p1, v4}, Landroidx/preference/ListPreference;->findIndexOfValue(Ljava/lang/String;)I
++    move-result v5
++    if-ltz v5, :selected
++    move-object v3, v4
++    goto :selected
++    :preferred
++    invoke-static {v2}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->modeValue(Landroid/view/Display$Mode;)Ljava/lang/String;
++    move-result-object v3
++    :selected
++    invoke-virtual {p1, v3}, Landroidx/preference/ListPreference;->setValue(Ljava/lang/String;)V
++    invoke-virtual {v0}, Landroid/view/Display;->getMode()Landroid/view/Display$Mode;
++    move-result-object v2
++    invoke-static {v2}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->modeLabel(Landroid/view/Display$Mode;)Ljava/lang/String;
++    move-result-object v2
++    invoke-virtual {p1, v2}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V
++    return-void
++    :missing
++    invoke-virtual {p1, v1}, Landroidx/preference/Preference;->setEnabled(Z)V
++    invoke-virtual {p1, v1}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V
++    return-void
++.end method
++
++.method public onPreferenceChange(Landroidx/preference/Preference;Ljava/lang/Object;)Z
++    .locals 5
++    :try_start
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-static {v0}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->getExternalDisplay(Landroid/content/Context;)Landroid/view/Display;
++    move-result-object v0
++    if-eqz v0, :failed
++    check-cast p2, Ljava/lang/String;
++    const-string v1, "0"
++    invoke-virtual {v1, p2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v1
++    if-eqz v1, :find
++    const/4 v3, 0x0
++    invoke-static {v3}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->setOutputMode(Landroid/view/Display$Mode;)V
++    invoke-virtual {v0}, Landroid/view/Display;->clearUserPreferredDisplayMode()V
++    goto :success
++    :find
++    invoke-virtual {v0}, Landroid/view/Display;->getSupportedModes()[Landroid/view/Display$Mode;
++    move-result-object v1
++    const/4 v2, 0x0
++    :next
++    array-length v3, v1
++    if-ge v2, v3, :failed
++    aget-object v3, v1, v2
++    invoke-static {v3}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->modeValue(Landroid/view/Display$Mode;)Ljava/lang/String;
++    move-result-object v4
++    invoke-virtual {v4, p2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v4
++    if-nez v4, :apply
++    add-int/lit8 v2, v2, 0x1
++    goto :next
++    :apply
++    invoke-static {v3}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->setOutputMode(Landroid/view/Display$Mode;)V
++    invoke-virtual {v0, v3}, Landroid/view/Display;->setUserPreferredDisplayMode(Landroid/view/Display$Mode;)V
++    :success
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    const v1, 0x7f14394b
++    const/4 v2, 0x0
++    invoke-static {v0, v1, v2}, Landroid/widget/Toast;->makeText(Landroid/content/Context;II)Landroid/widget/Toast;
++    move-result-object v0
++    invoke-virtual {v0}, Landroid/widget/Toast;->show()V
++    const/4 p0, 0x1
++    return p0
++    :try_end
++    .catch Ljava/lang/RuntimeException; {:try_start .. :try_end} :error
++    :error
++    move-exception p0
++    :failed
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method public onResume()V
++    .locals 2
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    const-class v1, Landroid/hardware/display/DisplayManager;
++    invoke-virtual {v0, v1}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Landroid/hardware/display/DisplayManager;
++    const/4 v1, 0x0
++    invoke-virtual {v0, p0, v1}, Landroid/hardware/display/DisplayManager;->registerDisplayListener(Landroid/hardware/display/DisplayManager$DisplayListener;Landroid/os/Handler;)V
++    const/4 v0, 0x0
++    invoke-virtual {p0, v0}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->onDisplayChanged(I)V
++    return-void
++.end method
++
++.method public onPause()V
++    .locals 2
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    const-class v1, Landroid/hardware/display/DisplayManager;
++    invoke-virtual {v0, v1}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Landroid/hardware/display/DisplayManager;
++    invoke-virtual {v0, p0}, Landroid/hardware/display/DisplayManager;->unregisterDisplayListener(Landroid/hardware/display/DisplayManager$DisplayListener;)V
++    return-void
++.end method
++
++.method public onDisplayChanged(I)V
++    .locals 1
++    iget-object v0, p0, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->mPreference:Landroidx/preference/ListPreference;
++    if-eqz v0, :done
++    invoke-virtual {p0, v0}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->updateState(Landroidx/preference/Preference;)V
++    :done
++    return-void
++.end method
++
++.method public onDisplayAdded(I)V
++    .locals 0
++    invoke-virtual {p0, p1}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->onDisplayChanged(I)V
++    return-void
++.end method
++
++.method public onDisplayRemoved(I)V
++    .locals 0
++    invoke-virtual {p0, p1}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->onDisplayChanged(I)V
++    return-void
++.end method
++
++.method public getLaunchIntent()Landroid/content/Intent;
++    .locals 0
++    const/4 p0, 0x0
++    return-object p0
++.end method
++
++.method public getStatusText()Ljava/lang/String;
++    .locals 0
++    const/4 p0, 0x0
++    return-object p0
++.end method
++
++.method public getValue()Lcom/samsung/android/settings/cube/ControlValue;
++    .locals 0
++    const/4 p0, 0x0
++    return-object p0
++.end method
++
++.method public isControllable()Z
++    .locals 0
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method public needUserInteraction(Ljava/lang/Object;)Lcom/samsung/android/settings/cube/Controllable$ControllableType;
++    .locals 0
++    sget-object p0, Lcom/samsung/android/settings/cube/Controllable$ControllableType;->NO_INTERACTION:Lcom/samsung/android/settings/cube/Controllable$ControllableType;
++    return-object p0
++.end method
++
++.method public runDefaultAction()Z
++    .locals 0
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method public setValue(Lcom/samsung/android/settings/cube/ControlValue;)Lcom/samsung/android/settings/cube/ControlResult;
++    .locals 0
++    const/4 p0, 0x0
++    return-object p0
++.end method
+diff --git a/smali_classes4/io/mesalabs/onigiri/settings/ExternalDisplayRotationPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/ExternalDisplayRotationPreferenceController.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes4/io/mesalabs/onigiri/settings/ExternalDisplayRotationPreferenceController.smali
+@@ -0,0 +1,82 @@
++.class public Lio/mesalabs/onigiri/settings/ExternalDisplayRotationPreferenceController;
++.super Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;
++.source "ExternalDisplayRotationPreferenceController.java"
++
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .locals 0
++    invoke-direct {p0, p1, p2}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++    return-void
++.end method
++
++.method public updateState(Landroidx/preference/Preference;)V
++    .locals 4
++    check-cast p1, Landroidx/preference/ListPreference;
++    :try_start
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-static {v0}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->getRotationDisplay(Landroid/content/Context;)Landroid/view/Display;
++    move-result-object v0
++    if-eqz v0, :missing
++    invoke-static {}, Landroid/view/WindowManagerGlobal;->getWindowManagerService()Landroid/view/IWindowManager;
++    move-result-object v1
++    invoke-virtual {v0}, Landroid/view/Display;->getDisplayId()I
++    move-result v2
++    invoke-interface {v1, v2}, Landroid/view/IWindowManager;->isDisplayRotationFrozen(I)Z
++    move-result v1
++    const-string v2, "-1"
++    if-eqz v1, :selected
++    invoke-virtual {v0}, Landroid/view/Display;->getRotation()I
++    move-result v0
++    invoke-static {v0}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
++    move-result-object v2
++    :selected
++    invoke-virtual {p1, v2}, Landroidx/preference/ListPreference;->setValue(Ljava/lang/String;)V
++    const/4 v0, 0x1
++    invoke-virtual {p1, v0}, Landroidx/preference/Preference;->setEnabled(Z)V
++    return-void
++    :try_end
++    .catch Landroid/os/RemoteException; {:try_start .. :try_end} :error
++    .catch Ljava/lang/RuntimeException; {:try_start .. :try_end} :error
++    :error
++    move-exception v0
++    :missing
++    const/4 v0, 0x0
++    invoke-virtual {p1, v0}, Landroidx/preference/Preference;->setEnabled(Z)V
++    return-void
++.end method
++
++.method public onPreferenceChange(Landroidx/preference/Preference;Ljava/lang/Object;)Z
++    .locals 4
++    :try_start
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-static {v0}, Lio/mesalabs/onigiri/settings/ExternalDisplayModePreferenceController;->getRotationDisplay(Landroid/content/Context;)Landroid/view/Display;
++    move-result-object v0
++    if-eqz v0, :failed
++    check-cast p2, Ljava/lang/String;
++    invoke-static {p2}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
++    move-result p2
++    const/4 v1, -0x1
++    if-lt p2, v1, :failed
++    const/4 v2, 0x3
++    if-gt p2, v2, :failed
++    invoke-virtual {v0}, Landroid/view/Display;->getDisplayId()I
++    move-result v0
++    invoke-static {}, Landroid/view/WindowManagerGlobal;->getWindowManagerService()Landroid/view/IWindowManager;
++    move-result-object v2
++    const-string v3, "OnigiriDisplaySettings"
++    if-ne p2, v1, :freeze
++    invoke-interface {v2, v0, v3}, Landroid/view/IWindowManager;->thawDisplayRotation(ILjava/lang/String;)V
++    goto :success
++    :freeze
++    invoke-interface {v2, v0, p2, v3}, Landroid/view/IWindowManager;->freezeDisplayRotation(IILjava/lang/String;)V
++    :success
++    const/4 p0, 0x1
++    return p0
++    :try_end
++    .catch Landroid/os/RemoteException; {:try_start .. :try_end} :error
++    .catch Ljava/lang/RuntimeException; {:try_start .. :try_end} :error
++    :error
++    move-exception p0
++    :failed
++    const/4 p0, 0x0
++    return p0
++.end method

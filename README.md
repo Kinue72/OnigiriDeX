@@ -47,6 +47,28 @@ onigiri build_odin
 Output is in `out/`. Keep `security/onigiri_platform.pk8` private and reuse it
 for updates. Flash only Flip5 bootloader, modem and hardware partitions.
 
+## DeX display settings
+
+Open **Settings → Onigiri Software → Display settings**. The external mode
+picker lists resolutions and refresh rates advertised by the connected monitor.
+Reconnect after changing the mode; **Automatic** restores the monitor default.
+The mode summary shows the active output resolution and refresh rate. Rotation
+applies immediately to the native DeX desktop. Both controls work independently
+of the high refresh switch.
+
+**DeX high refresh rate** is experimental and defaults off. It lets the external
+display drive the compositor's frame timing instead of the 60 Hz cover display.
+Reconnect after changing this switch. With a 2560×1600 144 Hz output, the native
+scheduler test measured about 142 FPS in Chrome TestUFO, versus 60 FPS with the
+original compositor. Individual applications can still impose their own limits.
+The compositor can still be limited to 60 FPS while the cover screen is on.
+The cover display keeps its native 60 Hz configuration, and thermal and battery
+saver policies still apply.
+
+Rebuild the kernel, Android 15 display policy, SurfaceFlinger, and Settings for
+these controls. The native patch checks the exact supported firmware binary and
+stops the build if it differs; offsets must be reviewed for a firmware update.
+
 ## Kernel and contributions
 
 `external/kernel` is a pinned

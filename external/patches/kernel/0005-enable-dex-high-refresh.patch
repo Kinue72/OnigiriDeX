@@ -1,0 +1,42 @@
+From: Onigiri
+Subject: [PATCH] Allow opt-in high refresh and UHD modes for native wired DeX
+
+diff --git a/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c b/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c
+--- a/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c
++++ b/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c
+@@ -308,6 +308,10 @@
+ 	DP_DEBUG("en:%d, active:%d->%d\n", en, active_before, ws->active);
+ }
+ #endif
++
++static bool secdp_high_refresh;
++module_param(secdp_high_refresh, bool, 0644);
++MODULE_PARM_DESC(secdp_high_refresh, "Allow EDID-validated DeX high refresh modes; reconnect to apply");
+ 
+ static int secdp_param_lpcharge;
+ module_param(secdp_param_lpcharge, int, 0444);
+@@ -5393,7 +5397,7 @@
+ }
+ #endif
+ 
+-	if (mode_refresh <= DEX_REFRESH_MAX) {
++	if (mode_refresh <= DEX_REFRESH_MAX || READ_ONCE(secdp_high_refresh)) {
+ 		ret = true;
+ 		goto end;
+ 	}
+@@ -5541,6 +5545,15 @@
+ 
+ 	if (!secdp_check_dex_refresh(mode))
+ 		goto end;
++
++	/* Link bandwidth and hardware limits are still checked by mode_valid. */
++	if (READ_ONCE(secdp_high_refresh) && !mode_interlaced &&
++			mode->hdisplay <= 3840 && mode->vdisplay <= 2160 &&
++			secdp_check_dex_ratio(mode_ratio) &&
++			(dex->ignore_prefer_ratio || mode_ratio == prefer->ratio)) {
++		ret = true;
++		goto end;
++	}
+ 
+ 	if (prefer_support && prefer_mode &&
+ 			secdp_check_dex_rowcol(mode) &&
