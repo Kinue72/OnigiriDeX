@@ -1,0 +1,67 @@
+From: Onigiri
+Subject: [PATCH] Show the Gemini assistant overlay fullscreen in DeX
+
+diff --git a/smali_classes2/com/android/server/wm/LaunchParamsController.smali b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
+index 9d4eb5b..3c5cf26 100644
+--- a/smali_classes2/com/android/server/wm/LaunchParamsController.smali
++++ b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
+@@ -56,7 +56,7 @@
+ 
+ 
+ # virtual methods
+-.method public final calculate(Lcom/android/server/wm/Task;Landroid/content/pm/ActivityInfo$WindowLayout;Lcom/android/server/wm/ActivityRecord;Lcom/android/server/wm/ActivityRecord;Landroid/app/ActivityOptions;Lcom/android/server/wm/ActivityStarter$Request;ILcom/android/server/wm/LaunchParamsController$LaunchParams;Lcom/android/server/wm/TaskDisplayArea;)V
++.method public final calculateDefault(Lcom/android/server/wm/Task;Landroid/content/pm/ActivityInfo$WindowLayout;Lcom/android/server/wm/ActivityRecord;Lcom/android/server/wm/ActivityRecord;Landroid/app/ActivityOptions;Lcom/android/server/wm/ActivityStarter$Request;ILcom/android/server/wm/LaunchParamsController$LaunchParams;Lcom/android/server/wm/TaskDisplayArea;)V
+     .locals 31
+ 
+     move-object/from16 v0, p0
+@@ -4163,3 +4163,50 @@
+ 
+     throw v0
+ .end method
++
++.method public final calculate(Lcom/android/server/wm/Task;Landroid/content/pm/ActivityInfo$WindowLayout;Lcom/android/server/wm/ActivityRecord;Lcom/android/server/wm/ActivityRecord;Landroid/app/ActivityOptions;Lcom/android/server/wm/ActivityStarter$Request;ILcom/android/server/wm/LaunchParamsController$LaunchParams;Lcom/android/server/wm/TaskDisplayArea;)V
++    .locals 0
++
++    invoke-virtual/range {p0 .. p9}, Lcom/android/server/wm/LaunchParamsController;->calculateDefault(Lcom/android/server/wm/Task;Landroid/content/pm/ActivityInfo$WindowLayout;Lcom/android/server/wm/ActivityRecord;Lcom/android/server/wm/ActivityRecord;Landroid/app/ActivityOptions;Lcom/android/server/wm/ActivityStarter$Request;ILcom/android/server/wm/LaunchParamsController$LaunchParams;Lcom/android/server/wm/TaskDisplayArea;)V
++
++    invoke-static {p3, p8}, Lcom/android/server/wm/LaunchParamsController;->applyAssistantOverlayDexPolicy(Lcom/android/server/wm/ActivityRecord;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
++
++    return-void
++.end method
++
++.method public static applyAssistantOverlayDexPolicy(Lcom/android/server/wm/ActivityRecord;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
++    .locals 2
++
++    if-eqz p0, :done
++    if-eqz p1, :done
++
++    # DeX resolves every launch on its display to freeform; only override that case.
++    iget v0, p1, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mWindowingMode:I
++    const/4 v1, 0x5
++    if-ne v0, v1, :done
++
++    # Google app assistant/Gemini overlay (robin "floaty" surfaces).
++    iget-object v0, p0, Lcom/android/server/wm/ActivityRecord;->packageName:Ljava/lang/String;
++    const-string v1, "com.google.android.googlequicksearchbox"
++    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    if-eqz v0, :done
++
++    iget-object v0, p0, Lcom/android/server/wm/ActivityRecord;->mActivityComponent:Landroid/content/ComponentName;
++    if-eqz v0, :done
++    invoke-virtual {v0}, Landroid/content/ComponentName;->getClassName()Ljava/lang/String;
++    move-result-object v0
++    const-string v1, ".floaty."
++    invoke-virtual {v0, v1}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
++    move-result v0
++    if-eqz v0, :done
++
++    # Fullscreen + translucent: the overlay floats over the desktop like on the phone.
++    const/4 v0, 0x1
++    iput v0, p1, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mWindowingMode:I
++    iget-object v0, p1, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mBounds:Landroid/graphics/Rect;
++    invoke-virtual {v0}, Landroid/graphics/Rect;->setEmpty()V
++
++    :done
++    return-void
++.end method

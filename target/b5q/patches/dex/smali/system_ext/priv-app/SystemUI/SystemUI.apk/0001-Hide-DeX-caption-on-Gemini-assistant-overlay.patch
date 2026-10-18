@@ -1,0 +1,37 @@
+From: Onigiri
+Subject: [PATCH] Hide the DeX caption on the Gemini assistant overlay
+
+diff --git a/smali_classes3/com/android/wm/shell/windowdecor/MultiTaskingWindowDecorViewModel.smali b/smali_classes3/com/android/wm/shell/windowdecor/MultiTaskingWindowDecorViewModel.smali
+index 5752899..5c4585e 100644
+--- a/smali_classes3/com/android/wm/shell/windowdecor/MultiTaskingWindowDecorViewModel.smali
++++ b/smali_classes3/com/android/wm/shell/windowdecor/MultiTaskingWindowDecorViewModel.smali
+@@ -2489,6 +2489,29 @@
+ .method public final shouldShowWindowDecor(Landroid/app/ActivityManager$RunningTaskInfo;Z)Z
+     .locals 4
+ 
++    # Onigiri: Google's assistant/Gemini overlay floats over DeX without a caption.
++    iget-object v0, p1, Landroid/app/TaskInfo;->baseIntent:Landroid/content/Intent;
++    if-eqz v0, :onigiri_not_assistant_overlay
++    invoke-virtual {v0}, Landroid/content/Intent;->getComponent()Landroid/content/ComponentName;
++    move-result-object v0
++    if-eqz v0, :onigiri_not_assistant_overlay
++    invoke-virtual {v0}, Landroid/content/ComponentName;->getPackageName()Ljava/lang/String;
++    move-result-object v1
++    const-string v2, "com.google.android.googlequicksearchbox"
++    invoke-virtual {v2, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v1
++    if-eqz v1, :onigiri_not_assistant_overlay
++    invoke-virtual {v0}, Landroid/content/ComponentName;->getClassName()Ljava/lang/String;
++    move-result-object v0
++    const-string v1, ".floaty."
++    invoke-virtual {v0, v1}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
++    move-result v0
++    if-eqz v0, :onigiri_not_assistant_overlay
++    const/4 v0, 0x0
++    return v0
++
++    :onigiri_not_assistant_overlay
++
+     iget-object v0, p0, Lcom/android/wm/shell/windowdecor/MultiTaskingWindowDecorViewModel;->mSplitScreenController:Lcom/android/wm/shell/splitscreen/SplitScreenController;
+ 
+     const/4 v1, 0x1
