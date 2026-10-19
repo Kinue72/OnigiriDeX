@@ -1,0 +1,404 @@
+From: Onigiri
+Subject: [PATCH] Add DeX zone layouts to Onigiri settings
+
+diff --git a/b/res/drawable/onigiri_zone_columns.xml b/res/drawable/onigiri_zone_columns.xml
+new file mode 100644
+index 0000000..db6753e
+--- /dev/null
++++ b/res/drawable/onigiri_zone_columns.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#eeeef0" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M7.75,5.25h21.83a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-21.83a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M66.42,5.25h21.83a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-21.83a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#387aff" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M37.08,5.25h21.83a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-21.83a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable/onigiri_zone_grid.xml b/res/drawable/onigiri_zone_grid.xml
+new file mode 100644
+index 0000000..53c2146
+--- /dev/null
++++ b/res/drawable/onigiri_zone_grid.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#eeeef0" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M51.75,5.25h36.5a2.5,2.5 0,0 1,2.5,2.5v16.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-16.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M7.75,29.25h36.5a2.5,2.5 0,0 1,2.5,2.5v16.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-16.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M51.75,29.25h36.5a2.5,2.5 0,0 1,2.5,2.5v16.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-16.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#387aff" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M7.75,5.25h36.5a2.5,2.5 0,0 1,2.5,2.5v16.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-16.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable/onigiri_zone_map_left.xml b/res/drawable/onigiri_zone_map_left.xml
+new file mode 100644
+index 0000000..b526e88
+--- /dev/null
++++ b/res/drawable/onigiri_zone_map_left.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#eeeef0" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M37.08,5.25h51.17a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-51.17a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#387aff" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M7.75,5.25h21.83a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-21.83a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable/onigiri_zone_map_right.xml b/res/drawable/onigiri_zone_map_right.xml
+new file mode 100644
+index 0000000..1c00f40
+--- /dev/null
++++ b/res/drawable/onigiri_zone_map_right.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#eeeef0" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M7.75,5.25h51.17a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-51.17a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#387aff" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M66.42,5.25h21.83a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-21.83a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable/onigiri_zone_off.xml b/res/drawable/onigiri_zone_off.xml
+new file mode 100644
+index 0000000..bf043fd
+--- /dev/null
++++ b/res/drawable/onigiri_zone_off.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#eeeef0" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M7.75,5.25h36.5a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M51.75,5.25h36.5a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable/onigiri_zone_priority.xml b/res/drawable/onigiri_zone_priority.xml
+new file mode 100644
+index 0000000..64086f7
+--- /dev/null
++++ b/res/drawable/onigiri_zone_priority.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#eeeef0" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M7.75,5.25h14.5a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-14.5a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#cfcfd4" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M73.75,5.25h14.5a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-14.5a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#387aff" android:strokeColor="#eeeef0" android:strokeWidth="1" android:pathData="M29.75,5.25h36.5a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable-night/onigiri_zone_columns.xml b/res/drawable-night/onigiri_zone_columns.xml
+new file mode 100644
+index 0000000..f7e3d3f
+--- /dev/null
++++ b/res/drawable-night/onigiri_zone_columns.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#3a3a3d" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M7.75,5.25h21.83a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-21.83a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M66.42,5.25h21.83a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-21.83a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#387aff" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M37.08,5.25h21.83a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-21.83a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable-night/onigiri_zone_grid.xml b/res/drawable-night/onigiri_zone_grid.xml
+new file mode 100644
+index 0000000..6d2835d
+--- /dev/null
++++ b/res/drawable-night/onigiri_zone_grid.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#3a3a3d" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M51.75,5.25h36.5a2.5,2.5 0,0 1,2.5,2.5v16.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-16.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M7.75,29.25h36.5a2.5,2.5 0,0 1,2.5,2.5v16.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-16.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M51.75,29.25h36.5a2.5,2.5 0,0 1,2.5,2.5v16.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-16.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#387aff" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M7.75,5.25h36.5a2.5,2.5 0,0 1,2.5,2.5v16.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-16.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable-night/onigiri_zone_map_left.xml b/res/drawable-night/onigiri_zone_map_left.xml
+new file mode 100644
+index 0000000..924c6b3
+--- /dev/null
++++ b/res/drawable-night/onigiri_zone_map_left.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#3a3a3d" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M37.08,5.25h51.17a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-51.17a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#387aff" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M7.75,5.25h21.83a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-21.83a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable-night/onigiri_zone_map_right.xml b/res/drawable-night/onigiri_zone_map_right.xml
+new file mode 100644
+index 0000000..042b540
+--- /dev/null
++++ b/res/drawable-night/onigiri_zone_map_right.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#3a3a3d" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M7.75,5.25h51.17a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-51.17a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#387aff" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M66.42,5.25h21.83a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-21.83a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable-night/onigiri_zone_off.xml b/res/drawable-night/onigiri_zone_off.xml
+new file mode 100644
+index 0000000..d1969e5
+--- /dev/null
++++ b/res/drawable-night/onigiri_zone_off.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#3a3a3d" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M7.75,5.25h36.5a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M51.75,5.25h36.5a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/b/res/drawable-night/onigiri_zone_priority.xml b/res/drawable-night/onigiri_zone_priority.xml
+new file mode 100644
+index 0000000..2e58935
+--- /dev/null
++++ b/res/drawable-night/onigiri_zone_priority.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector android:width="96dp" android:height="56dp" android:viewportWidth="96" android:viewportHeight="56"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#3a3a3d" android:pathData="M6,1h84a5,5 0,0 1,5,5v44a5,5 0,0 1,-5,5h-84a5,5 0,0 1,-5,-5v-44a5,5 0,0 1,5,-5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M7.75,5.25h14.5a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-14.5a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#5c5c61" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M73.75,5.25h14.5a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-14.5a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++    <path android:fillColor="#387aff" android:strokeColor="#3a3a3d" android:strokeWidth="1" android:pathData="M29.75,5.25h36.5a2.5,2.5 0,0 1,2.5,2.5v40.5a2.5,2.5 0,0 1,-2.5,2.5h-36.5a2.5,2.5 0,0 1,-2.5,-2.5v-40.5a2.5,2.5 0,0 1,2.5,-2.5z" />
++</vector>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index eba3a31..130571d 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -15386,6 +15386,13 @@ In Camera, you can use the Top button to take pictures."</string>
+     <string name="onigiri_external_rotation_title">External display rotation</string>
+     <string name="onigiri_display_automatic">Automatic</string>
+     <string name="onigiri_external_reconnect">Reconnect the external display to apply</string>
++    <string name="onigiri_dex_zones_title">Zones</string>
++    <string name="onigiri_dex_zones_off">Off</string>
++    <string name="onigiri_dex_zones_map_left">Map left</string>
++    <string name="onigiri_dex_zones_map_right">Map right</string>
++    <string name="onigiri_dex_zones_columns">Columns</string>
++    <string name="onigiri_dex_zones_grid">Grid</string>
++    <string name="onigiri_dex_zones_priority">Priority grid</string>
+     <string name="onigiri_autoboot_title">Power on when power connected</string>
+     <string name="onigiri_settings_category_title">Onigiri settings</string>
+ </resources>
+diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
+index c7b7a6e..4e1f9a2 100644
+--- a/res/xml/onigiri_settings.xml
++++ b/res/xml/onigiri_settings.xml
+@@ -20,6 +20,10 @@
+         <ListPreference android:title="@string/onigiri_external_mode_title" android:key="onigiri_external_mode" android:persistent="false" settings:controller="io.mesalabs.onigiri.settings.ExternalDisplayModePreferenceController" />
+         <ListPreference android:title="@string/onigiri_external_rotation_title" android:key="onigiri_external_rotation" android:persistent="false" android:entries="@array/onigiri_external_rotation_entries" android:entryValues="@array/onigiri_external_rotation_values" settings:controller="io.mesalabs.onigiri.settings.ExternalDisplayRotationPreferenceController" />
+     </SecPreferenceCategory>
++    <SecPreferenceCategory android:title="@string/onigiri_dex_zones_title">
++        <com.samsung.android.settings.widget.SecHorizontalRadioPreference android:key="onigiri_dex_zones_1" settings:viewType="image" settings:controller="io.mesalabs.onigiri.settings.DexZonesPreferenceController" />
++        <com.samsung.android.settings.widget.SecHorizontalRadioPreference android:key="onigiri_dex_zones_2" settings:viewType="image" />
++    </SecPreferenceCategory>
+     <SecPreferenceCategory android:title="@string/onigiri_spoof_settings_title">
+         <SecSwitchPreference android:title="@string/onigiri_games_spoof_title" android:key="onigiri_games_spoof" settings:controller="io.mesalabs.onigiri.settings.GamesPropsPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_hide_dev_title" android:key="onigiri_hide_dev" settings:controller="io.mesalabs.onigiri.settings.HideDeveloperStatusPreferenceController" />
+diff --git a/b/smali_classes4/io/mesalabs/onigiri/settings/DexZonesPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/DexZonesPreferenceController.smali
+new file mode 100644
+index 0000000..e73b0eb
+--- /dev/null
++++ b/smali_classes4/io/mesalabs/onigiri/settings/DexZonesPreferenceController.smali
+@@ -0,0 +1,198 @@
++.class public Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;
++.super Lcom/android/settings/core/BasePreferenceController;
++.source "DexZonesPreferenceController.java"
++
++# interfaces
++.implements Landroidx/preference/Preference$OnPreferenceChangeListener;
++
++
++# SecHorizontalRadioPreference holds at most three items, so the layouts are split over
++# rows onigiri_dex_zones_1..2 that all edit persist.sys.onigiri.dex_zones. Row 1 owns
++# this controller and drives the other rows too.
++.field private final mRows:[Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;
++
++
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .locals 1
++
++    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/BasePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++    const/4 v0, 0x2
++    new-array v0, v0, [Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;
++    iput-object v0, p0, Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;->mRows:[Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;
++    return-void
++.end method
++
++.method private static current()Ljava/lang/String;
++    .locals 3
++
++    const-string v0, "persist.sys.onigiri.dex_zones"
++    const-string v1, "off"
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, ","
++    invoke-virtual {v1, v0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v1
++    const-string v2, ","
++    invoke-virtual {v1, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v1
++    const-string v2, ",off,map_left,map_right,columns,grid,priority,"
++    invoke-virtual {v2, v1}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
++    move-result v1
++    if-eqz v1, :unknown
++    return-object v0
++    :unknown
++    const-string v0, "off"
++    return-object v0
++.end method
++
++.method private bindRow(Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;Ljava/lang/String;)V
++    .locals 9
++
++    const-string v0, ","
++    invoke-virtual {p2, v0}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
++    move-result-object v0
++    new-instance v1, Ljava/util/ArrayList;
++    invoke-direct {v1}, Ljava/util/ArrayList;-><init>()V
++    new-instance v2, Ljava/util/ArrayList;
++    invoke-direct {v2}, Ljava/util/ArrayList;-><init>()V
++    iget-object v3, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-virtual {v3}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++    move-result-object v4
++    invoke-virtual {v3}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
++    move-result-object v5
++    const/4 v6, 0x0
++
++    # Labels are onigiri_dex_zones_<value>, previews onigiri_zone_<value>.
++    :loop
++    array-length v7, v0
++    if-ge v6, v7, :built
++    aget-object v7, v0, v6
++    const-string v8, "onigiri_dex_zones_"
++    invoke-virtual {v8, v7}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v8
++    const-string p2, "string"
++    invoke-virtual {v4, v8, p2, v5}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
++    move-result v8
++    invoke-virtual {v3, v8}, Landroid/content/Context;->getString(I)Ljava/lang/String;
++    move-result-object v8
++    invoke-virtual {v1, v8}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
++    const-string v8, "onigiri_zone_"
++    invoke-virtual {v8, v7}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v8
++    const-string p2, "drawable"
++    invoke-virtual {v4, v8, p2, v5}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
++    move-result v8
++    invoke-static {v8}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v8
++    invoke-virtual {v2, v8}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
++    add-int/lit8 v6, v6, 0x1
++    goto :loop
++
++    :built
++    new-instance v6, Lcom/samsung/android/settings/widget/RadioItemDataInfo$Builder;
++    new-instance v7, Ljava/util/ArrayList;
++    invoke-static {v0}, Ljava/util/Arrays;->asList([Ljava/lang/Object;)Ljava/util/List;
++    move-result-object v8
++    invoke-direct {v7, v8}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
++    invoke-direct {v6, v7, v1}, Lcom/samsung/android/settings/widget/RadioItemDataInfo$Builder;-><init>(Ljava/util/List;Ljava/util/List;)V
++    iput-object v2, v6, Lcom/samsung/android/settings/widget/RadioItemDataInfo$Builder;->mImageList:Ljava/util/List;
++    invoke-virtual {v6}, Lcom/samsung/android/settings/widget/RadioItemDataInfo$Builder;->build()Lcom/samsung/android/settings/widget/RadioItemDataInfo;
++    move-result-object v6
++    invoke-virtual {p1, v6}, Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;->setRadioItemDataInfo(Lcom/samsung/android/settings/widget/RadioItemDataInfo;)V
++    const/4 v6, 0x0
++    iput-boolean v6, p1, Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;->mIsDividerEnabled:Z
++    invoke-virtual {p1, p0}, Landroidx/preference/Preference;->setOnPreferenceChangeListener(Landroidx/preference/Preference$OnPreferenceChangeListener;)V
++    return-void
++.end method
++
++.method private setAll(Ljava/lang/String;)V
++    .locals 4
++
++    iget-object v0, p0, Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;->mRows:[Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;
++    array-length v1, v0
++    const/4 v2, 0x0
++    :loop
++    if-ge v2, v1, :done
++    aget-object v3, v0, v2
++    if-eqz v3, :next
++    invoke-virtual {v3, p1}, Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;->setValue(Ljava/lang/String;)V
++    :next
++    add-int/lit8 v2, v2, 0x1
++    goto :loop
++    :done
++    return-void
++.end method
++
++
++# virtual methods
++.method public getAvailabilityStatus()I
++    .locals 1
++
++    const/4 v0, 0x0
++    return v0
++.end method
++
++.method public displayPreference(Landroidx/preference/PreferenceScreen;)V
++    .locals 5
++
++    invoke-super {p0, p1}, Lcom/android/settings/core/BasePreferenceController;->displayPreference(Landroidx/preference/PreferenceScreen;)V
++    const-string v0, "off,map_left,map_right;columns,grid,priority"
++    const-string v1, ";"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
++    move-result-object v0
++    const/4 v1, 0x0
++
++    :loop
++    array-length v2, v0
++    if-ge v1, v2, :done
++    add-int/lit8 v2, v1, 0x1
++    invoke-static {v2}, Ljava/lang/String;->valueOf(I)Ljava/lang/String;
++    move-result-object v2
++    const-string v3, "onigiri_dex_zones_"
++    invoke-virtual {v3, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v2
++    invoke-virtual {p1, v2}, Landroidx/preference/PreferenceGroup;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
++    move-result-object v2
++    instance-of v3, v2, Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;
++    if-eqz v3, :next
++    check-cast v2, Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;
++    iget-object v3, p0, Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;->mRows:[Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;
++    aput-object v2, v3, v1
++    aget-object v4, v0, v1
++    invoke-direct {p0, v2, v4}, Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;->bindRow(Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;Ljava/lang/String;)V
++    :next
++    add-int/lit8 v1, v1, 0x1
++    goto :loop
++
++    :done
++    return-void
++.end method
++
++.method public updateState(Landroidx/preference/Preference;)V
++    .locals 1
++
++    invoke-super {p0, p1}, Lcom/android/settingslib/core/AbstractPreferenceController;->updateState(Landroidx/preference/Preference;)V
++    invoke-static {}, Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;->current()Ljava/lang/String;
++    move-result-object v0
++    invoke-direct {p0, v0}, Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;->setAll(Ljava/lang/String;)V
++    return-void
++.end method
++
++# A pick in one row clears the others; their own change callbacks land here again as no-ops.
++.method public onPreferenceChange(Landroidx/preference/Preference;Ljava/lang/Object;)Z
++    .locals 2
++
++    check-cast p2, Ljava/lang/String;
++    if-eqz p2, :ignored
++    :try_start_0
++    const-string v0, "persist.sys.onigiri.dex_zones"
++    invoke-static {v0, p2}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    :try_end_0
++    .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :ignored
++    invoke-direct {p0, p2}, Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;->setAll(Ljava/lang/String;)V
++    const/4 v0, 0x1
++    return v0
++    :ignored
++    const/4 v0, 0x0
++    return v0
++.end method

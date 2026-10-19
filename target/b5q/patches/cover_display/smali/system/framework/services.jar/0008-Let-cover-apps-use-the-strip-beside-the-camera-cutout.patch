@@ -1,0 +1,34 @@
+From: Onigiri
+Subject: [PATCH] Let cover apps use the strip beside the camera cutout
+
+diff --git a/smali_classes2/com/android/server/wm/DisplayPolicy.smali b/smali_classes2/com/android/server/wm/DisplayPolicy.smali
+index 8354b0f..a11c9f9 100644
+--- a/smali_classes2/com/android/server/wm/DisplayPolicy.smali
++++ b/smali_classes2/com/android/server/wm/DisplayPolicy.smali
+@@ -1601,6 +1601,26 @@
+ .method public final adjustWindowParamsLw(Lcom/android/server/wm/WindowState;Landroid/view/WindowManager$LayoutParams;)V
+     .locals 8
+ 
++    # Onigiri: the cover's camera cutout is only the bottom-right corner, but AOSP turns any
++    # bottom cutout into a full-width safe inset. Let apps on the cover (display 0) draw
++    # into that strip; only the 369x66 px under the camera housing stays covered.
++    iget-object v0, p0, Lcom/android/server/wm/DisplayPolicy;->mDisplayContent:Lcom/android/server/wm/DisplayContent;
++
++    iget v0, v0, Lcom/android/server/wm/DisplayContent;->mDisplayId:I
++
++    if-nez v0, :onigiri_cover_cutout_skip
++
++    iget v0, p2, Landroid/view/WindowManager$LayoutParams;->type:I
++
++    const/4 v1, 0x1
++
++    if-ne v0, v1, :onigiri_cover_cutout_skip
++
++    const/4 v0, 0x3
++
++    iput v0, p2, Landroid/view/WindowManager$LayoutParams;->layoutInDisplayCutoutMode:I
++
++    :onigiri_cover_cutout_skip
+     iget v0, p2, Landroid/view/WindowManager$LayoutParams;->type:I
+ 
+     const/4 v1, 0x2

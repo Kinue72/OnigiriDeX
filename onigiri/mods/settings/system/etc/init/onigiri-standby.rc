@@ -1,0 +1,22 @@
+# Car standby daemon. It needs root and broad framework access (airplane mode, sensors,
+# deviceidle, CPU hotplug, USB power), so it runs in KernelSU's unconfined ksu domain. The
+# Onigiri kernel ships KernelSU, whose runtime policy lets init enter ksu from any file.
+service onigiri-standby /system/bin/sh /system/bin/onigiri-standby.sh
+    user root
+    group root
+    seclabel u:r:ksu:s0
+    disabled
+
+# Opt-in (Settings > Onigiri Software). It also starts at every boot, so state left by a
+# shutdown, crash or restart in standby is put back even after the switch was turned off, and
+# zone apps open when the phone starts docked; while switched off it does only that and stops
+# itself. Not oneshot: init restarts it if it dies, so a killed run gets cleaned up too.
+on property:sys.boot_completed=1
+    start onigiri-standby
+
+on property:sys.boot_completed=1 && property:persist.sys.onigiri.car_standby=true
+    start onigiri-standby
+
+# Switched back on while a switched-off run was stopping itself.
+on property:init.svc.onigiri-standby=stopped && property:sys.boot_completed=1 && property:persist.sys.onigiri.car_standby=true
+    start onigiri-standby

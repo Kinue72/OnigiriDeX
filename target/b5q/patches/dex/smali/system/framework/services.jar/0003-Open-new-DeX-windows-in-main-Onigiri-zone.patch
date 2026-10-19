@@ -1,0 +1,590 @@
+From: Onigiri
+Subject: [PATCH] Open new DeX windows in the main Onigiri zone
+
+diff --git a/smali_classes2/com/android/server/wm/LaunchParamsController.smali b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
+index 3c5cf26..3ef243e 100644
+--- a/smali_classes2/com/android/server/wm/LaunchParamsController.smali
++++ b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
+@@ -4171,6 +4171,8 @@
+ 
+     invoke-static {p3, p8}, Lcom/android/server/wm/LaunchParamsController;->applyAssistantOverlayDexPolicy(Lcom/android/server/wm/ActivityRecord;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
+ 
++    invoke-static {p1, p3, p5, p8}, Lcom/android/server/wm/LaunchParamsController;->applyZoneLaunchPolicy(Lcom/android/server/wm/Task;Lcom/android/server/wm/ActivityRecord;Landroid/app/ActivityOptions;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
++
+     return-void
+ .end method
+ 
+@@ -4210,3 +4212,155 @@
+     :done
+     return-void
+ .end method
++
++# Onigiri zones: open new DeX windows in the main zone while another zone is in use.
++.method public static applyZoneLaunchPolicy(Lcom/android/server/wm/Task;Lcom/android/server/wm/ActivityRecord;Landroid/app/ActivityOptions;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
++    .locals 9
++
++    # Only brand-new freeform tasks (no activities yet); relaunching an existing window keeps its place.
++    if-eqz p0, :new_task
++    invoke-virtual {p0}, Lcom/android/server/wm/WindowContainer;->getChildCount()I
++    move-result v0
++    if-nez v0, :done
++    :new_task
++    if-eqz p1, :done
++    if-eqz p3, :done
++    # Undefined means inherit the display area mode, which is freeform on DeX.
++    iget v0, p3, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mWindowingMode:I
++    if-nez v0, :resolved_mode
++    iget-object v0, p3, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mPreferredTaskDisplayArea:Lcom/android/server/wm/TaskDisplayArea;
++    if-eqz v0, :done
++    invoke-virtual {v0}, Lcom/android/server/wm/ConfigurationContainer;->getWindowingMode()I
++    move-result v0
++    :resolved_mode
++    const/4 v1, 0x5
++    if-ne v0, v1, :done
++
++    # Explicit placement (launcher drag) wins.
++    if-eqz p2, :no_options
++    invoke-virtual {p2}, Landroid/app/ActivityOptions;->getLaunchBounds()Landroid/graphics/Rect;
++    move-result-object v0
++    if-eqz v0, :no_options
++    invoke-virtual {v0}, Landroid/graphics/Rect;->isEmpty()Z
++    move-result v0
++    if-eqz v0, :done
++
++    :no_options
++    # The new ActivityRecord has no type until it joins its task.
++    invoke-virtual {p1}, Lcom/android/server/wm/ConfigurationContainer;->isActivityTypeStandardOrUndefined()Z
++    move-result v0
++    if-eqz v0, :done
++    iget-object v0, p3, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mPreferredTaskDisplayArea:Lcom/android/server/wm/TaskDisplayArea;
++    if-eqz v0, :done
++    invoke-virtual {v0}, Lcom/android/server/wm/ConfigurationContainer;->isDexMode()Z
++    move-result v1
++    if-eqz v1, :done
++    invoke-static {}, Lcom/android/server/wm/OnigiriZones;->layout()[I
++    move-result-object v1
++    if-eqz v1, :done
++
++    new-instance v2, Landroid/graphics/Rect;
++    invoke-direct {v2}, Landroid/graphics/Rect;-><init>()V
++    invoke-virtual {v0, v2}, Lcom/android/server/wm/DisplayArea;->getStableRect(Landroid/graphics/Rect;)V
++    new-instance v3, Lcom/android/server/wm/OnigiriZoneProbe;
++    invoke-direct {v3, v2, v1}, Lcom/android/server/wm/OnigiriZoneProbe;-><init>(Landroid/graphics/Rect;[I)V
++    invoke-virtual {v0, v3}, Lcom/android/server/wm/WindowContainer;->forAllRootTasks(Ljava/util/function/Consumer;)V
++    iget-object v4, v3, Lcom/android/server/wm/OnigiriZoneProbe;->mFound:Landroid/graphics/Rect;
++    if-eqz v4, :done
++
++    # Same gap as a drag snap: the DeX freeform outline thickness at this display's density,
++    # rounded up to even (MultiTaskingWindowDecoration.getFreeformThickness).
++    const/4 v8, 0x0
++    :try_start_gap
++    invoke-virtual {v0}, Lcom/android/server/wm/WindowContainer;->getDisplayContent()Lcom/android/server/wm/DisplayContent;
++    move-result-object v5
++    iget-object v5, v5, Lcom/android/server/wm/DisplayContent;->mDisplayMetrics:Landroid/util/DisplayMetrics;
++    new-instance v6, Landroid/util/TypedValue;
++    invoke-direct {v6}, Landroid/util/TypedValue;-><init>()V
++    invoke-static {}, Landroid/content/res/Resources;->getSystem()Landroid/content/res/Resources;
++    move-result-object v7
++    const v8, 0x10503b0
++    const/4 v0, 0x1
++    invoke-virtual {v7, v8, v6, v0}, Landroid/content/res/Resources;->getValue(ILandroid/util/TypedValue;Z)V
++    iget v6, v6, Landroid/util/TypedValue;->data:I
++    invoke-static {v6, v5}, Landroid/util/TypedValue;->complexToDimensionPixelSize(ILandroid/util/DisplayMetrics;)I
++    move-result v8
++    :try_end_gap
++    .catch Ljava/lang/RuntimeException; {:try_start_gap .. :try_end_gap} :no_gap
++    goto :have_gap
++    :no_gap
++    const/4 v8, 0x0
++    :have_gap
++    and-int/lit8 v0, v8, 0x1
++    add-int/2addr v8, v0
++
++    # Open in the main zone. If the user resized the side window, the shared edge follows it.
++    iget-object p0, p3, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mBounds:Landroid/graphics/Rect;
++    const/4 v5, 0x0
++    aget v5, v1, v5
++    invoke-static {v2, v1, v5, v8, p0}, Lcom/android/server/wm/OnigiriZones;->zoneRect(Landroid/graphics/Rect;[IIILandroid/graphics/Rect;)V
++    # Which edges the zones share is decided on the gap-free layout.
++    new-instance v7, Landroid/graphics/Rect;
++    invoke-direct {v7}, Landroid/graphics/Rect;-><init>()V
++    const/4 v0, 0x0
++    invoke-static {v2, v1, v5, v0, v7}, Lcom/android/server/wm/OnigiriZones;->zoneRect(Landroid/graphics/Rect;[IIILandroid/graphics/Rect;)V
++    new-instance v6, Landroid/graphics/Rect;
++    invoke-direct {v6}, Landroid/graphics/Rect;-><init>()V
++    iget v5, v3, Lcom/android/server/wm/OnigiriZoneProbe;->mZone:I
++    invoke-static {v2, v1, v5, v0, v6}, Lcom/android/server/wm/OnigiriZones;->zoneRect(Landroid/graphics/Rect;[IIILandroid/graphics/Rect;)V
++    const/16 v3, 0x20
++
++    iget v0, v6, Landroid/graphics/Rect;->right:I
++    iget v5, v7, Landroid/graphics/Rect;->left:I
++    if-ne v0, v5, :not_left_of_main
++    iget v1, v4, Landroid/graphics/Rect;->right:I
++    add-int/2addr v1, v8
++    iget v5, p0, Landroid/graphics/Rect;->left:I
++    sub-int v0, v1, v5
++    invoke-static {v0}, Ljava/lang/Math;->abs(I)I
++    move-result v0
++    if-le v0, v3, :not_left_of_main
++    iput v1, p0, Landroid/graphics/Rect;->left:I
++    :not_left_of_main
++
++    iget v0, v6, Landroid/graphics/Rect;->left:I
++    iget v5, v7, Landroid/graphics/Rect;->right:I
++    if-ne v0, v5, :not_right_of_main
++    iget v1, v4, Landroid/graphics/Rect;->left:I
++    sub-int/2addr v1, v8
++    iget v5, p0, Landroid/graphics/Rect;->right:I
++    sub-int v0, v1, v5
++    invoke-static {v0}, Ljava/lang/Math;->abs(I)I
++    move-result v0
++    if-le v0, v3, :not_right_of_main
++    iput v1, p0, Landroid/graphics/Rect;->right:I
++    :not_right_of_main
++
++    iget v0, v6, Landroid/graphics/Rect;->bottom:I
++    iget v5, v7, Landroid/graphics/Rect;->top:I
++    if-ne v0, v5, :not_above_main
++    iget v1, v4, Landroid/graphics/Rect;->bottom:I
++    add-int/2addr v1, v8
++    iget v5, p0, Landroid/graphics/Rect;->top:I
++    sub-int v0, v1, v5
++    invoke-static {v0}, Ljava/lang/Math;->abs(I)I
++    move-result v0
++    if-le v0, v3, :not_above_main
++    iput v1, p0, Landroid/graphics/Rect;->top:I
++    :not_above_main
++
++    iget v0, v6, Landroid/graphics/Rect;->top:I
++    iget v5, v7, Landroid/graphics/Rect;->bottom:I
++    if-ne v0, v5, :done
++    iget v1, v4, Landroid/graphics/Rect;->top:I
++    sub-int/2addr v1, v8
++    iget v5, p0, Landroid/graphics/Rect;->bottom:I
++    sub-int v0, v1, v5
++    invoke-static {v0}, Ljava/lang/Math;->abs(I)I
++    move-result v0
++    if-le v0, v3, :done
++    iput v1, p0, Landroid/graphics/Rect;->bottom:I
++
++    :done
++    return-void
++.end method
+diff --git a/b/smali_classes2/com/android/server/wm/OnigiriZoneProbe.smali b/smali_classes2/com/android/server/wm/OnigiriZoneProbe.smali
+new file mode 100644
+index 0000000..b970943
+--- /dev/null
++++ b/smali_classes2/com/android/server/wm/OnigiriZoneProbe.smali
+@@ -0,0 +1,141 @@
++.class public final Lcom/android/server/wm/OnigiriZoneProbe;
++.super Ljava/lang/Object;
++.source "OnigiriZoneProbe.java"
++
++# interfaces
++.implements Ljava/util/function/Consumer;
++
++
++# Finds a visible freeform window that sits in a side (non-main) zone: its centre is
++# inside the zone and it reaches the work-area edges the zone touches.
++.field public final mArea:Landroid/graphics/Rect;
++
++.field public final mLayout:[I
++
++.field public mFound:Landroid/graphics/Rect;
++
++.field public mZone:I
++
++
++.method public constructor <init>(Landroid/graphics/Rect;[I)V
++    .locals 0
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++    iput-object p1, p0, Lcom/android/server/wm/OnigiriZoneProbe;->mArea:Landroid/graphics/Rect;
++    iput-object p2, p0, Lcom/android/server/wm/OnigiriZoneProbe;->mLayout:[I
++    return-void
++.end method
++
++.method private static docked(IIII)Z
++    .locals 1
++
++    # p0 = zone edge, p1 = work-area edge, p2 = window edge, p3 = tolerance
++    if-ne p0, p1, :ok
++    sub-int v0, p2, p1
++    invoke-static {v0}, Ljava/lang/Math;->abs(I)I
++    move-result v0
++    if-le v0, p3, :ok
++    const/4 v0, 0x0
++    return v0
++    :ok
++    const/4 v0, 0x1
++    return v0
++.end method
++
++.method public final accept(Ljava/lang/Object;)V
++    .locals 10
++
++    iget-object v0, p0, Lcom/android/server/wm/OnigiriZoneProbe;->mFound:Landroid/graphics/Rect;
++    if-nez v0, :done
++
++    check-cast p1, Lcom/android/server/wm/Task;
++    invoke-virtual {p1}, Lcom/android/server/wm/WindowContainer;->isVisible()Z
++    move-result v0
++    if-eqz v0, :done
++    invoke-virtual {p1}, Lcom/android/server/wm/ConfigurationContainer;->getWindowingMode()I
++    move-result v0
++    const/4 v1, 0x5
++    if-ne v0, v1, :done
++    invoke-virtual {p1}, Lcom/android/server/wm/ConfigurationContainer;->isActivityTypeStandard()Z
++    move-result v0
++    if-eqz v0, :done
++
++    invoke-virtual {p1}, Lcom/android/server/wm/ConfigurationContainer;->getBounds()Landroid/graphics/Rect;
++    move-result-object v0
++    iget-object v1, p0, Lcom/android/server/wm/OnigiriZoneProbe;->mArea:Landroid/graphics/Rect;
++    iget-object v2, p0, Lcom/android/server/wm/OnigiriZoneProbe;->mLayout:[I
++    invoke-static {v2}, Lcom/android/server/wm/OnigiriZones;->count([I)I
++    move-result v3
++    new-instance v4, Landroid/graphics/Rect;
++    invoke-direct {v4}, Landroid/graphics/Rect;-><init>()V
++
++    # A window over the main zone's centre is not a side window (and would collapse the main zone).
++    const/4 v6, 0x0
++    aget v6, v2, v6
++    const/4 v7, 0x0
++    invoke-static {v1, v2, v6, v7, v4}, Lcom/android/server/wm/OnigiriZones;->zoneRect(Landroid/graphics/Rect;[IIILandroid/graphics/Rect;)V
++    invoke-virtual {v4}, Landroid/graphics/Rect;->centerX()I
++    move-result v6
++    invoke-virtual {v4}, Landroid/graphics/Rect;->centerY()I
++    move-result v7
++    invoke-virtual {v0, v6, v7}, Landroid/graphics/Rect;->contains(II)Z
++    move-result v6
++    if-nez v6, :done
++
++    const/16 v9, 0x20
++    const/4 v5, 0x0
++
++    :loop
++    if-ge v5, v3, :done
++    const/4 v6, 0x0
++    aget v6, v2, v6
++    if-eq v5, v6, :next
++    const/4 v6, 0x0
++    invoke-static {v1, v2, v5, v6, v4}, Lcom/android/server/wm/OnigiriZones;->zoneRect(Landroid/graphics/Rect;[IIILandroid/graphics/Rect;)V
++
++    invoke-virtual {v0}, Landroid/graphics/Rect;->centerX()I
++    move-result v6
++    invoke-virtual {v0}, Landroid/graphics/Rect;->centerY()I
++    move-result v7
++    invoke-virtual {v4, v6, v7}, Landroid/graphics/Rect;->contains(II)Z
++    move-result v6
++    if-eqz v6, :next
++
++    iget v6, v4, Landroid/graphics/Rect;->left:I
++    iget v7, v1, Landroid/graphics/Rect;->left:I
++    iget v8, v0, Landroid/graphics/Rect;->left:I
++    invoke-static {v6, v7, v8, v9}, Lcom/android/server/wm/OnigiriZoneProbe;->docked(IIII)Z
++    move-result v6
++    if-eqz v6, :next
++    iget v6, v4, Landroid/graphics/Rect;->top:I
++    iget v7, v1, Landroid/graphics/Rect;->top:I
++    iget v8, v0, Landroid/graphics/Rect;->top:I
++    invoke-static {v6, v7, v8, v9}, Lcom/android/server/wm/OnigiriZoneProbe;->docked(IIII)Z
++    move-result v6
++    if-eqz v6, :next
++    iget v6, v4, Landroid/graphics/Rect;->right:I
++    iget v7, v1, Landroid/graphics/Rect;->right:I
++    iget v8, v0, Landroid/graphics/Rect;->right:I
++    invoke-static {v6, v7, v8, v9}, Lcom/android/server/wm/OnigiriZoneProbe;->docked(IIII)Z
++    move-result v6
++    if-eqz v6, :next
++    iget v6, v4, Landroid/graphics/Rect;->bottom:I
++    iget v7, v1, Landroid/graphics/Rect;->bottom:I
++    iget v8, v0, Landroid/graphics/Rect;->bottom:I
++    invoke-static {v6, v7, v8, v9}, Lcom/android/server/wm/OnigiriZoneProbe;->docked(IIII)Z
++    move-result v6
++    if-eqz v6, :next
++
++    new-instance v6, Landroid/graphics/Rect;
++    invoke-direct {v6, v0}, Landroid/graphics/Rect;-><init>(Landroid/graphics/Rect;)V
++    iput-object v6, p0, Lcom/android/server/wm/OnigiriZoneProbe;->mFound:Landroid/graphics/Rect;
++    iput v5, p0, Lcom/android/server/wm/OnigiriZoneProbe;->mZone:I
++    return-void
++
++    :next
++    add-int/lit8 v5, v5, 0x1
++    goto :loop
++
++    :done
++    return-void
++.end method
+diff --git a/b/smali_classes2/com/android/server/wm/OnigiriZones.smali b/smali_classes2/com/android/server/wm/OnigiriZones.smali
+new file mode 100644
+index 0000000..464e83d
+--- /dev/null
++++ b/smali_classes2/com/android/server/wm/OnigiriZones.smali
+@@ -0,0 +1,265 @@
++.class public final Lcom/android/server/wm/OnigiriZones;
++.super Ljava/lang/Object;
++.source "OnigiriZones.java"
++
++
++# Zone layout from persist.sys.onigiri.dex_zones: the main zone index, then
++# left, top, right, bottom of every zone in twelfths of the work area.
++# null = stock DeX halves.
++.method public static layout()[I
++    .locals 3
++
++    const-string v0, "persist.sys.onigiri.dex_zones"
++    const-string v1, "off"
++    invoke-static {v0, v1}, Landroid/os/SystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++
++    const-string v1, "map_left"
++    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v1
++    if-eqz v1, :not_map_left
++    const/16 v2, 0x9
++    new-array v2, v2, [I
++    fill-array-data v2, :map_left
++    return-object v2
++
++    :not_map_left
++    const-string v1, "map_right"
++    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v1
++    if-eqz v1, :not_map_right
++    const/16 v2, 0x9
++    new-array v2, v2, [I
++    fill-array-data v2, :map_right
++    return-object v2
++
++    :not_map_right
++    const-string v1, "columns"
++    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v1
++    if-eqz v1, :not_columns
++    const/16 v2, 0xd
++    new-array v2, v2, [I
++    fill-array-data v2, :columns
++    return-object v2
++
++    :not_columns
++    const-string v1, "grid"
++    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v1
++    if-eqz v1, :not_grid
++    const/16 v2, 0x11
++    new-array v2, v2, [I
++    fill-array-data v2, :grid
++    return-object v2
++
++    :not_grid
++    const-string v1, "priority"
++    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v1
++    if-eqz v1, :stock
++    const/16 v2, 0xd
++    new-array v2, v2, [I
++    fill-array-data v2, :priority
++    return-object v2
++
++    :stock
++    const/4 v0, 0x0
++    return-object v0
++
++    :map_left
++    .array-data 4
++        0x1
++        0x0
++        0x0
++        0x4
++        0xc
++        0x4
++        0x0
++        0xc
++        0xc
++    .end array-data
++
++    :map_right
++    .array-data 4
++        0x0
++        0x0
++        0x0
++        0x8
++        0xc
++        0x8
++        0x0
++        0xc
++        0xc
++    .end array-data
++
++    :columns
++    .array-data 4
++        0x1
++        0x0
++        0x0
++        0x4
++        0xc
++        0x4
++        0x0
++        0x8
++        0xc
++        0x8
++        0x0
++        0xc
++        0xc
++    .end array-data
++
++    :grid
++    .array-data 4
++        0x0
++        0x0
++        0x0
++        0x6
++        0x6
++        0x6
++        0x0
++        0xc
++        0x6
++        0x0
++        0x6
++        0x6
++        0xc
++        0x6
++        0x6
++        0xc
++        0xc
++    .end array-data
++
++    :priority
++    .array-data 4
++        0x1
++        0x0
++        0x0
++        0x3
++        0xc
++        0x3
++        0x0
++        0x9
++        0xc
++        0x9
++        0x0
++        0xc
++        0xc
++    .end array-data
++.end method
++
++.method public static count([I)I
++    .locals 1
++
++    array-length v0, p0
++    add-int/lit8 v0, v0, -0x1
++    div-int/lit8 v0, v0, 0x4
++    return v0
++.end method
++
++# Zone i of the layout inside frame. Inner right/bottom edges give up `gap` like stock DeX
++# halves do: the freeform outline thickness, so focused windows' outlines don't overlap.
++.method public static zoneRect(Landroid/graphics/Rect;[IIILandroid/graphics/Rect;)V
++    .locals 5
++
++    mul-int/lit8 v0, p2, 0x4
++    add-int/lit8 v0, v0, 0x1
++    invoke-virtual {p0}, Landroid/graphics/Rect;->width()I
++    move-result v1
++    invoke-virtual {p0}, Landroid/graphics/Rect;->height()I
++    move-result v2
++
++    aget v3, p1, v0
++    mul-int/2addr v3, v1
++    div-int/lit8 v3, v3, 0xc
++    iget v4, p0, Landroid/graphics/Rect;->left:I
++    add-int/2addr v3, v4
++    iput v3, p4, Landroid/graphics/Rect;->left:I
++
++    add-int/lit8 v0, v0, 0x1
++    aget v3, p1, v0
++    mul-int/2addr v3, v2
++    div-int/lit8 v3, v3, 0xc
++    iget v4, p0, Landroid/graphics/Rect;->top:I
++    add-int/2addr v3, v4
++    iput v3, p4, Landroid/graphics/Rect;->top:I
++
++    const/16 p2, 0xc
++    add-int/lit8 v0, v0, 0x1
++    aget v3, p1, v0
++    mul-int/2addr v3, v1
++    div-int/lit8 v3, v3, 0xc
++    iget v4, p0, Landroid/graphics/Rect;->left:I
++    add-int/2addr v3, v4
++    aget v4, p1, v0
++    if-ge v4, p2, :set_right
++    sub-int/2addr v3, p3
++    :set_right
++    iput v3, p4, Landroid/graphics/Rect;->right:I
++
++    add-int/lit8 v0, v0, 0x1
++    aget v3, p1, v0
++    mul-int/2addr v3, v2
++    div-int/lit8 v3, v3, 0xc
++    iget v4, p0, Landroid/graphics/Rect;->top:I
++    add-int/2addr v3, v4
++    aget v4, p1, v0
++    if-ge v4, p2, :set_bottom
++    sub-int/2addr v3, p3
++    :set_bottom
++    iput v3, p4, Landroid/graphics/Rect;->bottom:I
++    return-void
++.end method
++
++# Index of the zone nearest to (x, y); the first one wins ties and overlaps.
++.method public static zoneAt(Landroid/graphics/Rect;[III)I
++    .locals 8
++
++    invoke-static {p1}, Lcom/android/server/wm/OnigiriZones;->count([I)I
++    move-result v0
++    new-instance v1, Landroid/graphics/Rect;
++    invoke-direct {v1}, Landroid/graphics/Rect;-><init>()V
++    const/4 v2, 0x0
++    const/4 v3, 0x0
++    const v4, 0x7fffffff
++
++    :loop
++    if-ge v2, v0, :done
++    const/4 v5, 0x0
++    invoke-static {p0, p1, v2, v5, v1}, Lcom/android/server/wm/OnigiriZones;->zoneRect(Landroid/graphics/Rect;[IIILandroid/graphics/Rect;)V
++
++    iget v5, v1, Landroid/graphics/Rect;->left:I
++    sub-int/2addr v5, p2
++    iget v6, v1, Landroid/graphics/Rect;->right:I
++    add-int/lit8 v6, v6, -0x1
++    sub-int v6, p2, v6
++    invoke-static {v5, v6}, Ljava/lang/Math;->max(II)I
++    move-result v5
++    const/4 v6, 0x0
++    invoke-static {v5, v6}, Ljava/lang/Math;->max(II)I
++    move-result v5
++
++    iget v6, v1, Landroid/graphics/Rect;->top:I
++    sub-int/2addr v6, p3
++    iget v7, v1, Landroid/graphics/Rect;->bottom:I
++    add-int/lit8 v7, v7, -0x1
++    sub-int v7, p3, v7
++    invoke-static {v6, v7}, Ljava/lang/Math;->max(II)I
++    move-result v6
++    const/4 v7, 0x0
++    invoke-static {v6, v7}, Ljava/lang/Math;->max(II)I
++    move-result v6
++
++    add-int/2addr v5, v6
++    if-ge v5, v4, :next
++    move v4, v5
++    move v3, v2
++
++    :next
++    add-int/lit8 v2, v2, 0x1
++    goto :loop
++
++    :done
++    return v3
++.end method

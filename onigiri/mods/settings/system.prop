@@ -3,3 +3,6 @@ persist.sys.onigiri.bootsound=false
 
 # Keep powered-off charging until explicitly enabled in Onigiri Software
 persist.sys.onigiri.autoboot=false
+
+# Car standby on power loss stays off until enabled in Onigiri Software
+persist.sys.onigiri.car_standby=false

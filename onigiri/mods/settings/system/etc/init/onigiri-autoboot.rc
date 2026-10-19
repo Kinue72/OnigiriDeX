@@ -5,11 +5,12 @@ on property:ro.persistent_properties.ready=true && property:persist.sys.onigiri.
     chmod 0600 /cache/onigiri/autoboot
     restorecon_recursive /cache/onigiri
 
-# Samsung starts this class after mounting /cache in init.sec-charger.rc.
+# Samsung starts this class after mounting /cache in init.sec-charger.rc. lpm gets no
+# dac_override, so root still needs a group that may enter /cache (system in charger mode).
 service onigiri-autoboot /system/bin/sh /system/bin/onigiri-autoboot.sh
     class sec-charger
     user root
-    group root
+    group root system cache
     seclabel u:r:lpm:s0
     oneshot
 
