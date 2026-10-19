@@ -1,20 +1,122 @@
-# Onigiri
+# OnigiriDeX
 
-Android 15 / One UI 7 firmware for **Galaxy Z Flip5 SM-F731B (XXV)**, based on
-[UN1CA fifteen](https://github.com/salvogiangri/UN1CA/tree/fifteen) and
+Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on Android 15 / One UI 7 and takes ideas and code from
+[UN1CA](https://github.com/salvogiangri/UN1CA/tree/fifteen) and
 [ArtisanROM](https://github.com/ArtisanROM/ArtisanROM).
 
-Uses the Fold5 system on the cover display, with wired DeX, official KernelSU
-and SUSFS. The inner display is disabled.
+## What it does
 
-**This project is AI slop with limited manual review. Use at your own risk.**
-The maintainer has little time to inspect every change. Back up your data and
-keep stock firmware available; flashing can erase data or leave the phone
-unable to boot.
+- Runs the whole phone on the **small outside screen** because this uses the software from the **Galaxy Z Fold5**, so the outside screen works like a full phone screen.
+- Lets you plug the phone into a monitor and use **Samsung DeX** (a desktop
+  mode, like a small computer).
+- Can split the DeX desktop into **zones** and open your favourite apps in
+  them.
+- Can work as a **car screen**: it turns on with the car and sleeps when the
+  car turns off.
+- Comes with root access (KernelSU + susFS) built in.
 
-## Build
+## Please read first
 
-Use Linux, Bash, Python 3 and Java 17.
+**Most of this project was written by AI, and only part of it has been checked
+by a person.** The maintainer doesn't have time to review every change.
+
+Installing it can wipe your phone or stop it from starting up. Before you try:
+
+- Back up everything you care about.
+- Keep a copy of the original Samsung software so you can go back.
+
+**Use it at your own risk.**
+
+## Extra features
+
+Everything Onigiri adds lives in **Settings → Onigiri Software**. Here's what
+each part does.
+
+### DeX zones
+
+![Zone layouts in Onigiri Software](docs/images/onigiri-settings-zones.png)
+
+Off by default. Zones split the monitor into fixed areas, like a map on one
+side and other apps next to it. You can pick a map on the left or right, three
+columns, a grid, or a priority grid.
+
+- **Snap windows**: drag a window to the edge of the screen and it fills the
+  zone there.
+- **New windows** open in the main zone.
+- **Zone apps**: pick an app for each zone. It opens in its zone every time it
+  starts, and all of them open by themselves when the phone starts on a
+  monitor (handy in the car). Each app can only have one zone.
+
+![DeX desktop with the Map left layout](docs/images/dex-zones-map-left.jpg)
+
+![Zone apps opened in the Map and Main zones](docs/images/dex-zone-apps.jpg)
+
+### Phone settings
+
+![Sleep when folded, power on and car standby switches](docs/images/onigiri-settings-car.png)
+
+- **Power on when power connected**: when the phone is off and gets power, it
+  turns on by itself once the battery reaches 5%.
+- **Car standby when power is lost**: when the car turns off, the phone waits
+  a minute and then goes into a deep sleep to save battery. It turns on
+  airplane mode, turns off Wi-Fi, Bluetooth and location, closes apps and
+  stops powering the monitor. It checks every 30 seconds whether the car is
+  back (less often after a long time, or right away if you press the power
+  button), and turns everything back on when it is. If the car stays off for
+  4 days, or the battery drops below 10%, the phone shuts down.
+
+### Monitor settings
+
+![DeX monitor settings](docs/images/onigiri-settings-display.png)
+
+- **External display mode**: pick the resolution and refresh rate for your
+  monitor. The list shows what your monitor supports. Unplug and plug the
+  cable back in after changing it. Choose **Automatic** to go back to the
+  monitor's default.
+- **External display rotation**: turns the desktop on the monitor. It changes
+  right away.
+- **DeX high refresh rate** (experimental, off by default): lets the desktop
+  run smoother than 60 frames per second on fast monitors. In testing, a
+  144 Hz monitor reached about 142 frames per second instead of 60. Unplug and
+  plug the cable back in after turning it on. Some apps may still run slower,
+  and it may stay at 60 while the phone's own screen is on. Battery saver and
+  overheating protection still work as usual.
+
+<details>
+<summary><b>Boring stuffs</b></summary>
+
+- **Allow secure screenshot**: lets you take screenshots in apps that normally
+  block them.
+- **Disable screenshot detection**: apps are no longer told when you take a
+  screenshot.
+- **Unlock higher FPS in games**: some games only offer their smoothest
+  settings on certain phones. This makes them think you have one of those
+  phones.
+- **Hide developer status from apps**: some apps, often banking apps, refuse
+  to work when developer options are turned on. This hides it from them.
+- **Sleep when folded**: turns the screen off and locks the phone when you
+  close it.
+- **Play Integrity Fix**: helps apps that check whether your phone has been
+  changed, like Google Wallet or banking apps, keep working. The date shows
+  which version you have. Tap the name to check for a newer one.
+- **Play power on sound effect**: plays Samsung's sound when the phone starts.
+  Off by default.
+- **Enable live blur effect**: gives menus and panels a frosted-glass look.
+  The phone needs a restart after you change it.
+- **Allow application downgrade**: lets you install an older version of an
+  app over a newer one.
+- **Disable low target SDK block**: lets you install very old apps that
+  Android 15 normally refuses.
+- **Disable ASKS**: turns off a Samsung security check that can stop some
+  apps from installing or running.
+
+</details>
+
+## Building it yourself
+
+You need a Linux computer with Bash, Python 3 and Java 17.
+
+**1. Get the code and tools**
 
 ```sh
 git clone --recurse-submodules https://github.com/Kinue72/zflip5-dex.git
@@ -24,13 +126,17 @@ source ./buildenv.sh SM-F731B
 onigiri build_dependencies
 ```
 
-Place the full firmware ZIPs in `firmware/`:
+**2. Download the original Samsung software**
+
+Put these full firmware ZIP files in the `firmware/` folder:
 
 - Flip5: SM-F731B / XXV / F731BXXS5EYI1
 - Fold5: SM-F946B / XXV / F946BXXS5EYI1
-- S24 adaptive colour assets: SM-S921B / S921BXXS9BYH1
+- Galaxy S24 (only used for screen colours): SM-S921B / S921BXXS9BYH1
 
-Replace these example filenames with the downloaded filenames:
+**3. Build**
+
+Change the file names below to match the files you downloaded:
 
 ```sh
 python3 scripts/import_fw.py target firmware/flip5.zip
@@ -44,83 +150,33 @@ onigiri make_rom
 onigiri build_odin
 ```
 
-Output is in `out/`. Keep `security/onigiri_platform.pk8` private and reuse it
-for updates. Flash only Flip5 bootloader, modem and hardware partitions; see
-[docs/flashing.md](docs/flashing.md) for Odin and odin4 (Linux/macOS).
+The finished files show up in the `out/` folder.
 
-## DeX display settings
+**4. Install it on the phone**
 
-Open **Settings → Onigiri Software → Display settings**. The external mode
-picker lists resolutions and refresh rates advertised by the connected monitor.
-Reconnect after changing the mode; **Automatic** restores the monitor default.
-The mode summary shows the active output resolution and refresh rate. Rotation
-applies immediately to the native DeX desktop. Both controls work independently
-of the high refresh switch.
+Follow [docs/flashing.md](docs/flashing.md). It covers odin4 on Linux and
+macOS (tested) and Odin on Windows (not tested yet).
 
-**DeX high refresh rate** is experimental and defaults off. It lets the external
-display drive the compositor's frame timing instead of the 60 Hz cover display.
-Reconnect after changing this switch. With a 2560×1600 144 Hz output, the native
-scheduler test measured about 142 FPS in Chrome TestUFO, versus 60 FPS with the
-original compositor. Individual applications can still impose their own limits.
-The compositor can still be limited to 60 FPS while the cover screen is on.
-The cover display keeps its native 60 Hz configuration, and thermal and battery
-saver policies still apply.
+A few things to keep in mind:
 
-Rebuild the kernel, Android 15 display policy, SurfaceFlinger, and Settings for
-these controls. The native patch checks the exact supported firmware binary and
-stops the build if it differs; offsets must be reviewed for a firmware update.
+- The build creates a private key at `security/onigiri_platform.pk8`. Keep it
+  safe, don't share it, and use the same one for every future update.
+- Only install the Flip5's own low-level parts (bootloader, modem and
+  hardware files). Never put Fold5 ones on the phone.
+- Parts of the build are made for this exact Samsung software version. If you
+  use a newer version, the build will stop on purpose so nothing breaks
+  quietly.
 
-## DeX zones
+## For contributors
 
-**Settings → Onigiri Software → Zones** (off by default) splits the DeX desktop
-into a layout: a map column on the left or right, three columns, a grid or a
-priority grid. Drag a window to a screen edge to snap it into the zone there;
-while another zone holds a window, new windows open in the main zone.
+The kernel (the core of the system) comes from
+[GoRhanHee's kernel](https://github.com/GoRhanHee/android_kernel_samsung_sm8550) and lives in `external/kernel`. Our own changes are kept as numbered patch
+files in `external/patches/kernel/`. The build adds them in and removes them
+again when it's done. Please put your kernel changes there and leave
+`external/kernel` itself untouched.
 
-Below the layouts, give each zone an app: it opens in that zone when it starts (a
-window that is already open stays where it is), and all of them open by themselves
-when the phone starts on a powered monitor (autoboot in the car) or car standby
-brings it back. An app has one zone: giving it another moves it there. Like car
-standby, zone apps make the phone replug a monitor it booted on as a USB device, once
-per boot, so DeX starts; booted on a computer's USB, that is a 5 s disconnect.
+## Help and feedback
 
-![Zone layouts in Onigiri Software](docs/images/onigiri-settings-zones.png)
+Found a problem or have an idea? [Open an issue](https://github.com/Kinue72/zflip5-dex/issues) or [send a pull request](https://github.com/Kinue72/zflip5-dex/pulls).
 
-![DeX desktop with the Map left layout](docs/images/dex-zones-map-left.jpg)
-
-![Zone apps opened in the Map and Main zones](docs/images/dex-zone-apps.jpg)
-
-## Car head unit
-
-For a phone that runs a car display from the cover screen, with wired DeX to a
-monitor that passes the car's power through to the phone. Both switches are in
-**Settings → Onigiri Software** and default off.
-
-![Car switches in Onigiri Software](docs/images/onigiri-settings-car.png)
-
-- **Power on when power connected** boots the phone from powered-off charging
-  once the battery has 5%.
-- **Car standby when power is lost** waits 60 s on battery, then turns on
-  airplane mode, switches Wi-Fi, Bluetooth, location and sensors off, closes
-  apps, forces deep idle and parks the big CPU cores. It stops powering the
-  monitor, rechecks the USB-C link every 30 s (backing off to 2 min on a long
-  park; the power key rechecks at once) and puts everything back when car
-  power returns. It shuts the phone down after 4 days or below 10%.
-
-The Flip5's USB-C controller has no sink-only mode, so the phone can't simply
-wait for the monitor to supply power: the standby script cuts the phone's own
-5 V within a millisecond whenever the controller turns it on, and swaps the
-port's roles to find a monitor that has power again. Booted on a powered
-monitor, the phone replugs the link once in software so DeX starts.
-
-## Kernel and contributions
-
-`external/kernel` is a pinned
-[GoRhanHee submodule](https://github.com/GoRhanHee/android_kernel_samsung_sm8550).
-The build applies the numbered patches in `external/patches/kernel/` and
-reverses them on exit. Keep project changes in that patch series and the
-submodule checkout clean.
-
-Found a bug or have an improvement? [Open an issue](https://github.com/Kinue72/zflip5-dex/issues)
-or [submit a pull request](https://github.com/Kinue72/zflip5-dex/pulls).
-See [LICENSE](LICENSE) and [NOTICE](NOTICE) for licensing and attribution.
+See [LICENSE](LICENSE) and [NOTICE](NOTICE) for license and credits.
