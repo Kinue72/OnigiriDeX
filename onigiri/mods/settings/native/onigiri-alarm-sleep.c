@@ -1,7 +1,8 @@
 // onigiri-alarm-sleep SECONDS [INPUT_DEVICE...]: sleep like sleep(1), but on an alarm clock that
 // wakes the phone from suspend, or until one of the input devices (e.g. the power key) reports an
-// event. Then hold the "onigiri-standby" wakelock so the caller can act before the phone sleeps
-// again (release it with: echo onigiri-standby > /sys/power/wake_unlock).
+// event. The caller may hold the "onigiri-standby" wakelock: it is released only once the alarm
+// is armed, so the phone can't suspend before it, and held again on wake so the caller can act
+// before the phone sleeps (release it with: echo onigiri-standby > /sys/power/wake_unlock).
 //
 // Build: aarch64-linux-android30-clang -O2 -s -o ../system/bin/onigiri-alarm-sleep onigiri-alarm-sleep.c
 #include <errno.h>
@@ -13,6 +14,14 @@
 #include <unistd.h>
 
 #define WAKELOCK "onigiri-standby"
+
+static int wakelock(const char *node) {
+    int fd = open(node, O_WRONLY | O_CLOEXEC);
+    int ok = fd >= 0 && write(fd, WAKELOCK, sizeof(WAKELOCK) - 1) == sizeof(WAKELOCK) - 1;
+    if (fd >= 0)
+        close(fd);
+    return ok;
+}
 
 int main(int argc, char **argv) {
     if (argc < 2 || atoi(argv[1]) <= 0) {
@@ -34,10 +43,10 @@ int main(int argc, char **argv) {
         if (input < 0 || epoll_ctl(poll, EPOLL_CTL_ADD, input, &event))
             perror(argv[i]);  // still sleep on the alarm
     }
+    wakelock("/sys/power/wake_unlock");  // fails harmlessly when the caller held none
     while (epoll_wait(poll, &event, 1, -1) < 0 && errno == EINTR) {
     }
-    int lock = open("/sys/power/wake_lock", O_WRONLY | O_CLOEXEC);
-    if (lock < 0 || write(lock, WAKELOCK, sizeof(WAKELOCK) - 1) < 0) {
+    if (!wakelock("/sys/power/wake_lock")) {
         perror("onigiri-alarm-sleep: wake_lock");
         return 1;
     }

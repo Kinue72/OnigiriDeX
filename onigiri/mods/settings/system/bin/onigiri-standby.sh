@@ -16,11 +16,15 @@ MONITOR_BOOT=8
 LOW_PCT=10
 MAX_HOURS=96
 BIG_CPUS="3 4 5 6 7"
-STATE=/dev/onigiri-standby  # tmpfs: one marker per thing we changed, so leave() undoes only those
+# Kept on /data so a low-battery shutdown, crash or restart can still put things back.
+DATA=/data/misc/onigiri-standby
+STATE=$DATA/standby  # one marker per thing standby changed; leave() undoes only those
+CC_LOCK=$DATA/cc-lock  # CTRLREG3 before replug_usb set its lock bit
 
 log() { /system/bin/log -t onigiri-standby "$*"; }
 mark() { touch "$STATE/$1"; }
 marked() { [ -e "$STATE/$1" ]; }
+unmark() { rm -f "$STATE/$1"; }
 
 powered() {
     for supply in ac usb wireless pogo; do
@@ -103,16 +107,25 @@ recheck_usb() {
 # Software replug: hold the CC lines open for a few seconds with the lock Samsung uses for an
 # overheating connector (CTRLREG3 bit 1 + forced CC error, through the MAX77705 debug opcode
 # node), so a docked monitor starts over as on a real replug.
+# The original CTRLREG3 is saved first: if we die mid-replug, the next start restores it
+# instead of leaving the port locked open (no USB and no wired charging).
 MXIM=/sys/devices/virtual/mxim/debug0/opcode
+restore_cc() {
+    [ -f $CC_LOCK ] || return 0
+    echo 1d $(cat $CC_LOCK) > $MXIM && rm -f $CC_LOCK
+}
 replug_usb() {
     [ -w $MXIM ] || return
     echo 1c > $MXIM && sleep 0.3
     set -- $(cat $MXIM)  # 0x1c CTRLREG3 ...
     [ "$1" = 0x1c ] || return
+    printf '%x' $(($2)) > $CC_LOCK || return
+    trap 'restore_cc; exit 1' TERM INT HUP
     echo 1d $(printf %x $(($2 | 2))) > $MXIM && sleep 0.3
     echo 0e 84 > $MXIM
     sleep 5
-    echo 1d $(printf %x $(($2))) > $MXIM
+    restore_cc
+    trap - TERM INT HUP
 }
 
 enter() {
@@ -156,19 +169,25 @@ enter() {
     setprop sys.onigiri.standby 1
 }
 
+# Each marker goes only once its restore worked; the rest are retried on the next call.
 leave() {
-    log "power back: leaving standby at $(capacity)%"
+    [ -n "$leaving" ] || log "power back: leaving standby at $(capacity)%"
     for cpu in $BIG_CPUS; do
-        marked cpu$cpu && echo 1 > /sys/devices/system/cpu/cpu$cpu/online
+        marked cpu$cpu && echo 1 > /sys/devices/system/cpu/cpu$cpu/online && unmark cpu$cpu
     done
-    marked idle && dumpsys deviceidle unforce >/dev/null
-    marked saver && cmd power set-mode 0 >/dev/null
-    marked sensors && service call sensor_privacy 9 i32 0 >/dev/null
-    marked location && cmd location set-location-enabled true
-    marked airplane && cmd connectivity airplane-mode disable
-    marked wifi && cmd wifi set-wifi-enabled enabled
-    marked bluetooth && cmd bluetooth_manager enable
-    rm -rf "$STATE"
+    marked idle && dumpsys deviceidle unforce >/dev/null && unmark idle
+    marked saver && cmd power set-mode 0 >/dev/null && unmark saver
+    marked sensors && service call sensor_privacy 9 i32 0 >/dev/null && unmark sensors
+    marked location && cmd location set-location-enabled true && unmark location
+    marked airplane && cmd connectivity airplane-mode disable && unmark airplane
+    marked wifi && cmd wifi set-wifi-enabled enabled && unmark wifi
+    marked bluetooth && cmd bluetooth_manager enable && unmark bluetooth
+    if ! rmdir "$STATE" 2>/dev/null; then
+        [ -n "$leaving" ] || log "restore failed, retrying: $(ls "$STATE" | tr '\n' ' ')"
+        leaving=1
+        return 1
+    fi
+    leaving=
     setprop sys.onigiri.standby 0
     input keyevent WAKEUP
 }
@@ -179,10 +198,17 @@ power_off() {
     exit 0
 }
 
+mkdir -p $DATA && chmod 0700 $DATA
+
 case "$1" in
     enter) enter; exit ;;
     leave) leave; exit ;;
 esac
+
+if [ -f $CC_LOCK ]; then
+    log "an interrupted replug left the USB-C port locked: restoring CTRLREG3"
+    restore_cc || log "could not restore CTRLREG3 from $CC_LOCK"
+fi
 
 # Booted on a powered monitor (autoboot in the car), the monitor stays USB host, ignores data role
 # swaps, and DeX never starts: replug it once the boot has settled.
@@ -200,17 +226,21 @@ if [ "$(getprop persist.sys.onigiri.car_standby)" = true ] && powered && [ -e $T
     esac
 fi
 
+# A leftover $STATE (shutdown or crash in standby) is restored on power, or standby is
+# entered again after GRACE on battery.
 since=
 in_standby=0
-[ -d "$STATE" ] && in_standby=1  # restarted mid-standby
 while :; do
     if [ "$(getprop persist.sys.onigiri.car_standby)" != true ]; then
-        [ $in_standby = 1 ] && leave
+        if [ -d "$STATE" ] && ! leave; then
+            sleep 3
+            continue
+        fi
         [ "$(cat $HOST_BLOCK)" = ON_HOST_ONIGIRI ] && echo OFF > $HOST_BLOCK
         echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
         exit 0  # onigiri-standby.rc starts it again once enabled
     elif powered; then
-        [ $in_standby = 1 ] && leave
+        [ -d "$STATE" ] && leave
         unblock_host
         in_standby=0
         since=
@@ -232,19 +262,18 @@ while :; do
             [ $((now - since)) -ge $((MAX_HOURS * 3600)) ] && power_off "no power for $MAX_HOURS hours"
         fi
     fi
-    # onigiri-alarm-sleep wakes the phone from suspend and holds this wakelock until here.
+    # onigiri-alarm-sleep releases this wakelock once its alarm is armed, wakes the phone from
+    # suspend and holds the wakelock again until here.
     if [ -z "$since" ]; then
         echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
         sleep 3  # notice power loss quickly: the monitor flickers until hold_power_off
     elif [ $in_standby = 1 ]; then
-        echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
-        onigiri-alarm-sleep $(poll_interval $((now - since))) $POWER_KEY
+        onigiri-alarm-sleep $(poll_interval $((now - since))) $POWER_KEY || sleep 10
     elif [ -e $TYPEC-partner ]; then
         # Stay awake and keep VBUS off through the grace period, until the monitor is dead.
         echo onigiri-standby > /sys/power/wake_lock
         hold_power_off 10
     else
-        echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
-        onigiri-alarm-sleep 10
+        onigiri-alarm-sleep 10 || sleep 10
     fi
 done
