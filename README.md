@@ -1,18 +1,13 @@
 # OnigiriDeX
 
-Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on Android 15 / One UI 7 and takes ideas and code from
-[UN1CA](https://github.com/salvogiangri/UN1CA/tree/fifteen) and
-[ArtisanROM](https://github.com/ArtisanROM/ArtisanROM).
+Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on Android 15 / One UI 7 and based on [UN1CA](https://github.com/salvogiangri/UN1CA/tree/fifteen).
 
 ## What it does
 
 - Runs the whole phone on the **small outside screen** because this uses the software from the **Galaxy Z Fold5**, so the outside screen works like a full phone screen.
-- Lets you plug the phone into a monitor and use **Samsung DeX** (a desktop
-  mode, like a small computer).
-- Can split the DeX desktop into **zones** and open your favourite apps in
-  them.
-- Can work as a **car screen**: it turns on with the car and sleeps when the
-  car turns off.
+- Lets you plug the phone into a monitor and use **Samsung DeX** (a desktop mode, like a small computer).
+- Can split the DeX desktop into **zones** and open your favourite apps in them.
+- Can work as a **car screen**: it turns on with the car and sleeps when the car turns off.
 - Comes with root access (KernelSU + susFS) built in.
 
 ## Please read first
