@@ -6,8 +6,13 @@ service onigiri-standby /system/bin/sh /system/bin/onigiri-standby.sh
     group root
     seclabel u:r:ksu:s0
     disabled
-    oneshot
 
-# Opt-in (Settings > Onigiri Software); the script exits by itself once switched off again.
+# Opt-in (Settings > Onigiri Software). It also starts at every boot, so state left by a
+# shutdown, crash or restart in standby is put back even after the switch was turned off;
+# while switched off it does only that and stops itself. Not oneshot: init restarts it if it
+# dies, so a killed run gets cleaned up too.
+on property:sys.boot_completed=1
+    start onigiri-standby
+
 on property:sys.boot_completed=1 && property:persist.sys.onigiri.car_standby=true
     start onigiri-standby

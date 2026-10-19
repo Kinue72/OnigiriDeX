@@ -112,10 +112,17 @@ recheck_usb() {
 MXIM=/sys/devices/virtual/mxim/debug0/opcode
 restore_cc() {
     [ -f $CC_LOCK ] || return 0
-    echo 1d $(cat $CC_LOCK) > $MXIM && rm -f $CC_LOCK
+    for i in 1 2 3 4 5; do
+        echo 1d $(cat $CC_LOCK) > $MXIM && rm -f $CC_LOCK && return 0
+        sleep 1
+    done
+    [ -n "$cc_failed" ] || log "could not restore CTRLREG3 from $CC_LOCK, retrying"
+    cc_failed=1
+    return 1
 }
 replug_usb() {
-    [ -w $MXIM ] || return
+    [ -w $MXIM ] && [ ! -f $CC_LOCK ] || return  # never overwrite a saved original
+    mkdir -p -m 0700 $DATA || return
     echo 1c > $MXIM && sleep 0.3
     set -- $(cat $MXIM)  # 0x1c CTRLREG3 ...
     [ "$1" = 0x1c ] || return
@@ -129,7 +136,7 @@ replug_usb() {
 }
 
 enter() {
-    mkdir -p "$STATE"
+    mkdir -p -m 0700 $DATA && mkdir -p "$STATE"
     log "power lost: entering standby at $(capacity)%"
 
     input keyevent SLEEP
@@ -177,7 +184,9 @@ leave() {
     done
     marked idle && dumpsys deviceidle unforce >/dev/null && unmark idle
     marked saver && cmd power set-mode 0 >/dev/null && unmark saver
-    marked sensors && service call sensor_privacy 9 i32 0 >/dev/null && unmark sensors
+    # `service call` exits 0 even when the call fails: check the state before trusting it.
+    marked sensors && service call sensor_privacy 9 i32 0 >/dev/null &&
+        service call sensor_privacy 6 | grep -q "00000000 00000000" && unmark sensors
     marked location && cmd location set-location-enabled true && unmark location
     marked airplane && cmd connectivity airplane-mode disable && unmark airplane
     marked wifi && cmd wifi set-wifi-enabled enabled && unmark wifi
@@ -198,8 +207,6 @@ power_off() {
     exit 0
 }
 
-mkdir -p $DATA && chmod 0700 $DATA
-
 case "$1" in
     enter) enter; exit ;;
     leave) leave; exit ;;
@@ -207,7 +214,7 @@ esac
 
 if [ -f $CC_LOCK ]; then
     log "an interrupted replug left the USB-C port locked: restoring CTRLREG3"
-    restore_cc || log "could not restore CTRLREG3 from $CC_LOCK"
+    restore_cc
 fi
 
 # Booted on a powered monitor (autoboot in the car), the monitor stays USB host, ignores data role
@@ -226,19 +233,22 @@ if [ "$(getprop persist.sys.onigiri.car_standby)" = true ] && powered && [ -e $T
     esac
 fi
 
-# A leftover $STATE (shutdown or crash in standby) is restored on power, or standby is
-# entered again after GRACE on battery.
+# A leftover $STATE (shutdown or crash in standby) is restored on power or once standby is
+# switched off, or standby is entered again after GRACE on battery.
 since=
 in_standby=0
 while :; do
+    restore_cc
     if [ "$(getprop persist.sys.onigiri.car_standby)" != true ]; then
-        if [ -d "$STATE" ] && ! leave; then
-            sleep 3
+        [ "$(cat $HOST_BLOCK 2>/dev/null)" = ON_HOST_ONIGIRI ] && echo OFF > $HOST_BLOCK
+        echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
+        if [ -d "$STATE" ] && ! leave || [ -f $CC_LOCK ]; then
+            sleep 10
             continue
         fi
-        [ "$(cat $HOST_BLOCK)" = ON_HOST_ONIGIRI ] && echo OFF > $HOST_BLOCK
-        echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
-        exit 0  # onigiri-standby.rc starts it again once enabled
+        # init restarts the service when it exits; onigiri-standby.rc starts it again once enabled.
+        setprop ctl.stop onigiri-standby
+        exit 0
     elif powered; then
         [ -d "$STATE" ] && leave
         unblock_host
