@@ -3,7 +3,7 @@
 # minimum, and put everything back as soon as power returns. Started by onigiri-standby.rc.
 #
 #   persist.sys.onigiri.car_standby   true|false   (Settings > Onigiri Software, off by default)
-#   persist.sys.onigiri.car_standby_hours   N       power off after N hours on battery (96 by default)
+#   persist.sys.onigiri.car_standby_hours   1|2|4|8|12|24|48|96   hours on battery before power off (96 by default)
 #   onigiri-standby.sh enter|leave                  run one transition by hand (testing)
 #
 # On battery: stop powering USB-C at once, standby after GRACE seconds, then recheck the USB-C
@@ -333,7 +333,9 @@ while :; do
             cap=$(capacity)
             [ -n "$cap" ] && [ "$cap" -lt $LOW_PCT ] && power_off "battery below $LOW_PCT%"
             hours=$(getprop persist.sys.onigiri.car_standby_hours 96)
-            case "$hours" in '' | *[!0-9]*) hours=96 ;; esac  # bad math would kill the script
+            # Only the Settings choices: 0 or a value that overflows mksh's 32-bit math would
+            # shut down at once, and junk would kill the script.
+            case "$hours" in 1 | 2 | 4 | 8 | 12 | 24 | 48 | 96) ;; *) hours=96 ;; esac
             [ $((now - since)) -ge $((hours * 3600)) ] && power_off "no power for $hours hours"
         fi
     fi
