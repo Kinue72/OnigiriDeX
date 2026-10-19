@@ -1,0 +1,19 @@
+From: Onigiri
+Subject: [PATCH] Apply dark mode schedule immediately
+
+diff --git a/smali/com/android/server/UiModeManagerService.smali b/smali/com/android/server/UiModeManagerService.smali
+index 2a21072..03e9943 100644
+--- a/smali/com/android/server/UiModeManagerService.smali
++++ b/smali/com/android/server/UiModeManagerService.smali
+@@ -3397,6 +3397,11 @@
+ .method public final shouldApplyAutomaticChangesImmediately()Z
+     .locals 2
+ 
++    # Onigiri: apply scheduled light/dark switches right away instead of waiting for screen off.
++    const/4 v0, 0x1
++
++    return v0
++
+     iget-boolean v0, p0, Lcom/android/server/UiModeManagerService;->mCar:Z
+ 
+     const/4 v1, 0x1

@@ -1,0 +1,26 @@
+From: Onigiri
+Subject: [PATCH] Describe immediate dark mode schedule
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -10122,6 +10122,7 @@ Your tablet will scan for devices even when Bluetooth is turned off."</string>
+     <string name="sec_night_theme_tile_when_to_turn_on_always">Always</string>
+     <string name="sec_night_theme_tile_when_to_turn_on_custom">When to use: %1$s - %2$s</string>
+     <string name="sec_night_theme_title">Dark mode</string>
++    <string name="onigiri_dark_mode_schedule_summary">Dark mode turns on and off right at the scheduled time.</string>
+     <string name="sec_night_theme_turn_on_as_scheduled_summary">To prevent interruptions, Dark mode will wait until the screen is off before it turns on.</string>
+     <string name="sec_no_default_app">None set as default</string>
+     <string name="sec_no_modified_conversations">No conversations</string>
+diff --git a/res/xml/sec_display_dark_mode_settings.xml b/res/xml/sec_display_dark_mode_settings.xml
+--- a/res/xml/sec_display_dark_mode_settings.xml
++++ b/res/xml/sec_display_dark_mode_settings.xml
+@@ -2,7 +2,7 @@
+ <PreferenceScreen android:title="@string/sec_dark_mode_settings" settings:hierarchicalParentFragment="com.android.settings.DisplaySettings" settings:topLevelPreferenceKey="top_level_display"
+   xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
+     <com.samsung.android.settings.widget.SecUnclickablePreference android:title="@string/sec_night_theme_desc" android:selectable="false" android:key="sec_dark_mode_desc" />
+-    <SecSwitchPreference android:title="@string/sec_blue_light_filter_enable_as_scheduled" android:key="sec_dark_mode_turn_on_as_scheduled" android:summary="@string/sec_night_theme_turn_on_as_scheduled_summary" />
++    <SecSwitchPreference android:title="@string/sec_blue_light_filter_enable_as_scheduled" android:key="sec_dark_mode_turn_on_as_scheduled" android:summary="@string/onigiri_dark_mode_schedule_summary" />
+     <com.samsung.android.settings.widget.SecRadioButtonPreference android:title="@string/sec_blue_light_filter_auto_schedule_title" android:key="sec_dark_mode_auto_schedule" settings:allowDividerBelow="false" />
+     <com.android.settingslib.widget.LayoutPreference android:layout="@layout/sec_button_preference_divider" android:selectable="false" android:key="divider" />
+     <com.samsung.android.settings.widget.SecRadioButtonPreference android:title="@string/sec_blue_light_filter_user_schedule_title" android:key="sec_dark_mode_user_schedule" />
