@@ -2,14 +2,14 @@ From: Onigiri
 Subject: [PATCH] Add DeX zone apps
 
 diff --git a/res/values/strings.xml b/res/values/strings.xml
-index fbbb069..728891f 100644
+index fbbb069..e9de264 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
 @@ -15394,6 +15394,17 @@ In Camera, you can use the Top button to take pictures."</string>
      <string name="onigiri_dex_zones_columns">Columns</string>
      <string name="onigiri_dex_zones_grid">Grid</string>
      <string name="onigiri_dex_zones_priority">Priority grid</string>
-+    <string name="onigiri_dex_zone_apps">Apps given a zone always open there. They all open when the phone starts on a powered monitor, and when car standby brings it back.</string>
++    <string name="onigiri_dex_zone_apps">Apps given a zone open in it. They all open by themselves when the phone starts on a powered monitor, and when car standby brings it back.</string>
 +    <string name="onigiri_dex_zone_app_none">None</string>
 +    <string name="onigiri_dex_zone_map">Map zone</string>
 +    <string name="onigiri_dex_zone_main">Main zone</string>
@@ -41,10 +41,10 @@ index 0603c90..c01b51f 100644
          <SecSwitchPreference android:title="@string/onigiri_games_spoof_title" android:key="onigiri_games_spoof" settings:controller="io.mesalabs.onigiri.settings.GamesPropsPreferenceController" />
 diff --git a/smali_classes4/io/mesalabs/onigiri/settings/DexZoneAppPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/DexZoneAppPreferenceController.smali
 new file mode 100644
-index 0000000..2d65010
+index 0000000..9a35021
 --- /dev/null
 +++ b/smali_classes4/io/mesalabs/onigiri/settings/DexZoneAppPreferenceController.smali
-@@ -0,0 +1,338 @@
+@@ -0,0 +1,374 @@
 +.class public Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;
 +.super Lcom/android/settings/core/BasePreferenceController;
 +.source "DexZoneAppPreferenceController.java"
@@ -58,6 +58,8 @@ index 0000000..2d65010
 +# standby opens them all when the phone starts docked or power comes back. The rows and their
 +# description (onigiri_dex_zone_apps) show only while zones are on, one row per zone;
 +# DexZonesPreferenceController refreshes them when the layout changes.
++
++.field private mScreen:Landroidx/preference/PreferenceScreen;
 +
 +
 +.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
@@ -336,6 +338,7 @@ index 0000000..2d65010
 +    .locals 1
 +
 +    invoke-super {p0, p1}, Lcom/android/settings/core/BasePreferenceController;->displayPreference(Landroidx/preference/PreferenceScreen;)V
++    iput-object p1, p0, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->mScreen:Landroidx/preference/PreferenceScreen;
 +    invoke-virtual {p0}, Lcom/android/settings/core/BasePreferenceController;->getPreferenceKey()Ljava/lang/String;
 +    move-result-object v0
 +    invoke-virtual {p1, v0}, Landroidx/preference/PreferenceGroup;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
@@ -358,7 +361,7 @@ index 0000000..2d65010
 +.end method
 +
 +.method public onPreferenceChange(Landroidx/preference/Preference;Ljava/lang/Object;)Z
-+    .locals 2
++    .locals 4
 +
 +    instance-of v0, p2, Ljava/lang/String;
 +    if-eqz v0, :ignored
@@ -367,15 +370,48 @@ index 0000000..2d65010
 +    invoke-static {v0}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->index(Ljava/lang/String;)I
 +    move-result v0
 +    if-ltz v0, :ignored
-+    invoke-static {v0}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->prop(I)Ljava/lang/String;
-+    move-result-object v0
 +    check-cast p2, Ljava/lang/String;
 +    :try_start
++    # An app has one zone: picking it here takes it out of any other zone.
++    invoke-virtual {p2}, Ljava/lang/String;->isEmpty()Z
++    move-result v1
++    if-nez v1, :set
++    const/4 v1, 0x0
++
++    :others
++    const/4 v2, 0x4
++    if-ge v1, v2, :set
++    if-eq v1, v0, :next
++    invoke-static {v1}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->prop(I)Ljava/lang/String;
++    move-result-object v2
++    const-string v3, ""
++    invoke-static {v2, v3}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v3
++    invoke-virtual {p2, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v3
++    if-eqz v3, :next
++    const-string v3, ""
++    invoke-static {v2, v3}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    :next
++    add-int/lit8 v1, v1, 0x1
++    goto :others
++
++    :set
++    invoke-static {v0}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->prop(I)Ljava/lang/String;
++    move-result-object v0
 +    invoke-static {v0, p2}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
 +    :try_end
 +    .catch Ljava/lang/RuntimeException; {:try_start .. :try_end} :ignored
 +    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    iget-object v1, p0, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->mScreen:Landroidx/preference/PreferenceScreen;
++    if-eqz v1, :row
++    invoke-static {v0, v1}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->refreshAll(Landroid/content/Context;Landroidx/preference/PreferenceGroup;)V
++    goto :changed
++
++    :row
 +    invoke-static {v0, p1}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->refresh(Landroid/content/Context;Landroidx/preference/Preference;)V
++
++    :changed
 +    const/4 v0, 0x1
 +    return v0
 +

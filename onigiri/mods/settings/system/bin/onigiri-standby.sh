@@ -98,36 +98,40 @@ unblock_host() {
     powered && echo OFF > $HOST_BLOCK
 }
 
-# Zone apps (Settings > Onigiri Software > Zones): once the DeX desktop is up, start the app
-# given each zone of the current layout; the window manager opens each in its zone.
-open_zone_apps() {
+# Apps given the zones of the current layout (Settings > Onigiri Software > Zones), if any.
+zone_apps() {
     case "$(getprop persist.sys.onigiri.dex_zones)" in
         map_left | map_right) zones="0 1" ;;
         columns | priority) zones="0 1 2" ;;
         grid) zones="0 1 2 3" ;;
         *) return ;;
     esac
-    apps=
     for zone in $zones; do
-        app=$(getprop persist.sys.onigiri.dex_zone_app.$zone)
-        [ -n "$app" ] && apps="$apps $app"
+        getprop persist.sys.onigiri.dex_zone_app.$zone
     done
-    [ -n "$apps" ] || return
+}
+
+# Once the DeX desktop is up, start the zone apps; the window manager opens each in its zone.
+open_zone_apps() {
+    [ -n "$(zone_apps)" ] || return
+    desktop=
     for i in $(seq 30); do
+        powered || return
         desktop=$(dumpsys display | sed -n 's/.*DisplayInfo{"Desktop", displayId \([0-9]*\).*/\1/p' | head -n 1)
         [ -n "$desktop" ] && break
         sleep 2
     done
     [ -n "$desktop" ] || return
     sleep 3  # let the DeX desktop settle
+    apps=$(echo $(zone_apps))  # again: zones or apps may have changed meanwhile
+    [ -n "$apps" ] && powered || return
     for app in $apps; do
-        activity=$(cmd package resolve-activity --brief -a android.intent.action.MAIN \
-            -c android.intent.category.LAUNCHER $app | tail -n 1)
-        case "$activity" in
-            */*) am start --display $desktop -n "$activity" >/dev/null 2>&1 ;;
-        esac
+        # The package's own launcher activity (resolve-activity can answer with the chooser).
+        activity=$(cmd package query-activities --brief --components -a android.intent.action.MAIN \
+            -c android.intent.category.LAUNCHER $app | grep / | head -n 1)
+        [ -n "$activity" ] && am start --display $desktop -n "$activity" >/dev/null 2>&1
     done
-    log "opened zone apps:$apps"
+    log "opened zone apps: $apps"
 }
 
 # With VBUS cut, a monitor that gets car power back just waits for VBUS, and nothing makes
@@ -140,7 +144,7 @@ recheck_usb() {
     echo $role > $TYPEC/port_type &
     hold_power_off 4 once
     found=$?
-    wait
+    wait $!  # not a zone apps run started in the background
     [ $found = 0 ] && log "USB-C recheck: power is back"
     return $found
 }
@@ -261,26 +265,26 @@ if [ -f $CC_LOCK ]; then
     restore_cc
 fi
 
-# Started on power with something on USB-C (autoboot in the car), once per boot (sys.* props
-# reset on reboot), not when the switch is toggled or the service restarts:
-# - with car standby on, a powered monitor stays USB host after the boot, ignores data role
-#   swaps and DeX never starts: replug it. Booting on a computer's USB costs one 5 s disconnect.
-# - open the zone apps, with car standby on or off.
-if [ "$(getprop sys.onigiri.docked_boot)" != 1 ] && powered && [ -e $TYPEC-partner ]; then
+# Started on power with something on USB-C (autoboot in the car), with car standby on or zone
+# apps set: a powered monitor stays USB host after the boot, ignores data role swaps and DeX
+# never starts, so replug it, then open the zone apps. Once per boot (sys.* props reset on
+# reboot), not when the switch is toggled or the service restarts; booting on a computer's USB
+# costs one 5 s disconnect. With neither set the flag stays unset, so switching car standby on
+# later in the boot still checks.
+if [ "$(getprop sys.onigiri.docked_boot)" != 1 ] && powered && [ -e $TYPEC-partner ] &&
+    { [ "$(getprop persist.sys.onigiri.car_standby)" = true ] || [ -n "$(zone_apps)" ]; }; then
     sleep 10
     setprop sys.onigiri.docked_boot 1  # after the wait: a run killed during it checks again
-    if [ "$(getprop persist.sys.onigiri.car_standby)" = true ]; then
-        case "$(cat $TYPEC/data_role)" in
-            *"[device]"*)
-                log "docked as a USB device after boot: replugging"
-                replug_usb
-                for i in 1 2 3 4 5 6 7 8 9 10; do
-                    powered && break
-                    sleep 1
-                done
-                ;;
-        esac
-    fi
+    case "$(cat $TYPEC/data_role)" in
+        *"[device]"*)
+            log "docked as a USB device after boot: replugging"
+            replug_usb
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+                powered && break
+                sleep 1
+            done
+            ;;
+    esac
     open_zone_apps
 fi
 
@@ -316,7 +320,7 @@ while :; do
             block_host &  # DisplayPort teardown takes seconds: keep cutting VBUS meanwhile
             hold_power_off 6
             found=$?
-            wait
+            wait $!
             [ $found = 0 ] && continue
         fi
         recheck_usb && continue
