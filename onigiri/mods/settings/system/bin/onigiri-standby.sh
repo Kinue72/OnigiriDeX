@@ -3,18 +3,18 @@
 # minimum, and put everything back as soon as power returns. Started by onigiri-standby.rc.
 #
 #   persist.sys.onigiri.car_standby   true|false   (Settings > Onigiri Software, off by default)
+#   persist.sys.onigiri.car_standby_hours   1|2|4|8|12|24|48|96   hours on battery before power off (96 by default)
 #   onigiri-standby.sh enter|leave                  run one transition by hand (testing)
 #
 # On battery: stop powering USB-C at once, standby after GRACE seconds, then recheck the USB-C
 # link every 30 s, backing off to 2 min on a long park (each recheck keeps the phone awake
 # ~11 s: sec-battery holds a 10 s wakelock per cable event); the power key rechecks at once.
-# Power off below LOW_PCT % or after MAX_HOURS.
+# Power off below LOW_PCT % or after car_standby_hours.
 # Autoboot only starts the phone again at 5% or more, so the two never loop.
 
 GRACE=60
 MONITOR_BOOT=8
 LOW_PCT=10
-MAX_HOURS=96
 BIG_CPUS="3 4 5 6 7"
 # Kept on /data so a low-battery shutdown, crash or restart can still put things back.
 DATA=/data/misc/onigiri-standby
@@ -332,7 +332,11 @@ while :; do
             [ $in_standby = 1 ] || { enter; in_standby=1; }
             cap=$(capacity)
             [ -n "$cap" ] && [ "$cap" -lt $LOW_PCT ] && power_off "battery below $LOW_PCT%"
-            [ $((now - since)) -ge $((MAX_HOURS * 3600)) ] && power_off "no power for $MAX_HOURS hours"
+            hours=$(getprop persist.sys.onigiri.car_standby_hours 96)
+            # Only the Settings choices: 0 or a value that overflows mksh's 32-bit math would
+            # shut down at once, and junk would kill the script.
+            case "$hours" in 1 | 2 | 4 | 8 | 12 | 24 | 48 | 96) ;; *) hours=96 ;; esac
+            [ $((now - since)) -ge $((hours * 3600)) ] && power_off "no power for $hours hours"
         fi
     fi
     # onigiri-alarm-sleep releases this wakelock once its alarm is armed, wakes the phone from

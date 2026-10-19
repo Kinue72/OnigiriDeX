@@ -48,7 +48,7 @@ columns, a grid, or a priority grid.
 
 ### Phone settings
 
-![Sleep when folded, power on and car standby switches](docs/images/onigiri-settings-car.png)
+![Sleep when folded, power on and car standby switches, and the car standby shutdown time](docs/images/onigiri-settings-car.png)
 
 - **Power on when power connected**: when the phone is off and gets power, it
   turns on by itself once the battery reaches 5%.
@@ -57,8 +57,9 @@ columns, a grid, or a priority grid.
   airplane mode, turns off Wi-Fi, Bluetooth and location, closes apps and
   stops powering the monitor. It checks every 30 seconds whether the car is
   back (less often after a long time, or right away if you press the power
-  button), and turns everything back on when it is. If the car stays off for
-  4 days, or the battery drops below 10%, the phone shuts down.
+  button), and turns everything back on when it is. If the car stays off
+  longer than **Shut down after** (1 hour to 4 days, 4 days by default), or
+  the battery drops below 10%, the phone shuts down.
 
 ### Monitor settings
 
