@@ -155,9 +155,10 @@ recheck_usb() {
     return $found
 }
 
-# Software replug: hold the CC lines open for a few seconds with the lock Samsung uses for an
+# Software replug: hold the CC lines open for a second with the lock Samsung uses for an
 # overheating connector (CTRLREG3 bit 1 + forced CC error, through the MAX77705 debug opcode
-# node), so a docked monitor starts over as on a real replug.
+# node), so a docked monitor starts over as on a real replug (a 25 ms CC error is too short;
+# 1 s worked as well as 5 s, and the port re-attaches only once the lock is lifted).
 # The original CTRLREG3 is saved first: if we die mid-replug, the next start restores it
 # instead of leaving the port locked open (no USB and no wired charging).
 MXIM=/sys/devices/virtual/mxim/debug0/opcode
@@ -181,7 +182,7 @@ replug_usb() {
     trap 'restore_cc; exit 1' TERM INT HUP
     echo 1d $(printf %x $(($2 | 2))) > $MXIM && sleep 0.3
     echo 0e 84 > $MXIM
-    sleep 5
+    sleep 1
     restore_cc
     trap - TERM INT HUP
 }
@@ -275,16 +276,22 @@ fi
 # apps set: a powered monitor stays USB host after the boot, ignores data role swaps and DeX
 # never starts, so replug it, then open the zone apps. Once per boot (sys.* props reset on
 # reboot), not when the switch is toggled or the service restarts; booting on a computer's USB
-# costs one 5 s disconnect. With neither set the flag stays unset, so switching car standby on
-# later in the boot still checks.
+# costs two short disconnects. With neither set the flag stays unset, so switching car standby
+# on later in the boot still checks. The data role is settled long before boot completes.
 if [ "$(getprop sys.onigiri.docked_boot)" != 1 ] && powered && [ -e $TYPEC-partner ] &&
     { [ "$(getprop persist.sys.onigiri.car_standby)" = true ] || [ -n "$(zone_apps)" ]; }; then
-    sleep 10
-    setprop sys.onigiri.docked_boot 1  # after the wait: a run killed during it checks again
+    setprop sys.onigiri.docked_boot 1
     case "$(cat $TYPEC/data_role)" in
         *"[device]"*)
             log "docked as a USB device after boot: replugging"
-            replug_usb
+            # The chip now and then ignores the CC command: replug again if it stays a device.
+            for try in 1 2; do
+                replug_usb
+                for i in 1 2 3 4 5 6 7 8 9 10; do
+                    sleep 1
+                    case "$(cat $TYPEC/data_role)" in *"[host]"*) break 2 ;; esac
+                done
+            done
             for i in 1 2 3 4 5 6 7 8 9 10; do
                 powered && break
                 sleep 1
