@@ -1,0 +1,96 @@
+From: Onigiri
+Subject: [PATCH] Show home screen live wallpapers in DeX
+
+diff --git a/smali_classes2/com/android/server/wallpaper/WallpaperManagerService$LocalService.smali b/smali_classes2/com/android/server/wallpaper/WallpaperManagerService$LocalService.smali
+index 5bf0d3d..57b2c2b 100644
+--- a/smali_classes2/com/android/server/wallpaper/WallpaperManagerService$LocalService.smali
++++ b/smali_classes2/com/android/server/wallpaper/WallpaperManagerService$LocalService.smali
+@@ -70,19 +70,10 @@
+ 
+     iput p1, v4, Lcom/android/server/wallpaper/WallpaperData;->mWhich:I
+ 
+-    iget-object v1, p0, Lcom/android/server/wallpaper/WallpaperManagerService;->mImageWallpaper:Landroid/content/ComponentName;
+-
+-    const/4 v3, 0x0
+-
+-    const/4 v5, 0x0
+-
+-    const/4 v6, 0x0
+-
+-    const/4 v2, 0x1
++    # Bind the saved DeX wallpaper, live ones too, not always a picture.
++    const/4 p1, 0x0
+ 
+-    move-object v0, p0
+-
+-    invoke-virtual/range {v0 .. v6}, Lcom/android/server/wallpaper/WallpaperManagerService;->bindWallpaperComponentLocked(Landroid/content/ComponentName;ZZLcom/android/server/wallpaper/WallpaperData;Landroid/os/IRemoteCallback;Landroid/app/WallpaperInfo;)Z
++    invoke-virtual {p0, v4, p1}, Lcom/android/server/wallpaper/WallpaperManagerService;->switchWallpaper(Lcom/android/server/wallpaper/WallpaperData;Landroid/os/IRemoteCallback;)V
+ 
+     iget p1, p0, Lcom/android/server/wallpaper/WallpaperManagerService;->mCurrentUserId:I
+ 
+diff --git a/smali_classes2/com/android/server/wallpaper/WallpaperManagerService.smali b/smali_classes2/com/android/server/wallpaper/WallpaperManagerService.smali
+index e6441fc..8c8e5de 100644
+--- a/smali_classes2/com/android/server/wallpaper/WallpaperManagerService.smali
++++ b/smali_classes2/com/android/server/wallpaper/WallpaperManagerService.smali
+@@ -24237,7 +24237,7 @@
+ .end method
+ 
+ .method public setWallpaperComponent(Landroid/content/ComponentName;Ljava/lang/String;IILandroid/os/Bundle;)Z
+-    .locals 8
++    .locals 9
+ 
+     invoke-virtual {p0, p2}, Lcom/android/server/wallpaper/WallpaperManagerService;->isFromForegroundApp(Ljava/lang/String;)Z
+ 
+@@ -24259,9 +24259,50 @@
+ 
+     invoke-virtual/range {v0 .. v7}, Lcom/android/server/wallpaper/WallpaperManagerService;->setWallpaperComponentInternal(Landroid/content/ComponentName;Ljava/lang/String;IIZZLandroid/os/Bundle;)Z
+ 
+-    move-result p0
++    move-result v8
+ 
+-    return p0
++    # DeX keeps its own wallpaper (which 9) that its picker only fills with
++    # pictures: give it third-party live wallpapers set for the home screen too.
++    if-eqz v8, :done
++    if-eqz p1, :done
++
++    # FLAG_SYSTEM (1) without the DeX mode bit (8).
++    and-int/lit8 v0, p3, 0x9
++    const/4 v1, 0x1
++    if-ne v0, v1, :done
++
++    iget-object v0, p0, Lcom/android/server/wallpaper/WallpaperManagerService;->mImageWallpaper:Landroid/content/ComponentName;
++    invoke-virtual {p1, v0}, Landroid/content/ComponentName;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    if-nez v0, :done
++
++    # Samsung's own live wallpapers read per-screen assets from the extras.
++    invoke-static {p1}, Lcom/samsung/server/wallpaper/PreloadedLiveWallpaperHelper;->isStockLiveWallpaperComponent(Landroid/content/ComponentName;)Z
++    move-result v0
++    if-nez v0, :done
++
++    move-object v0, p0
++    move-object v1, p1
++    move-object v2, p2
++    const/16 v3, 0x9
++    move v4, p4
++    const/4 v7, 0x0
++
++    :try_start
++    invoke-virtual/range {v0 .. v7}, Lcom/android/server/wallpaper/WallpaperManagerService;->setWallpaperComponentInternal(Landroid/content/ComponentName;Ljava/lang/String;IIZZLandroid/os/Bundle;)Z
++    :try_end
++    .catch Ljava/lang/RuntimeException; {:try_start .. :try_end} :mirror_failed
++
++    :done
++    return v8
++
++    # The home screen already has it: don't fail the whole request over DeX.
++    :mirror_failed
++    move-exception v0
++    const-string v1, "WallpaperManagerService"
++    const-string v2, "Cannot set the live wallpaper for DeX"
++    invoke-static {v1, v2, v0}, Landroid/util/Slog;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++    goto :done
+ .end method
+ 
+ .method public final setWallpaperComponentChecked(Landroid/content/ComponentName;Ljava/lang/String;IILandroid/os/Bundle;)V
