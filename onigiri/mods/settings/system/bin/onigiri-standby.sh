@@ -8,8 +8,8 @@
 #
 # On battery: stop powering USB-C at once, standby after GRACE seconds, then recheck the USB-C
 # link every 30 s, backing off to 2 min on a long park (each recheck keeps the phone awake
-# ~11 s: sec-battery holds a 10 s wakelock per cable event); the power key rechecks at once.
-# Power off below LOW_PCT % or after car_standby_hours.
+# ~11 s: sec-battery holds a 10 s wakelock per cable event); the power key or plugging in
+# power rechecks at once. Power off below LOW_PCT % or after car_standby_hours.
 # Autoboot only starts the phone again at 5% or more, so the two never loop.
 
 GRACE=60
@@ -63,7 +63,7 @@ done
 # about a millisecond: the monitor then dies and stays attached and quiet. The MAX77705
 # firmware has no sink-only mode, and Samsung's host block doesn't stop VBUS in this kernel.
 # Holds for $1 seconds (or until the first cut with "once"); returns 0 early once the port has
-# power again.
+# power again. A cut means a dead monitor is attached: see dead_monitor.
 TYPEC=/sys/class/typec/port0
 OTG=/sys/class/power_supply/otg/online
 hold_power_off() {
@@ -74,6 +74,7 @@ hold_power_off() {
             read on < $OTG
             if [ "$on" = 1 ]; then
                 echo 0 > $OTG
+                dead_monitor=1
                 [ "$2" = once ] && return 1
             fi
             i=$((i+1))
@@ -87,6 +88,9 @@ hold_power_off() {
 # rechecks below don't start DisplayPort on a dead monitor, and lift it only once a re-powered
 # monitor has booted: DisplayPort on a booting monitor times out and the DP driver resets the
 # phone. Lifting it restarts DisplayPort (DeX).
+# dead_monitor is set once something sat on USB-C without power (it may be a monitor that lost
+# power too, and boots when power returns) and cleared once the cable is out: a monitor plugged
+# in afterwards brought the power itself, so it is up and DisplayPort starts at once.
 HOST_BLOCK=/sys/class/usb_notify/usb_control/disable
 block_host() {
     [ "$(cat $HOST_BLOCK)" = OFF ] && echo ON_HOST_ONIGIRI > $HOST_BLOCK &&
@@ -94,7 +98,7 @@ block_host() {
 }
 unblock_host() {
     [ "$(cat $HOST_BLOCK)" = ON_HOST_ONIGIRI ] || return 1
-    sleep $MONITOR_BOOT
+    [ -n "$dead_monitor" ] && sleep $MONITOR_BOOT
     powered && echo OFF > $HOST_BLOCK
 }
 
@@ -317,7 +321,15 @@ while :; do
         fi
         in_standby=0
         since=
+        dead_monitor=
     else
+        # since is set from the second pass on: VBUS is cut by then, so a monitor that lost
+        # power has stopped dropping off, and no partner means the cable is out.
+        if [ -e $TYPEC-partner ]; then
+            dead_monitor=1
+        elif [ -n "$since" ]; then
+            dead_monitor=
+        fi
         if [ "$(cat $HOST_BLOCK)" = OFF ]; then
             block_host &  # DisplayPort teardown takes seconds: keep cutting VBUS meanwhile
             hold_power_off 6
