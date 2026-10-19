@@ -252,6 +252,8 @@ in_standby=0
 while :; do
     restore_cc
     if [ "$(getprop persist.sys.onigiri.car_standby)" != true ]; then
+        in_standby=0  # if it is switched back on, standby starts over from GRACE
+        since=
         [ "$(cat $HOST_BLOCK 2>/dev/null)" = ON_HOST_ONIGIRI ] && echo OFF > $HOST_BLOCK
         echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
         if [ -d "$STATE" ] && ! leave || [ -f $CC_LOCK ]; then
