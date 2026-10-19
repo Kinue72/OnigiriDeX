@@ -1,0 +1,90 @@
+From: Onigiri
+Subject: [PATCH] Fix the Odin handshake on 0x685d bootloaders and GNU base-256 tar sizes
+
+Upstream issues Llucs/odin4#284 and Llucs/odin4#288.
+
+diff --git a/src/firmware/firmware_package.cpp b/src/firmware/firmware_package.cpp
+index a688351..76c345b 100644
+--- a/src/firmware/firmware_package.cpp
++++ b/src/firmware/firmware_package.cpp
+@@ -113,6 +113,26 @@ auto parse_octal_u64(const char* field, size_t len, uint64_t& out) -> bool {
+     return true;
+ }
+ 
++// GNU tar stores sizes >= 8 GiB base-256: 0x80 marker, then the big-endian value (odin4 #288).
++auto parse_tar_size(const char* field, uint64_t& out) -> bool {
++    const auto marker = static_cast<unsigned char>(field[0]);
++    if ((marker & 0x80) == 0) {
++        return parse_octal_u64(field, 12, out);
++    }
++    if (marker != 0x80) {
++        return false;
++    }
++    out = 0;
++    for (size_t i = 1; i < 12; ++i) {
++        const auto b = static_cast<unsigned char>(field[i]);
++        if (i < 4 && b != 0) {
++            return false;
++        }
++        out = (out << 8) | b;
++    }
++    return true;
++}
++
+ auto read_exact(std::ifstream& file, void* buf, size_t len) -> bool {
+     file.read(static_cast<char*>(buf), static_cast<std::streamsize>(len));
+     return static_cast<size_t>(file.gcount()) == len;
+@@ -672,7 +692,7 @@ auto process_tar_file(const std::string& tar_path, UsbDevice& usb_device, const
+         }
+ 
+         uint64_t data_size = 0;
+-        if (!parse_octal_u64(header + 124, 12, data_size)) {
++        if (!parse_tar_size(header + 124, data_size)) {
+             log_error("Invalid TAR size field");
+             return ExitCode::Firmware;
+         }
+diff --git a/src/usb/odin_protocol.cpp b/src/usb/odin_protocol.cpp
+index 5579194..2a07110 100644
+--- a/src/usb/odin_protocol.cpp
++++ b/src/usb/odin_protocol.cpp
+@@ -253,15 +253,32 @@ auto UsbDevice::send_control(uint32_t control_type) -> bool {
+ }
+ 
+ auto UsbDevice::odin_handshake() -> bool {
+-    const char preamble[4] = {'O', 'D', 'I', 'N'};
+-    if (!bulk_write_all(preamble, sizeof(preamble), USB_TIMEOUT_CONTROL)) return false;
++    constexpr int kAttempts = 5;
++    constexpr int kTimeoutMs = 2000;
++    unsigned char preamble[4] = {'O', 'D', 'I', 'N'};
++
++    for (int attempt = 1; attempt <= kAttempts; ++attempt) {
++        // Some 0x685d bootloaders NAK bulk OUT until CLEAR_FEATURE(ENDPOINT_HALT) re-arms it (odin4 #284).
++        (void) libusb_clear_halt(handle, endpoint_out);
++        (void) libusb_clear_halt(handle, endpoint_in);
++
++        int sent = 0;
++        int err = libusb_bulk_transfer(handle, endpoint_out, preamble, sizeof(preamble), &sent, kTimeoutMs);
++        if (err == LIBUSB_ERROR_NO_DEVICE) return false;
++        if (err != 0 || sent != static_cast<int>(sizeof(preamble))) {
++            log_info(std::format("Handshake write failed (attempt {}/{}, error: {})", attempt, kAttempts, err));
++            continue;
++        }
+ 
+-    unsigned char reply[512] = {0};
+-    int actual = 0;
+-    if (!bulk_read_once(reply, sizeof(reply), &actual, USB_TIMEOUT_CONTROL)) return false;
+-    if (actual < 4) return false;
+-    if (reply[0] != 'L' || reply[1] != 'O' || reply[2] != 'K' || reply[3] != 'E') return false;
+-    return true;
++        unsigned char reply[512] = {0};
++        int actual = 0;
++        err = libusb_bulk_transfer(handle, endpoint_in, reply, sizeof(reply), &actual, kTimeoutMs);
++        if (err == LIBUSB_ERROR_NO_DEVICE) return false;
++        if (err == 0 && actual >= 4 && std::memcmp(reply, kLokeResponse, kLokeResponseSize) == 0) return true;
++        log_info(std::format("Handshake reply invalid (attempt {}/{}, error: {}, length: {})", attempt, kAttempts,
++                             err, actual));
++    }
++    return false;
+ }
+ 
+ auto UsbDevice::odin_command(uint32_t cmd, uint32_t subcmd, const void* payload, size_t payload_size,
