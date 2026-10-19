@@ -45,7 +45,8 @@ onigiri build_odin
 ```
 
 Output is in `out/`. Keep `security/onigiri_platform.pk8` private and reuse it
-for updates. Flash only Flip5 bootloader, modem and hardware partitions.
+for updates. Flash only Flip5 bootloader, modem and hardware partitions; see
+[docs/flashing.md](docs/flashing.md) for Odin and odin4 (Linux/macOS).
 
 ## DeX display settings
 
@@ -68,6 +69,40 @@ saver policies still apply.
 Rebuild the kernel, Android 15 display policy, SurfaceFlinger, and Settings for
 these controls. The native patch checks the exact supported firmware binary and
 stops the build if it differs; offsets must be reviewed for a firmware update.
+
+## DeX zones
+
+**Settings → Onigiri Software → Zones** (off by default) splits the DeX desktop
+into a layout: a map column on the left or right, three columns, a grid or a
+priority grid. Drag a window to a screen edge to snap it into the zone there;
+while another zone holds a window, new windows open in the main zone.
+
+![Zone layouts in Onigiri Software](docs/images/onigiri-settings-zones.png)
+
+![DeX desktop with the Map left layout](docs/images/dex-zones-map-left.jpg)
+
+## Car head unit
+
+For a phone that runs a car display from the cover screen, with wired DeX to a
+monitor that passes the car's power through to the phone. Both switches are in
+**Settings → Onigiri Software** and default off.
+
+![Car switches in Onigiri Software](docs/images/onigiri-settings-car.png)
+
+- **Power on when power connected** boots the phone from powered-off charging
+  once the battery has 5%.
+- **Car standby when power is lost** waits 60 s on battery, then turns on
+  airplane mode, switches Wi-Fi, Bluetooth, location and sensors off, closes
+  apps, forces deep idle and parks the big CPU cores. It stops powering the
+  monitor, rechecks the USB-C link every 30 s (backing off to 2 min on a long
+  park; the power key rechecks at once) and puts everything back when car
+  power returns. It shuts the phone down after 4 days or below 10%.
+
+The Flip5's USB-C controller has no sink-only mode, so the phone can't simply
+wait for the monitor to supply power: the standby script cuts the phone's own
+5 V within a millisecond whenever the controller turns it on, and swaps the
+port's roles to find a monitor that has power again. Booted on a powered
+monitor, the phone replugs the link once in software so DeX starts.
 
 ## Kernel and contributions
 
