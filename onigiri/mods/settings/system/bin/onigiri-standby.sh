@@ -235,8 +235,8 @@ fi
 # booting on a computer's USB costs one 5 s disconnect.
 if [ "$(getprop persist.sys.onigiri.car_standby)" = true ] && [ "$(getprop sys.onigiri.replug_checked)" != 1 ] &&
     powered && [ -e $TYPEC-partner ]; then
-    setprop sys.onigiri.replug_checked 1
     sleep 10
+    setprop sys.onigiri.replug_checked 1  # after the wait: a run killed during it checks again
     case "$(cat $TYPEC/data_role)" in
         *"[device]"*)
             log "docked as a USB device after boot: replugging"
