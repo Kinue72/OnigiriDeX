@@ -119,8 +119,8 @@ You need a Linux computer with Bash, Python 3 and Java 17.
 **1. Get the code and tools**
 
 ```sh
-git clone --recurse-submodules https://github.com/Kinue72/zflip5-dex.git
-cd zflip5-dex
+git clone --recurse-submodules https://github.com/Kinue72/OnigiriDeX.git
+cd OnigiriDeX
 bash
 source ./buildenv.sh SM-F731B
 onigiri build_dependencies
@@ -177,6 +177,6 @@ again when it's done. Please put your kernel changes there and leave
 
 ## Help and feedback
 
-Found a problem or have an idea? [Open an issue](https://github.com/Kinue72/zflip5-dex/issues) or [send a pull request](https://github.com/Kinue72/zflip5-dex/pulls).
+Found a problem or have an idea? [Open an issue](https://github.com/Kinue72/OnigiriDeX/issues) or [send a pull request](https://github.com/Kinue72/OnigiriDeX/pulls).
 
 See [LICENSE](LICENSE) and [NOTICE](NOTICE) for license and credits.

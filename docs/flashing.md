@@ -21,7 +21,7 @@ Silicon Mac flashing an SM-F731B.
 ```sh
 git clone https://github.com/Llucs/odin4
 cd odin4
-git apply /path/to/zflip5-dex/scripts/odin4/0001-Fix-handshake-and-large-tar-sizes.patch
+git apply /path/to/OnigiriDeX/scripts/odin4/0001-Fix-handshake-and-large-tar-sizes.patch
 cmake -B build -DODIN4_BUILD_GUI=OFF && cmake --build build
 ```
 
