@@ -3,7 +3,8 @@
 
 usage: make_odin4_ap.py out/Onigiri_AP_<...>.tar.md5 out/AP_odin4.tar
 
-- odin4 never decompresses .lz4 images, so they are stored decompressed.
+- odin4's compressed download only takes single-block LZ4 frames, so it unpacks every real
+  image to a temporary file before sending it; the images are stored plain instead.
 - A super sparse image with FILL chunks was acknowledged by the bootloader but landed corrupted
   ("liblp: invalid geometry magic" at boot); Samsung's own super images only use RAW and
   DONT_CARE, so FILL chunks are expanded to RAW.
@@ -15,11 +16,13 @@ Needs the lz4 CLI. Writes a GNU tar: super is over 8 GiB, so odin4 needs base-25
 """
 import io
 import os
+import re
 import shutil
 import struct
 import subprocess
 import sys
 import tarfile
+import tempfile
 
 SPARSE_MAGIC = 0xED26FF3A
 RAW, FILL, DONT_CARE = 0xCAC1, 0xCAC2, 0xCAC3
@@ -31,12 +34,19 @@ def sparse_fixed(path):
     magic, major, minor, fhs, chs, blk, blocks, count, _ = struct.unpack("<IHHHHIIII", src.read(28))
     if magic != SPARSE_MAGIC or fhs != 28 or chs != 12:
         raise SystemExit(f"{path}: not an Android sparse image")
+    # (kind, blocks, output size with header, input data offset); a FILL becomes RAW chunks small
+    # enough for the 32-bit chunk size field.
     chunks = []
     for _ in range(count):
         kind, _, cb, total = struct.unpack("<HHII", src.read(chs))
-        chunks.append((kind, cb, total, src.tell()))
+        if kind == FILL:
+            for start in range(0, cb, (0xFFFFFFFF - chs) // blk):
+                n = min(cb - start, (0xFFFFFFFF - chs) // blk)
+                chunks.append((FILL, n, chs + n * blk, src.tell()))
+        else:
+            chunks.append((kind, cb, total, src.tell()))
         src.seek(total - chs, 1)
-    size = 28 + sum(chs + cb * blk if kind == FILL else total for kind, cb, total, _ in chunks)
+    size = 28 + sum(total for _, _, total, _ in chunks)
     extra = next(x for x in range(512) if (size + chs * x) % 512 == 0)
     holes = [i for i, c in enumerate(chunks) if c[0] == DONT_CARE]
     big = max(holes, key=lambda i: chunks[i][1], default=None)
@@ -44,12 +54,12 @@ def sparse_fixed(path):
         raise SystemExit(f"{path}: no DONT_CARE chunk large enough to align the image")
 
     def generate():
-        yield struct.pack("<IHHHHIIII", magic, major, minor, fhs, chs, blk, blocks, count + extra, 0)
+        yield struct.pack("<IHHHHIIII", magic, major, minor, fhs, chs, blk, blocks, len(chunks) + extra, 0)
         for i, (kind, cb, total, offset) in enumerate(chunks):
             src.seek(offset)
             if kind == FILL:
                 block = src.read(4) * (blk // 4)
-                yield struct.pack("<HHII", RAW, 0, cb, chs + cb * blk)
+                yield struct.pack("<HHII", RAW, 0, cb, total)
                 for _ in range(cb):
                     yield block
             elif i == big and extra:
@@ -93,20 +103,26 @@ def main():
     if len(sys.argv) != 3:
         raise SystemExit(__doc__.split("\n\n")[1])
     package, out = sys.argv[1], sys.argv[2]
-    work = out + ".work"
-    os.makedirs(work, exist_ok=True)
+    work = tempfile.mkdtemp(prefix=".make_odin4_ap.", dir=os.path.dirname(os.path.abspath(out)))
     try:
         images = []
         with tarfile.open(package) as tar:
             for member in tar:
                 name = member.name[:-4] if member.name.endswith(".lz4") else member.name
+                if not member.isfile() or not re.fullmatch(r"[A-Za-z0-9_]+\.img", name):
+                    raise SystemExit(f"{package}: unexpected entry {member.name!r}")
+                if name in images:
+                    raise SystemExit(f"{package}: {name} appears twice")
                 path = os.path.join(work, name)
                 with tar.extractfile(member) as data, open(path, "wb") as image:
                     if member.name.endswith(".lz4"):
-                        with subprocess.Popen(["lz4", "-dcq"], stdin=subprocess.PIPE, stdout=image) as lz4:
+                        lz4 = subprocess.Popen(["lz4", "-dcq"], stdin=subprocess.PIPE, stdout=image, bufsize=0)
+                        try:
                             shutil.copyfileobj(data, lz4.stdin, 1 << 24)
-                            lz4.stdin.close()
-                        if lz4.returncode:
+                        except BrokenPipeError:
+                            pass  # lz4 exited early; its status says why
+                        lz4.stdin.close()
+                        if lz4.wait():
                             raise SystemExit(f"lz4 failed on {member.name}")
                     else:
                         shutil.copyfileobj(data, image, 1 << 24)

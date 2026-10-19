@@ -43,11 +43,11 @@ macOS holds new USB accessories until you allow them.
 python3 scripts/make_odin4_ap.py out/Onigiri_AP_*.tar.md5 out/AP_odin4.tar
 ```
 
-It needs the `lz4` CLI and about 18 GB of free space. What it changes, and why:
+It needs the `lz4` CLI and about 18 GB free next to the output file. What it changes, and why:
 
 | Problem | Symptom | Fix |
 |---|---|---|
-| odin4 doesn't decompress `.lz4` | images written compressed | images are stored plain |
+| odin4's compressed download only takes LZ4 frames of one block, so it unpacks every real image to a temporary file first | an extra ~9 GB write for super | images are stored plain |
 | FILL chunks in the super sparse image | every step acknowledged, then a boot loop; `/proc/last_kmsg` shows `liblp: invalid geometry magic` | FILL chunks expanded to RAW, as in Samsung's own super images |
 | odin4 pads large images to 512 bytes | the image after super fails with `BOOTLOADER_FAIL code=11` | the largest DONT_CARE chunk is split until the sparse file is a multiple of 512 bytes, and super goes last |
 
