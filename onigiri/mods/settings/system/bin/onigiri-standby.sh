@@ -230,8 +230,12 @@ if [ -f $CC_LOCK ]; then
 fi
 
 # Booted on a powered monitor (autoboot in the car), the monitor stays USB host, ignores data role
-# swaps, and DeX never starts: replug it once the boot has settled.
-if [ "$(getprop persist.sys.onigiri.car_standby)" = true ] && powered && [ -e $TYPEC-partner ]; then
+# swaps, and DeX never starts: replug it once the boot has settled. Only on the first start after
+# a boot (sys.* props reset on reboot), not when the switch is toggled or the service restarts;
+# booting on a computer's USB costs one 5 s disconnect.
+if [ "$(getprop persist.sys.onigiri.car_standby)" = true ] && [ "$(getprop sys.onigiri.replug_checked)" != 1 ] &&
+    powered && [ -e $TYPEC-partner ]; then
+    setprop sys.onigiri.replug_checked 1
     sleep 10
     case "$(cat $TYPEC/data_role)" in
         *"[device]"*)
