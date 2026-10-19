@@ -1,0 +1,419 @@
+From: Onigiri
+Subject: [PATCH] Add DeX zone apps
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index fbbb069..728891f 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -15394,6 +15394,17 @@ In Camera, you can use the Top button to take pictures."</string>
+     <string name="onigiri_dex_zones_columns">Columns</string>
+     <string name="onigiri_dex_zones_grid">Grid</string>
+     <string name="onigiri_dex_zones_priority">Priority grid</string>
++    <string name="onigiri_dex_zone_apps">Apps given a zone always open there. They all open when the phone starts on a powered monitor, and when car standby brings it back.</string>
++    <string name="onigiri_dex_zone_app_none">None</string>
++    <string name="onigiri_dex_zone_map">Map zone</string>
++    <string name="onigiri_dex_zone_main">Main zone</string>
++    <string name="onigiri_dex_zone_left">Left zone</string>
++    <string name="onigiri_dex_zone_middle">Middle zone</string>
++    <string name="onigiri_dex_zone_right">Right zone</string>
++    <string name="onigiri_dex_zone_top_left">Top left zone</string>
++    <string name="onigiri_dex_zone_top_right">Top right zone</string>
++    <string name="onigiri_dex_zone_bottom_left">Bottom left zone</string>
++    <string name="onigiri_dex_zone_bottom_right">Bottom right zone</string>
+     <string name="onigiri_autoboot_title">Power on when power connected</string>
+     <string name="onigiri_car_standby_title">Car standby when power is lost</string>
+     <string name="onigiri_car_standby_summary">Airplane mode, sensors off, apps closed and no power to the monitor while unplugged. Shuts down after 4 days or below 10%.</string>
+diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
+index 0603c90..c01b51f 100644
+--- a/res/xml/onigiri_settings.xml
++++ b/res/xml/onigiri_settings.xml
+@@ -24,6 +24,11 @@
+     <SecPreferenceCategory android:title="@string/onigiri_dex_zones_title">
+         <com.samsung.android.settings.widget.SecHorizontalRadioPreference android:key="onigiri_dex_zones_1" settings:viewType="image" settings:controller="io.mesalabs.onigiri.settings.DexZonesPreferenceController" />
+         <com.samsung.android.settings.widget.SecHorizontalRadioPreference android:key="onigiri_dex_zones_2" settings:viewType="image" />
++        <com.samsung.android.settings.widget.SecUnclickablePreference android:title="@string/onigiri_dex_zone_apps" android:selectable="false" android:key="onigiri_dex_zone_apps" settings:controller="io.mesalabs.onigiri.settings.DexZoneAppPreferenceController" />
++        <ListPreference android:key="onigiri_dex_zone_app_0" android:persistent="false" settings:controller="io.mesalabs.onigiri.settings.DexZoneAppPreferenceController" />
++        <ListPreference android:key="onigiri_dex_zone_app_1" android:persistent="false" settings:controller="io.mesalabs.onigiri.settings.DexZoneAppPreferenceController" />
++        <ListPreference android:key="onigiri_dex_zone_app_2" android:persistent="false" settings:controller="io.mesalabs.onigiri.settings.DexZoneAppPreferenceController" />
++        <ListPreference android:key="onigiri_dex_zone_app_3" android:persistent="false" settings:controller="io.mesalabs.onigiri.settings.DexZoneAppPreferenceController" />
+     </SecPreferenceCategory>
+     <SecPreferenceCategory android:title="@string/onigiri_spoof_settings_title">
+         <SecSwitchPreference android:title="@string/onigiri_games_spoof_title" android:key="onigiri_games_spoof" settings:controller="io.mesalabs.onigiri.settings.GamesPropsPreferenceController" />
+diff --git a/smali_classes4/io/mesalabs/onigiri/settings/DexZoneAppPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/DexZoneAppPreferenceController.smali
+new file mode 100644
+index 0000000..2d65010
+--- /dev/null
++++ b/smali_classes4/io/mesalabs/onigiri/settings/DexZoneAppPreferenceController.smali
+@@ -0,0 +1,338 @@
++.class public Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;
++.super Lcom/android/settings/core/BasePreferenceController;
++.source "DexZoneAppPreferenceController.java"
++
++# interfaces
++.implements Landroidx/preference/Preference$OnPreferenceChangeListener;
++
++
++# Zone apps: rows onigiri_dex_zone_app_<i> pick a launcher app for zone i of the current layout
++# (persist.sys.onigiri.dex_zone_app.<i>); the window manager opens that app in zone i, and car
++# standby opens them all when the phone starts docked or power comes back. The rows and their
++# description (onigiri_dex_zone_apps) show only while zones are on, one row per zone;
++# DexZonesPreferenceController refreshes them when the layout changes.
++
++
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .locals 0
++
++    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/BasePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++    return-void
++.end method
++
++# String resource suffixes (onigiri_dex_zone_<name>) of the current layout's zones, in the
++# window manager's zone order; empty while zones are off.
++.method public static zoneNames()[Ljava/lang/String;
++    .locals 3
++
++    const-string v0, "persist.sys.onigiri.dex_zones"
++    const-string v1, "off"
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, ";"
++    invoke-virtual {v1, v0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, "="
++    invoke-virtual {v0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, ";map_left=map,main;map_right=main,map;columns=left,middle,right;grid=top_left,top_right,bottom_left,bottom_right;priority=left,middle,right;"
++    invoke-virtual {v1, v0}, Ljava/lang/String;->indexOf(Ljava/lang/String;)I
++    move-result v2
++    if-ltz v2, :off
++    invoke-virtual {v0}, Ljava/lang/String;->length()I
++    move-result v0
++    add-int/2addr v2, v0
++    const/16 v0, 0x3b
++    invoke-virtual {v1, v0, v2}, Ljava/lang/String;->indexOf(II)I
++    move-result v0
++    invoke-virtual {v1, v2, v0}, Ljava/lang/String;->substring(II)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, ","
++    invoke-virtual {v0, v1}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
++    move-result-object v0
++    return-object v0
++
++    :off
++    const/4 v0, 0x0
++    new-array v0, v0, [Ljava/lang/String;
++    return-object v0
++.end method
++
++# Zone index of a row key, -1 for the description.
++.method public static index(Ljava/lang/String;)I
++    .locals 1
++
++    const-string v0, "onigiri_dex_zone_app_"
++    invoke-virtual {p0, v0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++    move-result v0
++    if-eqz v0, :description
++    invoke-virtual {p0}, Ljava/lang/String;->length()I
++    move-result v0
++    add-int/lit8 v0, v0, -0x1
++    invoke-virtual {p0, v0}, Ljava/lang/String;->charAt(I)C
++    move-result v0
++    add-int/lit8 v0, v0, -0x30
++    return v0
++
++    :description
++    const/4 v0, -0x1
++    return v0
++.end method
++
++.method public static prop(I)Ljava/lang/String;
++    .locals 2
++
++    invoke-static {p0}, Ljava/lang/String;->valueOf(I)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, "persist.sys.onigiri.dex_zone_app."
++    invoke-virtual {v1, v0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    return-object v0
++.end method
++
++.method public static refresh(Landroid/content/Context;Landroidx/preference/Preference;)V
++    .locals 12
++
++    invoke-static {}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->zoneNames()[Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {p1}, Landroidx/preference/Preference;->getKey()Ljava/lang/String;
++    move-result-object v1
++    invoke-static {v1}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->index(Ljava/lang/String;)I
++    move-result v1
++    array-length v2, v0
++    if-gez v1, :row
++
++    # The description shows whenever zones are on.
++    if-lez v2, :hide
++    const/4 v3, 0x1
++    invoke-virtual {p1, v3}, Landroidx/preference/Preference;->setVisible(Z)V
++    return-void
++
++    :row
++    if-lt v1, v2, :show
++    :hide
++    const/4 v3, 0x0
++    invoke-virtual {p1, v3}, Landroidx/preference/Preference;->setVisible(Z)V
++    return-void
++
++    :show
++    instance-of v3, p1, Landroidx/preference/ListPreference;
++    if-eqz v3, :done
++    check-cast p1, Landroidx/preference/ListPreference;
++    const/4 v3, 0x1
++    invoke-virtual {p1, v3}, Landroidx/preference/Preference;->setVisible(Z)V
++    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++    move-result-object v3
++    invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
++    move-result-object v4
++    const-string v6, "string"
++    aget-object v5, v0, v1
++    const-string v7, "onigiri_dex_zone_"
++    invoke-virtual {v7, v5}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v5
++    invoke-virtual {v3, v5, v6, v4}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
++    move-result v5
++    invoke-virtual {p0, v5}, Landroid/content/Context;->getString(I)Ljava/lang/String;
++    move-result-object v5
++    invoke-virtual {p1, v5}, Landroidx/preference/Preference;->setTitle(Ljava/lang/CharSequence;)V
++    iput-object v5, p1, Landroidx/preference/DialogPreference;->mDialogTitle:Ljava/lang/CharSequence;
++    const-string v5, "onigiri_dex_zone_app_none"
++    invoke-virtual {v3, v5, v6, v4}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
++    move-result v5
++    invoke-virtual {p0, v5}, Landroid/content/Context;->getString(I)Ljava/lang/String;
++    move-result-object v5
++
++    # Launcher apps sorted by label; the key keeps apps with the same label apart.
++    invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
++    move-result-object v3
++    new-instance v4, Landroid/content/Intent;
++    const-string v6, "android.intent.action.MAIN"
++    invoke-direct {v4, v6}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
++    const-string v6, "android.intent.category.LAUNCHER"
++    invoke-virtual {v4, v6}, Landroid/content/Intent;->addCategory(Ljava/lang/String;)Landroid/content/Intent;
++    const/4 v6, 0x0
++    invoke-virtual {v3, v4, v6}, Landroid/content/pm/PackageManager;->queryIntentActivities(Landroid/content/Intent;I)Ljava/util/List;
++    move-result-object v4
++    new-instance v6, Ljava/util/TreeMap;
++    sget-object v7, Ljava/lang/String;->CASE_INSENSITIVE_ORDER:Ljava/util/Comparator;
++    invoke-direct {v6, v7}, Ljava/util/TreeMap;-><init>(Ljava/util/Comparator;)V
++    new-instance v7, Ljava/util/HashSet;
++    invoke-direct {v7}, Ljava/util/HashSet;-><init>()V
++    invoke-interface {v4}, Ljava/util/List;->iterator()Ljava/util/Iterator;
++    move-result-object v4
++
++    :apps
++    invoke-interface {v4}, Ljava/util/Iterator;->hasNext()Z
++    move-result v8
++    if-eqz v8, :sorted
++    invoke-interface {v4}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++    move-result-object v8
++    check-cast v8, Landroid/content/pm/ResolveInfo;
++    iget-object v9, v8, Landroid/content/pm/ResolveInfo;->activityInfo:Landroid/content/pm/ActivityInfo;
++    iget-object v9, v9, Landroid/content/pm/PackageItemInfo;->packageName:Ljava/lang/String;
++    invoke-virtual {v7, v9}, Ljava/util/HashSet;->add(Ljava/lang/Object;)Z
++    move-result v10
++    if-eqz v10, :apps
++    invoke-virtual {v8, v3}, Landroid/content/pm/ResolveInfo;->loadLabel(Landroid/content/pm/PackageManager;)Ljava/lang/CharSequence;
++    move-result-object v8
++    invoke-interface {v8}, Ljava/lang/CharSequence;->toString()Ljava/lang/String;
++    move-result-object v8
++    const-string v10, "\u0000"
++    invoke-virtual {v8, v10}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v8
++    invoke-virtual {v8, v9}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v8
++    invoke-virtual {v6, v8, v9}, Ljava/util/TreeMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++    goto :apps
++
++    :sorted
++    invoke-virtual {v6}, Ljava/util/TreeMap;->size()I
++    move-result v3
++    add-int/lit8 v3, v3, 0x1
++    new-array v4, v3, [Ljava/lang/CharSequence;
++    new-array v7, v3, [Ljava/lang/CharSequence;
++    const/4 v3, 0x0
++    aput-object v5, v4, v3
++    const-string v8, ""
++    aput-object v8, v7, v3
++    const/4 v3, 0x1
++    invoke-virtual {v6}, Ljava/util/TreeMap;->entrySet()Ljava/util/Set;
++    move-result-object v6
++    invoke-interface {v6}, Ljava/util/Set;->iterator()Ljava/util/Iterator;
++    move-result-object v6
++
++    :fill
++    invoke-interface {v6}, Ljava/util/Iterator;->hasNext()Z
++    move-result v8
++    if-eqz v8, :filled
++    invoke-interface {v6}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++    move-result-object v8
++    check-cast v8, Ljava/util/Map$Entry;
++    invoke-interface {v8}, Ljava/util/Map$Entry;->getKey()Ljava/lang/Object;
++    move-result-object v9
++    check-cast v9, Ljava/lang/String;
++    invoke-interface {v8}, Ljava/util/Map$Entry;->getValue()Ljava/lang/Object;
++    move-result-object v8
++    check-cast v8, Ljava/lang/String;
++    const/4 v10, 0x0
++    invoke-virtual {v9, v10}, Ljava/lang/String;->lastIndexOf(I)I
++    move-result v11
++    invoke-virtual {v9, v10, v11}, Ljava/lang/String;->substring(II)Ljava/lang/String;
++    move-result-object v9
++    aput-object v9, v4, v3
++    aput-object v8, v7, v3
++    add-int/lit8 v3, v3, 0x1
++    goto :fill
++
++    :filled
++    invoke-virtual {p1, v4}, Landroidx/preference/ListPreference;->setEntries([Ljava/lang/CharSequence;)V
++    iput-object v7, p1, Landroidx/preference/ListPreference;->mEntryValues:[Ljava/lang/CharSequence;
++
++    # The saved choice; an app that is gone reads as none.
++    invoke-static {v1}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->prop(I)Ljava/lang/String;
++    move-result-object v1
++    const-string v3, ""
++    invoke-static {v1, v3}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v1
++    invoke-virtual {p1, v1}, Landroidx/preference/ListPreference;->findIndexOfValue(Ljava/lang/String;)I
++    move-result v3
++    if-gez v3, :known
++    const/4 v3, 0x0
++    :known
++    aget-object v1, v7, v3
++    check-cast v1, Ljava/lang/String;
++    invoke-virtual {p1, v1}, Landroidx/preference/ListPreference;->setValue(Ljava/lang/String;)V
++    aget-object v1, v4, v3
++    invoke-virtual {p1, v1}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V
++
++    :done
++    return-void
++.end method
++
++# Refreshes the description and every zone row in group, e.g. after the layout changed.
++.method public static refreshAll(Landroid/content/Context;Landroidx/preference/PreferenceGroup;)V
++    .locals 3
++
++    const-string v0, "onigiri_dex_zone_apps,onigiri_dex_zone_app_0,onigiri_dex_zone_app_1,onigiri_dex_zone_app_2,onigiri_dex_zone_app_3"
++    const-string v1, ","
++    invoke-virtual {v0, v1}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
++    move-result-object v0
++    const/4 v1, 0x0
++
++    :loop
++    array-length v2, v0
++    if-ge v1, v2, :done
++    aget-object v2, v0, v1
++    invoke-virtual {p1, v2}, Landroidx/preference/PreferenceGroup;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
++    move-result-object v2
++    if-eqz v2, :next
++    invoke-static {p0, v2}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->refresh(Landroid/content/Context;Landroidx/preference/Preference;)V
++    :next
++    add-int/lit8 v1, v1, 0x1
++    goto :loop
++
++    :done
++    return-void
++.end method
++
++
++# virtual methods
++.method public getAvailabilityStatus()I
++    .locals 1
++
++    # Always available: refresh() hides what the current layout doesn't use.
++    const/4 v0, 0x0
++    return v0
++.end method
++
++.method public displayPreference(Landroidx/preference/PreferenceScreen;)V
++    .locals 1
++
++    invoke-super {p0, p1}, Lcom/android/settings/core/BasePreferenceController;->displayPreference(Landroidx/preference/PreferenceScreen;)V
++    invoke-virtual {p0}, Lcom/android/settings/core/BasePreferenceController;->getPreferenceKey()Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {p1, v0}, Landroidx/preference/PreferenceGroup;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
++    move-result-object p1
++    if-eqz p1, :done
++    invoke-virtual {p1, p0}, Landroidx/preference/Preference;->setOnPreferenceChangeListener(Landroidx/preference/Preference$OnPreferenceChangeListener;)V
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-static {v0, p1}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->refresh(Landroid/content/Context;Landroidx/preference/Preference;)V
++
++    :done
++    return-void
++.end method
++
++.method public updateState(Landroidx/preference/Preference;)V
++    .locals 1
++
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-static {v0, p1}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->refresh(Landroid/content/Context;Landroidx/preference/Preference;)V
++    return-void
++.end method
++
++.method public onPreferenceChange(Landroidx/preference/Preference;Ljava/lang/Object;)Z
++    .locals 2
++
++    instance-of v0, p2, Ljava/lang/String;
++    if-eqz v0, :ignored
++    invoke-virtual {p1}, Landroidx/preference/Preference;->getKey()Ljava/lang/String;
++    move-result-object v0
++    invoke-static {v0}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->index(Ljava/lang/String;)I
++    move-result v0
++    if-ltz v0, :ignored
++    invoke-static {v0}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->prop(I)Ljava/lang/String;
++    move-result-object v0
++    check-cast p2, Ljava/lang/String;
++    :try_start
++    invoke-static {v0, p2}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    :try_end
++    .catch Ljava/lang/RuntimeException; {:try_start .. :try_end} :ignored
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-static {v0, p1}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->refresh(Landroid/content/Context;Landroidx/preference/Preference;)V
++    const/4 v0, 0x1
++    return v0
++
++    :ignored
++    const/4 v0, 0x0
++    return v0
++.end method
+diff --git a/smali_classes4/io/mesalabs/onigiri/settings/DexZonesPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/DexZonesPreferenceController.smali
+index e73b0eb..a54204b 100644
+--- a/smali_classes4/io/mesalabs/onigiri/settings/DexZonesPreferenceController.smali
++++ b/smali_classes4/io/mesalabs/onigiri/settings/DexZonesPreferenceController.smali
+@@ -11,6 +11,8 @@
+ # this controller and drives the other rows too.
+ .field private final mRows:[Lcom/samsung/android/settings/widget/SecHorizontalRadioPreference;
+ 
++.field private mScreen:Landroidx/preference/PreferenceScreen;
++
+ 
+ .method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
+     .locals 1
+@@ -136,6 +138,7 @@
+     .locals 5
+ 
+     invoke-super {p0, p1}, Lcom/android/settings/core/BasePreferenceController;->displayPreference(Landroidx/preference/PreferenceScreen;)V
++    iput-object p1, p0, Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;->mScreen:Landroidx/preference/PreferenceScreen;
+     const-string v0, "off,map_left,map_right;columns,grid,priority"
+     const-string v1, ";"
+     invoke-virtual {v0, v1}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
+@@ -190,6 +193,12 @@
+     :try_end_0
+     .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :ignored
+     invoke-direct {p0, p2}, Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;->setAll(Ljava/lang/String;)V
++    # The zone app rows follow the layout.
++    iget-object v0, p0, Lio/mesalabs/onigiri/settings/DexZonesPreferenceController;->mScreen:Landroidx/preference/PreferenceScreen;
++    if-eqz v0, :refreshed
++    iget-object v1, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-static {v1, v0}, Lio/mesalabs/onigiri/settings/DexZoneAppPreferenceController;->refreshAll(Landroid/content/Context;Landroidx/preference/PreferenceGroup;)V
++    :refreshed
+     const/4 v0, 0x1
+     return v0
+     :ignored

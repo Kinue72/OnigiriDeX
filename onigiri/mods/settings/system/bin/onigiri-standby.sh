@@ -93,9 +93,41 @@ block_host() {
         log "stopped powering the USB-C device"
 }
 unblock_host() {
-    [ "$(cat $HOST_BLOCK)" = ON_HOST_ONIGIRI ] || return
+    [ "$(cat $HOST_BLOCK)" = ON_HOST_ONIGIRI ] || return 1
     sleep $MONITOR_BOOT
     powered && echo OFF > $HOST_BLOCK
+}
+
+# Zone apps (Settings > Onigiri Software > Zones): once the DeX desktop is up, start the app
+# given each zone of the current layout; the window manager opens each in its zone.
+open_zone_apps() {
+    case "$(getprop persist.sys.onigiri.dex_zones)" in
+        map_left | map_right) zones="0 1" ;;
+        columns | priority) zones="0 1 2" ;;
+        grid) zones="0 1 2 3" ;;
+        *) return ;;
+    esac
+    apps=
+    for zone in $zones; do
+        app=$(getprop persist.sys.onigiri.dex_zone_app.$zone)
+        [ -n "$app" ] && apps="$apps $app"
+    done
+    [ -n "$apps" ] || return
+    for i in $(seq 30); do
+        desktop=$(dumpsys display | sed -n 's/.*DisplayInfo{"Desktop", displayId \([0-9]*\).*/\1/p' | head -n 1)
+        [ -n "$desktop" ] && break
+        sleep 2
+    done
+    [ -n "$desktop" ] || return
+    sleep 3  # let the DeX desktop settle
+    for app in $apps; do
+        activity=$(cmd package resolve-activity --brief -a android.intent.action.MAIN \
+            -c android.intent.category.LAUNCHER $app | tail -n 1)
+        case "$activity" in
+            */*) am start --display $desktop -n "$activity" >/dev/null 2>&1 ;;
+        esac
+    done
+    log "opened zone apps:$apps"
 }
 
 # With VBUS cut, a monitor that gets car power back just waits for VBUS, and nothing makes
@@ -229,24 +261,27 @@ if [ -f $CC_LOCK ]; then
     restore_cc
 fi
 
-# Booted on a powered monitor (autoboot in the car), the monitor stays USB host, ignores data role
-# swaps, and DeX never starts: replug it once the boot has settled. Only on the first start after
-# a boot (sys.* props reset on reboot), not when the switch is toggled or the service restarts;
-# booting on a computer's USB costs one 5 s disconnect.
-if [ "$(getprop persist.sys.onigiri.car_standby)" = true ] && [ "$(getprop sys.onigiri.replug_checked)" != 1 ] &&
-    powered && [ -e $TYPEC-partner ]; then
+# Started on power with something on USB-C (autoboot in the car), once per boot (sys.* props
+# reset on reboot), not when the switch is toggled or the service restarts:
+# - with car standby on, a powered monitor stays USB host after the boot, ignores data role
+#   swaps and DeX never starts: replug it. Booting on a computer's USB costs one 5 s disconnect.
+# - open the zone apps, with car standby on or off.
+if [ "$(getprop sys.onigiri.docked_boot)" != 1 ] && powered && [ -e $TYPEC-partner ]; then
     sleep 10
-    setprop sys.onigiri.replug_checked 1  # after the wait: a run killed during it checks again
-    case "$(cat $TYPEC/data_role)" in
-        *"[device]"*)
-            log "docked as a USB device after boot: replugging"
-            replug_usb
-            for i in 1 2 3 4 5 6 7 8 9 10; do
-                powered && break
-                sleep 1
-            done
-            ;;
-    esac
+    setprop sys.onigiri.docked_boot 1  # after the wait: a run killed during it checks again
+    if [ "$(getprop persist.sys.onigiri.car_standby)" = true ]; then
+        case "$(cat $TYPEC/data_role)" in
+            *"[device]"*)
+                log "docked as a USB device after boot: replugging"
+                replug_usb
+                for i in 1 2 3 4 5 6 7 8 9 10; do
+                    powered && break
+                    sleep 1
+                done
+                ;;
+        esac
+    fi
+    open_zone_apps
 fi
 
 # A leftover $STATE (shutdown or crash in standby) is restored on power or once standby is
@@ -271,7 +306,9 @@ while :; do
         exit 0
     elif powered; then
         [ -d "$STATE" ] && leave
-        unblock_host
+        if unblock_host; then
+            open_zone_apps &  # DisplayPort (and DeX) restarts now
+        fi
         in_standby=0
         since=
     else

@@ -77,9 +77,15 @@ into a layout: a map column on the left or right, three columns, a grid or a
 priority grid. Drag a window to a screen edge to snap it into the zone there;
 while another zone holds a window, new windows open in the main zone.
 
+Below the layouts, give each zone an app: it always opens in that zone, and all of
+them open by themselves when the phone starts on a powered monitor (autoboot in the
+car) or car standby brings it back.
+
 ![Zone layouts in Onigiri Software](docs/images/onigiri-settings-zones.png)
 
 ![DeX desktop with the Map left layout](docs/images/dex-zones-map-left.jpg)
+
+![Zone apps opened in the Map and Main zones](docs/images/dex-zone-apps.jpg)
 
 ## Car head unit
 

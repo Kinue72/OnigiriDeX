@@ -1,0 +1,144 @@
+From: Onigiri
+Subject: [PATCH] Open zone apps in their zones
+
+diff --git a/smali_classes2/com/android/server/wm/LaunchParamsController.smali b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
+index 3ef243e..10ed00f 100644
+--- a/smali_classes2/com/android/server/wm/LaunchParamsController.smali
++++ b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
+@@ -4213,7 +4213,8 @@
+     return-void
+ .end method
+ 
+-# Onigiri zones: open new DeX windows in the main zone while another zone is in use.
++# Onigiri zones: open new DeX windows in the zone their app was given in Settings, otherwise
++# in the main zone while another zone is in use.
+ .method public static applyZoneLaunchPolicy(Lcom/android/server/wm/Task;Lcom/android/server/wm/ActivityRecord;Landroid/app/ActivityOptions;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
+     .locals 9
+ 
+@@ -4262,37 +4263,28 @@
+     new-instance v2, Landroid/graphics/Rect;
+     invoke-direct {v2}, Landroid/graphics/Rect;-><init>()V
+     invoke-virtual {v0, v2}, Lcom/android/server/wm/DisplayArea;->getStableRect(Landroid/graphics/Rect;)V
++
++    # An app given a zone opens there, whatever else is open.
++    iget-object v3, p1, Lcom/android/server/wm/ActivityRecord;->packageName:Ljava/lang/String;
++    invoke-static {v3, v1}, Lcom/android/server/wm/OnigiriZones;->assignedZone(Ljava/lang/String;[I)I
++    move-result v3
++    if-ltz v3, :probe
++    invoke-static {v0}, Lcom/android/server/wm/OnigiriZones;->gap(Lcom/android/server/wm/WindowContainer;)I
++    move-result v8
++    iget-object v4, p3, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mBounds:Landroid/graphics/Rect;
++    invoke-static {v2, v1, v3, v8, v4}, Lcom/android/server/wm/OnigiriZones;->zoneRect(Landroid/graphics/Rect;[IIILandroid/graphics/Rect;)V
++    return-void
++
++    :probe
+     new-instance v3, Lcom/android/server/wm/OnigiriZoneProbe;
+     invoke-direct {v3, v2, v1}, Lcom/android/server/wm/OnigiriZoneProbe;-><init>(Landroid/graphics/Rect;[I)V
+     invoke-virtual {v0, v3}, Lcom/android/server/wm/WindowContainer;->forAllRootTasks(Ljava/util/function/Consumer;)V
+     iget-object v4, v3, Lcom/android/server/wm/OnigiriZoneProbe;->mFound:Landroid/graphics/Rect;
+     if-eqz v4, :done
+ 
+-    # Same gap as a drag snap: the DeX freeform outline thickness at this display's density,
+-    # rounded up to even (MultiTaskingWindowDecoration.getFreeformThickness).
+-    const/4 v8, 0x0
+-    :try_start_gap
+-    invoke-virtual {v0}, Lcom/android/server/wm/WindowContainer;->getDisplayContent()Lcom/android/server/wm/DisplayContent;
+-    move-result-object v5
+-    iget-object v5, v5, Lcom/android/server/wm/DisplayContent;->mDisplayMetrics:Landroid/util/DisplayMetrics;
+-    new-instance v6, Landroid/util/TypedValue;
+-    invoke-direct {v6}, Landroid/util/TypedValue;-><init>()V
+-    invoke-static {}, Landroid/content/res/Resources;->getSystem()Landroid/content/res/Resources;
+-    move-result-object v7
+-    const v8, 0x10503b0
+-    const/4 v0, 0x1
+-    invoke-virtual {v7, v8, v6, v0}, Landroid/content/res/Resources;->getValue(ILandroid/util/TypedValue;Z)V
+-    iget v6, v6, Landroid/util/TypedValue;->data:I
+-    invoke-static {v6, v5}, Landroid/util/TypedValue;->complexToDimensionPixelSize(ILandroid/util/DisplayMetrics;)I
++    # Same gap as a drag snap.
++    invoke-static {v0}, Lcom/android/server/wm/OnigiriZones;->gap(Lcom/android/server/wm/WindowContainer;)I
+     move-result v8
+-    :try_end_gap
+-    .catch Ljava/lang/RuntimeException; {:try_start_gap .. :try_end_gap} :no_gap
+-    goto :have_gap
+-    :no_gap
+-    const/4 v8, 0x0
+-    :have_gap
+-    and-int/lit8 v0, v8, 0x1
+-    add-int/2addr v8, v0
+ 
+     # Open in the main zone. If the user resized the side window, the shared edge follows it.
+     iget-object p0, p3, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mBounds:Landroid/graphics/Rect;
+diff --git a/smali_classes2/com/android/server/wm/OnigiriZones.smali b/smali_classes2/com/android/server/wm/OnigiriZones.smali
+index 464e83d..988f40f 100644
+--- a/smali_classes2/com/android/server/wm/OnigiriZones.smali
++++ b/smali_classes2/com/android/server/wm/OnigiriZones.smali
+@@ -149,6 +149,69 @@
+     .end array-data
+ .end method
+ 
++# Zone the user gave this app in Settings (persist.sys.onigiri.dex_zone_app.<i>), or -1.
++.method public static assignedZone(Ljava/lang/String;[I)I
++    .locals 4
++
++    if-eqz p0, :none
++    invoke-static {p1}, Lcom/android/server/wm/OnigiriZones;->count([I)I
++    move-result v0
++    const/4 v1, 0x0
++
++    :loop
++    if-ge v1, v0, :none
++    invoke-static {v1}, Ljava/lang/String;->valueOf(I)Ljava/lang/String;
++    move-result-object v2
++    const-string v3, "persist.sys.onigiri.dex_zone_app."
++    invoke-virtual {v3, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v2
++    const-string v3, ""
++    invoke-static {v2, v3}, Landroid/os/SystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v2
++    invoke-virtual {p0, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v2
++    if-nez v2, :found
++    add-int/lit8 v1, v1, 0x1
++    goto :loop
++
++    :found
++    return v1
++
++    :none
++    const/4 v0, -0x1
++    return v0
++.end method
++
++# The DeX freeform outline thickness at this display's density, rounded up to even
++# (MultiTaskingWindowDecoration.getFreeformThickness): zones leave it as a gap, like drag snaps.
++.method public static gap(Lcom/android/server/wm/WindowContainer;)I
++    .locals 4
++
++    :try_start
++    invoke-virtual {p0}, Lcom/android/server/wm/WindowContainer;->getDisplayContent()Lcom/android/server/wm/DisplayContent;
++    move-result-object v0
++    iget-object v0, v0, Lcom/android/server/wm/DisplayContent;->mDisplayMetrics:Landroid/util/DisplayMetrics;
++    new-instance v1, Landroid/util/TypedValue;
++    invoke-direct {v1}, Landroid/util/TypedValue;-><init>()V
++    invoke-static {}, Landroid/content/res/Resources;->getSystem()Landroid/content/res/Resources;
++    move-result-object v2
++    const v3, 0x10503b0
++    const/4 p0, 0x1
++    invoke-virtual {v2, v3, v1, p0}, Landroid/content/res/Resources;->getValue(ILandroid/util/TypedValue;Z)V
++    iget v1, v1, Landroid/util/TypedValue;->data:I
++    invoke-static {v1, v0}, Landroid/util/TypedValue;->complexToDimensionPixelSize(ILandroid/util/DisplayMetrics;)I
++    move-result v0
++    :try_end
++    .catch Ljava/lang/RuntimeException; {:try_start .. :try_end} :none
++    and-int/lit8 v1, v0, 0x1
++    add-int/2addr v0, v1
++    return v0
++
++    :none
++    const/4 v0, 0x0
++    return v0
++.end method
++
+ .method public static count([I)I
+     .locals 1
+ 
