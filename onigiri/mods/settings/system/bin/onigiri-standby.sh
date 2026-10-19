@@ -8,8 +8,8 @@
 #
 # On battery: stop powering USB-C at once, standby after GRACE seconds, then recheck the USB-C
 # link every 30 s, backing off to 2 min on a long park (each recheck keeps the phone awake
-# ~11 s: sec-battery holds a 10 s wakelock per cable event); the power key rechecks at once.
-# Power off below LOW_PCT % or after car_standby_hours.
+# ~11 s: sec-battery holds a 10 s wakelock per cable event); the power key or plugging in
+# power rechecks at once. Power off below LOW_PCT % or after car_standby_hours.
 # Autoboot only starts the phone again at 5% or more, so the two never loop.
 
 GRACE=60
@@ -63,22 +63,33 @@ done
 # about a millisecond: the monitor then dies and stays attached and quiet. The MAX77705
 # firmware has no sink-only mode, and Samsung's host block doesn't stop VBUS in this kernel.
 # Holds for $1 seconds (or until the first cut with "once"); returns 0 early once the port has
-# power again.
+# power again. Meanwhile it tracks whether a dead monitor is attached: see dead_monitor.
 TYPEC=/sys/class/typec/port0
 OTG=/sys/class/power_supply/otg/online
 hold_power_off() {
     end=$(($(date +%s) + $1))
+    out_at=
     while [ $(date +%s) -lt $end ]; do
         i=0
         while [ $i -lt 200 ]; do
             read on < $OTG
             if [ "$on" = 1 ]; then
                 echo 0 > $OTG
+                dead_monitor=1
+                out_at=
                 [ "$2" = once ] && return 1
             fi
             i=$((i+1))
         done
         powered && return 0
+        # The cable is out once no partner shows for 3 s straight (not while recheck_usb flips
+        # the roles: the partner drops off then by design).
+        if [ -e $TYPEC-partner ]; then
+            out_at=
+        elif [ "$2" != once ]; then
+            [ -n "$out_at" ] || out_at=$(date +%s)
+            [ $(($(date +%s) - out_at)) -ge 4 ] && dead_monitor=  # whole seconds
+        fi
     done
     return 1
 }
@@ -94,8 +105,33 @@ block_host() {
 }
 unblock_host() {
     [ "$(cat $HOST_BLOCK)" = ON_HOST_ONIGIRI ] || return 1
-    sleep $MONITOR_BOOT
+    [ -n "$dead_monitor" ] && sleep $MONITOR_BOOT
     powered && echo OFF > $HOST_BLOCK
+}
+
+# dead_monitor: whatever is on USB-C may be a monitor that lost power too and boots once power
+# returns, so unblock_host waits MONITOR_BOOT. Set while powered (every power loss starts out
+# unsafe), whenever a partner sits on USB-C without power and on every VBUS cut. Cleared only
+# while hold_power_off watches no partner show for 3 s straight (a monitor that just lost power
+# drops off and re-attaches about once a second, taking VBUS each time, until it is cut). A
+# monitor plugged in after that that gives power within 2 s, with no VBUS draw seen (a running
+# one gives power in under a second; a dead one takes VBUS about a second after attaching), is
+# taken as up, so DisplayPort starts at once, as it would without car standby. A heuristic, not
+# a guarantee: a dead monitor whose power comes back before a draw is seen (OTG is sampled every
+# 0.2 s), and a monitor that vanished from USB-C entirely when it lost power (the one in use
+# stays attached when dead), look the same as a running one.
+dead_monitor=1
+check_cable() {
+    [ -e $TYPEC-partner ] || return
+    if [ -z "$dead_monitor" ]; then
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+            read on < $OTG
+            [ "$on" = 1 ] && break  # it takes VBUS: dead, and stays counted so once powered
+            powered && return
+            sleep 0.2
+        done
+    fi
+    dead_monitor=1
 }
 
 # Apps given the zones of the current layout (Settings > Onigiri Software > Zones), if any.
@@ -151,9 +187,10 @@ recheck_usb() {
     return $found
 }
 
-# Software replug: hold the CC lines open for a few seconds with the lock Samsung uses for an
+# Software replug: hold the CC lines open for a second with the lock Samsung uses for an
 # overheating connector (CTRLREG3 bit 1 + forced CC error, through the MAX77705 debug opcode
-# node), so a docked monitor starts over as on a real replug.
+# node), so a docked monitor starts over as on a real replug (a 25 ms CC error is too short;
+# 1 s worked as well as 5 s, and the port re-attaches only once the lock is lifted).
 # The original CTRLREG3 is saved first: if we die mid-replug, the next start restores it
 # instead of leaving the port locked open (no USB and no wired charging).
 MXIM=/sys/devices/virtual/mxim/debug0/opcode
@@ -177,7 +214,7 @@ replug_usb() {
     trap 'restore_cc; exit 1' TERM INT HUP
     echo 1d $(printf %x $(($2 | 2))) > $MXIM && sleep 0.3
     echo 0e 84 > $MXIM
-    sleep 5
+    sleep 1
     restore_cc
     trap - TERM INT HUP
 }
@@ -271,16 +308,22 @@ fi
 # apps set: a powered monitor stays USB host after the boot, ignores data role swaps and DeX
 # never starts, so replug it, then open the zone apps. Once per boot (sys.* props reset on
 # reboot), not when the switch is toggled or the service restarts; booting on a computer's USB
-# costs one 5 s disconnect. With neither set the flag stays unset, so switching car standby on
-# later in the boot still checks.
+# costs two short disconnects. With neither set the flag stays unset, so switching car standby
+# on later in the boot still checks. The data role is settled long before boot completes.
 if [ "$(getprop sys.onigiri.docked_boot)" != 1 ] && powered && [ -e $TYPEC-partner ] &&
     { [ "$(getprop persist.sys.onigiri.car_standby)" = true ] || [ -n "$(zone_apps)" ]; }; then
-    sleep 10
-    setprop sys.onigiri.docked_boot 1  # after the wait: a run killed during it checks again
+    setprop sys.onigiri.docked_boot 1
     case "$(cat $TYPEC/data_role)" in
         *"[device]"*)
             log "docked as a USB device after boot: replugging"
-            replug_usb
+            # The chip now and then ignores the CC command: replug again if it stays a device.
+            for try in 1 2; do
+                replug_usb
+                for i in 1 2 3 4 5 6 7 8 9 10; do
+                    sleep 1
+                    case "$(cat $TYPEC/data_role)" in *"[host]"*) break 2 ;; esac
+                done
+            done
             for i in 1 2 3 4 5 6 7 8 9 10; do
                 powered && break
                 sleep 1
@@ -317,7 +360,10 @@ while :; do
         fi
         in_standby=0
         since=
+        dead_monitor=1
     else
+        check_cable
+        powered && continue  # plugged into a running monitor
         if [ "$(cat $HOST_BLOCK)" = OFF ]; then
             block_host &  # DisplayPort teardown takes seconds: keep cutting VBUS meanwhile
             hold_power_off 6
@@ -340,17 +386,20 @@ while :; do
         fi
     fi
     # onigiri-alarm-sleep releases this wakelock once its alarm is armed, wakes the phone from
-    # suspend and holds the wakelock again until here.
+    # suspend and holds the wakelock again until here. It returns early when power comes back
+    # and, once the cable was out, when anything is plugged in (check_cable sorts it out).
+    plug=-p
+    [ -n "$dead_monitor" ] && plug=
     if [ -z "$since" ]; then
         echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
         sleep 3  # notice power loss quickly: the monitor flickers until hold_power_off
     elif [ $in_standby = 1 ]; then
-        onigiri-alarm-sleep $(poll_interval $((now - since))) $POWER_KEY || sleep 10
+        onigiri-alarm-sleep $plug $(poll_interval $((now - since))) $POWER_KEY || sleep 10
     elif [ -e $TYPEC-partner ]; then
         # Stay awake and keep VBUS off through the grace period, until the monitor is dead.
         echo onigiri-standby > /sys/power/wake_lock
         hold_power_off 10
     else
-        onigiri-alarm-sleep 10 || sleep 10
+        onigiri-alarm-sleep $plug 10 || sleep 10
     fi
 done
