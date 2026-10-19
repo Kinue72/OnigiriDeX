@@ -80,7 +80,9 @@ while another zone holds a window, new windows open in the main zone.
 Below the layouts, give each zone an app: it opens in that zone when it starts (a
 window that is already open stays where it is), and all of them open by themselves
 when the phone starts on a powered monitor (autoboot in the car) or car standby
-brings it back. An app has one zone: giving it another moves it there.
+brings it back. An app has one zone: giving it another moves it there. Like car
+standby, zone apps make the phone replug a monitor it booted on as a USB device, once
+per boot, so DeX starts; booted on a computer's USB, that is a 5 s disconnect.
 
 ![Zone layouts in Onigiri Software](docs/images/onigiri-settings-zones.png)
 

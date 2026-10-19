@@ -129,7 +129,9 @@ open_zone_apps() {
         # The package's own launcher activity (resolve-activity can answer with the chooser).
         activity=$(cmd package query-activities --brief --components -a android.intent.action.MAIN \
             -c android.intent.category.LAUNCHER $app | grep / | head -n 1)
-        [ -n "$activity" ] && am start --display $desktop -n "$activity" >/dev/null 2>&1
+        # As a launcher does, so an open task comes to the front instead of getting a new activity.
+        [ -n "$activity" ] && am start --display $desktop -a android.intent.action.MAIN \
+            -c android.intent.category.LAUNCHER -n "$activity" >/dev/null 2>&1
     done
     log "opened zone apps: $apps"
 }
