@@ -114,14 +114,19 @@ unblock_host() {
 # unsafe), whenever a partner sits on USB-C without power and on every VBUS cut. Cleared only
 # while hold_power_off watches no partner show for 3 s straight (a monitor that just lost power
 # drops off and re-attaches about once a second, taking VBUS each time, until it is cut). A
-# monitor plugged in after that and giving power within 2 s (a running one takes under a second;
-# a dead one takes VBUS instead) is up, so DisplayPort starts at once. A monitor that vanished
-# from USB-C entirely when it lost power would look like an unplug; the one in use stays attached.
+# monitor plugged in after that that gives power within 2 s, with no VBUS draw seen (a running
+# one gives power in under a second; a dead one takes VBUS about a second after attaching), is
+# taken as up, so DisplayPort starts at once, as it would without car standby. A heuristic, not
+# a guarantee: a dead monitor whose power comes back before a draw is seen (OTG is sampled every
+# 0.2 s), and a monitor that vanished from USB-C entirely when it lost power (the one in use
+# stays attached when dead), look the same as a running one.
 dead_monitor=1
 check_cable() {
     [ -e $TYPEC-partner ] || return
     if [ -z "$dead_monitor" ]; then
         for i in 1 2 3 4 5 6 7 8 9 10; do
+            read on < $OTG
+            [ "$on" = 1 ] && break  # it takes VBUS: dead, and stays counted so once powered
             powered && return
             sleep 0.2
         done
