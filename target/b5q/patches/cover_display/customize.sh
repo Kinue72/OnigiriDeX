@@ -10,3 +10,6 @@ SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_CONFIG_SUB_HFR_SUPPORTED_R
 # Quick Shot launches on display 1, which is the disabled inner panel in this ROM.
 sed -i '/name="SUPPORT_QUICK_SHOT"/s/value="true"/value="false"/' \
     "$WORK_DIR/system/system/cameradata/camera-feature.xml"
+
+python3 "$MODPATH/native/patch_camera_hal.py" \
+    "$WORK_DIR/vendor/lib64/hw/camera.qcom.so" || ABORT "Cannot patch the camera HAL orientation"
