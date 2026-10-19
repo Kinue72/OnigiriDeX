@@ -21,14 +21,27 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# Charger mode has no logcat; /dev/kmsg ends up in /proc/last_kmsg after the next boot.
+log() { echo "onigiri-autoboot: $*" > /dev/kmsg; }
+
 [ "$(getprop ro.bootmode)" = charger ] || exit 0
-[ "$(cat /cache/onigiri/autoboot 2>/dev/null)" = true ] || exit 0
+marker=$(cat /cache/onigiri/autoboot 2>&1)
+log "started, autoboot=$marker"
+[ "$marker" = true ] || exit 0
+ps=/sys/class/power_supply
+log "ac=$(cat $ps/ac/online) usb=$(cat $ps/usb/online) wireless=$(cat $ps/wireless/online) battery=$(cat $ps/battery/capacity)%"
 
 while :; do
     for supply in ac usb wireless; do
         if [ "$(cat /sys/class/power_supply/$supply/online 2>/dev/null)" = 1 ]; then
-            setprop sys.powerctl reboot
-            exit $?
+            # Charge to 5% first: below that, booting on a weak supply ends in a low-battery
+            # shutdown loop. Car standby powers off under 10%, so the thresholds never meet.
+            capacity=$(cat /sys/class/power_supply/battery/capacity 2>/dev/null)
+            if [ -z "$capacity" ] || [ "$capacity" -ge 5 ]; then
+                log "$supply power at ${capacity:-?}%, rebooting"
+                setprop sys.powerctl reboot
+                exit $?
+            fi
         fi
     done
     sleep 10
