@@ -16,3 +16,7 @@ on property:sys.boot_completed=1
 
 on property:sys.boot_completed=1 && property:persist.sys.onigiri.car_standby=true
     start onigiri-standby
+
+# Switched back on while a switched-off run was stopping itself.
+on property:init.svc.onigiri-standby=stopped && property:sys.boot_completed=1 && property:persist.sys.onigiri.car_standby=true
+    start onigiri-standby

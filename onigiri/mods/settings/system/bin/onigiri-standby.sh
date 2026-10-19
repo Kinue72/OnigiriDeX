@@ -25,6 +25,15 @@ log() { /system/bin/log -t onigiri-standby "$*"; }
 mark() { touch "$STATE/$1"; }
 marked() { [ -e "$STATE/$1" ]; }
 unmark() { rm -f "$STATE/$1"; }
+# change NAME COMMAND...: record NAME before running COMMAND, so a run killed in between still
+# restores it (every restore only returns a setting to its pre-standby value); forget NAME if
+# COMMAND fails, and skip COMMAND if NAME can't be recorded.
+change() {
+    name=$1
+    shift
+    mark $name && { "$@" || unmark $name; }
+}
+cpu_online() { echo $2 > /sys/devices/system/cpu/cpu$1/online; }
 
 powered() {
     for supply in ac usb wireless pogo; do
@@ -136,30 +145,33 @@ replug_usb() {
 }
 
 enter() {
-    mkdir -p -m 0700 $DATA && mkdir -p "$STATE"
+    if ! mkdir -p -m 0700 $DATA || ! mkdir -p "$STATE"; then
+        log "power lost, but $STATE can't be created: staying out of standby"
+        return 1
+    fi
     log "power lost: entering standby at $(capacity)%"
 
     input keyevent SLEEP
 
     if [ "$(cmd connectivity airplane-mode)" = disabled ]; then
-        cmd connectivity airplane-mode enable && mark airplane
+        change airplane cmd connectivity airplane-mode enable
     fi
     # Airplane mode keeps radios the user re-enabled in it; switch those off too.
     if cmd wifi status 2>/dev/null | grep -q "Wifi is enabled"; then
-        cmd wifi set-wifi-enabled disabled && mark wifi
+        change wifi cmd wifi set-wifi-enabled disabled
     fi
     if [ "$(settings get global bluetooth_on)" = 1 ]; then
-        cmd bluetooth_manager disable && mark bluetooth
+        change bluetooth cmd bluetooth_manager disable
     fi
     if [ "$(cmd location is-location-enabled)" = true ]; then
-        cmd location set-location-enabled false && mark location
+        change location cmd location set-location-enabled false
     fi
     # ISensorPrivacyManager 6 = isSensorPrivacyEnabled, 9 = setSensorPrivacy (developer "Sensors off").
     if service call sensor_privacy 6 | grep -q "00000000 00000000"; then
-        service call sensor_privacy 9 i32 1 >/dev/null && mark sensors
+        change sensors service call sensor_privacy 9 i32 1
     fi
     if [ "$(settings get global low_power)" != 1 ]; then
-        cmd power set-mode 1 >/dev/null && mark saver
+        change saver cmd power set-mode 1
     fi
 
     # Close every background app: system ones get killed, user apps stay stopped until opened.
@@ -167,11 +179,11 @@ enter() {
     for pkg in $(pm list packages -3 | cut -d: -f2); do
         am force-stop "$pkg"
     done
-    dumpsys deviceidle force-idle deep >/dev/null && mark idle
+    change idle dumpsys deviceidle force-idle deep
 
     # Park the big cores; the three little ones handle the odd maintenance wakeup.
     for cpu in $BIG_CPUS; do
-        echo 0 > /sys/devices/system/cpu/cpu$cpu/online 2>/dev/null && mark cpu$cpu
+        change cpu$cpu cpu_online $cpu 0 2>/dev/null
     done
     setprop sys.onigiri.standby 1
 }
@@ -246,7 +258,9 @@ while :; do
             sleep 10
             continue
         fi
-        # init restarts the service when it exits; onigiri-standby.rc starts it again once enabled.
+        # init restarts the service when it exits; onigiri-standby.rc starts it again once enabled,
+        # including when that happened while this cleanup ran.
+        [ "$(getprop persist.sys.onigiri.car_standby)" = true ] && continue
         setprop ctl.stop onigiri-standby
         exit 0
     elif powered; then
