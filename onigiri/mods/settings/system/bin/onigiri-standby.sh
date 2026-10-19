@@ -63,11 +63,12 @@ done
 # about a millisecond: the monitor then dies and stays attached and quiet. The MAX77705
 # firmware has no sink-only mode, and Samsung's host block doesn't stop VBUS in this kernel.
 # Holds for $1 seconds (or until the first cut with "once"); returns 0 early once the port has
-# power again. A cut means a dead monitor is attached: see dead_monitor.
+# power again. Meanwhile it tracks whether a dead monitor is attached: see dead_monitor.
 TYPEC=/sys/class/typec/port0
 OTG=/sys/class/power_supply/otg/online
 hold_power_off() {
     end=$(($(date +%s) + $1))
+    out_at=
     while [ $(date +%s) -lt $end ]; do
         i=0
         while [ $i -lt 200 ]; do
@@ -75,11 +76,20 @@ hold_power_off() {
             if [ "$on" = 1 ]; then
                 echo 0 > $OTG
                 dead_monitor=1
+                out_at=
                 [ "$2" = once ] && return 1
             fi
             i=$((i+1))
         done
         powered && return 0
+        # The cable is out once no partner shows for 3 s straight (not while recheck_usb flips
+        # the roles: the partner drops off then by design).
+        if [ -e $TYPEC-partner ]; then
+            out_at=
+        elif [ "$2" != once ]; then
+            [ -n "$out_at" ] || out_at=$(date +%s)
+            [ $(($(date +%s) - out_at)) -ge 4 ] && dead_monitor=  # whole seconds
+        fi
     done
     return 1
 }
@@ -88,9 +98,6 @@ hold_power_off() {
 # rechecks below don't start DisplayPort on a dead monitor, and lift it only once a re-powered
 # monitor has booted: DisplayPort on a booting monitor times out and the DP driver resets the
 # phone. Lifting it restarts DisplayPort (DeX).
-# dead_monitor is set once something sat on USB-C without power (it may be a monitor that lost
-# power too, and boots when power returns) and cleared once the cable is out: a monitor plugged
-# in afterwards brought the power itself, so it is up and DisplayPort starts at once.
 HOST_BLOCK=/sys/class/usb_notify/usb_control/disable
 block_host() {
     [ "$(cat $HOST_BLOCK)" = OFF ] && echo ON_HOST_ONIGIRI > $HOST_BLOCK &&
@@ -100,6 +107,26 @@ unblock_host() {
     [ "$(cat $HOST_BLOCK)" = ON_HOST_ONIGIRI ] || return 1
     [ -n "$dead_monitor" ] && sleep $MONITOR_BOOT
     powered && echo OFF > $HOST_BLOCK
+}
+
+# dead_monitor: whatever is on USB-C may be a monitor that lost power too and boots once power
+# returns, so unblock_host waits MONITOR_BOOT. Set while powered (every power loss starts out
+# unsafe), whenever a partner sits on USB-C without power and on every VBUS cut. Cleared only
+# while hold_power_off watches no partner show for 3 s straight (a monitor that just lost power
+# drops off and re-attaches about once a second, taking VBUS each time, until it is cut). A
+# monitor plugged in after that and giving power within 2 s (a running one takes under a second;
+# a dead one takes VBUS instead) is up, so DisplayPort starts at once. A monitor that vanished
+# from USB-C entirely when it lost power would look like an unplug; the one in use stays attached.
+dead_monitor=1
+check_cable() {
+    [ -e $TYPEC-partner ] || return
+    if [ -z "$dead_monitor" ]; then
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+            powered && return
+            sleep 0.2
+        done
+    fi
+    dead_monitor=1
 }
 
 # Apps given the zones of the current layout (Settings > Onigiri Software > Zones), if any.
@@ -328,15 +355,10 @@ while :; do
         fi
         in_standby=0
         since=
-        dead_monitor=
+        dead_monitor=1
     else
-        # since is set from the second pass on: VBUS is cut by then, so a monitor that lost
-        # power has stopped dropping off, and no partner means the cable is out.
-        if [ -e $TYPEC-partner ]; then
-            dead_monitor=1
-        elif [ -n "$since" ]; then
-            dead_monitor=
-        fi
+        check_cable
+        powered && continue  # plugged into a running monitor
         if [ "$(cat $HOST_BLOCK)" = OFF ]; then
             block_host &  # DisplayPort teardown takes seconds: keep cutting VBUS meanwhile
             hold_power_off 6
@@ -359,17 +381,20 @@ while :; do
         fi
     fi
     # onigiri-alarm-sleep releases this wakelock once its alarm is armed, wakes the phone from
-    # suspend and holds the wakelock again until here.
+    # suspend and holds the wakelock again until here. It returns early when power comes back
+    # and, once the cable was out, when anything is plugged in (check_cable sorts it out).
+    plug=-p
+    [ -n "$dead_monitor" ] && plug=
     if [ -z "$since" ]; then
         echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
         sleep 3  # notice power loss quickly: the monitor flickers until hold_power_off
     elif [ $in_standby = 1 ]; then
-        onigiri-alarm-sleep $(poll_interval $((now - since))) $POWER_KEY || sleep 10
+        onigiri-alarm-sleep $plug $(poll_interval $((now - since))) $POWER_KEY || sleep 10
     elif [ -e $TYPEC-partner ]; then
         # Stay awake and keep VBUS off through the grace period, until the monitor is dead.
         echo onigiri-standby > /sys/power/wake_lock
         hold_power_off 10
     else
-        onigiri-alarm-sleep 10 || sleep 10
+        onigiri-alarm-sleep $plug 10 || sleep 10
     fi
 done

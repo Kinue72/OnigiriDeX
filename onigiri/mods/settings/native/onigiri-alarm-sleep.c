@@ -1,9 +1,10 @@
-// onigiri-alarm-sleep SECONDS [INPUT_DEVICE...]: sleep like sleep(1), but on an alarm clock that
-// wakes the phone from suspend, or until one of the input devices (e.g. the power key) reports an
-// event, or until external power comes back (ac, usb, wireless or pogo online, as the standby
-// script's powered()). The caller may hold the "onigiri-standby" wakelock: it is released only
-// once the alarm is armed, so the phone can't suspend before it, and held again on wake so the
-// caller can act before the phone sleeps (release it with: echo onigiri-standby > /sys/power/wake_unlock).
+// onigiri-alarm-sleep [-p] SECONDS [INPUT_DEVICE...]: sleep like sleep(1), but on an alarm clock
+// that wakes the phone from suspend, or until one of the input devices (e.g. the power key)
+// reports an event, or until external power comes back (ac, usb, wireless or pogo online, as the
+// standby script's powered()), or with -p until something is on USB-C (at once if it already is).
+// The caller may hold the "onigiri-standby" wakelock: it is released only once the alarm is
+// armed, so the phone can't suspend before it, and held again on wake so the caller can act before
+// the phone sleeps (release it with: echo onigiri-standby > /sys/power/wake_unlock).
 //
 // Build: aarch64-linux-android30-clang -O2 -s -o ../system/bin/onigiri-alarm-sleep onigiri-alarm-sleep.c
 #include <errno.h>
@@ -43,9 +44,14 @@ static int powered(void) {
     return 0;
 }
 
+static int plugged(void) { return access("/sys/class/typec/port0-partner", F_OK) == 0; }
+
 int main(int argc, char **argv) {
+    int wait_plug = argc > 1 && !strcmp(argv[1], "-p");
+    argc -= wait_plug;
+    argv += wait_plug;
     if (argc < 2 || atoi(argv[1]) <= 0) {
-        fprintf(stderr, "usage: %s SECONDS [INPUT_DEVICE...]\n", argv[0]);
+        fprintf(stderr, "usage: onigiri-alarm-sleep [-p] SECONDS [INPUT_DEVICE...]\n");
         return 2;
     }
     struct itimerspec when = {.it_value = {.tv_sec = atoi(argv[1])}};
@@ -63,7 +69,7 @@ int main(int argc, char **argv) {
         if (input < 0 || epoll_ctl(poll, EPOLL_CTL_ADD, input, &event))
             perror(argv[i]);  // still sleep on the alarm
     }
-    // Kernel uevents: power coming back sends some, so recheck power on each.
+    // Kernel uevents: power coming back and a USB-C attach send some, so recheck on each.
     struct sockaddr_nl uevents = {.nl_family = AF_NETLINK, .nl_groups = 1};
     int uevent = socket(AF_NETLINK, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, NETLINK_KOBJECT_UEVENT);
     event.data.u32 = 1;
@@ -72,7 +78,7 @@ int main(int argc, char **argv) {
         perror("onigiri-alarm-sleep: uevents");  // still sleep on the alarm
     wakelock("/sys/power/wake_unlock");  // fails harmlessly when the caller held none
     // Checked once the socket is open, so power that came back before it isn't missed.
-    while (!powered()) {
+    while (!powered() && !(wait_plug && plugged())) {
         if (epoll_wait(poll, &event, 1, -1) < 0) {
             if (errno == EINTR)
                 continue;
