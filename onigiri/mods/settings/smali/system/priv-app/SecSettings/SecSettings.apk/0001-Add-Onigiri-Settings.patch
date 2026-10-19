@@ -15,7 +15,7 @@ diff --git a/AndroidManifest.xml b/AndroidManifest.xml
 +                <action android:name="android.intent.action.MAIN"/>
 +                <category android:name="android.intent.category.DEFAULT"/>
 +            </intent-filter>
-+            <meta-data android:name="com.android.settings.FRAGMENT_CLASS" android:value="io.mesalabs.onigiri.OnigiriSettingsFragment"/>
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS" android:value="moe.foss.onigiri.OnigiriSettingsFragment"/>
 +            <meta-data android:name="com.android.settings.HIGHLIGHT_MENU_KEY" android:value="@string/menu_key_onigiri_settings"/>
 +        </activity>
      </application>
@@ -1179,7 +1179,7 @@ diff --git a/res/xml/sec_top_level_settings.xml b/res/xml/sec_top_level_settings
      <com.android.settings.widget.HomepagePreference android:icon="@drawable/sec_ic_settings_cloud_and_account" android:title="@string/cloud_and_accounts_title" android:key="top_level_accounts_backup" android:summary="@string/summary_placeholder" android:order="-130000" android:fragment="com.samsung.android.settings.account.CloudAccountSettings" settings:controller="com.samsung.android.settings.homepage.TopLevelCloudAccountPreferenceController" settings:highlightableMenuKey="@string/menu_key_accounts_backup" />
      <com.samsung.android.settings.widget.SecInsetCategoryPreference android:order="-100000" />
      <com.android.settings.widget.HomepagePreference android:icon="@drawable/sec_ic_settings_advanced_feature" android:layout="@layout/sec_homepage_software_update_preference" android:title="@string/useful_feature_title" android:key="top_level_advanced_features" android:summary="@string/summary_placeholder" android:order="-40000" android:fragment="com.samsung.android.settings.usefulfeature.Usefulfeature" settings:controller="com.samsung.android.settings.homepage.TopLevelAdvancedFeaturesPreferenceController" settings:highlightableMenuKey="@string/menu_key_advanced_features" settings:keywords="@string/keywords_advanced_features_settings" />
-+    <com.android.settings.widget.HomepagePreference android:icon="@drawable/sec_ic_settings_onigiri" android:title="@string/onigiri_settings_title" android:key="top_level_onigiri" android:summary="@string/onigiri_settings_summary" android:order="-39999" android:fragment="io.mesalabs.onigiri.OnigiriSettingsFragment" settings:controller="io.mesalabs.onigiri.OnigiriSettingsPreferenceController" settings:highlightableMenuKey="@string/menu_key_onigiri_settings" settings:keywords="@string/keywords_onigiri_settings" />
++    <com.android.settings.widget.HomepagePreference android:icon="@drawable/sec_ic_settings_onigiri" android:title="@string/onigiri_settings_title" android:key="top_level_onigiri" android:summary="@string/onigiri_settings_summary" android:order="-39999" android:fragment="moe.foss.onigiri.OnigiriSettingsFragment" settings:controller="moe.foss.onigiri.OnigiriSettingsPreferenceController" settings:highlightableMenuKey="@string/menu_key_onigiri_settings" settings:keywords="@string/keywords_onigiri_settings" />
      <com.samsung.android.settings.widget.SecInsetCategoryPreference android:order="0" />
      <com.android.settings.widget.HomepagePreference android:icon="@drawable/sec_ic_settings_digitalwellbeing" android:title="@string/app_name_digital_wellbeing" android:key="top_level_digitalwellbeing" android:summary="@string/summary_placeholder" android:order="40000" settings:controller="com.samsung.android.settings.homepage.TopLevelDigitalWellbeingPreferenceController" settings:highlightableMenuKey="@string/menu_key_digitalwellbeing">
          <intent android:targetPackage="@string/config_sec_toplevel_digitalwellbeing_package" android:targetClass="@string/config_sec_toplevel_digitalwellbeing_class">
@@ -1191,26 +1191,26 @@ new file mode 100644
 +<?xml version="1.0" encoding="utf-8"?>
 +<PreferenceScreen android:title="@string/onigiri_settings_title" settings:hierarchicalParentFragment="com.android.settings.homepage.TopLevelSettings" settings:keywords="@string/keywords_onigiri_settings" settings:topLevelPreferenceKey="top_level_onigiri"
 +  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
-+    <Preference android:title="@string/onigiri_rom_version_title" android:key="onigiri_rom_version" android:summary="@string/summary_placeholder" android:fragment="com.samsung.android.settings.deviceinfo.softwareinfo.SoftwareInfoSettings" settings:controller="io.mesalabs.onigiri.settings.ROMVersionPreferenceController" />
-+    <Preference android:title="@string/onigiri_device_name_title" android:key="onigiri_device_name" android:summary="@string/summary_placeholder" settings:controller="io.mesalabs.onigiri.settings.DeviceNamePreferenceController" />
++    <Preference android:title="@string/onigiri_rom_version_title" android:key="onigiri_rom_version" android:summary="@string/summary_placeholder" android:fragment="com.samsung.android.settings.deviceinfo.softwareinfo.SoftwareInfoSettings" settings:controller="moe.foss.onigiri.settings.ROMVersionPreferenceController" />
++    <Preference android:title="@string/onigiri_device_name_title" android:key="onigiri_device_name" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.DeviceNamePreferenceController" />
 +    <SecPreferenceCategory android:title="@string/onigiri_patch_settings_title">
-+        <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" settings:controller="io.mesalabs.onigiri.settings.PIFVersionPreferenceController" />
++        <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" settings:controller="moe.foss.onigiri.settings.PIFVersionPreferenceController" />
 +    </SecPreferenceCategory>
 +    <SecPreferenceCategory android:title="@string/onigiri_ui_settings_title">
-+        <SecSwitchPreference android:title="@string/onigiri_boot_sound_title" android:key="onigiri_boot_sound" settings:controller="io.mesalabs.onigiri.settings.BootSoundPreferenceController" />
-+        <SecSwitchPreference android:title="@string/onigiri_native_blur_title" android:key="onigiri_native_blur" settings:controller="io.mesalabs.onigiri.settings.LiveBlurPreferenceController" />
-+        <SecSwitchPreference android:title="@string/onigiri_max_refresh_rate_title" android:key="onigiri_max_refresh_rate" settings:controller="io.mesalabs.onigiri.settings.ForceMaxRefreshRatePreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_boot_sound_title" android:key="onigiri_boot_sound" settings:controller="moe.foss.onigiri.settings.BootSoundPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_native_blur_title" android:key="onigiri_native_blur" settings:controller="moe.foss.onigiri.settings.LiveBlurPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_max_refresh_rate_title" android:key="onigiri_max_refresh_rate" settings:controller="moe.foss.onigiri.settings.ForceMaxRefreshRatePreferenceController" />
 +    </SecPreferenceCategory>
 +    <SecPreferenceCategory android:title="@string/onigiri_spoof_settings_title">
-+        <SecSwitchPreference android:title="@string/onigiri_games_spoof_title" android:key="onigiri_games_spoof" settings:controller="io.mesalabs.onigiri.settings.GamesPropsPreferenceController" />
-+        <SecSwitchPreference android:title="@string/onigiri_hide_dev_title" android:key="onigiri_hide_dev" settings:controller="io.mesalabs.onigiri.settings.HideDeveloperStatusPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_games_spoof_title" android:key="onigiri_games_spoof" settings:controller="moe.foss.onigiri.settings.GamesPropsPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_hide_dev_title" android:key="onigiri_hide_dev" settings:controller="moe.foss.onigiri.settings.HideDeveloperStatusPreferenceController" />
 +    </SecPreferenceCategory>
 +    <SecPreferenceCategory android:title="@string/onigiri_extra_settings_title">
-+        <SecSwitchPreference android:title="@string/onigiri_allow_downgrade_title" android:key="onigiri_allow_downgrade" settings:controller="io.mesalabs.onigiri.settings.AppDowngradePreferenceController" />
-+        <SecSwitchPreference android:title="@string/onigiri_allow_sdkbypass_title" android:key="onigiri_allow_sdkbypass" settings:controller="io.mesalabs.onigiri.settings.AppTargetSDKBypassPreferenceController" />
-+        <SecSwitchPreference android:title="@string/onigiri_asks_title" android:key="onigiri_asks" settings:controller="io.mesalabs.onigiri.settings.ASKSPreferenceController" />
-+        <SecSwitchPreference android:title="@string/onigiri_secure_ss_title" android:key="onigiri_secure_ss" settings:controller="io.mesalabs.onigiri.settings.SecureScreenshotPreferenceController" />
-+        <SecSwitchPreference android:title="@string/onigiri_ss_detection_title" android:key="onigiri_ss_detection" settings:controller="io.mesalabs.onigiri.settings.CaptureDetectionPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_allow_downgrade_title" android:key="onigiri_allow_downgrade" settings:controller="moe.foss.onigiri.settings.AppDowngradePreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_allow_sdkbypass_title" android:key="onigiri_allow_sdkbypass" settings:controller="moe.foss.onigiri.settings.AppTargetSDKBypassPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_asks_title" android:key="onigiri_asks" settings:controller="moe.foss.onigiri.settings.ASKSPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_secure_ss_title" android:key="onigiri_secure_ss" settings:controller="moe.foss.onigiri.settings.SecureScreenshotPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_ss_detection_title" android:key="onigiri_ss_detection" settings:controller="moe.foss.onigiri.settings.CaptureDetectionPreferenceController" />
 +    </SecPreferenceCategory>
 +</PreferenceScreen>
 diff --git a/smali_classes2/com/android/settings/R$drawable.smali b/smali_classes2/com/android/settings/R$drawable.smali
@@ -1312,7 +1312,7 @@ diff --git a/smali_classes2/com/android/settings/core/gateway/SettingsGateway.sm
      const-string v136, "com.samsung.android.fast.ui.MainActivity"
  
 -    filled-new-array/range {v1 .. v139}, [Ljava/lang/String;
-+    const-string v140, "io.mesalabs.onigiri.OnigiriSettingsFragment"
++    const-string v140, "moe.foss.onigiri.OnigiriSettingsFragment"
 +
 +    filled-new-array/range {v1 .. v140}, [Ljava/lang/String;
  
@@ -1327,9 +1327,9 @@ diff --git a/smali_classes2/com/android/settingslib/search/SearchIndexableResour
  
 +    new-instance v0, Lcom/android/settingslib/search/SearchIndexableData;
 +
-+    const-class v1, Lio/mesalabs/onigiri/OnigiriSettingsFragment;
++    const-class v1, Lmoe/foss/onigiri/OnigiriSettingsFragment;
 +
-+    sget-object v2, Lio/mesalabs/onigiri/OnigiriSettingsFragment;->SEARCH_INDEX_DATA_PROVIDER:Lcom/android/settings/search/BaseSearchIndexProvider;
++    sget-object v2, Lmoe/foss/onigiri/OnigiriSettingsFragment;->SEARCH_INDEX_DATA_PROVIDER:Lcom/android/settings/search/BaseSearchIndexProvider;
 +
 +    invoke-direct {v0, v1, v2}, Lcom/android/settingslib/search/SearchIndexableData;-><init>(Ljava/lang/Class;Lcom/android/settingslib/search/Indexable$SearchIndexProvider;)V
 +
@@ -1356,12 +1356,12 @@ new file mode 100644
 +
 +    return-void
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/OnigiriSettingsFragment.smali b/smali_classes4/io/mesalabs/onigiri/OnigiriSettingsFragment.smali
+diff --git a/smali_classes4/moe/foss/onigiri/OnigiriSettingsFragment.smali b/smali_classes4/moe/foss/onigiri/OnigiriSettingsFragment.smali
 new file mode 100644
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/OnigiriSettingsFragment.smali
++++ b/smali_classes4/moe/foss/onigiri/OnigiriSettingsFragment.smali
 @@ -0,0 +1,112 @@
-+.class public Lio/mesalabs/onigiri/OnigiriSettingsFragment;
++.class public Lmoe/foss/onigiri/OnigiriSettingsFragment;
 +.super Lcom/android/settings/dashboard/DashboardFragment;
 +.source "OnigiriSettingsFragment.java"
 +
@@ -1384,7 +1384,7 @@ new file mode 100644
 +
 +    invoke-direct {v0, v1}, Lcom/android/settings/search/BaseSearchIndexProvider;-><init>(I)V
 +
-+    sput-object v0, Lio/mesalabs/onigiri/OnigiriSettingsFragment;->SEARCH_INDEX_DATA_PROVIDER:Lcom/android/settings/search/BaseSearchIndexProvider;
++    sput-object v0, Lmoe/foss/onigiri/OnigiriSettingsFragment;->SEARCH_INDEX_DATA_PROVIDER:Lcom/android/settings/search/BaseSearchIndexProvider;
 +
 +    return-void
 +.end method
@@ -1452,7 +1452,7 @@ new file mode 100644
 +
 +    move-result-object p0
 +
-+    invoke-static {p1, p0}, Lio/mesalabs/onigiri/pif/PIFUtils;->updatePIF(Landroid/content/Context;Landroidx/preference/Preference;)V
++    invoke-static {p1, p0}, Lmoe/foss/onigiri/pif/PIFUtils;->updatePIF(Landroid/content/Context;Landroidx/preference/Preference;)V
 +
 +    :cond_0
 +    return-void
@@ -1463,7 +1463,7 @@ new file mode 100644
 +
 +    invoke-super {p0}, Lcom/android/settings/dashboard/DashboardFragment;->onResume()V
 +
-+    invoke-virtual {p0}, Lio/mesalabs/onigiri/OnigiriSettingsFragment;->setLinkedDataView()V
++    invoke-virtual {p0}, Lmoe/foss/onigiri/OnigiriSettingsFragment;->setLinkedDataView()V
 +
 +    return-void
 +.end method
@@ -1473,13 +1473,13 @@ new file mode 100644
 +
 +    return-void
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/OnigiriSettingsPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/OnigiriSettingsPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/OnigiriSettingsPreferenceController.smali b/smali_classes4/moe/foss/onigiri/OnigiriSettingsPreferenceController.smali
 new file mode 100644
 index 0000000..8e48381
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/OnigiriSettingsPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/OnigiriSettingsPreferenceController.smali
 @@ -0,0 +1,163 @@
-+.class public Lio/mesalabs/onigiri/OnigiriSettingsPreferenceController;
++.class public Lmoe/foss/onigiri/OnigiriSettingsPreferenceController;
 +.super Lcom/android/settings/core/BasePreferenceController;
 +.source "OnigiriSettingsPreferenceController.java"
 +
@@ -1642,12 +1642,12 @@ index 0000000..8e48381
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0.smali b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0.smali
+diff --git a/smali_classes4/moe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0.smali b/smali_classes4/moe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0.smali
 new file mode 100644
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0.smali
++++ b/smali_classes4/moe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0.smali
 @@ -0,0 +1,46 @@
-+.class public final synthetic Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;
++.class public final synthetic Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;
 +.super Ljava/lang/Object;
 +.source "D8$$SyntheticClass"
 +
@@ -1669,11 +1669,11 @@ new file mode 100644
 +
 +    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +
-+    iput-object p1, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$0:Landroid/content/Context;
++    iput-object p1, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$0:Landroid/content/Context;
 +
-+    iput-object p2, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$1:Lorg/json/JSONObject;
++    iput-object p2, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$1:Lorg/json/JSONObject;
 +
-+    iput-object p3, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$2:Landroidx/preference/Preference;
++    iput-object p3, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$2:Landroidx/preference/Preference;
 +
 +    return-void
 +.end method
@@ -1683,22 +1683,22 @@ new file mode 100644
 +.method public final run()V
 +    .locals 2
 +
-+    iget-object v0, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$0:Landroid/content/Context;
++    iget-object v0, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$0:Landroid/content/Context;
 +
-+    iget-object v1, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$1:Lorg/json/JSONObject;
++    iget-object v1, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$1:Lorg/json/JSONObject;
 +
-+    iget-object p0, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$2:Landroidx/preference/Preference;
++    iget-object p0, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;->f$2:Landroidx/preference/Preference;
 +
-+    invoke-static {v0, v1, p0}, Lio/mesalabs/onigiri/pif/PIFUtils;->lambda$updatePIF$0(Landroid/content/Context;Lorg/json/JSONObject;Landroidx/preference/Preference;)V
++    invoke-static {v0, v1, p0}, Lmoe/foss/onigiri/pif/PIFUtils;->lambda$updatePIF$0(Landroid/content/Context;Lorg/json/JSONObject;Landroidx/preference/Preference;)V
 +
 +    return-void
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1.smali b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1.smali
+diff --git a/smali_classes4/moe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1.smali b/smali_classes4/moe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1.smali
 new file mode 100644
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1.smali
++++ b/smali_classes4/moe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1.smali
 @@ -0,0 +1,34 @@
-+.class public final synthetic Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1;
++.class public final synthetic Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1;
 +.super Ljava/lang/Object;
 +.source "D8$$SyntheticClass"
 +
@@ -1716,7 +1716,7 @@ new file mode 100644
 +
 +    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +
-+    iput-object p1, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1;->f$0:Landroid/content/Context;
++    iput-object p1, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1;->f$0:Landroid/content/Context;
 +
 +    return-void
 +.end method
@@ -1726,18 +1726,18 @@ new file mode 100644
 +.method public final run()V
 +    .locals 0
 +
-+    iget-object p0, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1;->f$0:Landroid/content/Context;
++    iget-object p0, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1;->f$0:Landroid/content/Context;
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/pif/PIFUtils;->lambda$updatePIF$1(Landroid/content/Context;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/pif/PIFUtils;->lambda$updatePIF$1(Landroid/content/Context;)V
 +
 +    return-void
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2.smali b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2.smali
+diff --git a/smali_classes4/moe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2.smali b/smali_classes4/moe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2.smali
 new file mode 100644
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2.smali
++++ b/smali_classes4/moe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2.smali
 @@ -0,0 +1,46 @@
-+.class public final synthetic Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;
++.class public final synthetic Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;
 +.super Ljava/lang/Object;
 +.source "D8$$SyntheticClass"
 +
@@ -1759,11 +1759,11 @@ new file mode 100644
 +
 +    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +
-+    iput-object p1, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$0:Landroid/os/Handler;
++    iput-object p1, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$0:Landroid/os/Handler;
 +
-+    iput-object p2, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$1:Landroid/content/Context;
++    iput-object p2, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$1:Landroid/content/Context;
 +
-+    iput-object p3, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$2:Landroidx/preference/Preference;
++    iput-object p3, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$2:Landroidx/preference/Preference;
 +
 +    return-void
 +.end method
@@ -1773,22 +1773,22 @@ new file mode 100644
 +.method public final run()V
 +    .locals 2
 +
-+    iget-object v0, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$0:Landroid/os/Handler;
++    iget-object v0, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$0:Landroid/os/Handler;
 +
-+    iget-object v1, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$1:Landroid/content/Context;
++    iget-object v1, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$1:Landroid/content/Context;
 +
-+    iget-object p0, p0, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$2:Landroidx/preference/Preference;
++    iget-object p0, p0, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;->f$2:Landroidx/preference/Preference;
 +
-+    invoke-static {v0, v1, p0}, Lio/mesalabs/onigiri/pif/PIFUtils;->lambda$updatePIF$2(Landroid/os/Handler;Landroid/content/Context;Landroidx/preference/Preference;)V
++    invoke-static {v0, v1, p0}, Lmoe/foss/onigiri/pif/PIFUtils;->lambda$updatePIF$2(Landroid/os/Handler;Landroid/content/Context;Landroidx/preference/Preference;)V
 +
 +    return-void
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali
+diff --git a/smali_classes4/moe/foss/onigiri/pif/PIFUtils.smali b/smali_classes4/moe/foss/onigiri/pif/PIFUtils.smali
 new file mode 100644
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali
++++ b/smali_classes4/moe/foss/onigiri/pif/PIFUtils.smali
 @@ -0,0 +1,542 @@
-+.class public Lio/mesalabs/onigiri/pif/PIFUtils;
++.class public Lmoe/foss/onigiri/pif/PIFUtils;
 +.super Ljava/lang/Object;
 +.source "PIFUtils.java"
 +
@@ -2001,9 +2001,9 @@ new file mode 100644
 +.method static synthetic lambda$updatePIF$0(Landroid/content/Context;Lorg/json/JSONObject;Landroidx/preference/Preference;)V
 +    .locals 0
 +
-+    invoke-static {p0, p1}, Lio/mesalabs/onigiri/pif/PIFUtils;->setPIFConfig(Landroid/content/Context;Lorg/json/JSONObject;)V
++    invoke-static {p0, p1}, Lmoe/foss/onigiri/pif/PIFUtils;->setPIFConfig(Landroid/content/Context;Lorg/json/JSONObject;)V
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/pif/PIFUtils;->killGMS(Landroid/content/Context;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/pif/PIFUtils;->killGMS(Landroid/content/Context;)V
 +
 +    return-void
 +.end method
@@ -2013,7 +2013,7 @@ new file mode 100644
 +
 +    const/4 v0, 0x3
 +
-+    invoke-static {p0, v0}, Lio/mesalabs/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
++    invoke-static {p0, v0}, Lmoe/foss/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
 +
 +    return-void
 +.end method
@@ -2022,13 +2022,13 @@ new file mode 100644
 +    .locals 2
 +
 +    :try_start_0
-+    invoke-static {}, Lio/mesalabs/onigiri/pif/PIFUtils;->getJson()Lorg/json/JSONObject;
++    invoke-static {}, Lmoe/foss/onigiri/pif/PIFUtils;->getJson()Lorg/json/JSONObject;
 +
 +    move-result-object v0
 +
-+    new-instance v1, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;
++    new-instance v1, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;
 +
-+    invoke-direct {v1, p1, v0, p2}, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;-><init>(Landroid/content/Context;Lorg/json/JSONObject;Landroidx/preference/Preference;)V
++    invoke-direct {v1, p1, v0, p2}, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda0;-><init>(Landroid/content/Context;Lorg/json/JSONObject;Landroidx/preference/Preference;)V
 +
 +    invoke-virtual {p0, v1}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 +    :try_end_0
@@ -2046,9 +2046,9 @@ new file mode 100644
 +
 +    invoke-static {v0, v1, p2}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 +
-+    new-instance p2, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1;
++    new-instance p2, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1;
 +
-+    invoke-direct {p2, p1}, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1;-><init>(Landroid/content/Context;)V
++    invoke-direct {p2, p1}, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda1;-><init>(Landroid/content/Context;)V
 +
 +    invoke-virtual {p0, p2}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 +
@@ -2202,14 +2202,14 @@ new file mode 100644
 +
 +    const/4 p1, 0x1
 +
-+    invoke-static {p0, p1}, Lio/mesalabs/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
++    invoke-static {p0, p1}, Lmoe/foss/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
 +
 +    goto :goto_0
 +
 +    :cond_0
 +    const/4 p1, 0x2
 +
-+    invoke-static {p0, p1}, Lio/mesalabs/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
++    invoke-static {p0, p1}, Lmoe/foss/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
 +    :try_end_0
 +    .catch Lorg/json/JSONException; {:try_start_0 .. :try_end_0} :catch_0
 +
@@ -2226,7 +2226,7 @@ new file mode 100644
 +
 +    const/4 p1, 0x3
 +
-+    invoke-static {p0, p1}, Lio/mesalabs/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
++    invoke-static {p0, p1}, Lmoe/foss/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
 +
 +    :goto_0
 +    return-void
@@ -2293,7 +2293,7 @@ new file mode 100644
 +.method public static updatePIF(Landroid/content/Context;Landroidx/preference/Preference;)V
 +    .locals 3
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/pif/PIFUtils;->isPIFInstallable()Z
++    invoke-static {}, Lmoe/foss/onigiri/pif/PIFUtils;->isPIFInstallable()Z
 +
 +    move-result v0
 +
@@ -2301,14 +2301,14 @@ new file mode 100644
 +
 +    const/4 p1, 0x4
 +
-+    invoke-static {p0, p1}, Lio/mesalabs/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
++    invoke-static {p0, p1}, Lmoe/foss/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
 +
 +    return-void
 +
 +    :cond_0
 +    const/4 v0, 0x0
 +
-+    invoke-static {p0, v0}, Lio/mesalabs/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
++    invoke-static {p0, v0}, Lmoe/foss/onigiri/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
 +
 +    invoke-static {}, Ljava/util/concurrent/Executors;->newSingleThreadExecutor()Ljava/util/concurrent/ExecutorService;
 +
@@ -2322,21 +2322,21 @@ new file mode 100644
 +
 +    invoke-direct {v1, v2}, Landroid/os/Handler;-><init>(Landroid/os/Looper;)V
 +
-+    new-instance v2, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;
++    new-instance v2, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;
 +
-+    invoke-direct {v2, v1, p0, p1}, Lio/mesalabs/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;-><init>(Landroid/os/Handler;Landroid/content/Context;Landroidx/preference/Preference;)V
++    invoke-direct {v2, v1, p0, p1}, Lmoe/foss/onigiri/pif/PIFUtils$$ExternalSyntheticLambda2;-><init>(Landroid/os/Handler;Landroid/content/Context;Landroidx/preference/Preference;)V
 +
 +    invoke-interface {v0, v2}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 +
 +    return-void
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/ASKSPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/ASKSPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/ASKSPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/ASKSPreferenceController.smali
 new file mode 100644
 index 0000000..f636085
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/ASKSPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/ASKSPreferenceController.smali
 @@ -0,0 +1,171 @@
-+.class public Lio/mesalabs/onigiri/settings/ASKSPreferenceController;
++.class public Lmoe/foss/onigiri/settings/ASKSPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "ASKSPreferenceController.java"
 +
@@ -2507,13 +2507,13 @@ index 0000000..f636085
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/AppDowngradePreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/AppDowngradePreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/AppDowngradePreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/AppDowngradePreferenceController.smali
 new file mode 100644
 index 0000000..637e009
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/AppDowngradePreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/AppDowngradePreferenceController.smali
 @@ -0,0 +1,183 @@
-+.class public Lio/mesalabs/onigiri/settings/AppDowngradePreferenceController;
++.class public Lmoe/foss/onigiri/settings/AppDowngradePreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "AppDowngradePreferenceController.java"
 +
@@ -2696,13 +2696,13 @@ index 0000000..637e009
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/AppTargetSDKBypassPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/AppTargetSDKBypassPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/AppTargetSDKBypassPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/AppTargetSDKBypassPreferenceController.smali
 new file mode 100644
 index 0000000..235fe46
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/AppTargetSDKBypassPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/AppTargetSDKBypassPreferenceController.smali
 @@ -0,0 +1,183 @@
-+.class public Lio/mesalabs/onigiri/settings/AppTargetSDKBypassPreferenceController;
++.class public Lmoe/foss/onigiri/settings/AppTargetSDKBypassPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "AppTargetSDKBypassPreferenceController.java"
 +
@@ -2885,13 +2885,13 @@ index 0000000..235fe46
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/BootSoundPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/BootSoundPreferenceController.smali
 new file mode 100644
 index 0000000..6217969
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/BootSoundPreferenceController.smali
 @@ -0,0 +1,167 @@
-+.class public Lio/mesalabs/onigiri/settings/BootSoundPreferenceController;
++.class public Lmoe/foss/onigiri/settings/BootSoundPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "BootSoundPreferenceController.java"
 +
@@ -3058,13 +3058,13 @@ index 0000000..6217969
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/CaptureDetectionPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/CaptureDetectionPreferenceController.smali
 new file mode 100644
 index 0000000..73a00e4
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/CaptureDetectionPreferenceController.smali
 @@ -0,0 +1,183 @@
-+.class public Lio/mesalabs/onigiri/settings/CaptureDetectionPreferenceController;
++.class public Lmoe/foss/onigiri/settings/CaptureDetectionPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "CaptureDetectionPreferenceController.java"
 +
@@ -3247,13 +3247,13 @@ index 0000000..73a00e4
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/DeviceNamePreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/DeviceNamePreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/DeviceNamePreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/DeviceNamePreferenceController.smali
 new file mode 100644
 index 0000000..3e0ad92
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/DeviceNamePreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/DeviceNamePreferenceController.smali
 @@ -0,0 +1,175 @@
-+.class public Lio/mesalabs/onigiri/settings/DeviceNamePreferenceController;
++.class public Lmoe/foss/onigiri/settings/DeviceNamePreferenceController;
 +.super Lcom/android/settings/core/BasePreferenceController;
 +.source "DeviceNamePreferenceController.java"
 +
@@ -3428,13 +3428,13 @@ index 0000000..3e0ad92
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/ForceMaxRefreshRatePreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/ForceMaxRefreshRatePreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/ForceMaxRefreshRatePreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/ForceMaxRefreshRatePreferenceController.smali
 new file mode 100644
 index 0000000..6b8a2d3
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/ForceMaxRefreshRatePreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/ForceMaxRefreshRatePreferenceController.smali
 @@ -0,0 +1,266 @@
-+.class public Lio/mesalabs/onigiri/settings/ForceMaxRefreshRatePreferenceController;
++.class public Lmoe/foss/onigiri/settings/ForceMaxRefreshRatePreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "ForceMaxRefreshRatePreferenceController.java"
 +
@@ -3463,7 +3463,7 @@ index 0000000..6b8a2d3
 +
 +    move-result v0
 +
-+    iput v0, p0, Lio/mesalabs/onigiri/settings/ForceMaxRefreshRatePreferenceController;->mRefreshRateType:I
++    iput v0, p0, Lmoe/foss/onigiri/settings/ForceMaxRefreshRatePreferenceController;->mRefreshRateType:I
 +
 +    invoke-static {p1}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getHighRefreshRateMaxValue(Landroid/content/Context;)I
 +
@@ -3471,7 +3471,7 @@ index 0000000..6b8a2d3
 +
 +    int-to-float p1, p1
 +
-+    iput p1, p0, Lio/mesalabs/onigiri/settings/ForceMaxRefreshRatePreferenceController;->mMaxRefreshRate:F
++    iput p1, p0, Lmoe/foss/onigiri/settings/ForceMaxRefreshRatePreferenceController;->mMaxRefreshRate:F
 +
 +    return-void
 +.end method
@@ -3481,7 +3481,7 @@ index 0000000..6b8a2d3
 +.method public getAvailabilityStatus()I
 +    .locals 2
 +
-+    iget v0, p0, Lio/mesalabs/onigiri/settings/ForceMaxRefreshRatePreferenceController;->mRefreshRateType:I
++    iget v0, p0, Lmoe/foss/onigiri/settings/ForceMaxRefreshRatePreferenceController;->mRefreshRateType:I
 +
 +    const/4 v1, 0x2
 +
@@ -3618,7 +3618,7 @@ index 0000000..6b8a2d3
 +
 +    move-result v0
 +
-+    iget p0, p0, Lio/mesalabs/onigiri/settings/ForceMaxRefreshRatePreferenceController;->mMaxRefreshRate:F
++    iget p0, p0, Lmoe/foss/onigiri/settings/ForceMaxRefreshRatePreferenceController;->mMaxRefreshRate:F
 +
 +    cmpl-float p0, v0, p0
 +
@@ -3674,7 +3674,7 @@ index 0000000..6b8a2d3
 +
 +    if-eqz p1, :cond_0
 +
-+    iget p0, p0, Lio/mesalabs/onigiri/settings/ForceMaxRefreshRatePreferenceController;->mMaxRefreshRate:F
++    iget p0, p0, Lmoe/foss/onigiri/settings/ForceMaxRefreshRatePreferenceController;->mMaxRefreshRate:F
 +
 +    goto :goto_0
 +
@@ -3700,13 +3700,13 @@ index 0000000..6b8a2d3
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/GamesPropsPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/GamesPropsPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/GamesPropsPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/GamesPropsPreferenceController.smali
 new file mode 100644
 index 0000000..68af51c
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/GamesPropsPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/GamesPropsPreferenceController.smali
 @@ -0,0 +1,167 @@
-+.class public Lio/mesalabs/onigiri/settings/GamesPropsPreferenceController;
++.class public Lmoe/foss/onigiri/settings/GamesPropsPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "GamesPropsPreferenceController.java"
 +
@@ -3873,13 +3873,13 @@ index 0000000..68af51c
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/HideDeveloperStatusPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/HideDeveloperStatusPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/HideDeveloperStatusPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/HideDeveloperStatusPreferenceController.smali
 new file mode 100644
 index 0000000..571a3c0
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/HideDeveloperStatusPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/HideDeveloperStatusPreferenceController.smali
 @@ -0,0 +1,183 @@
-+.class public Lio/mesalabs/onigiri/settings/HideDeveloperStatusPreferenceController;
++.class public Lmoe/foss/onigiri/settings/HideDeveloperStatusPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "HideDeveloperStatusPreferenceController.java"
 +
@@ -4062,12 +4062,12 @@ index 0000000..571a3c0
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0.smali b/smali_classes4/io/mesalabs/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0.smali b/smali_classes4/moe/foss/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0.smali
 new file mode 100644
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0.smali
 @@ -0,0 +1,34 @@
-+.class public final synthetic Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0;
++.class public final synthetic Lmoe/foss/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0;
 +.super Ljava/lang/Object;
 +.source "D8$$SyntheticClass"
 +
@@ -4076,16 +4076,16 @@ new file mode 100644
 +
 +
 +# instance fields
-+.field public final synthetic f$0:Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;
++.field public final synthetic f$0:Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;
 +
 +
 +# direct methods
-+.method public synthetic constructor <init>(Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;)V
++.method public synthetic constructor <init>(Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;)V
 +    .locals 0
 +
 +    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +
-+    iput-object p1, p0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0;->f$0:Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;
++    iput-object p1, p0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0;->f$0:Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;
 +
 +    return-void
 +.end method
@@ -4095,19 +4095,19 @@ new file mode 100644
 +.method public final onClick(Landroid/content/DialogInterface;I)V
 +    .locals 0
 +
-+    iget-object p0, p0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0;->f$0:Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;
++    iget-object p0, p0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0;->f$0:Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;
 +
-+    invoke-static {p0, p1, p2}, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->$r8$lambda$AaMRnzLV1nNPtxvU3q2yudHGCQo(Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;Landroid/content/DialogInterface;I)V
++    invoke-static {p0, p1, p2}, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->$r8$lambda$AaMRnzLV1nNPtxvU3q2yudHGCQo(Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;Landroid/content/DialogInterface;I)V
 +
 +    return-void
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/LiveBlurPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/LiveBlurPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/LiveBlurPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/LiveBlurPreferenceController.smali
 new file mode 100644
 index 0000000..5cc2644
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/LiveBlurPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/LiveBlurPreferenceController.smali
 @@ -0,0 +1,318 @@
-+.class public Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;
++.class public Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "LiveBlurPreferenceController.java"
 +
@@ -4123,10 +4123,10 @@ index 0000000..5cc2644
 +
 +
 +# direct methods
-+.method public static synthetic $r8$lambda$AaMRnzLV1nNPtxvU3q2yudHGCQo(Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;Landroid/content/DialogInterface;I)V
++.method public static synthetic $r8$lambda$AaMRnzLV1nNPtxvU3q2yudHGCQo(Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;Landroid/content/DialogInterface;I)V
 +    .locals 0
 +
-+    invoke-direct {p0, p1, p2}, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->lambda$showRebootAlertDialog$0(Landroid/content/DialogInterface;I)V
++    invoke-direct {p0, p1, p2}, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->lambda$showRebootAlertDialog$0(Landroid/content/DialogInterface;I)V
 +
 +    return-void
 +.end method
@@ -4156,7 +4156,7 @@ index 0000000..5cc2644
 +
 +    aput-object v2, v0, v1
 +
-+    sput-object v0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->DEFAULT_DISABLED_DEVICES:[Ljava/lang/String;
++    sput-object v0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->DEFAULT_DISABLED_DEVICES:[Ljava/lang/String;
 +
 +    return-void
 +.end method
@@ -4166,7 +4166,7 @@ index 0000000..5cc2644
 +
 +    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/TogglePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
 +
-+    sget-object v0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->DEFAULT_DISABLED_DEVICES:[Ljava/lang/String;
++    sget-object v0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->DEFAULT_DISABLED_DEVICES:[Ljava/lang/String;
 +
 +    invoke-static {v0}, Ljava/util/Arrays;->asList([Ljava/lang/Object;)Ljava/util/List;
 +
@@ -4186,7 +4186,7 @@ index 0000000..5cc2644
 +
 +    xor-int/lit8 v0, v0, 0x1
 +
-+    iput-boolean v0, p0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->mDefaultValue:Z
++    iput-boolean v0, p0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->mDefaultValue:Z
 +
 +    return-void
 +.end method
@@ -4194,7 +4194,7 @@ index 0000000..5cc2644
 +.method private synthetic lambda$showRebootAlertDialog$0(Landroid/content/DialogInterface;I)V
 +    .locals 0
 +
-+    iget-boolean p1, p0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->mDefaultValue:Z
++    iget-boolean p1, p0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->mDefaultValue:Z
 +
 +    const-string p2, "persist.sys.onigiri.nativeblur"
 +
@@ -4210,7 +4210,7 @@ index 0000000..5cc2644
 +
 +    invoke-static {p2, p1}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
 +
-+    iget-object p0, p0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->mContext:Landroid/content/Context;
++    iget-object p0, p0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->mContext:Landroid/content/Context;
 +
 +    const-string p1, "power"
 +
@@ -4230,13 +4230,13 @@ index 0000000..5cc2644
 +.method private showRebootAlertDialog()V
 +    .locals 4
 +
-+    iget-object v0, p0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->mRebootDialog:Landroidx/appcompat/app/AlertDialog;
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->mRebootDialog:Landroidx/appcompat/app/AlertDialog;
 +
 +    if-nez v0, :cond_0
 +
 +    new-instance v0, Landroidx/appcompat/app/AlertDialog$Builder;
 +
-+    iget-object v1, p0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->mContext:Landroid/content/Context;
++    iget-object v1, p0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->mContext:Landroid/content/Context;
 +
 +    invoke-direct {v0, v1}, Landroidx/appcompat/app/AlertDialog$Builder;-><init>(Landroid/content/Context;)V
 +
@@ -4250,9 +4250,9 @@ index 0000000..5cc2644
 +
 +    sget v2, Lcom/android/settings/R$string;->onigiri_native_blur_dialog_positive:I
 +
-+    new-instance v3, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0;
++    new-instance v3, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0;
 +
-+    invoke-direct {v3, p0}, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0;-><init>(Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;)V
++    invoke-direct {v3, p0}, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController$$ExternalSyntheticLambda0;-><init>(Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;)V
 +
 +    invoke-virtual {v0, v2, v3}, Landroidx/appcompat/app/AlertDialog$Builder;->setPositiveButton(ILandroid/content/DialogInterface$OnClickListener;)V
 +
@@ -4266,10 +4266,10 @@ index 0000000..5cc2644
 +
 +    move-result-object v0
 +
-+    iput-object v0, p0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->mRebootDialog:Landroidx/appcompat/app/AlertDialog;
++    iput-object v0, p0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->mRebootDialog:Landroidx/appcompat/app/AlertDialog;
 +
 +    :cond_0
-+    iget-object p0, p0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->mRebootDialog:Landroidx/appcompat/app/AlertDialog;
++    iget-object p0, p0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->mRebootDialog:Landroidx/appcompat/app/AlertDialog;
 +
 +    invoke-virtual {p0}, Landroidx/appcompat/app/AlertDialog;->show()V
 +
@@ -4367,7 +4367,7 @@ index 0000000..5cc2644
 +
 +    const-string v0, "persist.sys.onigiri.nativeblur"
 +
-+    iget-boolean p0, p0, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->mDefaultValue:Z
++    iget-boolean p0, p0, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->mDefaultValue:Z
 +
 +    invoke-static {v0, p0}, Landroid/os/SemSystemProperties;->getBoolean(Ljava/lang/String;Z)Z
 +
@@ -4409,7 +4409,7 @@ index 0000000..5cc2644
 +.method public setChecked(Z)Z
 +    .locals 0
 +
-+    invoke-direct {p0}, Lio/mesalabs/onigiri/settings/LiveBlurPreferenceController;->showRebootAlertDialog()V
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/LiveBlurPreferenceController;->showRebootAlertDialog()V
 +
 +    const/4 p0, 0x0
 +
@@ -4425,13 +4425,13 @@ index 0000000..5cc2644
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali
 new file mode 100644
 index 0000000..1922a64
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali
 @@ -0,0 +1,214 @@
-+.class public Lio/mesalabs/onigiri/settings/PIFVersionPreferenceController;
++.class public Lmoe/foss/onigiri/settings/PIFVersionPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "PIFVersionPreferenceController.java"
 +
@@ -4450,7 +4450,7 @@ index 0000000..1922a64
 +.method public getAvailabilityStatus()I
 +    .locals 0
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/pif/PIFUtils;->isPIFInstallable()Z
++    invoke-static {}, Lmoe/foss/onigiri/pif/PIFUtils;->isPIFInstallable()Z
 +
 +    move-result p0
 +
@@ -4544,7 +4544,7 @@ index 0000000..1922a64
 +
 +    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
 +
-+    invoke-static {p0, p1}, Lio/mesalabs/onigiri/pif/PIFUtils;->updatePIF(Landroid/content/Context;Landroidx/preference/Preference;)V
++    invoke-static {p0, p1}, Lmoe/foss/onigiri/pif/PIFUtils;->updatePIF(Landroid/content/Context;Landroidx/preference/Preference;)V
 +
 +    const/4 p0, 0x1
 +
@@ -4629,7 +4629,7 @@ index 0000000..1922a64
 +
 +    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/pif/PIFUtils;->killGMS(Landroid/content/Context;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/pif/PIFUtils;->killGMS(Landroid/content/Context;)V
 +
 +    const/4 p0, 0x1
 +
@@ -4645,13 +4645,13 @@ index 0000000..1922a64
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/ROMVersionPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/ROMVersionPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/ROMVersionPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/ROMVersionPreferenceController.smali
 new file mode 100644
 index 0000000..ce721d7
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/ROMVersionPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/ROMVersionPreferenceController.smali
 @@ -0,0 +1,252 @@
-+.class public Lio/mesalabs/onigiri/settings/ROMVersionPreferenceController;
++.class public Lmoe/foss/onigiri/settings/ROMVersionPreferenceController;
 +.super Lcom/android/settings/core/BasePreferenceController;
 +.source "ROMVersionPreferenceController.java"
 +
@@ -4903,13 +4903,13 @@ index 0000000..ce721d7
 +
 +    return p0
 +.end method
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/SecureScreenshotPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/SecureScreenshotPreferenceController.smali
 new file mode 100644
 index 0000000..3ba2474
 --- /dev/null
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/SecureScreenshotPreferenceController.smali
 @@ -0,0 +1,185 @@
-+.class public Lio/mesalabs/onigiri/settings/SecureScreenshotPreferenceController;
++.class public Lmoe/foss/onigiri/settings/SecureScreenshotPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "SecureScreenshotPreferenceController.java"
 +

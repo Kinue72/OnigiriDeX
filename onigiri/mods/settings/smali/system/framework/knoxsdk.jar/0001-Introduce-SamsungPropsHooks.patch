@@ -20,7 +20,7 @@ index a95b7af..b4a6310 100644
  
 -    :try_start_0
 -    invoke-static {}, Lcom/samsung/android/knox/EdmUtils;->getAPILevelForInternal()I
-+    invoke-static {}, Lio/mesalabs/onigiri/SamsungPropsHooks;->onEDMGetAPILevelHook()I
++    invoke-static {}, Lmoe/foss/onigiri/SamsungPropsHooks;->onEDMGetAPILevelHook()I
  
      move-result v0
 -    :try_end_0

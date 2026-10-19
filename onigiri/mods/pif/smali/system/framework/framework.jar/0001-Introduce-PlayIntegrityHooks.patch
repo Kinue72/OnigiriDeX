@@ -7,12 +7,12 @@ Subject: [PATCH] Introduce PlayIntegrityHooks
  smali/android/app/Instrumentation.smali       |    4 +
  .../keystore2/AndroidKeyStoreSpi.smali        |    2 +
  ...grityHooks$$ExternalSyntheticLambda0.smali |   30 +
- .../mesalabs/onigiri/PlayIntegrityHooks$1.smali |   79 ++
- .../mesalabs/onigiri/PlayIntegrityHooks.smali   | 1049 +++++++++++++++++
+ .../foss/onigiri/PlayIntegrityHooks$1.smali |   79 ++
+ .../foss/onigiri/PlayIntegrityHooks.smali   | 1049 +++++++++++++++++
  5 files changed, 1164 insertions(+)
- create mode 100644 smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0.smali
- create mode 100644 smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks$1.smali
- create mode 100644 smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks.smali
+ create mode 100644 smali_classes6/moe/foss/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0.smali
+ create mode 100644 smali_classes6/moe/foss/onigiri/PlayIntegrityHooks$1.smali
+ create mode 100644 smali_classes6/moe/foss/onigiri/PlayIntegrityHooks.smali
 
 diff --git a/smali/android/app/Instrumentation.smali b/smali/android/app/Instrumentation.smali
 index 86460ff3..a0f4bf02 100644
@@ -22,7 +22,7 @@ index 86460ff3..a0f4bf02 100644
  
      invoke-virtual {v0, p1}, Landroid/app/Application;->attach(Landroid/content/Context;)V
  
-+    invoke-static {p1}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setProps(Landroid/content/Context;)V
++    invoke-static {p1}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setProps(Landroid/content/Context;)V
 +
      return-object v0
  .end method
@@ -31,7 +31,7 @@ index 86460ff3..a0f4bf02 100644
  
      invoke-virtual {v0, p3}, Landroid/app/Application;->attach(Landroid/content/Context;)V
  
-+    invoke-static {p3}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setProps(Landroid/content/Context;)V
++    invoke-static {p3}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setProps(Landroid/content/Context;)V
 +
      return-object v0
  .end method
@@ -44,18 +44,18 @@ index f8640991..502e7662 100644
  .method public whitelist test-api engineGetCertificateChain(Ljava/lang/String;)[Ljava/security/cert/Certificate;
      .locals 9
  
-+    invoke-static {}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->onEngineGetCertificateChain()V
++    invoke-static {}, Lmoe/foss/onigiri/PlayIntegrityHooks;->onEngineGetCertificateChain()V
 +
      invoke-direct {p0, p1}, Landroid/security/keystore2/AndroidKeyStoreSpi;->getKeyMetadata(Ljava/lang/String;)Landroid/system/keystore2/KeyEntryResponse;
  
      move-result-object v0
-diff --git a/smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0.smali b/smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0.smali
+diff --git a/smali_classes6/moe/foss/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0.smali b/smali_classes6/moe/foss/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0.smali
 new file mode 100644
 index 00000000..807bf498
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0.smali
++++ b/smali_classes6/moe/foss/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0.smali
 @@ -0,0 +1,30 @@
-+.class public final synthetic Lio/mesalabs/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0;
++.class public final synthetic Lmoe/foss/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0;
 +.super Ljava/lang/Object;
 +.source "D8$$SyntheticClass"
 +
@@ -79,26 +79,26 @@ index 00000000..807bf498
 +
 +    check-cast p1, Ljava/lang/StackTraceElement;
 +
-+    invoke-static {p1}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->lambda$isCallerSafetyNet$0(Ljava/lang/StackTraceElement;)Z
++    invoke-static {p1}, Lmoe/foss/onigiri/PlayIntegrityHooks;->lambda$isCallerSafetyNet$0(Ljava/lang/StackTraceElement;)Z
 +
 +    move-result p0
 +
 +    return p0
 +.end method
-diff --git a/smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks$1.smali b/smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks$1.smali
+diff --git a/smali_classes6/moe/foss/onigiri/PlayIntegrityHooks$1.smali b/smali_classes6/moe/foss/onigiri/PlayIntegrityHooks$1.smali
 new file mode 100644
 index 00000000..fe159605
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks$1.smali
++++ b/smali_classes6/moe/foss/onigiri/PlayIntegrityHooks$1.smali
 @@ -0,0 +1,79 @@
-+.class Lio/mesalabs/onigiri/PlayIntegrityHooks$1;
++.class Lmoe/foss/onigiri/PlayIntegrityHooks$1;
 +.super Landroid/app/TaskStackListener;
 +.source "PlayIntegrityHooks.java"
 +
 +
 +# annotations
 +.annotation system Ldalvik/annotation/EnclosingMethod;
-+    value = Lio/mesalabs/onigiri/PlayIntegrityHooks;->shouldTryToCertifyDevice()Z
++    value = Lmoe/foss/onigiri/PlayIntegrityHooks;->shouldTryToCertifyDevice()Z
 +.end annotation
 +
 +.annotation system Ldalvik/annotation/InnerClass;
@@ -115,7 +115,7 @@ index 00000000..fe159605
 +.method constructor blacklist <init>(Z)V
 +    .locals 0
 +
-+    iput-boolean p1, p0, Lio/mesalabs/onigiri/PlayIntegrityHooks$1;->val$was:Z
++    iput-boolean p1, p0, Lmoe/foss/onigiri/PlayIntegrityHooks$1;->val$was:Z
 +
 +    invoke-direct {p0}, Landroid/app/TaskStackListener;-><init>()V
 +
@@ -127,11 +127,11 @@ index 00000000..fe159605
 +.method public blacklist onTaskStackChanged()V
 +    .locals 2
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->-$$Nest$smisGmsAddAccountActivityOnTop()Z
++    invoke-static {}, Lmoe/foss/onigiri/PlayIntegrityHooks;->-$$Nest$smisGmsAddAccountActivityOnTop()Z
 +
 +    move-result v0
 +
-+    iget-boolean v1, p0, Lio/mesalabs/onigiri/PlayIntegrityHooks$1;->val$was:Z
++    iget-boolean v1, p0, Lmoe/foss/onigiri/PlayIntegrityHooks$1;->val$was:Z
 +
 +    xor-int/2addr v1, v0
 +
@@ -141,7 +141,7 @@ index 00000000..fe159605
 +
 +    move-result-object v0
 +
-+    iget-boolean p0, p0, Lio/mesalabs/onigiri/PlayIntegrityHooks$1;->val$was:Z
++    iget-boolean p0, p0, Lmoe/foss/onigiri/PlayIntegrityHooks$1;->val$was:Z
 +
 +    invoke-static {p0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
 +
@@ -159,7 +159,7 @@ index 00000000..fe159605
 +
 +    move-result-object p0
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    invoke-static {}, Landroid/os/Process;->myPid()I
 +
@@ -170,13 +170,13 @@ index 00000000..fe159605
 +    :cond_0
 +    return-void
 +.end method
-diff --git a/smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks.smali b/smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks.smali
+diff --git a/smali_classes6/moe/foss/onigiri/PlayIntegrityHooks.smali b/smali_classes6/moe/foss/onigiri/PlayIntegrityHooks.smali
 new file mode 100644
 index 00000000..0d5593e1
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/PlayIntegrityHooks.smali
++++ b/smali_classes6/moe/foss/onigiri/PlayIntegrityHooks.smali
 @@ -0,0 +1,1049 @@
-+.class public final Lio/mesalabs/onigiri/PlayIntegrityHooks;
++.class public final Lmoe/foss/onigiri/PlayIntegrityHooks;
 +.super Ljava/lang/Object;
 +.source "PlayIntegrityHooks.java"
 +
@@ -221,7 +221,7 @@ index 00000000..0d5593e1
 +.method static bridge synthetic blacklist -$$Nest$smisGmsAddAccountActivityOnTop()Z
 +    .locals 1
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->isGmsAddAccountActivityOnTop()Z
++    invoke-static {}, Lmoe/foss/onigiri/PlayIntegrityHooks;->isGmsAddAccountActivityOnTop()Z
 +
 +    move-result v0
 +
@@ -237,7 +237,7 @@ index 00000000..0d5593e1
 +
 +    move-result-object v0
 +
-+    sput-object v0, Lio/mesalabs/onigiri/PlayIntegrityHooks;->GMS_ADD_ACCOUNT_ACTIVITY:Landroid/content/ComponentName;
++    sput-object v0, Lmoe/foss/onigiri/PlayIntegrityHooks;->GMS_ADD_ACCOUNT_ACTIVITY:Landroid/content/ComponentName;
 +
 +    return-void
 +.end method
@@ -271,9 +271,9 @@ index 00000000..0d5593e1
 +
 +    move-result-object v0
 +
-+    new-instance v1, Lio/mesalabs/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0;
++    new-instance v1, Lmoe/foss/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0;
 +
-+    invoke-direct {v1}, Lio/mesalabs/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0;-><init>()V
++    invoke-direct {v1}, Lmoe/foss/onigiri/PlayIntegrityHooks$$ExternalSyntheticLambda0;-><init>()V
 +
 +    invoke-interface {v0, v1}, Ljava/util/stream/Stream;->anyMatch(Ljava/util/function/Predicate;)Z
 +
@@ -304,7 +304,7 @@ index 00000000..0d5593e1
 +
 +    iget-object v1, v1, Landroid/app/ActivityTaskManager$RootTaskInfo;->topActivity:Landroid/content/ComponentName;
 +
-+    sget-object v2, Lio/mesalabs/onigiri/PlayIntegrityHooks;->GMS_ADD_ACCOUNT_ACTIVITY:Landroid/content/ComponentName;
++    sget-object v2, Lmoe/foss/onigiri/PlayIntegrityHooks;->GMS_ADD_ACCOUNT_ACTIVITY:Landroid/content/ComponentName;
 +
 +    invoke-virtual {v1, v2}, Landroid/content/ComponentName;->equals(Ljava/lang/Object;)Z
 +
@@ -368,13 +368,13 @@ index 00000000..0d5593e1
 +.method public static blacklist onEngineGetCertificateChain()V
 +    .locals 1
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->isPIFEnabled()Z
++    invoke-static {}, Lmoe/foss/onigiri/PlayIntegrityHooks;->isPIFEnabled()Z
 +
 +    move-result v0
 +
 +    if-eqz v0, :cond_1
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->isCallerSafetyNet()Z
++    invoke-static {}, Lmoe/foss/onigiri/PlayIntegrityHooks;->isCallerSafetyNet()Z
 +
 +    move-result v0
 +
@@ -385,7 +385,7 @@ index 00000000..0d5593e1
 +    :cond_0
 +    const-string v0, "Blocked key attestation"
 +
-+    invoke-static {v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    new-instance v0, Ljava/lang/UnsupportedOperationException;
 +
@@ -430,7 +430,7 @@ index 00000000..0d5593e1
 +
 +    move-result-object v0
 +
-+    invoke-static {v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-class v0, Landroid/os/Build;
 +
@@ -504,9 +504,9 @@ index 00000000..0d5593e1
 +    goto :goto_0
 +
 +    :cond_0
-+    sput-object v0, Lio/mesalabs/onigiri/PlayIntegrityHooks;->sProcessName:Ljava/lang/String;
++    sput-object v0, Lmoe/foss/onigiri/PlayIntegrityHooks;->sProcessName:Ljava/lang/String;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->isPIFEnabled()Z
++    invoke-static {}, Lmoe/foss/onigiri/PlayIntegrityHooks;->isPIFEnabled()Z
 +
 +    move-result v0
 +
@@ -523,7 +523,7 @@ index 00000000..0d5593e1
 +
 +    if-eqz p0, :cond_3
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->shouldTryToCertifyDevice()Z
++    invoke-static {}, Lmoe/foss/onigiri/PlayIntegrityHooks;->shouldTryToCertifyDevice()Z
 +
 +    move-result p0
 +
@@ -531,9 +531,9 @@ index 00000000..0d5593e1
 +
 +    const-string p0, "Spoofing build for GMS to pass CTS/Play Integrity API"
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->spoofBuildGms()V
++    invoke-static {}, Lmoe/foss/onigiri/PlayIntegrityHooks;->spoofBuildGms()V
 +
 +    :cond_2
 +    invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
@@ -546,7 +546,7 @@ index 00000000..0d5593e1
 +
 +    const-string v0, "TIME"
 +
-+    invoke-static {v0, p0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
++    invoke-static {v0, p0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
 +
 +    :cond_3
 +    :goto_0
@@ -707,7 +707,7 @@ index 00000000..0d5593e1
 +
 +    move-result-object v0
 +
-+    invoke-static {v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +    :try_end_0
 +    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
 +
@@ -754,7 +754,7 @@ index 00000000..0d5593e1
 +    return v1
 +
 +    :cond_0
-+    invoke-static {}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->isGmsAddAccountActivityOnTop()Z
++    invoke-static {}, Lmoe/foss/onigiri/PlayIntegrityHooks;->isGmsAddAccountActivityOnTop()Z
 +
 +    move-result v0
 +
@@ -767,11 +767,11 @@ index 00000000..0d5593e1
 +    :cond_1
 +    const-string v3, "Skip spoofing build for GMS, because GmsAddAccountActivityOnTop!"
 +
-+    invoke-static {v3}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v3}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
-+    new-instance v3, Lio/mesalabs/onigiri/PlayIntegrityHooks$1;
++    new-instance v3, Lmoe/foss/onigiri/PlayIntegrityHooks$1;
 +
-+    invoke-direct {v3, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks$1;-><init>(Z)V
++    invoke-direct {v3, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks$1;-><init>(Z)V
 +
 +    :try_start_0
 +    invoke-static {}, Landroid/app/ActivityTaskManager;->getService()Landroid/app/IActivityTaskManager;
@@ -839,7 +839,7 @@ index 00000000..0d5593e1
 +
 +    move-result-object v0
 +
-+    invoke-static {v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    :cond_0
 +    const-string v0, "persist.sys.pif.product"
@@ -872,11 +872,11 @@ index 00000000..0d5593e1
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v2}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v2, "PRODUCT"
 +
-+    invoke-static {v2, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
++    invoke-static {v2, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
 +
 +    :cond_1
 +    const-string v0, "persist.sys.pif.device"
@@ -907,11 +907,11 @@ index 00000000..0d5593e1
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v2}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v2, "DEVICE"
 +
-+    invoke-static {v2, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
++    invoke-static {v2, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
 +
 +    :cond_2
 +    const-string v0, "persist.sys.pif.manufacturer"
@@ -942,11 +942,11 @@ index 00000000..0d5593e1
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v2}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v2, "MANUFACTURER"
 +
-+    invoke-static {v2, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
++    invoke-static {v2, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
 +
 +    :cond_3
 +    const-string v0, "persist.sys.pif.brand"
@@ -977,11 +977,11 @@ index 00000000..0d5593e1
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v2}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v2, "BRAND"
 +
-+    invoke-static {v2, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
++    invoke-static {v2, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
 +
 +    :cond_4
 +    const-string v0, "persist.sys.pif.model"
@@ -1012,11 +1012,11 @@ index 00000000..0d5593e1
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v2}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v2, "MODEL"
 +
-+    invoke-static {v2, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
++    invoke-static {v2, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
 +
 +    :cond_5
 +    const-string v0, "persist.sys.pif.release"
@@ -1045,11 +1045,11 @@ index 00000000..0d5593e1
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v2}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v2, "RELEASE"
 +
-+    invoke-static {v2, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setVersionFieldString(Ljava/lang/String;Ljava/lang/String;)V
++    invoke-static {v2, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setVersionFieldString(Ljava/lang/String;Ljava/lang/String;)V
 +
 +    :cond_6
 +    const-string v0, "persist.sys.pif.incremental"
@@ -1078,11 +1078,11 @@ index 00000000..0d5593e1
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v2}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v2, "INCREMENTAL"
 +
-+    invoke-static {v2, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setVersionFieldString(Ljava/lang/String;Ljava/lang/String;)V
++    invoke-static {v2, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setVersionFieldString(Ljava/lang/String;Ljava/lang/String;)V
 +
 +    :cond_7
 +    const-string v0, "persist.sys.pif.id"
@@ -1111,11 +1111,11 @@ index 00000000..0d5593e1
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v2}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v2, "ID"
 +
-+    invoke-static {v2, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
++    invoke-static {v2, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
 +
 +    :cond_8
 +    const-string v0, "persist.sys.pif.fingerprint"
@@ -1146,11 +1146,11 @@ index 00000000..0d5593e1
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v2}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v2, "FINGERPRINT"
 +
-+    invoke-static {v2, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
++    invoke-static {v2, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
 +
 +    :cond_9
 +    const-string v0, "persist.sys.pif.security_patch"
@@ -1179,11 +1179,11 @@ index 00000000..0d5593e1
 +
 +    move-result-object v2
 +
-+    invoke-static {v2}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v2}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v2, "SECURITY_PATCH"
 +
-+    invoke-static {v2, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setVersionFieldString(Ljava/lang/String;Ljava/lang/String;)V
++    invoke-static {v2, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setVersionFieldString(Ljava/lang/String;Ljava/lang/String;)V
 +
 +    :cond_a
 +    const-string v0, "persist.sys.pif.first_api_level"
@@ -1212,7 +1212,7 @@ index 00000000..0d5593e1
 +
 +    move-result-object v1
 +
-+    invoke-static {v1}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {v1}, Lmoe/foss/onigiri/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    const-string v1, "DEVICE_INITIAL_SDK_INT"
 +
@@ -1220,7 +1220,7 @@ index 00000000..0d5593e1
 +
 +    move-result v0
 +
-+    invoke-static {v1, v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setVersionFieldInt(Ljava/lang/String;I)V
++    invoke-static {v1, v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setVersionFieldInt(Ljava/lang/String;I)V
 +
 +    :cond_b
 +    return-void

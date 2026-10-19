@@ -10,7 +10,7 @@ diff --git a/smali_classes2/com/android/server/wm/ActivityTaskManagerService.sma
  
 +    iget-object v0, p0, Lcom/android/server/wm/ActivityTaskManagerService;->mContext:Landroid/content/Context;
 +
-+    invoke-static {v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->shouldBypassTaskPermission(Landroid/content/Context;)Z
++    invoke-static {v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->shouldBypassTaskPermission(Landroid/content/Context;)Z
 +
 +    move-result v0
 +
@@ -30,7 +30,7 @@ diff --git a/smali_classes2/com/android/server/wm/ActivityTaskManagerService.sma
  
 +    iget-object v0, p0, Lcom/android/server/wm/ActivityTaskManagerService;->mContext:Landroid/content/Context;
 +
-+    invoke-static {v0}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->shouldBypassTaskPermission(Landroid/content/Context;)Z
++    invoke-static {v0}, Lmoe/foss/onigiri/PlayIntegrityHooks;->shouldBypassTaskPermission(Landroid/content/Context;)Z
 +
 +    move-result v0
 +

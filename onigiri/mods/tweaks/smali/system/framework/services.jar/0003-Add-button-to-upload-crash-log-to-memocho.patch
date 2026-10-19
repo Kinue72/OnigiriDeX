@@ -13,7 +13,7 @@ new file mode 100644
 +.source "AppErrorDialog.java"
 +
 +# interfaces
-+.implements Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;
++.implements Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;
 +
 +
 +# instance fields
@@ -128,7 +128,7 @@ diff --git a/smali/com/android/server/am/AppErrorDialog.smali b/smali/com/androi
 +
 +    if-eqz v2, :onigiri_no_log_button
 +
-+    invoke-static {p1}, Lio/mesalabs/onigiri/LogPasteUtils;->addLogPasteButton(Landroid/widget/FrameLayout;)V
++    invoke-static {p1}, Lmoe/foss/onigiri/LogPasteUtils;->addLogPasteButton(Landroid/widget/FrameLayout;)V
 +
 +    const v2, 0x69420
 +
@@ -179,7 +179,7 @@ diff --git a/smali/com/android/server/am/AppErrorDialog.smali b/smali/com/androi
 +
 +    invoke-direct {v1, p0}, Lcom/android/server/am/AppErrorDialog$2;-><init>(Lcom/android/server/am/AppErrorDialog;)V
 +
-+    invoke-static {v0, v1}, Lio/mesalabs/onigiri/LogPasteUtils;->upload(Ljava/lang/String;Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;)V
++    invoke-static {v0, v1}, Lmoe/foss/onigiri/LogPasteUtils;->upload(Ljava/lang/String;Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;)V
 +
 +    :onigiri_no_crash_log
 +    return-void

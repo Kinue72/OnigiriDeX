@@ -6,17 +6,17 @@ diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
 +++ b/res/xml/onigiri_settings.xml
 @@ -6,10 +6,12 @@
      <SecPreferenceCategory android:title="@string/onigiri_patch_settings_title">
-         <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" android:summary="@string/summary_placeholder" settings:controller="io.mesalabs.onigiri.settings.PIFVersionPreferenceController" />
+         <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.PIFVersionPreferenceController" />
      </SecPreferenceCategory>
 +    <SecPreferenceCategory android:title="@string/onigiri_settings_category_title">
-+        <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="io.mesalabs.onigiri.settings.SleepOnFoldPreferenceController" />
-+        <SecSwitchPreference android:title="@string/onigiri_autoboot_title" android:key="onigiri_autoboot" settings:controller="io.mesalabs.onigiri.settings.AutobootPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="moe.foss.onigiri.settings.SleepOnFoldPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_autoboot_title" android:key="onigiri_autoboot" settings:controller="moe.foss.onigiri.settings.AutobootPreferenceController" />
 +    </SecPreferenceCategory>
      <SecPreferenceCategory android:title="@string/onigiri_ui_settings_title">
--        <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="io.mesalabs.onigiri.settings.SleepOnFoldPreferenceController" />
-         <SecSwitchPreference android:title="@string/onigiri_boot_sound_title" android:key="onigiri_boot_sound" settings:controller="io.mesalabs.onigiri.settings.BootSoundPreferenceController" />
--        <SecSwitchPreference android:title="@string/onigiri_autoboot_title" android:key="onigiri_autoboot" android:summary="@string/onigiri_autoboot_summary" settings:controller="io.mesalabs.onigiri.settings.AutobootPreferenceController" />
-         <SecSwitchPreference android:title="@string/onigiri_native_blur_title" android:key="onigiri_native_blur" settings:controller="io.mesalabs.onigiri.settings.LiveBlurPreferenceController" />
+-        <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="moe.foss.onigiri.settings.SleepOnFoldPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_boot_sound_title" android:key="onigiri_boot_sound" settings:controller="moe.foss.onigiri.settings.BootSoundPreferenceController" />
+-        <SecSwitchPreference android:title="@string/onigiri_autoboot_title" android:key="onigiri_autoboot" android:summary="@string/onigiri_autoboot_summary" settings:controller="moe.foss.onigiri.settings.AutobootPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_native_blur_title" android:key="onigiri_native_blur" settings:controller="moe.foss.onigiri.settings.LiveBlurPreferenceController" />
      </SecPreferenceCategory>
      <SecPreferenceCategory android:title="@string/onigiri_display_settings_title">
 diff --git a/res/values/strings.xml b/res/values/strings.xml

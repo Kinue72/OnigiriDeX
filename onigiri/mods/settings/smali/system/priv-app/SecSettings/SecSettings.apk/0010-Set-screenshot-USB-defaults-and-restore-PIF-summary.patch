@@ -1,9 +1,9 @@
 From: Onigiri
 Subject: [PATCH] Set screenshot and USB defaults and restore the PIF version summary
 
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali
---- a/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/CaptureDetectionPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/CaptureDetectionPreferenceController.smali
+--- a/smali_classes4/moe/foss/onigiri/settings/CaptureDetectionPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/CaptureDetectionPreferenceController.smali
 @@ -109,18 +109,18 @@
  
      const-string v0, "onigiri_ss_detection"
@@ -26,9 +26,9 @@ diff --git a/smali_classes4/io/mesalabs/onigiri/settings/CaptureDetectionPrefere
  
      :goto_0
      return v1
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali
---- a/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/SecureScreenshotPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/SecureScreenshotPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/SecureScreenshotPreferenceController.smali
+--- a/smali_classes4/moe/foss/onigiri/settings/SecureScreenshotPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/SecureScreenshotPreferenceController.smali
 @@ -113,7 +113,7 @@
  
      const/4 v2, 0x0
@@ -63,9 +63,9 @@ diff --git a/smali_classes4/com/samsung/android/settings/security/BlockUsbConnec
  
      :goto_0
      return v1
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
---- a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali
+--- a/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali
 @@ -92,6 +92,16 @@
      return-object p0
  .end method
@@ -73,7 +73,7 @@ diff --git a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceCon
 +.method public getSummary()Ljava/lang/CharSequence;
 +    .locals 0
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/pif/PIFUtils;->getFormattedPIFVersion()Ljava/lang/CharSequence;
++    invoke-static {}, Lmoe/foss/onigiri/pif/PIFUtils;->getFormattedPIFVersion()Ljava/lang/CharSequence;
 +
 +    move-result-object p0
 +
@@ -83,14 +83,14 @@ diff --git a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceCon
  .method public handlePreferenceTreeClick(Landroidx/preference/Preference;)Z
      .locals 2
  
-diff --git a/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali
---- a/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali
-+++ b/smali_classes4/io/mesalabs/onigiri/pif/PIFUtils.smali
+diff --git a/smali_classes4/moe/foss/onigiri/pif/PIFUtils.smali b/smali_classes4/moe/foss/onigiri/pif/PIFUtils.smali
+--- a/smali_classes4/moe/foss/onigiri/pif/PIFUtils.smali
++++ b/smali_classes4/moe/foss/onigiri/pif/PIFUtils.smali
 @@ -215,6 +215,12 @@
  
-     invoke-static {p0}, Lio/mesalabs/onigiri/pif/PIFUtils;->killGMS(Landroid/content/Context;)V
+     invoke-static {p0}, Lmoe/foss/onigiri/pif/PIFUtils;->killGMS(Landroid/content/Context;)V
  
-+    invoke-static {}, Lio/mesalabs/onigiri/pif/PIFUtils;->getFormattedPIFVersion()Ljava/lang/CharSequence;
++    invoke-static {}, Lmoe/foss/onigiri/pif/PIFUtils;->getFormattedPIFVersion()Ljava/lang/CharSequence;
 +
 +    move-result-object p0
 +
@@ -103,12 +103,12 @@ diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
 --- a/res/xml/onigiri_settings.xml
 +++ b/res/xml/onigiri_settings.xml
 @@ -4,7 +4,7 @@
-     <Preference android:title="@string/onigiri_rom_version_title" android:key="onigiri_rom_version" android:summary="@string/summary_placeholder" android:fragment="com.samsung.android.settings.deviceinfo.softwareinfo.SoftwareInfoSettings" settings:controller="io.mesalabs.onigiri.settings.ROMVersionPreferenceController" />
-     <Preference android:title="@string/onigiri_device_name_title" android:key="onigiri_device_name" android:summary="@string/summary_placeholder" settings:controller="io.mesalabs.onigiri.settings.DeviceNamePreferenceController" />
+     <Preference android:title="@string/onigiri_rom_version_title" android:key="onigiri_rom_version" android:summary="@string/summary_placeholder" android:fragment="com.samsung.android.settings.deviceinfo.softwareinfo.SoftwareInfoSettings" settings:controller="moe.foss.onigiri.settings.ROMVersionPreferenceController" />
+     <Preference android:title="@string/onigiri_device_name_title" android:key="onigiri_device_name" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.DeviceNamePreferenceController" />
      <SecPreferenceCategory android:title="@string/onigiri_patch_settings_title">
--        <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" settings:controller="io.mesalabs.onigiri.settings.PIFVersionPreferenceController" />
-+        <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" android:summary="@string/summary_placeholder" settings:controller="io.mesalabs.onigiri.settings.PIFVersionPreferenceController" />
+-        <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" settings:controller="moe.foss.onigiri.settings.PIFVersionPreferenceController" />
++        <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.PIFVersionPreferenceController" />
      </SecPreferenceCategory>
      <SecPreferenceCategory android:title="@string/onigiri_ui_settings_title">
-         <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="io.mesalabs.onigiri.settings.SleepOnFoldPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="moe.foss.onigiri.settings.SleepOnFoldPreferenceController" />
 

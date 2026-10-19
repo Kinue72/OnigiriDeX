@@ -1,9 +1,9 @@
 From: Onigiri
 Subject: [PATCH] Refresh the installed PIF summary when opening settings
 
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
---- a/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/PIFVersionPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali
+--- a/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/PIFVersionPreferenceController.smali
 @@ -102,6 +102,16 @@
      return-object p0
  .end method

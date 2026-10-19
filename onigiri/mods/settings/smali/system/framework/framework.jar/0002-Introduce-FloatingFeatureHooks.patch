@@ -5,9 +5,9 @@ Subject: [PATCH] Introduce FloatingFeatureHooks
 
 ---
  .../android/feature/SemFloatingFeature.smali  |  60 +++-
- .../mesalabs/onigiri/FloatingFeatureHooks.smali | 272 ++++++++++++++++++
+ .../foss/onigiri/FloatingFeatureHooks.smali | 272 ++++++++++++++++++
  2 files changed, 324 insertions(+), 8 deletions(-)
- create mode 100644 smali_classes6/io/mesalabs/onigiri/FloatingFeatureHooks.smali
+ create mode 100644 smali_classes6/moe/foss/onigiri/FloatingFeatureHooks.smali
 
 diff --git a/smali_classes6/com/samsung/android/feature/SemFloatingFeature.smali b/smali_classes6/com/samsung/android/feature/SemFloatingFeature.smali
 index 8a5dc15b..a6ce5287 100644
@@ -17,7 +17,7 @@ index 8a5dc15b..a6ce5287 100644
      return v0
  
      :cond_0
-+    invoke-static {p1}, Lio/mesalabs/onigiri/FloatingFeatureHooks;->onGetBooleanHook(Ljava/lang/String;)Ljava/lang/Boolean;
++    invoke-static {p1}, Lmoe/foss/onigiri/FloatingFeatureHooks;->onGetBooleanHook(Ljava/lang/String;)Ljava/lang/Boolean;
 +
 +    move-result-object v1
 +
@@ -51,7 +51,7 @@ index 8a5dc15b..a6ce5287 100644
      return v0
  
      :cond_0
-+    invoke-static {p1}, Lio/mesalabs/onigiri/FloatingFeatureHooks;->onGetBooleanHook(Ljava/lang/String;)Ljava/lang/Boolean;
++    invoke-static {p1}, Lmoe/foss/onigiri/FloatingFeatureHooks;->onGetBooleanHook(Ljava/lang/String;)Ljava/lang/Boolean;
 +
 +    move-result-object v0
 +
@@ -87,7 +87,7 @@ index 8a5dc15b..a6ce5287 100644
      return-object v0
  
      :cond_0
-+    invoke-static {p1}, Lio/mesalabs/onigiri/FloatingFeatureHooks;->onGetStringHook(Ljava/lang/String;)Ljava/lang/String;
++    invoke-static {p1}, Lmoe/foss/onigiri/FloatingFeatureHooks;->onGetStringHook(Ljava/lang/String;)Ljava/lang/String;
 +
 +    move-result-object v1
 +
@@ -117,7 +117,7 @@ index 8a5dc15b..a6ce5287 100644
      return-object v0
  
      :cond_0
-+    invoke-static {p1}, Lio/mesalabs/onigiri/FloatingFeatureHooks;->onGetStringHook(Ljava/lang/String;)Ljava/lang/String;
++    invoke-static {p1}, Lmoe/foss/onigiri/FloatingFeatureHooks;->onGetStringHook(Ljava/lang/String;)Ljava/lang/String;
 +
 +    move-result-object v0
 +
@@ -145,13 +145,13 @@ index 8a5dc15b..a6ce5287 100644
      move-object v1, v0
  
      :goto_0
-diff --git a/smali_classes6/io/mesalabs/onigiri/FloatingFeatureHooks.smali b/smali_classes6/io/mesalabs/onigiri/FloatingFeatureHooks.smali
+diff --git a/smali_classes6/moe/foss/onigiri/FloatingFeatureHooks.smali b/smali_classes6/moe/foss/onigiri/FloatingFeatureHooks.smali
 new file mode 100644
 index 00000000..6b06b7ef
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/FloatingFeatureHooks.smali
++++ b/smali_classes6/moe/foss/onigiri/FloatingFeatureHooks.smali
 @@ -0,0 +1,272 @@
-+.class public final Lio/mesalabs/onigiri/FloatingFeatureHooks;
++.class public final Lmoe/foss/onigiri/FloatingFeatureHooks;
 +.super Ljava/lang/Object;
 +.source "FloatingFeatureHooks.java"
 +
@@ -212,19 +212,19 @@ index 00000000..6b06b7ef
 +
 +    aput-object v3, v0, v1
 +
-+    sput-object v0, Lio/mesalabs/onigiri/FloatingFeatureHooks;->DISABLED_LIVE_BLUR_DEVICES:[Ljava/lang/String;
++    sput-object v0, Lmoe/foss/onigiri/FloatingFeatureHooks;->DISABLED_LIVE_BLUR_DEVICES:[Ljava/lang/String;
 +
 +    new-instance v1, Ljava/util/HashMap;
 +
 +    invoke-direct {v1}, Ljava/util/HashMap;-><init>()V
 +
-+    sput-object v1, Lio/mesalabs/onigiri/FloatingFeatureHooks;->BOOLEAN_FEATURES:Ljava/util/HashMap;
++    sput-object v1, Lmoe/foss/onigiri/FloatingFeatureHooks;->BOOLEAN_FEATURES:Ljava/util/HashMap;
 +
 +    new-instance v3, Ljava/util/HashMap;
 +
 +    invoke-direct {v3}, Ljava/util/HashMap;-><init>()V
 +
-+    sput-object v3, Lio/mesalabs/onigiri/FloatingFeatureHooks;->STRING_FEATURES:Ljava/util/HashMap;
++    sput-object v3, Lmoe/foss/onigiri/FloatingFeatureHooks;->STRING_FEATURES:Ljava/util/HashMap;
 +
 +    const-string v4, "ro.product.vendor.device"
 +
@@ -305,7 +305,7 @@ index 00000000..6b06b7ef
 +.method public static blacklist onGetBooleanHook(Ljava/lang/String;)Ljava/lang/Boolean;
 +    .locals 3
 +
-+    sget-object v0, Lio/mesalabs/onigiri/FloatingFeatureHooks;->BOOLEAN_FEATURES:Ljava/util/HashMap;
++    sget-object v0, Lmoe/foss/onigiri/FloatingFeatureHooks;->BOOLEAN_FEATURES:Ljava/util/HashMap;
 +
 +    invoke-virtual {v0, p0}, Ljava/util/HashMap;->containsKey(Ljava/lang/Object;)Z
 +
@@ -357,7 +357,7 @@ index 00000000..6b06b7ef
 +
 +    move-result-object p0
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/FloatingFeatureHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/FloatingFeatureHooks;->dlog(Ljava/lang/String;)V
 +
 +    :cond_1
 +    return-object v0
@@ -366,7 +366,7 @@ index 00000000..6b06b7ef
 +.method public static blacklist onGetStringHook(Ljava/lang/String;)Ljava/lang/String;
 +    .locals 3
 +
-+    sget-object v0, Lio/mesalabs/onigiri/FloatingFeatureHooks;->STRING_FEATURES:Ljava/util/HashMap;
++    sget-object v0, Lmoe/foss/onigiri/FloatingFeatureHooks;->STRING_FEATURES:Ljava/util/HashMap;
 +
 +    invoke-virtual {v0, p0}, Ljava/util/HashMap;->containsKey(Ljava/lang/Object;)Z
 +
@@ -418,7 +418,7 @@ index 00000000..6b06b7ef
 +
 +    move-result-object p0
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/FloatingFeatureHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/FloatingFeatureHooks;->dlog(Ljava/lang/String;)V
 +
 +    :cond_1
 +    return-object v0

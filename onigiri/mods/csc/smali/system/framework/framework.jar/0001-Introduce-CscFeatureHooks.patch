@@ -8,7 +8,7 @@ diff --git a/smali_classes6/com/samsung/android/feature/SemCscFeature.smali b/sm
  .method public whitelist getBoolean(Ljava/lang/String;)Z
      .locals 5
  
-+    invoke-static {p1}, Lio/mesalabs/onigiri/CscFeatureHooks;->onGetBooleanHook(Ljava/lang/String;)Ljava/lang/Boolean;
++    invoke-static {p1}, Lmoe/foss/onigiri/CscFeatureHooks;->onGetBooleanHook(Ljava/lang/String;)Ljava/lang/Boolean;
 +
 +    move-result-object v0
 +
@@ -30,7 +30,7 @@ diff --git a/smali_classes6/com/samsung/android/feature/SemCscFeature.smali b/sm
  .method public whitelist getBoolean(Ljava/lang/String;Z)Z
      .locals 4
 +
-+    invoke-static {p1}, Lio/mesalabs/onigiri/CscFeatureHooks;->onGetBooleanHook(Ljava/lang/String;)Ljava/lang/Boolean;
++    invoke-static {p1}, Lmoe/foss/onigiri/CscFeatureHooks;->onGetBooleanHook(Ljava/lang/String;)Ljava/lang/Boolean;
 +
 +    move-result-object v0
 +
@@ -50,7 +50,7 @@ diff --git a/smali_classes6/com/samsung/android/feature/SemCscFeature.smali b/sm
  .method public whitelist getInt(Ljava/lang/String;)I
      .locals 5
  
-+    invoke-static {p1}, Lio/mesalabs/onigiri/CscFeatureHooks;->onGetIntHook(Ljava/lang/String;)Ljava/lang/Integer;
++    invoke-static {p1}, Lmoe/foss/onigiri/CscFeatureHooks;->onGetIntHook(Ljava/lang/String;)Ljava/lang/Integer;
 +
 +    move-result-object v0
 +
@@ -72,7 +72,7 @@ diff --git a/smali_classes6/com/samsung/android/feature/SemCscFeature.smali b/sm
  .method public whitelist getInt(Ljava/lang/String;I)I
      .locals 4
 +
-+    invoke-static {p1}, Lio/mesalabs/onigiri/CscFeatureHooks;->onGetIntHook(Ljava/lang/String;)Ljava/lang/Integer;
++    invoke-static {p1}, Lmoe/foss/onigiri/CscFeatureHooks;->onGetIntHook(Ljava/lang/String;)Ljava/lang/Integer;
 +
 +    move-result-object v0
 +
@@ -92,7 +92,7 @@ diff --git a/smali_classes6/com/samsung/android/feature/SemCscFeature.smali b/sm
  .method public whitelist getString(Ljava/lang/String;)Ljava/lang/String;
      .locals 5
  
-+    invoke-static {p1}, Lio/mesalabs/onigiri/CscFeatureHooks;->onGetStringHook(Ljava/lang/String;)Ljava/lang/String;
++    invoke-static {p1}, Lmoe/foss/onigiri/CscFeatureHooks;->onGetStringHook(Ljava/lang/String;)Ljava/lang/String;
 +
 +    move-result-object v0
 +
@@ -110,7 +110,7 @@ diff --git a/smali_classes6/com/samsung/android/feature/SemCscFeature.smali b/sm
  .method public whitelist getString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
      .locals 4
 +
-+    invoke-static {p1}, Lio/mesalabs/onigiri/CscFeatureHooks;->onGetStringHook(Ljava/lang/String;)Ljava/lang/String;
++    invoke-static {p1}, Lmoe/foss/onigiri/CscFeatureHooks;->onGetStringHook(Ljava/lang/String;)Ljava/lang/String;
 +
 +    move-result-object v0
 +
@@ -122,12 +122,12 @@ diff --git a/smali_classes6/com/samsung/android/feature/SemCscFeature.smali b/sm
  
      :try_start_0
      invoke-direct {p0, p1}, Lcom/samsung/android/feature/SemCscFeature;->get(Ljava/lang/String;)Ljava/lang/String;
-diff --git a/smali_classes6/io/mesalabs/onigiri/CscFeatureHooks.smali b/smali_classes6/io/mesalabs/onigiri/CscFeatureHooks.smali
+diff --git a/smali_classes6/moe/foss/onigiri/CscFeatureHooks.smali b/smali_classes6/moe/foss/onigiri/CscFeatureHooks.smali
 new file mode 100644
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/CscFeatureHooks.smali
++++ b/smali_classes6/moe/foss/onigiri/CscFeatureHooks.smali
 @@ -0,0 +1,345 @@
-+.class public final Lio/mesalabs/onigiri/CscFeatureHooks;
++.class public final Lmoe/foss/onigiri/CscFeatureHooks;
 +.super Ljava/lang/Object;
 +.source "CscFeatureHooks.java"
 +
@@ -179,19 +179,19 @@ new file mode 100644
 +
 +    invoke-direct {v0}, Ljava/util/HashMap;-><init>()V
 +
-+    sput-object v0, Lio/mesalabs/onigiri/CscFeatureHooks;->BOOLEAN_FEATURES:Ljava/util/HashMap;
++    sput-object v0, Lmoe/foss/onigiri/CscFeatureHooks;->BOOLEAN_FEATURES:Ljava/util/HashMap;
 +
 +    new-instance v1, Ljava/util/HashMap;
 +
 +    invoke-direct {v1}, Ljava/util/HashMap;-><init>()V
 +
-+    sput-object v1, Lio/mesalabs/onigiri/CscFeatureHooks;->STRING_FEATURES:Ljava/util/HashMap;
++    sput-object v1, Lmoe/foss/onigiri/CscFeatureHooks;->STRING_FEATURES:Ljava/util/HashMap;
 +
 +    new-instance v2, Ljava/util/HashMap;
 +
 +    invoke-direct {v2}, Ljava/util/HashMap;-><init>()V
 +
-+    sput-object v2, Lio/mesalabs/onigiri/CscFeatureHooks;->INTEGER_FEATURES:Ljava/util/HashMap;
++    sput-object v2, Lmoe/foss/onigiri/CscFeatureHooks;->INTEGER_FEATURES:Ljava/util/HashMap;
 +
 +    const-string v3, "CscFeature_Common_SupportPrivateMode"
 +
@@ -293,7 +293,7 @@ new file mode 100644
 +.method public static blacklist onGetBooleanHook(Ljava/lang/String;)Ljava/lang/Boolean;
 +    .locals 3
 +
-+    sget-object v0, Lio/mesalabs/onigiri/CscFeatureHooks;->BOOLEAN_FEATURES:Ljava/util/HashMap;
++    sget-object v0, Lmoe/foss/onigiri/CscFeatureHooks;->BOOLEAN_FEATURES:Ljava/util/HashMap;
 +
 +    invoke-virtual {v0, p0}, Ljava/util/HashMap;->containsKey(Ljava/lang/Object;)Z
 +
@@ -345,7 +345,7 @@ new file mode 100644
 +
 +    move-result-object p0
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/CscFeatureHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/CscFeatureHooks;->dlog(Ljava/lang/String;)V
 +
 +    :cond_1
 +    return-object v0
@@ -354,7 +354,7 @@ new file mode 100644
 +.method public static blacklist onGetIntHook(Ljava/lang/String;)Ljava/lang/Integer;
 +    .locals 3
 +
-+    sget-object v0, Lio/mesalabs/onigiri/CscFeatureHooks;->INTEGER_FEATURES:Ljava/util/HashMap;
++    sget-object v0, Lmoe/foss/onigiri/CscFeatureHooks;->INTEGER_FEATURES:Ljava/util/HashMap;
 +
 +    invoke-virtual {v0, p0}, Ljava/util/HashMap;->containsKey(Ljava/lang/Object;)Z
 +
@@ -406,7 +406,7 @@ new file mode 100644
 +
 +    move-result-object p0
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/CscFeatureHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/CscFeatureHooks;->dlog(Ljava/lang/String;)V
 +
 +    :cond_1
 +    return-object v0
@@ -415,7 +415,7 @@ new file mode 100644
 +.method public static blacklist onGetStringHook(Ljava/lang/String;)Ljava/lang/String;
 +    .locals 3
 +
-+    sget-object v0, Lio/mesalabs/onigiri/CscFeatureHooks;->STRING_FEATURES:Ljava/util/HashMap;
++    sget-object v0, Lmoe/foss/onigiri/CscFeatureHooks;->STRING_FEATURES:Ljava/util/HashMap;
 +
 +    invoke-virtual {v0, p0}, Ljava/util/HashMap;->containsKey(Ljava/lang/Object;)Z
 +
@@ -467,7 +467,7 @@ new file mode 100644
 +
 +    move-result-object p0
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/CscFeatureHooks;->dlog(Ljava/lang/String;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/CscFeatureHooks;->dlog(Ljava/lang/String;)V
 +
 +    :cond_1
 +    return-object v0

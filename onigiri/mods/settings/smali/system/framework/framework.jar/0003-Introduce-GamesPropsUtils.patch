@@ -5,9 +5,9 @@ Subject: [PATCH] Introduce GamesPropsUtils
 
 ---
  smali/android/app/Instrumentation.smali       |    4 +
- .../io/mesalabs/onigiri/GamesPropsUtils.smali   | 1094 +++++++++++++++++
+ .../moe/foss/onigiri/GamesPropsUtils.smali   | 1094 +++++++++++++++++
  2 files changed, 1098 insertions(+)
- create mode 100644 smali_classes6/io/mesalabs/onigiri/GamesPropsUtils.smali
+ create mode 100644 smali_classes6/moe/foss/onigiri/GamesPropsUtils.smali
 
 diff --git a/smali/android/app/Instrumentation.smali b/smali/android/app/Instrumentation.smali
 index 236e3ab4..e29afd3b 100644
@@ -15,29 +15,29 @@ index 236e3ab4..e29afd3b 100644
 +++ b/smali/android/app/Instrumentation.smali
 @@ -636,6 +636,8 @@
  
-     invoke-static {p1}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setProps(Landroid/content/Context;)V
+     invoke-static {p1}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setProps(Landroid/content/Context;)V
  
-+    invoke-static {p1}, Lio/mesalabs/onigiri/GamesPropsUtils;->setProps(Landroid/content/Context;)V
++    invoke-static {p1}, Lmoe/foss/onigiri/GamesPropsUtils;->setProps(Landroid/content/Context;)V
 +
      return-object v0
  .end method
  
 @@ -3850,6 +3852,8 @@
  
-     invoke-static {p3}, Lio/mesalabs/onigiri/PlayIntegrityHooks;->setProps(Landroid/content/Context;)V
+     invoke-static {p3}, Lmoe/foss/onigiri/PlayIntegrityHooks;->setProps(Landroid/content/Context;)V
  
-+    invoke-static {p3}, Lio/mesalabs/onigiri/GamesPropsUtils;->setProps(Landroid/content/Context;)V
++    invoke-static {p3}, Lmoe/foss/onigiri/GamesPropsUtils;->setProps(Landroid/content/Context;)V
 +
      return-object v0
  .end method
  
-diff --git a/smali_classes6/io/mesalabs/onigiri/GamesPropsUtils.smali b/smali_classes6/io/mesalabs/onigiri/GamesPropsUtils.smali
+diff --git a/smali_classes6/moe/foss/onigiri/GamesPropsUtils.smali b/smali_classes6/moe/foss/onigiri/GamesPropsUtils.smali
 new file mode 100644
 index 00000000..f54aa840
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/GamesPropsUtils.smali
++++ b/smali_classes6/moe/foss/onigiri/GamesPropsUtils.smali
 @@ -0,0 +1,1094 @@
-+.class public final Lio/mesalabs/onigiri/GamesPropsUtils;
++.class public final Lmoe/foss/onigiri/GamesPropsUtils;
 +.super Ljava/lang/Object;
 +.source "GamesPropsUtils.java"
 +
@@ -81,15 +81,15 @@ index 00000000..f54aa840
 +
 +    invoke-direct {v0}, Ljava/util/HashMap;-><init>()V
 +
-+    sput-object v0, Lio/mesalabs/onigiri/GamesPropsUtils;->propsToChange:Ljava/util/Map;
++    sput-object v0, Lmoe/foss/onigiri/GamesPropsUtils;->propsToChange:Ljava/util/Map;
 +
 +    new-instance v1, Ljava/util/HashMap;
 +
 +    invoke-direct {v1}, Ljava/util/HashMap;-><init>()V
 +
-+    sput-object v1, Lio/mesalabs/onigiri/GamesPropsUtils;->packagesToChange:Ljava/util/Map;
++    sput-object v1, Lmoe/foss/onigiri/GamesPropsUtils;->packagesToChange:Ljava/util/Map;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createBS4Props()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createBS4Props()Ljava/util/Map;
 +
 +    move-result-object v2
 +
@@ -109,7 +109,7 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v3, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createF5Props()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createF5Props()Ljava/util/Map;
 +
 +    move-result-object v3
 +
@@ -125,7 +125,7 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v4, v3}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createMI11TPProps()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createMI11TPProps()Ljava/util/Map;
 +
 +    move-result-object v3
 +
@@ -159,7 +159,7 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v4, v5}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createMI13PProps()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createMI13PProps()Ljava/util/Map;
 +
 +    move-result-object v4
 +
@@ -179,7 +179,7 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v5, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createOP8PProps()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createOP8PProps()Ljava/util/Map;
 +
 +    move-result-object v4
 +
@@ -207,7 +207,7 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v5, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createOP9RProps()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createOP9RProps()Ljava/util/Map;
 +
 +    move-result-object v4
 +
@@ -231,7 +231,7 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v5, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createRM9PProps()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createRM9PProps()Ljava/util/Map;
 +
 +    move-result-object v4
 +
@@ -331,7 +331,7 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v5, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createROG1Props()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createROG1Props()Ljava/util/Map;
 +
 +    move-result-object v4
 +
@@ -351,7 +351,7 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v5, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createROG6Props()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createROG6Props()Ljava/util/Map;
 +
 +    move-result-object v4
 +
@@ -383,7 +383,7 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v5, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createS24UProps()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createS24UProps()Ljava/util/Map;
 +
 +    move-result-object v4
 +
@@ -423,7 +423,7 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v5, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/GamesPropsUtils;->createLenovoY700Props()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createLenovoY700Props()Ljava/util/Map;
 +
 +    move-result-object v4
 +
@@ -949,7 +949,7 @@ index 00000000..f54aa840
 +
 +    move-result-object v0
 +
-+    invoke-static {v0}, Lio/mesalabs/onigiri/GamesPropsUtils;->dlog(Ljava/lang/String;)V
++    invoke-static {v0}, Lmoe/foss/onigiri/GamesPropsUtils;->dlog(Ljava/lang/String;)V
 +
 +    const-class v0, Landroid/os/Build;
 +
@@ -1028,7 +1028,7 @@ index 00000000..f54aa840
 +    return-void
 +
 +    :cond_1
-+    sget-object v0, Lio/mesalabs/onigiri/GamesPropsUtils;->packagesToChange:Ljava/util/Map;
++    sget-object v0, Lmoe/foss/onigiri/GamesPropsUtils;->packagesToChange:Ljava/util/Map;
 +
 +    invoke-interface {v0}, Ljava/util/Map;->keySet()Ljava/util/Set;
 +
@@ -1051,7 +1051,7 @@ index 00000000..f54aa840
 +
 +    check-cast v1, Ljava/lang/String;
 +
-+    sget-object v2, Lio/mesalabs/onigiri/GamesPropsUtils;->packagesToChange:Ljava/util/Map;
++    sget-object v2, Lmoe/foss/onigiri/GamesPropsUtils;->packagesToChange:Ljava/util/Map;
 +
 +    invoke-interface {v2, v1}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
 +
@@ -1083,9 +1083,9 @@ index 00000000..f54aa840
 +
 +    move-result-object p0
 +
-+    invoke-static {p0}, Lio/mesalabs/onigiri/GamesPropsUtils;->dlog(Ljava/lang/String;)V
++    invoke-static {p0}, Lmoe/foss/onigiri/GamesPropsUtils;->dlog(Ljava/lang/String;)V
 +
-+    sget-object p0, Lio/mesalabs/onigiri/GamesPropsUtils;->propsToChange:Ljava/util/Map;
++    sget-object p0, Lmoe/foss/onigiri/GamesPropsUtils;->propsToChange:Ljava/util/Map;
 +
 +    invoke-interface {p0, v1}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
 +
@@ -1124,7 +1124,7 @@ index 00000000..f54aa840
 +
 +    move-result-object v0
 +
-+    invoke-static {v1, v0}, Lio/mesalabs/onigiri/GamesPropsUtils;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
++    invoke-static {v1, v0}, Lmoe/foss/onigiri/GamesPropsUtils;->setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
 +
 +    goto :goto_0
 +

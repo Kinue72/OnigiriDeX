@@ -8,21 +8,21 @@ Subject: [PATCH] Add button to upload crash log to memocho
  .../LogPasteUtils$UploadResultCallback.smali  |  22 +
  ...Utils$VectorDrawableCreator$PathData.smali |  48 +
  .../LogPasteUtils$VectorDrawableCreator.smali | 756 ++++++++++++++++
- .../io/mesalabs/onigiri/LogPasteUtils.smali     | 827 ++++++++++++++++++
+ .../moe/foss/onigiri/LogPasteUtils.smali     | 827 ++++++++++++++++++
  5 files changed, 1693 insertions(+)
- create mode 100644 smali_classes6/io/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0.smali
- create mode 100644 smali_classes6/io/mesalabs/onigiri/LogPasteUtils$UploadResultCallback.smali
- create mode 100644 smali_classes6/io/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData.smali
- create mode 100644 smali_classes6/io/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator.smali
- create mode 100644 smali_classes6/io/mesalabs/onigiri/LogPasteUtils.smali
+ create mode 100644 smali_classes6/moe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0.smali
+ create mode 100644 smali_classes6/moe/foss/onigiri/LogPasteUtils$UploadResultCallback.smali
+ create mode 100644 smali_classes6/moe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData.smali
+ create mode 100644 smali_classes6/moe/foss/onigiri/LogPasteUtils$VectorDrawableCreator.smali
+ create mode 100644 smali_classes6/moe/foss/onigiri/LogPasteUtils.smali
 
-diff --git a/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0.smali b/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0.smali
+diff --git a/smali_classes6/moe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0.smali b/smali_classes6/moe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0.smali
 new file mode 100644
 index 00000000..40cc60fb
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0.smali
++++ b/smali_classes6/moe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0.smali
 @@ -0,0 +1,40 @@
-+.class public final synthetic Lio/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;
++.class public final synthetic Lmoe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;
 +.super Ljava/lang/Object;
 +.source "D8$$SyntheticClass"
 +
@@ -33,18 +33,18 @@ index 00000000..40cc60fb
 +# instance fields
 +.field public final synthetic blacklist f$0:Ljava/lang/String;
 +
-+.field public final synthetic blacklist f$1:Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;
++.field public final synthetic blacklist f$1:Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;
 +
 +
 +# direct methods
-+.method public synthetic constructor blacklist <init>(Ljava/lang/String;Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;)V
++.method public synthetic constructor blacklist <init>(Ljava/lang/String;Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;)V
 +    .locals 0
 +
 +    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +
-+    iput-object p1, p0, Lio/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;->f$0:Ljava/lang/String;
++    iput-object p1, p0, Lmoe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;->f$0:Ljava/lang/String;
 +
-+    iput-object p2, p0, Lio/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;->f$1:Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;
++    iput-object p2, p0, Lmoe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;->f$1:Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;
 +
 +    return-void
 +.end method
@@ -54,28 +54,28 @@ index 00000000..40cc60fb
 +.method public final whitelist test-api run()V
 +    .locals 1
 +
-+    iget-object v0, p0, Lio/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;->f$0:Ljava/lang/String;
++    iget-object v0, p0, Lmoe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;->f$0:Ljava/lang/String;
 +
-+    iget-object p0, p0, Lio/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;->f$1:Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;
++    iget-object p0, p0, Lmoe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;->f$1:Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;
 +
-+    invoke-static {v0, p0}, Lio/mesalabs/onigiri/LogPasteUtils;->lambda$upload$0(Ljava/lang/String;Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;)V
++    invoke-static {v0, p0}, Lmoe/foss/onigiri/LogPasteUtils;->lambda$upload$0(Ljava/lang/String;Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;)V
 +
 +    return-void
 +.end method
-diff --git a/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$UploadResultCallback.smali b/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$UploadResultCallback.smali
+diff --git a/smali_classes6/moe/foss/onigiri/LogPasteUtils$UploadResultCallback.smali b/smali_classes6/moe/foss/onigiri/LogPasteUtils$UploadResultCallback.smali
 new file mode 100644
 index 00000000..a36c303c
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$UploadResultCallback.smali
++++ b/smali_classes6/moe/foss/onigiri/LogPasteUtils$UploadResultCallback.smali
 @@ -0,0 +1,22 @@
-+.class public interface abstract Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;
++.class public interface abstract Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;
 +.super Ljava/lang/Object;
 +.source "LogPasteUtils.java"
 +
 +
 +# annotations
 +.annotation system Ldalvik/annotation/EnclosingClass;
-+    value = Lio/mesalabs/onigiri/LogPasteUtils;
++    value = Lmoe/foss/onigiri/LogPasteUtils;
 +.end annotation
 +
 +.annotation system Ldalvik/annotation/InnerClass;
@@ -90,20 +90,20 @@ index 00000000..a36c303c
 +
 +.method public abstract blacklist onSuccess(Ljava/lang/String;)V
 +.end method
-diff --git a/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData.smali b/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData.smali
+diff --git a/smali_classes6/moe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData.smali b/smali_classes6/moe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData.smali
 new file mode 100644
 index 00000000..a8c71a8f
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData.smali
++++ b/smali_classes6/moe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData.smali
 @@ -0,0 +1,48 @@
-+.class public Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;
++.class public Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;
 +.super Ljava/lang/Object;
 +.source "LogPasteUtils.java"
 +
 +
 +# annotations
 +.annotation system Ldalvik/annotation/EnclosingClass;
-+    value = Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;
++    value = Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;
 +.end annotation
 +
 +.annotation system Ldalvik/annotation/InnerClass;
@@ -128,7 +128,7 @@ index 00000000..a8c71a8f
 +
 +    move-result-object p1
 +
-+    invoke-direct {p0, p1, p2}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;-><init>([BI)V
++    invoke-direct {p0, p1, p2}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;-><init>([BI)V
 +
 +    return-void
 +.end method
@@ -138,26 +138,26 @@ index 00000000..a8c71a8f
 +
 +    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +
-+    iput-object p1, p0, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;->data:[B
++    iput-object p1, p0, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;->data:[B
 +
-+    iput p2, p0, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;->color:I
++    iput p2, p0, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;->color:I
 +
 +    return-void
 +.end method
-diff --git a/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator.smali b/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator.smali
+diff --git a/smali_classes6/moe/foss/onigiri/LogPasteUtils$VectorDrawableCreator.smali b/smali_classes6/moe/foss/onigiri/LogPasteUtils$VectorDrawableCreator.smali
 new file mode 100644
 index 00000000..3723a8de
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator.smali
++++ b/smali_classes6/moe/foss/onigiri/LogPasteUtils$VectorDrawableCreator.smali
 @@ -0,0 +1,756 @@
-+.class final Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;
++.class final Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;
 +.super Ljava/lang/Object;
 +.source "LogPasteUtils.java"
 +
 +
 +# annotations
 +.annotation system Ldalvik/annotation/EnclosingClass;
-+    value = Lio/mesalabs/onigiri/LogPasteUtils;
++    value = Lmoe/foss/onigiri/LogPasteUtils;
 +.end annotation
 +
 +.annotation system Ldalvik/annotation/InnerClass;
@@ -167,7 +167,7 @@ index 00000000..3723a8de
 +
 +.annotation system Ldalvik/annotation/MemberClasses;
 +    value = {
-+        Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;
++        Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;
 +    }
 +.end annotation
 +
@@ -258,7 +258,7 @@ index 00000000..3723a8de
 +
 +    move-result-object v0
 +
-+    sput-object v0, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->BIN_XML_STRINGS:[[B
++    sput-object v0, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->BIN_XML_STRINGS:[[B
 +
 +    const/4 v0, 0x6
 +
@@ -266,7 +266,7 @@ index 00000000..3723a8de
 +
 +    fill-array-data v0, :array_0
 +
-+    sput-object v0, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->BIN_XML_ATTRS:[I
++    sput-object v0, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->BIN_XML_ATTRS:[I
 +
 +    return-void
 +
@@ -297,14 +297,14 @@ index 00000000..3723a8de
 +        value = {
 +            "(IIFF",
 +            "Ljava/util/List<",
-+            "Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;",
++            "Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;",
 +            ">;)[B"
 +        }
 +    .end annotation
 +
 +    new-instance v0, Ljava/util/ArrayList;
 +
-+    sget-object v1, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->BIN_XML_STRINGS:[[B
++    sget-object v1, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->BIN_XML_STRINGS:[[B
 +
 +    invoke-static {v1}, Ljava/util/Arrays;->asList([Ljava/lang/Object;)Ljava/util/List;
 +
@@ -327,9 +327,9 @@ index 00000000..3723a8de
 +
 +    move-result-object v2
 +
-+    check-cast v2, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;
++    check-cast v2, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;
 +
-+    iget-object v2, v2, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;->data:[B
++    iget-object v2, v2, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;->data:[B
 +
 +    invoke-interface {v0, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 +
@@ -587,7 +587,7 @@ index 00000000..3723a8de
 +
 +    invoke-virtual {v1, v3}, Ljava/nio/ByteBuffer;->putShort(S)Ljava/nio/ByteBuffer;
 +
-+    sget-object v0, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->BIN_XML_ATTRS:[I
++    sget-object v0, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->BIN_XML_ATTRS:[I
 +
 +    array-length v5, v0
 +
@@ -619,7 +619,7 @@ index 00000000..3723a8de
 +
 +    const/4 v5, 0x7
 +
-+    invoke-static {v1, v5, v6}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->putStartTag(Ljava/nio/ByteBuffer;II)I
++    invoke-static {v1, v5, v6}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->putStartTag(Ljava/nio/ByteBuffer;II)I
 +
 +    move-result v8
 +
@@ -631,13 +631,13 @@ index 00000000..3723a8de
 +
 +    const/16 v12, 0x500
 +
-+    invoke-static {v1, v9, v11, v12, v10}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
++    invoke-static {v1, v9, v11, v12, v10}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
 +
 +    shl-int/lit8 v3, p1, 0x8
 +
 +    add-int/2addr v3, v7
 +
-+    invoke-static {v1, v7, v11, v12, v3}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
++    invoke-static {v1, v7, v11, v12, v3}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
 +
 +    invoke-static/range {p2 .. p2}, Ljava/lang/Float;->floatToRawIntBits(F)I
 +
@@ -647,13 +647,13 @@ index 00000000..3723a8de
 +
 +    const/16 v10, 0x400
 +
-+    invoke-static {v1, v7, v11, v10, v3}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
++    invoke-static {v1, v7, v11, v10, v3}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
 +
 +    invoke-static/range {p3 .. p3}, Ljava/lang/Float;->floatToRawIntBits(F)I
 +
 +    move-result v3
 +
-+    invoke-static {v1, v2, v11, v10, v3}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
++    invoke-static {v1, v2, v11, v10, v3}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
 +
 +    invoke-virtual {v1}, Ljava/nio/ByteBuffer;->position()I
 +
@@ -682,7 +682,7 @@ index 00000000..3723a8de
 +
 +    const/4 v2, 0x6
 +
-+    invoke-static {v1, v2, v7}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->putStartTag(Ljava/nio/ByteBuffer;II)I
++    invoke-static {v1, v2, v7}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->putStartTag(Ljava/nio/ByteBuffer;II)I
 +
 +    move-result v3
 +
@@ -692,13 +692,13 @@ index 00000000..3723a8de
 +
 +    move-result-object v10
 +
-+    check-cast v10, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;
++    check-cast v10, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;
 +
-+    iget v10, v10, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;->color:I
++    iget v10, v10, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;->color:I
 +
 +    const/16 v12, 0x1d00
 +
-+    invoke-static {v1, v6, v11, v12, v10}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
++    invoke-static {v1, v6, v11, v12, v10}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
 +
 +    add-int/lit8 v10, v9, 0x9
 +
@@ -706,7 +706,7 @@ index 00000000..3723a8de
 +
 +    const/4 v13, 0x5
 +
-+    invoke-static {v1, v13, v10, v12, v10}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
++    invoke-static {v1, v13, v10, v12, v10}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->putAttribute(Ljava/nio/ByteBuffer;IISI)V
 +
 +    invoke-virtual {v1}, Ljava/nio/ByteBuffer;->position()I
 +
@@ -722,14 +722,14 @@ index 00000000..3723a8de
 +
 +    invoke-virtual {v1, v10}, Ljava/nio/ByteBuffer;->position(I)Ljava/nio/Buffer;
 +
-+    invoke-static {v1, v2}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->putEndTag(Ljava/nio/ByteBuffer;I)V
++    invoke-static {v1, v2}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->putEndTag(Ljava/nio/ByteBuffer;I)V
 +
 +    add-int/lit8 v9, v9, 0x1
 +
 +    goto :goto_6
 +
 +    :cond_7
-+    invoke-static {v1, v5}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->putEndTag(Ljava/nio/ByteBuffer;I)V
++    invoke-static {v1, v5}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->putEndTag(Ljava/nio/ByteBuffer;I)V
 +
 +    invoke-virtual {v1}, Ljava/nio/ByteBuffer;->position()I
 +
@@ -764,13 +764,13 @@ index 00000000..3723a8de
 +            "Landroid/content/Context;",
 +            "IIFF",
 +            "Ljava/util/List<",
-+            "Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;",
++            "Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;",
 +            ">;)",
 +            "Landroid/graphics/drawable/Drawable;"
 +        }
 +    .end annotation
 +
-+    invoke-static {p1, p2, p3, p4, p5}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->createBinaryDrawableXml(IIFFLjava/util/List;)[B
++    invoke-static {p1, p2, p3, p4, p5}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->createBinaryDrawableXml(IIFFLjava/util/List;)[B
 +
 +    move-result-object p1
 +
@@ -906,13 +906,13 @@ index 00000000..3723a8de
 +
 +    return v0
 +.end method
-diff --git a/smali_classes6/io/mesalabs/onigiri/LogPasteUtils.smali b/smali_classes6/io/mesalabs/onigiri/LogPasteUtils.smali
+diff --git a/smali_classes6/moe/foss/onigiri/LogPasteUtils.smali b/smali_classes6/moe/foss/onigiri/LogPasteUtils.smali
 new file mode 100644
 index 00000000..bea01e28
 --- /dev/null
-+++ b/smali_classes6/io/mesalabs/onigiri/LogPasteUtils.smali
++++ b/smali_classes6/moe/foss/onigiri/LogPasteUtils.smali
 @@ -0,0 +1,827 @@
-+.class public final Lio/mesalabs/onigiri/LogPasteUtils;
++.class public final Lmoe/foss/onigiri/LogPasteUtils;
 +.super Ljava/lang/Object;
 +.source "LogPasteUtils.java"
 +
@@ -920,8 +920,8 @@ index 00000000..bea01e28
 +# annotations
 +.annotation system Ldalvik/annotation/MemberClasses;
 +    value = {
-+        Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;,
-+        Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;
++        Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;,
++        Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;
 +    }
 +.end annotation
 +
@@ -970,13 +970,13 @@ index 00000000..bea01e28
 +
 +    invoke-direct {v7, v1, v8, v0, v2}, Landroid/widget/Button;-><init>(Landroid/content/Context;Landroid/util/AttributeSet;II)V
 +
-+    new-instance v0, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;
++    new-instance v0, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;
 +
 +    const-string v2, "M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"
 +
 +    const/high16 v3, -0x1000000
 +
-+    invoke-direct {v0, v2, v3}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;-><init>(Ljava/lang/String;I)V
++    invoke-direct {v0, v2, v3}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator$PathData;-><init>(Ljava/lang/String;I)V
 +
 +    invoke-static {v0}, Ljava/util/List;->of(Ljava/lang/Object;)Ljava/util/List;
 +
@@ -990,13 +990,13 @@ index 00000000..bea01e28
 +
 +    const/high16 v5, 0x41c00000    # 24.0f
 +
-+    invoke-static/range {v1 .. v6}, Lio/mesalabs/onigiri/LogPasteUtils$VectorDrawableCreator;->getVectorDrawable(Landroid/content/Context;IIFFLjava/util/List;)Landroid/graphics/drawable/Drawable;
++    invoke-static/range {v1 .. v6}, Lmoe/foss/onigiri/LogPasteUtils$VectorDrawableCreator;->getVectorDrawable(Landroid/content/Context;IIFFLjava/util/List;)Landroid/graphics/drawable/Drawable;
 +
 +    move-result-object v0
 +
 +    invoke-virtual {v7, v0, v8, v8, v8}, Landroid/widget/Button;->setCompoundDrawablesRelativeWithIntrinsicBounds(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;)V
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/LogPasteUtils;->getDialogButtonTitleText()Ljava/lang/CharSequence;
++    invoke-static {}, Lmoe/foss/onigiri/LogPasteUtils;->getDialogButtonTitleText()Ljava/lang/CharSequence;
 +
 +    move-result-object v0
 +
@@ -1552,7 +1552,7 @@ index 00000000..bea01e28
 +.method private static blacklist getHandler()Landroid/os/Handler;
 +    .locals 2
 +
-+    sget-object v0, Lio/mesalabs/onigiri/LogPasteUtils;->mHandler:Landroid/os/Handler;
++    sget-object v0, Lmoe/foss/onigiri/LogPasteUtils;->mHandler:Landroid/os/Handler;
 +
 +    if-nez v0, :cond_1
 +
@@ -1579,15 +1579,15 @@ index 00000000..bea01e28
 +
 +    invoke-direct {v1, v0}, Landroid/os/Handler;-><init>(Landroid/os/Looper;)V
 +
-+    sput-object v1, Lio/mesalabs/onigiri/LogPasteUtils;->mHandler:Landroid/os/Handler;
++    sput-object v1, Lmoe/foss/onigiri/LogPasteUtils;->mHandler:Landroid/os/Handler;
 +
 +    :cond_1
-+    sget-object v0, Lio/mesalabs/onigiri/LogPasteUtils;->mHandler:Landroid/os/Handler;
++    sget-object v0, Lmoe/foss/onigiri/LogPasteUtils;->mHandler:Landroid/os/Handler;
 +
 +    return-object v0
 +.end method
 +
-+.method static synthetic blacklist lambda$upload$0(Ljava/lang/String;Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;)V
++.method static synthetic blacklist lambda$upload$0(Ljava/lang/String;Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;)V
 +    .locals 4
 +
 +    const-string v0, "https://bin.kv2.dev"
@@ -1672,7 +1672,7 @@ index 00000000..bea01e28
 +
 +    move-result-object p0
 +
-+    invoke-interface {p1, p0}, Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;->onSuccess(Ljava/lang/String;)V
++    invoke-interface {p1, p0}, Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;->onSuccess(Ljava/lang/String;)V
 +
 +    goto :goto_0
 +
@@ -1683,7 +1683,7 @@ index 00000000..bea01e28
 +
 +    invoke-direct {v0, p0}, Ljava/lang/Exception;-><init>(Ljava/lang/String;)V
 +
-+    invoke-interface {p1, p0, v0}, Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;->onFail(Ljava/lang/String;Ljava/lang/Exception;)V
++    invoke-interface {p1, p0, v0}, Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;->onFail(Ljava/lang/String;Ljava/lang/Exception;)V
 +
 +    :goto_0
 +    invoke-virtual {v1}, Ljavax/net/ssl/HttpsURLConnection;->disconnect()V
@@ -1718,22 +1718,22 @@ index 00000000..bea01e28
 +
 +    const-string v0, "Failed to upload logs"
 +
-+    invoke-interface {p1, v0, p0}, Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;->onFail(Ljava/lang/String;Ljava/lang/Exception;)V
++    invoke-interface {p1, v0, p0}, Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;->onFail(Ljava/lang/String;Ljava/lang/Exception;)V
 +
 +    :goto_2
 +    return-void
 +.end method
 +
-+.method public static blacklist upload(Ljava/lang/String;Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;)V
++.method public static blacklist upload(Ljava/lang/String;Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;)V
 +    .locals 2
 +
-+    invoke-static {}, Lio/mesalabs/onigiri/LogPasteUtils;->getHandler()Landroid/os/Handler;
++    invoke-static {}, Lmoe/foss/onigiri/LogPasteUtils;->getHandler()Landroid/os/Handler;
 +
 +    move-result-object v0
 +
-+    new-instance v1, Lio/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;
++    new-instance v1, Lmoe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;
 +
-+    invoke-direct {v1, p0, p1}, Lio/mesalabs/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;-><init>(Ljava/lang/String;Lio/mesalabs/onigiri/LogPasteUtils$UploadResultCallback;)V
++    invoke-direct {v1, p0, p1}, Lmoe/foss/onigiri/LogPasteUtils$$ExternalSyntheticLambda0;-><init>(Ljava/lang/String;Lmoe/foss/onigiri/LogPasteUtils$UploadResultCallback;)V
 +
 +    invoke-virtual {v0, v1}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 +

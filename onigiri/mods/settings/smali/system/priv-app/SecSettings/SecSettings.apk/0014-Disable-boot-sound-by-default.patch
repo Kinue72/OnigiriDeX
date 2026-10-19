@@ -1,9 +1,9 @@
 From: Onigiri
 Subject: [PATCH] Default boot sound to disabled
 
-diff --git a/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali b/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali
---- a/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali
-+++ b/smali_classes4/io/mesalabs/onigiri/settings/BootSoundPreferenceController.smali
+diff --git a/smali_classes4/moe/foss/onigiri/settings/BootSoundPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/BootSoundPreferenceController.smali
+--- a/smali_classes4/moe/foss/onigiri/settings/BootSoundPreferenceController.smali
++++ b/smali_classes4/moe/foss/onigiri/settings/BootSoundPreferenceController.smali
 @@ -103,7 +103,7 @@
  
      const-string p0, "persist.sys.onigiri.bootsound"
