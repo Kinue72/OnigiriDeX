@@ -3,8 +3,8 @@
 Phones on a released build update from **Settings > Onigiri Software > Software update**. It
 reads `version.txt` from the latest GitHub release and, when that release carries
 `Onigiri_OTA_<installed ro.onigiri.version>.zip`, downloads it to `/cache` and reboots to
-recovery, which installs it. A typical update is 10-20 MB instead of the 8 GB AP. Phones on any
-other build need the full AP.
+recovery, which installs it. An update that only changes the ROM was 3 MB in testing, one with a
+new kernel 40 MB, instead of the 8 GB AP. Phones on any other build need the full AP.
 
 The AP ships Samsung's stock recovery with one change: `otacerts.zip` holds only the Onigiri OTA
 certificate, so recovery installs packages signed with `security/onigiri_ota.pk8` and nothing
