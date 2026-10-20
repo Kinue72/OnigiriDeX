@@ -13,44 +13,48 @@ was made from, so a package for another build fails without touching the phone.
 
 ## Making a release
 
-Push a tag. `.github/workflows/release.yml` then runs `scripts/release.sh <tag>` on the
-self-hosted runner, which:
+Push a tag, for example `git tag 2026.10.21 && git push origin 2026.10.21`.
+`.github/workflows/build.yml` then builds that commit on GitHub's runners and runs
+`scripts/release.sh`, which:
 
-1. builds the kernel (only when `external/kernel` or `external/patches/kernel` changed) and the AP;
-2. makes `Onigiri_OTA_<previous version>.zip` from the previous release's AP with
+1. makes `Onigiri_OTA_<previous version>.zip` from the previous release's AP with
    `scripts/make_ota.sh` (Samsung's `ota_from_target_files`, from the Flip5 firmware);
-3. uploads the AP split into parts under GitHub's 2 GiB asset limit, its `.sha256`, the OTA
-   and `version.txt`.
+2. uploads the AP split into parts under GitHub's 2 GiB asset limit, its `.sha256`, the OTA and
+   `version.txt`.
 
-Without the runner, run the same thing from a clean git checkout on the build machine:
-`onigiri release <tag>` (needs `gh` logged in with push access).
+A build takes about three hours, more when the kernel changed (the kernel and the build tools
+are cached between runs). Only an update from the previous release is made; someone two releases
+behind flashes the AP.
 
-Only an update from the previous release is built. Someone two releases behind flashes the AP.
+To try a pull request on a phone first, add the `build` label: the AP is attached to the run as
+an artifact for a week. **Run workflow** on the Actions tab does the same for a branch.
 
-## Keys
+Without GitHub, the same works on the build machine from a clean git checkout:
+`onigiri build_odin`, then `onigiri release <tag> out/Onigiri_AP_*.tar.md5` (needs `gh` logged in
+with push access).
 
-`security/onigiri_ota.pk8` is created on the first build, next to `onigiri_platform.pk8`. Back
-both up. With the OTA key lost, every phone needs a full Odin flash of a recovery with the new
-certificate before it can update again.
+## Setup (once)
 
-## Runner setup (once, repository admin)
+**Signing keys.** The workflow reads the keys from the `ONIGIRI_SIGNING_KEYS` secret. Set it
+on the machine that holds them:
 
-The build needs the firmware ZIPs, the keys and about 250 GB of disk, so it runs on the build
-machine. On it:
+```sh
+tar -C security -cz onigiri_platform.pk8 onigiri_platform.x509.pem onigiri_ota.pk8 onigiri_ota.x509.pem |
+    base64 -w0 | gh secret set ONIGIRI_SIGNING_KEYS --repo Kinue72/OnigiriDeX
+```
 
-1. Settings > Actions > Runners > New self-hosted runner (Linux). Follow the commands, adding
-   `--labels onigiri` to `./config.sh`, then `sudo ./svc.sh install && sudo ./svc.sh start`.
-2. Seed the runner's checkout with what git doesn't carry (adjust the paths):
+Back the keys up as well. Without the platform key, updates can't be installed over an existing
+install; without the OTA key, every phone needs a recovery with the new certificate flashed with
+Odin before it can update again. Builds without the secret get throwaway keys and never publish.
 
-   ```sh
-   W=~/actions-runner/_work/OnigiriDeX/OnigiriDeX
-   mkdir -p "$W/security"
-   cp ~/dev/OnigiriDeX/security/onigiri_*.{pk8,x509.pem} "$W/security/"
-   ln -s ~/dev/OnigiriDeX/firmware "$W/firmware"
-   ```
+**Firmware.** Samsung's servers no longer serve the pinned firmware, so the workflow downloads
+`out/fw` (what `onigiri extract_fw` produces) from a draft release named `firmware`. Drafts are
+only visible to people with push access; never publish it. After changing the firmware pins in
+`onigiri/configs/firmware.json`, extract the new firmware and replace it:
 
-   Then run the README's build steps once in `$W` (import and extract the firmware,
-   `onigiri build_dependencies`). The workflow keeps `out/` between runs.
-3. Settings > Actions > General > Fork pull request workflows: **Require approval for all
-   external contributors**. The repository is public, and a pull request can add a workflow
-   that would otherwise run on this machine.
+```sh
+mkdir -p /tmp/fw && tar -C out -cf - fw | zstd -T0 -10 | split -b 1900M -d -a 2 - /tmp/fw/onigiri-fw.tar.zst.
+gh release delete firmware --repo Kinue72/OnigiriDeX --yes
+gh release create firmware --repo Kinue72/OnigiriDeX --draft --title "Firmware for CI (never publish)" \
+    --notes "Pre-extracted pinned Samsung firmware for .github/workflows/build.yml." /tmp/fw/onigiri-fw.tar.zst.*
+```

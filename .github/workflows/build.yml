@@ -1,0 +1,158 @@
+# Builds Onigiri on GitHub's runners. A pushed tag publishes a release (scripts/release.sh: the AP,
+# an OTA from the previous release and version.txt); a pull request labelled "build" or a manual
+# run uploads the AP as a short-lived artifact instead. Setup (firmware draft release, signing key
+# secret) is in docs/releasing.md.
+name: Build
+
+on:
+  push:
+    tags: ["*"]
+  pull_request:
+    types: [labeled, synchronize]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    # A full build takes hours, so pull requests only build when asked to.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 355
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ONIGIRI_REPO: ${{ github.repository }}
+    steps:
+      # The build needs ~100 GB: drop preinstalled SDKs and pool / and /mnt for the workspace.
+      - uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
+        with:
+          root-reserve-mb: 10240
+          swap-size-mb: 8192
+          remove-dotnet: true
+          remove-android: true
+          remove-haskell: true
+          remove-codeql: true
+          remove-docker-images: true
+
+      - uses: actions/checkout@v7
+
+      - name: Install host packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y attr bc bison brotli cpio device-tree-compiler dwarves e2fsprogs \
+            flex gawk golang-go gperf kmod lld llvm lz4 meson ninja-build pcre2-utils pkg-config \
+            protobuf-compiler python3-dev python3-pip python3-venv python3-protobuf python3-pyelftools \
+            python3-jinja2 rsync secilc swig xxd zip zstd libbrotli-dev libdw-dev libelf-dev libfmt-dev \
+            libgmock-dev libgtest-dev liblz4-dev libncurses-dev libpcre2-dev libprotobuf-dev libsepol-dev \
+            libssl-dev libudev-dev libunwind-dev libusb-1.0-0-dev libzstd-dev
+          # depmod and debugfs live in sbin.
+          echo "PATH=$PATH:/usr/sbin:/sbin" >> "$GITHUB_ENV"
+          df -h "$GITHUB_WORKSPACE"
+
+      - name: Signing keys
+        env:
+          KEYS: ${{ secrets.ONIGIRI_SIGNING_KEYS }}
+        run: |
+          if [ -n "$KEYS" ]; then
+            echo "$KEYS" | base64 -d | tar -xz -C security
+          elif [ "$GITHUB_REF_TYPE" = tag ]; then
+            echo "::error::Set the ONIGIRI_SIGNING_KEYS secret: releases must keep the same keys."
+            exit 1
+          else
+            echo "::warning::No ONIGIRI_SIGNING_KEYS secret: this test build gets throwaway keys."
+          fi
+
+      # Samsung's servers won't serve the pinned firmware any more, so it comes pre-extracted from
+      # a draft release, which only people with push access can see.
+      - name: Firmware
+        run: |
+          mkdir -p out
+          gh release view firmware --json assets --jq '.assets[].name' | sort | while read -r PART; do
+            gh release download firmware --pattern "$PART" --output -
+          done | zstd -dc | tar -x -C out
+          python3 scripts/verify_fw.py SM-F731B/XXV out/fw/SM-F731B_XXV
+          python3 scripts/verify_fw.py SM-F946B/XXV out/fw/SM-F946B_XXV
+
+      - name: Versions
+        id: versions
+        run: |
+          source ./buildenv.sh SM-F731B > /dev/null
+          echo "kernel=$KERNEL_RELEASE" >> "$GITHUB_OUTPUT"
+          echo "tools=$(git ls-tree HEAD external/android-tools external/apktool external/erofs-utils \
+            external/samloader external/signapk | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore tools
+        id: tools
+        uses: actions/cache/restore@v6
+        with:
+          path: out/tools
+          key: tools-${{ steps.versions.outputs.tools }}-${{ hashFiles('scripts/build_dependencies.sh', 'external/make.sh', 'external/patches/**', 'external/ext4_utils/**', 'external/f2fs_utils/**') }}
+
+      - name: Build tools
+        if: steps.tools.outputs.cache-hit != 'true'
+        run: |
+          git submodule update --init --recursive --depth 1 external/android-tools external/apktool \
+            external/erofs-utils external/samloader external/signapk
+          source ./buildenv.sh SM-F731B > /dev/null
+          onigiri build_dependencies
+
+      - if: steps.tools.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: out/tools
+          key: ${{ steps.tools.outputs.cache-primary-key }}
+
+      # The kernel only changes with external/kernel and its patches (onigiri/configs/version.sh).
+      - name: Restore kernel
+        id: kernel
+        uses: actions/cache/restore@v6
+        with:
+          path: out/target/b5q/kernel
+          key: kernel-${{ steps.versions.outputs.kernel }}
+
+      - name: Build kernel
+        if: steps.kernel.outputs.cache-hit != 'true'
+        run: |
+          source ./buildenv.sh SM-F731B > /dev/null
+          onigiri build_kernel
+          rm -rf external/kernel/out
+
+      - if: steps.kernel.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: out/target/b5q/kernel
+          key: ${{ steps.kernel.outputs.cache-primary-key }}
+
+      - name: Build ROM
+        run: |
+          source ./buildenv.sh SM-F731B > /dev/null
+          onigiri build_odin
+          ls -l out/Onigiri_AP_*
+
+      # Room for the OTA: only the OTA tools are still needed from the firmware.
+      - name: Free build space
+        run: |
+          rm -rf out/target/b5q/work_dir out/target/b5q/apktool
+          git submodule deinit --force --quiet external/kernel || true
+          find out/fw -mindepth 2 -maxdepth 2 ! -name fota -exec rm -rf {} +
+          df -h "$GITHUB_WORKSPACE"
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        run: |
+          source ./buildenv.sh SM-F731B > /dev/null
+          onigiri release "$GITHUB_REF_NAME" out/Onigiri_AP_*.tar.md5
+
+      - name: Upload test build
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Onigiri-AP-${{ github.sha }}
+          path: out/Onigiri_AP_*
+          compression-level: 0
+          retention-days: 7

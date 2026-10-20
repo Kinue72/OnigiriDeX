@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Usage: release <tag>
+# Usage: release <tag> <AP .tar.md5 built from this commit>
 #
-# Builds the checked-out commit and publishes it as a GitHub release: the Odin AP (split into
-# parts under GitHub's 2 GiB asset limit), an OTA from the previous release when there is one,
-# and version.txt, which Settings > Onigiri Software > Software update reads. Released APs are
-# kept in out/releases as the base of the next OTA (re-downloaded when missing).
-# .github/workflows/release.yml runs this on a self-hosted runner for every pushed tag.
+# Publishes a GitHub release: the Odin AP (split into parts under GitHub's 2 GiB asset limit),
+# an OTA from the previous release when there is one, and version.txt, which Settings > Onigiri
+# Software > Software update reads. Released APs are kept in out/releases as the base of the
+# next OTA (downloaded from the previous release when missing).
+# .github/workflows/build.yml runs this for every pushed tag.
 
 set -eo pipefail
 
-[ "$#" -eq 1 ] || { echo "Usage: release <tag>" >&2; exit 1; }
+[ "$#" -eq 2 ] || { echo "Usage: release <tag> <AP .tar.md5>" >&2; exit 1; }
 TAG="$1"
+AP="$(realpath "$2")"
 REPO="${ONIGIRI_REPO:-Kinue72/OnigiriDeX}"
 RELEASES="$OUT_DIR/releases"
 
@@ -24,11 +25,10 @@ if gh release view "$TAG" --repo "$REPO" &> /dev/null; then
     exit 1
 fi
 
-if [ "$(cat "$OUT_DIR/target/b5q/kernel/kernel.release" 2> /dev/null)" != "$KERNEL_RELEASE" ]; then
-    "$SRC_DIR/scripts/build_kernel.sh"
+if [[ "$(basename "$AP")" != *"_${ROM_VERSION}_"* ]]; then
+    echo "$AP was not built from this commit ($ROM_VERSION)." >&2
+    exit 1
 fi
-"$SRC_DIR/scripts/build_odin.sh"
-AP="$(ls -t "$OUT_DIR"/Onigiri_AP_*_"$ROM_VERSION"_*.tar.md5 | head -n 1)"
 
 mkdir -p "$RELEASES" "$OUT_DIR/tmp"
 WORK="$(mktemp -d "$OUT_DIR/tmp/release.XXXXXX")"
