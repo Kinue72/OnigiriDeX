@@ -25,6 +25,50 @@ Installing it can wipe your phone or stop it from starting up. Before you try:
 
 **Use it at your own risk.**
 
+## Installing
+
+**You need:**
+
+- A Galaxy Z Flip5 **SM-F731B**. Other Flip5 models don't work.
+- An **unlocked bootloader**. Unlocking wipes the phone: turn on *OEM unlocking*
+  in Developer options, turn the phone off, hold both volume keys while you
+  plug in USB, then hold Volume Up and follow the screen.
+- The original Samsung software **F731BXXS5EYI1** for the SM-F731B (search for
+  that version on a Samsung firmware site). You only use its BL, CP and CSC
+  files.
+- A computer with Odin: Odin3 on Windows, or odin4 on Linux and macOS.
+
+**1. Download Onigiri.** From the [latest release](https://github.com/Kinue72/OnigiriDeX/releases/latest),
+download every `Onigiri_AP_….tar.md5.0`, `.1`, `.2`… part and the `.sha256`
+file. GitHub can't hold the whole 8 GB file in one piece, so join the parts
+into one file with the same name, without the number. The release notes show
+the exact command for macOS, Linux and Windows.
+
+**2. Check the download.** The `.sha256` file holds the file's checksum:
+`sha256sum -c Onigiri_AP_*.sha256` on Linux, `shasum -a 256 -c Onigiri_AP_*.sha256`
+on macOS, or compare it with `certutil -hashfile <file> SHA256` on Windows.
+
+**3. Flash it.** Turn the phone off, then hold both volume keys while you plug
+in USB, and press Volume Up to enter Download Mode.
+
+- **Windows (Odin3):** put the Onigiri file in **AP**, and the BL, CP and CSC
+  files from the Samsung software in their slots, then press Start. This hasn't
+  been tested with the current builds yet; if the phone keeps restarting
+  afterwards, use odin4.
+- **Linux and macOS (odin4):** follow [docs/flashing.md](docs/flashing.md). It
+  needs two small fixes to odin4 and a repacked AP; both are explained there.
+
+Use **CSC** for the first install: it wipes the phone, which a phone coming
+from Samsung's own software needs. Never flash Fold5 files.
+
+The first start takes a few minutes.
+
+**Updating.** Open **Settings → Onigiri Software → Software update** and tap
+it. When a new version is out, tap again: the phone downloads only what
+changed, restarts, installs it in about a minute and starts again. Your data
+stays. If it says the new version needs a full flash, flash just the new AP
+(no BL, CP or CSC): that keeps your data too.
+
 ## Extra features
 
 Everything Onigiri adds lives in **Settings → Onigiri Software**. Here's what
@@ -111,7 +155,8 @@ columns, a grid, or a priority grid.
 
 </details>
 
-## Building it yourself
+<details>
+<summary><b>Building it yourself</b></summary>
 
 You need a Linux computer with Bash, Python 3 and Java 17.
 
@@ -153,12 +198,9 @@ The finished files show up in the `out/` folder.
 
 **4. Install it on the phone**
 
-Follow [docs/flashing.md](docs/flashing.md). It covers odin4 on Linux and
-macOS (tested) and Odin on Windows (not tested yet).
-
-After that, new releases install over the air from Settings > Onigiri Software >
-Software update. [docs/releasing.md](docs/releasing.md) explains how releases
-and updates are made.
+Flash `out/Onigiri_AP_….tar.md5` as in [Installing](#installing), or follow
+[docs/flashing.md](docs/flashing.md) for odin4. [docs/releasing.md](docs/releasing.md)
+explains how releases and over-the-air updates are made.
 
 A few things to keep in mind:
 
@@ -170,6 +212,8 @@ A few things to keep in mind:
 - Parts of the build are made for this exact Samsung software version. If you
   use a newer version, the build will stop on purpose so nothing breaks
   quietly.
+
+</details>
 
 ## For contributors
 
