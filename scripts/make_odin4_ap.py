@@ -3,6 +3,9 @@
 
 usage: make_odin4_ap.py out/Onigiri_AP_<...>.tar.md5 out/AP_odin4.tar
 
+Only packages up to 2026.10.20 need it: build_odin.sh now shapes super this way itself (with
+sparse_fixed below), and odin4 flashes those .tar.md5 files as they are.
+
 - odin4's compressed download only takes single-block LZ4 frames, so it unpacks every real
   image to a temporary file before sending it; the images are stored plain instead.
 - A super sparse image with FILL chunks was acknowledged by the bootloader but landed corrupted
