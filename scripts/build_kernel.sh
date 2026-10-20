@@ -9,11 +9,13 @@ PATCHES=("$SRC_DIR"/external/patches/kernel/*.patch)
 
 source "$SRC_DIR/onigiri/configs/version.sh"
 export ROM_VERSION KERNEL_RELEASE
-export LOCALVERSION="-$ROM_VERSION"
+export LOCALVERSION="-$KERNEL_VERSION"
 unset BUILD_NUMBER
 
 source "$SRC_DIR/scripts/utils/source_patches.sh"
 if [[ -e "$KERNEL_DIR/.git" ]]; then
+    # The camera and video drivers rewrite these tracked headers with build time and host.
+    git -C "$KERNEL_DIR" checkout -- ':(glob)vendor/**/*_generated_h'
     require_clean_source "$KERNEL_DIR"
 else
     git -C "$SRC_DIR" submodule update --init --depth 1 external/kernel

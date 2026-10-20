@@ -23,7 +23,7 @@ GET_WORK_DIR_HASH()
     {
         find "$SRC_DIR/onigiri" "$SRC_DIR/target/$TARGET_CODENAME" -type f -print0
         find "$SRC_DIR/scripts" -type f \( -name '*.sh' -o -name '*.py' \) -print0
-        printf '%s\0' "$SRC_DIR/security/onigiri_platform.x509.pem"
+        printf '%s\0' "$SRC_DIR/security/onigiri_platform.x509.pem" "$SRC_DIR/security/onigiri_ota.x509.pem"
         if [ -f "$OUT_DIR/target/b5q/kernel/artifacts.json" ]; then
             printf '%s\0' "$OUT_DIR/target/b5q/kernel/artifacts.json"
         fi

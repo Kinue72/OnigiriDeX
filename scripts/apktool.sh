@@ -37,6 +37,19 @@ BUILD()
         EVAL "signapk \"$SRC_DIR/security/${CERT_PREFIX}_platform.x509.pem\" \"$SRC_DIR/security/${CERT_PREFIX}_platform.pk8\" \"$OUTPUT_PATH/dist/$FILE_NAME\" \"$OUTPUT_PATH/dist/temp.apk\"" || exit 1
         mv -f "$OUTPUT_PATH/dist/temp.apk" "$OUTPUT_PATH/dist/$FILE_NAME"
     else
+        # apktool stamps every entry with the build time (signapk resets it for APKs). A fixed
+        # time keeps an unchanged jar byte-identical across builds, and so out of OTAs.
+        python3 - "$OUTPUT_PATH/dist/$FILE_NAME" "$OUTPUT_PATH/dist/fixed" << 'PY' || exit 1
+import sys
+import zipfile
+
+with zipfile.ZipFile(sys.argv[1]) as source, zipfile.ZipFile(sys.argv[2], "w") as output:
+    for entry in source.infolist():
+        data = source.read(entry)
+        entry.date_time = (2008, 1, 1, 0, 0, 0)
+        output.writestr(entry, data)
+PY
+        mv -f "$OUTPUT_PATH/dist/fixed" "$OUTPUT_PATH/dist/$FILE_NAME"
         LOG "- Zipaligning ${INPUT_FILE//$WORK_DIR/}"
         EVAL "zipalign -p 4 \"$OUTPUT_PATH/dist/$FILE_NAME\" \"$OUTPUT_PATH/dist/temp\"" || exit 1
         mv -f "$OUTPUT_PATH/dist/temp" "$OUTPUT_PATH/dist/$FILE_NAME"

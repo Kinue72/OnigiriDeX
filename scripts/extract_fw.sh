@@ -36,7 +36,7 @@ EXTRACT_AVB_BINARIES()
 
 EXTRACT_KERNEL_BINARIES()
 {
-    local FILES="boot.img dtbo.img init_boot.img vendor_boot.img"
+    local FILES="boot.img dtbo.img init_boot.img vendor_boot.img recovery.img"
 
     LOG_STEP_IN "- Extracting kernel binaries"
 
@@ -52,6 +52,19 @@ EXTRACT_KERNEL_BINARIES()
     done
 
     LOG_STEP_OUT
+}
+
+# The target AP ships Samsung's OTA generator (ota_from_target_files, updater and target-files
+# metadata); scripts/make_ota.sh runs it.
+EXTRACT_OTA_TOOLS()
+{
+    [ "$MODEL/$CSC" = "$TARGET_FIRMWARE" ] || return 0
+
+    LOG "- Extracting OTA tools..."
+    rm -rf "$FW_DIR/${MODEL}_${CSC}/fota"
+    EVAL "tar xf \"$AP_TAR\" -C \"$TMP_DIR\" meta-data/fota.zip" || exit 1
+    EVAL "unzip -q \"$TMP_DIR/meta-data/fota.zip\" \"OTA/*\" META/misc_info.txt META/dynamic_partitions_info.txt RECOVERY/RAMDISK/system/etc/recovery.fstab -d \"$FW_DIR/${MODEL}_${CSC}/fota\"" || exit 1
+    rm -rf "$TMP_DIR/meta-data"
 }
 
 EXTRACT_OS_PARTITIONS()
@@ -390,6 +403,7 @@ for i in "${FIRMWARES[@]}"; do
     fi
 
     EXTRACT_KERNEL_BINARIES
+    EXTRACT_OTA_TOOLS
     EXTRACT_OS_PARTITIONS
     EXTRACT_AVB_BINARIES
 

@@ -1,12 +1,14 @@
 # Flashing with Odin
 
 `onigiri build_odin` writes `out/Onigiri_AP_<model>_<firmware>_<commit>_<date>.tar.md5`, an AP
-package with `boot`, `init_boot`, `vendor_boot`, `dtbo`, `vbmeta` and `super`, all LZ4
-compressed.
+package with `boot`, `init_boot`, `vendor_boot`, `dtbo`, `vbmeta`, `recovery` and `super`, all
+LZ4 compressed.
 
 - **First install**: flash the stock Flip5 BL, CP and CSC (CSC wipes data; HOME_CSC keeps it)
   together with the Onigiri AP. Never flash Fold5 bootloader, modem or hardware partitions.
-- **Updates**: the AP alone keeps your data.
+- **Updates**: the AP alone keeps your data. Once a release is installed, the next one also
+  comes over the air: Settings > Onigiri Software > Software update (see
+  [releasing.md](releasing.md)).
 
 Samsung Odin3 on Windows takes the `.tar.md5` in the AP slot as is. This has not been tested on
 the current builds; if it reports PASS but the phone boot-loops, use odin4 as below.

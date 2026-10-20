@@ -30,7 +30,7 @@ for name, checksum in {
     "busybox": "060844b0769f7a50262854af027c4d6076a212d160a51309b53057cfb7122900",
 }.items():
     assert hashlib.sha256((tools / name).read_bytes()).hexdigest() == checksum, name
-assert (build / "dist/kernel.release").read_text().strip() == release, "Kernel release does not match the ROM commit"
+assert (build / "dist/kernel.release").read_text().strip() == release, "Kernel release does not match the kernel sources"
 msm_makefile = susfs_config.parents[1] / "kernel_platform/msm-kernel/Makefile"
 version = dict(re.findall(r"^(VERSION|PATCHLEVEL|SUBLEVEL|EXTRAVERSION)[ \t]*=[ \t]*(.*)$", msm_makefile.read_text(), re.M))
 msm_release = ".".join(version[name] for name in ("VERSION", "PATCHLEVEL", "SUBLEVEL")) + version["EXTRAVERSION"] + "-" + release.partition("-")[2]
