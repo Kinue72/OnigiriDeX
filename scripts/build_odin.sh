@@ -48,22 +48,35 @@ if [ "$OCCUPIED" -gt "$TARGET_SUPER_GROUP_SIZE" ]; then
 fi
 
 LOG "- Building and verifying Flip5 super image"
-python3 - "$STAGE" "${SUPER_COMMAND[@]}" <<'PYCHECK'
+python3 - "$STAGE" "$SRC_DIR" "${SUPER_COMMAND[@]}" <<'PYCHECK'
 import hashlib
 import subprocess
 import sys
 from pathlib import Path
 
 stage = Path(sys.argv[1])
+sys.path.insert(0, str(Path(sys.argv[2]) / "scripts"))
+from make_odin4_ap import sparse_fixed
 partitions = ("system", "product", "system_ext", "vendor", "odm", "vendor_dlkm", "system_dlkm")
 expected = {}
 for partition in partitions:
     image = stage / (partition + ".img")
     with image.open("rb") as stream:
         expected[partition] = (image.stat().st_size, hashlib.file_digest(stream, "sha256").digest())
-subprocess.run(sys.argv[2:], check=True)
+subprocess.run(sys.argv[3:], check=True)
 for partition in partitions:
     (stage / (partition + ".img")).unlink()
+# Shape super like Samsung's own (RAW and DONT_CARE chunks only, a multiple of 512 bytes, flashed
+# last) so odin4 takes the package as is: it lands FILL chunks corrupted ("liblp: invalid geometry
+# magic" at boot) and pads big images to 512 bytes, which breaks the next one. The unpack check
+# below then runs on the image that ships.
+size, pieces = sparse_fixed(stage / "super.img")
+with (stage / "super.fixed.img").open("wb") as fixed:
+    for piece in pieces:
+        fixed.write(piece)
+if (stage / "super.fixed.img").stat().st_size != size:
+    raise ValueError("Reshaped super image has the wrong size")
+(stage / "super.fixed.img").replace(stage / "super.img")
 raw = stage / "super.raw.img"
 subprocess.run(["simg2img", str(stage / "super.img"), str(raw)], check=True)
 images = stage / "unpacked"
@@ -92,7 +105,7 @@ done
 
 LOG "- Creating Odin AP archive"
 tar --format=gnu -cf "$STAGE/package.tar" -C "$STAGE" \
-    super.img.lz4 boot.img.lz4 init_boot.img.lz4 vendor_boot.img.lz4 dtbo.img.lz4 vbmeta.img.lz4 recovery.img.lz4
+    boot.img.lz4 init_boot.img.lz4 vendor_boot.img.lz4 dtbo.img.lz4 vbmeta.img.lz4 recovery.img.lz4 super.img.lz4
 
 python3 - "$STAGE/package.tar" "$OUTPUT" "$SRC_DIR" "$SUPER_IMAGE_SIZE" "$WORK_DIR" <<'PY'
 import hashlib

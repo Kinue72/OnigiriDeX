@@ -10,8 +10,9 @@ LZ4 compressed.
   comes over the air: Settings > Onigiri Software > Software update (see
   [releasing.md](releasing.md)).
 
-Samsung Odin3 on Windows takes the `.tar.md5` in the AP slot as is. This has not been tested on
-the current builds; if it reports PASS but the phone boot-loops, use odin4 as below.
+Samsung Odin3 on Windows and Eros on Android take the `.tar.md5` in the AP slot as is. With
+2026.10.20, a CSC flash ends at "Can't load Android system" on the inner screen: choose Factory data
+reset. Later builds do that reset themselves.
 
 ## Linux and macOS: odin4
 
@@ -39,7 +40,10 @@ On macOS also remove the Linux-only link flags from `CMakeLists.txt` (`-static-l
 USB modem driver to the Odin interface, and only root can claim it. While the Mac is locked,
 macOS holds new USB accessories until you allow them.
 
-### 2. Repack the AP for odin4
+### 2. Packages up to 2026.10.20: repack the AP for odin4
+
+Later packages are already shaped for odin4: skip this step and flash the `.tar.md5` itself. odin4
+unpacks each image to a temporary file first, so keep about 9 GB free there.
 
 ```sh
 python3 scripts/make_odin4_ap.py out/Onigiri_AP_*.tar.md5 out/AP_odin4.tar
@@ -50,8 +54,8 @@ It needs the `lz4` CLI and about 18 GB free next to the output file. What it cha
 | Problem | Symptom | Fix |
 |---|---|---|
 | odin4's compressed download only takes LZ4 frames of one block, so it unpacks every real image to a temporary file first | an extra ~9 GB write for super | images are stored plain |
-| FILL chunks in the super sparse image | every step acknowledged, then a boot loop; `/proc/last_kmsg` shows `liblp: invalid geometry magic` | FILL chunks expanded to RAW, as in Samsung's own super images |
-| odin4 pads large images to 512 bytes | the image after super fails with `BOOTLOADER_FAIL code=11` | the largest DONT_CARE chunk is split until the sparse file is a multiple of 512 bytes, and super goes last |
+| odin4 lands FILL chunks in the super sparse image corrupted | every step acknowledged, then a boot loop; `/proc/last_kmsg` shows `liblp: invalid geometry magic` | FILL chunks expanded to RAW, as in Samsung's own super images (`build_odin` does this after 2026.10.20) |
+| odin4 pads large images to 512 bytes | the image after super fails with `BOOTLOADER_FAIL code=11` | the largest DONT_CARE chunk is split until the sparse file is a multiple of 512 bytes, and super goes last (also in `build_odin`) |
 
 ### 3. Flash
 
@@ -60,7 +64,7 @@ USB), then:
 
 ```sh
 sudo ./build/odin4 -l                      # the phone must be listed
-sudo ./build/odin4 --reboot -a out/AP_odin4.tar
+sudo ./build/odin4 --reboot -a out/Onigiri_AP_*.tar.md5   # or out/AP_odin4.tar from step 2
 ```
 
 For a first install add `-b BL_<...>.tar.md5 -c CP_<...>.tar.md5 -s CSC_<...>.tar.md5` from the
