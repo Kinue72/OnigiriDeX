@@ -1,5 +1,5 @@
 From: Onigiri
-Subject: [PATCH] Add OTA software update
+Subject: [PATCH] Add OTA software update in place of the ROM version row
 
 diff --git a/res/values/strings.xml b/res/values/strings.xml
 index c781530..4e481dd 100644
@@ -15,10 +15,10 @@ diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
 index 3c36c3f..f57fca2 100644
 --- a/res/xml/onigiri_settings.xml
 +++ b/res/xml/onigiri_settings.xml
-@@ -2,6 +2,7 @@
+@@ -2,6 +2,6 @@
  <PreferenceScreen android:title="@string/onigiri_settings_title" settings:hierarchicalParentFragment="com.android.settings.homepage.TopLevelSettings" settings:keywords="@string/keywords_onigiri_settings" settings:topLevelPreferenceKey="top_level_onigiri"
    xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
-     <Preference android:title="@string/onigiri_rom_version_title" android:key="onigiri_rom_version" android:summary="@string/summary_placeholder" android:fragment="com.samsung.android.settings.deviceinfo.softwareinfo.SoftwareInfoSettings" settings:controller="moe.foss.onigiri.settings.ROMVersionPreferenceController" />
+-    <Preference android:title="@string/onigiri_rom_version_title" android:key="onigiri_rom_version" android:summary="@string/summary_placeholder" android:fragment="com.samsung.android.settings.deviceinfo.softwareinfo.SoftwareInfoSettings" settings:controller="moe.foss.onigiri.settings.ROMVersionPreferenceController" />
 +    <Preference android:title="@string/onigiri_update_title" android:key="onigiri_update" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.UpdatePreferenceController" />
      <Preference android:title="@string/onigiri_device_name_title" android:key="onigiri_device_name" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.DeviceNamePreferenceController" />
      <SecPreferenceCategory android:title="@string/onigiri_patch_settings_title">
@@ -28,7 +28,7 @@ new file mode 100644
 index 0000000..293d1f5
 --- /dev/null
 +++ b/smali_classes4/moe/foss/onigiri/settings/UpdatePreferenceController.smali
-@@ -0,0 +1,132 @@
+@@ -0,0 +1,136 @@
 +.class public Lmoe/foss/onigiri/settings/UpdatePreferenceController;
 +.super Lcom/android/settings/core/BasePreferenceController;
 +.source "UpdatePreferenceController.java"
@@ -37,10 +37,11 @@ index 0000000..293d1f5
 +.implements Ljava/lang/Runnable;
 +
 +
-+# Software update: a tap sets sys.onigiri.update to "install" once a check found an update
-+# (sys.onigiri.update.ready holds its tag), otherwise to "check". init then runs
-+# onigiri-update.sh as root, which reports in sys.onigiri.update.status and clears
-+# sys.onigiri.update when it ends. Until then the row re-reads the status every second.
++# Software update: shows the installed build (ro.onigiri.build) until a check reports. A tap
++# sets sys.onigiri.update to "install" once a check found an update (sys.onigiri.update.ready
++# holds its tag), otherwise to "check". init then runs onigiri-update.sh as root, which reports
++# in sys.onigiri.update.status and clears sys.onigiri.update when it ends. Until then the row
++# re-reads the status every second.
 +
 +.field private final mHandler:Landroid/os/Handler;
 +
@@ -83,8 +84,11 @@ index 0000000..293d1f5
 +.method public updateState(Landroidx/preference/Preference;)V
 +    .locals 3
 +
++    const-string v0, "ro.onigiri.build"
++    const-string v1, ""
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v1
 +    const-string v0, "sys.onigiri.update.status"
-+    const-string v1, "Tap to check for updates"
 +    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 +    move-result-object v0
 +    invoke-virtual {p1, v0}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V

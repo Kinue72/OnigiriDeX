@@ -79,6 +79,8 @@ done
 
 SET_PROP system ro.build.display.id "${TARGET_FIRMWARE_VERSION%%/*}-onigiri-$ROM_VERSION"
 SET_PROP system ro.onigiri.version "$ROM_VERSION"
+# Settings > Onigiri Software > Software update shows it until the first check.
+SET_PROP system ro.onigiri.build "$ROM_VERSION, built $(date -u -d "@$ROM_BUILD_TIMESTAMP" '+%Y-%m-%d %H:%M UTC')"
 # PackageManager keys its parse cache on a digest of the partition fingerprints, which Onigiri
 # keeps stock, and erofs stamps every file with the same time. Without a per-build value here an
 # update keeps stale manifests (e.g. "Invalid fragment" crashes). No partition sets "oem" on the
