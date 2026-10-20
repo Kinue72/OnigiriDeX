@@ -14,8 +14,8 @@ unset BUILD_NUMBER
 
 source "$SRC_DIR/scripts/utils/source_patches.sh"
 if [[ -e "$KERNEL_DIR/.git" ]]; then
-    # Every camera driver build rewrites this tracked header with its build time and host.
-    git -C "$KERNEL_DIR" checkout -- vendor/qcom/opensource/camera-kernel/cam_generated_h
+    # The camera and video drivers rewrite these tracked headers with build time and host.
+    git -C "$KERNEL_DIR" checkout -- ':(glob)vendor/**/*_generated_h'
     require_clean_source "$KERNEL_DIR"
 else
     git -C "$SRC_DIR" submodule update --init --depth 1 external/kernel
