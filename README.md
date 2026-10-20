@@ -35,8 +35,9 @@ Installing it can wipe your phone or stop it from starting up. Before you try:
   first.
 - The original Samsung software [F731BXXS5EYI1](https://samfw.com/firmware/SM-F731B/XXV/F731BXXS5EYI1) for the SM-F731B. You only need its BL, CP and CSC files.
 - Something to flash with, one of:
-  - a computer: **Odin3** on Windows, or **odin4** on Linux and macOS;
-  - another Android phone with [Eros](https://github.com/Gabriel2392/ErosFlashTool) and a USB-C cable or OTG adapter between the two phones.
+  - a computer: **Odin3** on Windows, **odin4** on Linux and macOS, or
+    [brokkr](https://github.com/Gabriel2392/brokkr-flash) on any of them;
+  - another Android phone with brokkr and a USB-C cable or OTG adapter between the two phones.
 
 **1. Download Onigiri.** From the [latest release](https://github.com/Kinue72/OnigiriDeX/releases/latest),
 download every `Onigiri_AP_….tar.md5.0`, `.1`, `.2`… part. GitHub can't hold
@@ -57,11 +58,12 @@ USB, then press Volume Up to enter Download Mode. Put the Onigiri file in
 
 - **Odin3 (Windows):** press Start.
 - **odin4 (Linux, macOS):** follow [docs/flashing.md](docs/flashing.md). It
-  needs two small fixes to odin4 and a repacked AP, both explained there.
-- **Eros (Android):** connect the phones and start the flash.
+  needs two small fixes to odin4, explained there.
+- **brokkr (Windows, macOS, Linux, Android):** start the flash. On Android,
+  connect the two phones first.
 
 Only odin4 has been tested with Onigiri so far. If the phone keeps restarting
-after Odin3 or Eros, flash it again with odin4.
+after Odin3 or brokkr, flash it again with odin4.
 
 Use **CSC** the first time: it wipes the phone, which a phone coming from
 Samsung's own software needs. Never flash Fold5 files. The first start takes a

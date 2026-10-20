@@ -10,7 +10,8 @@ LZ4 compressed.
   comes over the air: Settings > Onigiri Software > Software update (see
   [releasing.md](releasing.md)).
 
-Samsung Odin3 on Windows and Eros on Android take the `.tar.md5` in the AP slot as is. With
+Samsung Odin3 on Windows and [brokkr](https://github.com/Gabriel2392/brokkr-flash) (Windows,
+macOS, Linux and Android) take the `.tar.md5` in the AP slot as is. With
 2026.10.20, a CSC flash ends at "Can't load Android system" on the inner screen: choose Factory data
 reset. Later builds do that reset themselves.
 
