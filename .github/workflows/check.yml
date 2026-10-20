@@ -1,0 +1,40 @@
+# Fast checks for every pull request and push to main. release.yml runs them too before its
+# hours-long build, so a broken script or patch fails in a minute instead of hours in.
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lz4 shellcheck > /dev/null
+
+      - name: Shell scripts
+        run: |
+          git ls-files '*.sh' | while IFS= read -r FILE; do bash -n "$FILE"; done
+          git ls-files '*.sh' | xargs shellcheck --severity=error --shell=bash
+
+      - name: Python
+        run: |
+          python3 -m py_compile $(git ls-files '*.py')
+          python3 scripts/test_make_odin4_ap.py
+
+      - name: Patches
+        run: |
+          python3 scripts/check_patches.py
+          git ls-files -z '*.patch' | xargs -0 python3 scripts/check_patches.py
+
+      - name: Config files
+        run: git ls-files '*.json' | xargs -n 1 python3 -m json.tool > /dev/null

@@ -14,20 +14,19 @@ was made from, so a package for another build fails without touching the phone.
 ## Making a release
 
 Push a tag, for example `git tag 2026.10.21 && git push origin 2026.10.21`.
-`.github/workflows/build.yml` then builds that commit on GitHub's runners and runs
-`scripts/release.sh`, which:
+`.github/workflows/release.yml` first runs the checks from `check.yml` (shell, Python, patch and
+config checks, which also run on every pull request and push to main) and that the signing key
+secret and firmware draft are in place. Only then does it build that commit on GitHub's runners
+and run `scripts/release.sh`, which:
 
 1. makes `Onigiri_OTA_<previous version>.zip` from the previous release's AP with
    `scripts/make_ota.sh` (Samsung's `ota_from_target_files`, from the Flip5 firmware);
 2. uploads the AP split into parts under GitHub's 2 GiB asset limit, its `.sha256`, the OTA and
    `version.txt`.
 
-A build takes about three hours, more when the kernel changed (the kernel and the build tools
-are cached between runs). Only an update from the previous release is made; someone two releases
-behind flashes the AP.
-
-To try a pull request on a phone first, add the `build` label: the AP is attached to the run as
-an artifact for a week. **Run workflow** on the Actions tab does the same for a branch.
+A release takes three to four hours; nothing else builds. If it fails late, **Re-run failed
+jobs** reuses the cached kernel and tools. Only an update from the previous release is made;
+someone two releases behind flashes the AP.
 
 Without GitHub, the same works on the build machine from a clean git checkout:
 `onigiri build_odin`, then `onigiri release <tag> out/Onigiri_AP_*.tar.md5` (needs `gh` logged in
@@ -45,7 +44,7 @@ tar -C security -cz onigiri_platform.pk8 onigiri_platform.x509.pem onigiri_ota.p
 
 Back the keys up as well. Without the platform key, updates can't be installed over an existing
 install; without the OTA key, every phone needs a recovery with the new certificate flashed with
-Odin before it can update again. Builds without the secret get throwaway keys and never publish.
+Odin before it can update again. Without the secret a release stops before building.
 
 **Firmware.** Samsung's servers no longer serve the pinned firmware, so the workflow downloads
 `out/fw` (what `onigiri extract_fw` produces) from a draft release named `firmware`. Drafts are
