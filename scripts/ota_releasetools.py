@@ -22,4 +22,6 @@ def IncrementalOTA_InstallEnd(info):
             continue
         common.ZipWrite(info.output_zip, target, name + ".img")
         info.script.Print("Writing %s..." % name)
-        info.script.AppendExtra('package_extract_file("%s.img", "/dev/block/bootdevice/by-name/%s");' % (name, name))
+        # A bare package_extract_file() call ignores a failed write; abort so it isn't reported as installed.
+        info.script.AppendExtra('package_extract_file("%s.img", "/dev/block/bootdevice/by-name/%s") || '
+                                'abort("E9001: Failed to write %s.");' % (name, name, name))

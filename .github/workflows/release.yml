@@ -93,7 +93,10 @@ jobs:
         id: versions
         run: |
           source ./buildenv.sh SM-F731B > /dev/null
-          echo "kernel=kernel-$KERNEL_RELEASE.tar.zst" >> "$GITHUB_OUTPUT"
+          # The cached boot images are also repacked from the stock ones by these scripts.
+          KERNEL="$(cat scripts/build_kernel.sh scripts/package_kernel.sh scripts/utils/source_patches.sh \
+            onigiri/configs/firmware.json | sha256sum | cut -c1-12)"
+          echo "kernel=kernel-$KERNEL_RELEASE-$KERNEL.tar.zst" >> "$GITHUB_OUTPUT"
           TOOLS="$({ git ls-tree HEAD external/android-tools external/apktool external/erofs-utils \
             external/samloader external/signapk; git ls-files -s scripts/build_dependencies.sh external/make.sh \
             external/patches external/ext4_utils external/f2fs_utils; } | sha256sum | cut -c1-16)"
@@ -119,8 +122,18 @@ jobs:
           CACHE: ${{ steps.versions.outputs.kernel }}
         run: |
           mkdir -p out/target/b5q
-          if ! gh release download build-cache --pattern "$CACHE" --output - | zstd -dc | tar -x -C out/target/b5q; then
-            git submodule update --init --depth 1 external/kernel
+          git submodule update --init --depth 1 external/kernel
+          if gh release download build-cache --pattern "$CACHE" --output - | zstd -dc | tar -x -C out/target/b5q; then
+            # The ROM build still needs the kernel's pinned clang (DeX compositor patch): fetch it
+            # the way the kernel build does, with the URL and checksum from its patched build.sh.
+            git -C external/kernel apply --include=build.sh "$PWD"/external/patches/kernel/*.patch
+            eval "$(grep -E '^export TOOLCHAIN_(URL|SHA256)=' external/kernel/build.sh)"
+            git -C external/kernel checkout -- build.sh
+            wget -q -O "$RUNNER_TEMP/clang.tar.xz" "$TOOLCHAIN_URL"
+            echo "$TOOLCHAIN_SHA256  $RUNNER_TEMP/clang.tar.xz" | sha256sum -c -
+            tar -xf "$RUNNER_TEMP/clang.tar.xz" -C external/kernel/kernel_platform --strip-components=1 toolchain/prebuilts
+            rm "$RUNNER_TEMP/clang.tar.xz"
+          else
             $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_kernel'
             rm -rf external/kernel/out
             tar -C out/target/b5q -cf - kernel | zstd -T0 > "$CACHE"
