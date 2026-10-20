@@ -29,45 +29,109 @@ Installing it can wipe your phone or stop it from starting up. Before you try:
 
 **You need:**
 
-- A Galaxy Z Flip5 **SM-F731B**. Other Flip5 models don't work.
-- An **unlocked bootloader**. Unlocking wipes the phone: turn on *OEM unlocking*
-  in Developer options, turn the phone off, hold both volume keys while you
-  plug in USB, then hold Volume Up and follow the screen.
-- The original Samsung software **F731BXXS5EYI1** for the SM-F731B (search for
-  that version on a Samsung firmware site). You only use its BL, CP and CSC
-  files.
-- A computer with Odin: Odin3 on Windows, or odin4 on Linux and macOS.
+- A Galaxy Z Flip5 **SM-F731B**. Other Flip5 models haven't been tested.
+- An **unlocked bootloader**. You can only unlock it on Android 15 / One UI 7
+  or older; some early Android 16 / One UI 8 builds can still be downgraded
+  first.
+- The original Samsung software [F731BXXS5EYI1](https://samfw.com/firmware/SM-F731B/XXV/F731BXXS5EYI1) for the SM-F731B. You only need its BL, CP and CSC files.
+- Something to flash with, one of:
+  - a computer: **Odin3** on Windows, or **odin4** on Linux and macOS;
+  - another Android phone with [Eros](https://github.com/Gabriel2392/ErosFlashTool) and a USB-C cable or OTG adapter between the two phones.
 
 **1. Download Onigiri.** From the [latest release](https://github.com/Kinue72/OnigiriDeX/releases/latest),
-download every `Onigiri_AP_….tar.md5.0`, `.1`, `.2`… part and the `.sha256`
-file. GitHub can't hold the whole 8 GB file in one piece, so join the parts
-into one file with the same name, without the number. The release notes show
-the exact command for macOS, Linux and Windows.
+download every `Onigiri_AP_….tar.md5.0`, `.1`, `.2`… part. GitHub can't hold
+the whole 8 GB file in one piece, so join the parts
+back into one file with the same name, minus the number at the end. The
+release notes show the exact command for Windows, macOS and Linux; on an
+Android phone, run the Linux command in [Termux](https://termux.dev).
 
-**2. Check the download.** The `.sha256` file holds the file's checksum:
-`sha256sum -c Onigiri_AP_*.sha256` on Linux, `shasum -a 256 -c Onigiri_AP_*.sha256`
-on macOS, or compare it with `certutil -hashfile <file> SHA256` on Windows.
+**2. Check the download (optional).** To make sure nothing got corrupted,
+download the `.sha256` file too and run `sha256sum -c Onigiri_AP_*.sha256` (Linux and
+Termux) or `shasum -a 256 -c Onigiri_AP_*.sha256` (macOS); it should say `OK`.
+On Windows, compare `certutil -hashfile <file> SHA256` with the number in the
+`.sha256` file.
 
-**3. Flash it.** Turn the phone off, then hold both volume keys while you plug
-in USB, and press Volume Up to enter Download Mode.
+**3. Flash it.** Turn the Flip5 off, hold both volume keys while you plug in
+USB, then press Volume Up to enter Download Mode. Put the Onigiri file in
+**AP** and the Samsung BL, CP and CSC files in their slots.
 
-- **Windows (Odin3):** put the Onigiri file in **AP**, and the BL, CP and CSC
-  files from the Samsung software in their slots, then press Start. This hasn't
-  been tested with the current builds yet; if the phone keeps restarting
-  afterwards, use odin4.
-- **Linux and macOS (odin4):** follow [docs/flashing.md](docs/flashing.md). It
-  needs two small fixes to odin4 and a repacked AP; both are explained there.
+- **Odin3 (Windows):** press Start.
+- **odin4 (Linux, macOS):** follow [docs/flashing.md](docs/flashing.md). It
+  needs two small fixes to odin4 and a repacked AP, both explained there.
+- **Eros (Android):** connect the phones and start the flash.
 
-Use **CSC** for the first install: it wipes the phone, which a phone coming
-from Samsung's own software needs. Never flash Fold5 files.
+Only odin4 has been tested with Onigiri so far. If the phone keeps restarting
+after Odin3 or Eros, flash it again with odin4.
 
-The first start takes a few minutes.
+Use **CSC** the first time: it wipes the phone, which a phone coming from
+Samsung's own software needs. Never flash Fold5 files. The first start takes a
+few minutes.
 
 **Updating.** Open **Settings → Onigiri Software → Software update** and tap
 it. When a new version is out, tap again: the phone downloads only what
 changed, restarts, installs it in about a minute and starts again. Your data
 stays. If it says the new version needs a full flash, flash just the new AP
-(no BL, CP or CSC): that keeps your data too.
+(no BL, CP or CSC), which keeps your data too.
+
+<details>
+<summary><b>Building it yourself</b></summary>
+
+You need a Linux computer with Bash, Python 3 and Java 17.
+
+**1. Get the code and tools**
+
+```sh
+git clone --recurse-submodules https://github.com/Kinue72/OnigiriDeX.git
+cd OnigiriDeX
+bash
+source ./buildenv.sh SM-F731B
+onigiri build_dependencies
+```
+
+**2. Download the original Samsung software**
+
+Put these full firmware ZIP files in the `firmware/` folder:
+
+- Flip5: SM-F731B / XXV / F731BXXS5EYI1
+- Fold5: SM-F946B / XXV / F946BXXS5EYI1
+- Galaxy S24 (only used for screen colours): SM-S921B / S921BXXS9BYH1
+
+**3. Build**
+
+Change the file names below to match the files you downloaded:
+
+```sh
+python3 scripts/import_fw.py target firmware/flip5.zip
+python3 scripts/import_fw.py donor firmware/fold5.zip
+onigiri extract_fw
+onigiri extract_fw --ignore-source --ignore-target SM-F946B/XXV
+python3 scripts/extract_adaptive_display.py firmware/s24.zip
+source ./buildenv.sh SM-F731B
+onigiri build_kernel
+onigiri make_rom
+onigiri build_odin
+```
+
+The finished files show up in the `out/` folder.
+
+**4. Install it on the phone**
+
+Flash `out/Onigiri_AP_….tar.md5` as in [Installing](#installing), or follow
+[docs/flashing.md](docs/flashing.md) for odin4. [docs/releasing.md](docs/releasing.md)
+explains how releases and over-the-air updates are made.
+
+A few things to keep in mind:
+
+- The build creates two private keys, `security/onigiri_platform.pk8` and
+  `security/onigiri_ota.pk8` (recovery only installs updates signed with it).
+  Keep them safe, don't share them, and use the same ones for every future update.
+- Only install the Flip5's own low-level parts (bootloader, modem and
+  hardware files). Never put Fold5 ones on the phone.
+- Parts of the build are made for this exact Samsung software version. If you
+  use a newer version, the build will stop on purpose so nothing breaks
+  quietly.
+
+</details>
 
 ## Extra features
 
@@ -152,66 +216,6 @@ columns, a grid, or a priority grid.
   Android 15 normally refuses.
 - **Disable ASKS**: turns off a Samsung security check that can stop some
   apps from installing or running.
-
-</details>
-
-<details>
-<summary><b>Building it yourself</b></summary>
-
-You need a Linux computer with Bash, Python 3 and Java 17.
-
-**1. Get the code and tools**
-
-```sh
-git clone --recurse-submodules https://github.com/Kinue72/OnigiriDeX.git
-cd OnigiriDeX
-bash
-source ./buildenv.sh SM-F731B
-onigiri build_dependencies
-```
-
-**2. Download the original Samsung software**
-
-Put these full firmware ZIP files in the `firmware/` folder:
-
-- Flip5: SM-F731B / XXV / F731BXXS5EYI1
-- Fold5: SM-F946B / XXV / F946BXXS5EYI1
-- Galaxy S24 (only used for screen colours): SM-S921B / S921BXXS9BYH1
-
-**3. Build**
-
-Change the file names below to match the files you downloaded:
-
-```sh
-python3 scripts/import_fw.py target firmware/flip5.zip
-python3 scripts/import_fw.py donor firmware/fold5.zip
-onigiri extract_fw
-onigiri extract_fw --ignore-source --ignore-target SM-F946B/XXV
-python3 scripts/extract_adaptive_display.py firmware/s24.zip
-source ./buildenv.sh SM-F731B
-onigiri build_kernel
-onigiri make_rom
-onigiri build_odin
-```
-
-The finished files show up in the `out/` folder.
-
-**4. Install it on the phone**
-
-Flash `out/Onigiri_AP_….tar.md5` as in [Installing](#installing), or follow
-[docs/flashing.md](docs/flashing.md) for odin4. [docs/releasing.md](docs/releasing.md)
-explains how releases and over-the-air updates are made.
-
-A few things to keep in mind:
-
-- The build creates two private keys, `security/onigiri_platform.pk8` and
-  `security/onigiri_ota.pk8` (recovery only installs updates signed with it).
-  Keep them safe, don't share them, and use the same ones for every future update.
-- Only install the Flip5's own low-level parts (bootloader, modem and
-  hardware files). Never put Fold5 ones on the phone.
-- Parts of the build are made for this exact Samsung software version. If you
-  use a newer version, the build will stop on purpose so nothing breaks
-  quietly.
 
 </details>
 
