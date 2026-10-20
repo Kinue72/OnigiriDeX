@@ -47,6 +47,19 @@ bin/install-recovery.sh
 etc/init/vendor_flash_recovery.rc
 "
 
+# Background app installers
+# - OMCAgent5: downloads the CSC app lists (restore_<CSC>.json, appres.json and
+#   server-pushed ones) after setup; One UI Home shows them as gray icons while offline
+# - AppUpdateCenter: swaps stub apps for the full ones
+# - MAPSAgent: app recommendations
+SYSTEM_DEBLOAT+="
+system/app/MAPSAgent
+system/etc/permissions/privapp-permissions-com.samsung.android.app.omcagent.xml
+system/etc/permissions/privapp-permissions-com.samsung.android.app.updatecenter.xml
+system/priv-app/AppUpdateCenter
+system/priv-app/OMCAgent5
+"
+
 # Apps debloat
 PRODUCT_DEBLOAT+="
 app/AssistantShell

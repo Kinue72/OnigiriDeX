@@ -1,6 +1,12 @@
 <packages>
     <!-- <package name="com.example.app"/> -->
+    <package name="com.amazon.appmanager"/>
     <package name="com.aura.oobe.samsung"/>
     <package name="com.aura.oobe.samsung.gl"/>
+    <package name="com.dti.aone"/>
+    <package name="com.dti.bouyguestelecom"/>
+    <package name="com.dti.globe"/>
+    <package name="com.dti.telefonica"/>
+    <package name="com.dti.tim"/>
     <package name="com.ironsource.appcloud.oobe.hutchison"/>
 </packages>
