@@ -5,7 +5,7 @@
 # an OTA from the previous release when there is one, and version.txt, which Settings > Onigiri
 # Software > Software update reads. Released APs are kept in out/releases as the base of the
 # next OTA (downloaded from the previous release when missing).
-# .github/workflows/build.yml runs this for every pushed tag.
+# .github/workflows/release.yml runs this for every pushed tag.
 
 set -eo pipefail
 

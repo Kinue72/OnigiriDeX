@@ -6,7 +6,6 @@ name: Release
 on:
   push:
     tags: ["*"]
-  pull_request:  # TEMP: one test build of PR #5, reverted before merge
 
 permissions:
   contents: write
@@ -34,7 +33,6 @@ jobs:
           [ -n "$KEYS" ] || { echo "::error::Set the ONIGIRI_SIGNING_KEYS secret (docs/releasing.md)."; exit 1; }
           PARTS="$(gh release view firmware --repo "$ONIGIRI_REPO" --json assets --jq '[.assets[] | select(.name | startswith("onigiri-fw.tar.zst."))] | length')" || PARTS=0
           [ "$PARTS" -gt 0 ] || { echo "::error::The firmware draft release is missing (docs/releasing.md)."; exit 1; }
-          [ "$GITHUB_EVENT_NAME" = push ] || exit 0  # TEMP
           if gh release view "$GITHUB_REF_NAME" --repo "$ONIGIRI_REPO" --json isDraft --jq 'select(.isDraft | not)' | grep -q .; then
             echo "::error::Release $GITHUB_REF_NAME already exists."
             exit 1
@@ -143,14 +141,4 @@ jobs:
           df -h /
 
       - name: Publish release
-        if: github.event_name == 'push'  # TEMP
         run: $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri release "$GITHUB_REF_NAME" out/Onigiri_AP_*.tar.md5'
-
-      - name: Upload test build  # TEMP
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v7
-        with:
-          name: Onigiri-AP-test
-          path: out/Onigiri_AP_*
-          compression-level: 0
-          retention-days: 7

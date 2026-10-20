@@ -56,5 +56,5 @@ only visible to people with push access; never publish it (or `build-cache`). Af
 mkdir -p /tmp/fw && tar -C out -cf - fw | zstd -T0 -10 | split -b 1900M -d -a 2 - /tmp/fw/onigiri-fw.tar.zst.
 gh release delete firmware --repo Kinue72/OnigiriDeX --yes
 gh release create firmware --repo Kinue72/OnigiriDeX --draft --title "Firmware for CI (never publish)" \
-    --notes "Pre-extracted pinned Samsung firmware for .github/workflows/build.yml." /tmp/fw/onigiri-fw.tar.zst.*
+    --notes "Pre-extracted pinned Samsung firmware for .github/workflows/release.yml." /tmp/fw/onigiri-fw.tar.zst.*
 ```
