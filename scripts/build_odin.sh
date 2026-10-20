@@ -86,13 +86,13 @@ LOG "- Compressing Odin images"
 SUPER_IMAGE_SIZE="$(stat -c '%s' "$STAGE/super.img")"
 lz4 -B6 --content-size -12 "$STAGE/super.img" "$STAGE/super.img.lz4"
 rm "$STAGE/super.img"
-for IMAGE in boot init_boot vendor_boot dtbo vbmeta; do
+for IMAGE in boot init_boot vendor_boot dtbo vbmeta recovery; do
     lz4 -B6 --content-size -12 "$WORK_DIR/kernel/$IMAGE.img" "$STAGE/$IMAGE.img.lz4"
 done
 
 LOG "- Creating Odin AP archive"
 tar --format=gnu -cf "$STAGE/package.tar" -C "$STAGE" \
-    super.img.lz4 boot.img.lz4 init_boot.img.lz4 vendor_boot.img.lz4 dtbo.img.lz4 vbmeta.img.lz4
+    super.img.lz4 boot.img.lz4 init_boot.img.lz4 vendor_boot.img.lz4 dtbo.img.lz4 vbmeta.img.lz4 recovery.img.lz4
 
 python3 - "$STAGE/package.tar" "$OUTPUT" "$SRC_DIR" "$SUPER_IMAGE_SIZE" "$WORK_DIR" <<'PY'
 import hashlib
@@ -108,7 +108,8 @@ from import_fw import verify_odin_package
 
 with tarfile.open(package) as archive:
     if {entry.name for entry in archive.getmembers()} != {
-        "super.img.lz4", "boot.img.lz4", "init_boot.img.lz4", "vendor_boot.img.lz4", "dtbo.img.lz4", "vbmeta.img.lz4"}:
+        "super.img.lz4", "boot.img.lz4", "init_boot.img.lz4", "vendor_boot.img.lz4", "dtbo.img.lz4", "vbmeta.img.lz4",
+        "recovery.img.lz4"}:
         raise ValueError("Unexpected Odin archive contents")
     if not all(entry.isfile() for entry in archive.getmembers()):
         raise ValueError("Odin archive contains a non-regular image")

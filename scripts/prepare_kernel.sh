@@ -27,7 +27,7 @@ config = (root / "gki.config").read_text()
 for option in ("CONFIG_KSU=y", "CONFIG_KSU_SUSFS=y", "CONFIG_MODVERSIONS=y", *Path(sys.argv[2]).read_text().splitlines()):
     if option.startswith("CONFIG_") and option + "\n" not in config:
         raise SystemExit("Required kernel configuration missing: " + option)
-assert (root / "kernel.release").read_text().strip() == sys.argv[3], "Kernel release does not match the ROM commit"
+assert (root / "kernel.release").read_text().strip() == sys.argv[3], "Kernel release does not match the kernel sources; run build_kernel"
 for name in ("boot.img", "vendor_boot.img"):
     assert (root / name).stat().st_size <= 100663296, name
 PY

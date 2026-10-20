@@ -156,10 +156,15 @@ The finished files show up in the `out/` folder.
 Follow [docs/flashing.md](docs/flashing.md). It covers odin4 on Linux and
 macOS (tested) and Odin on Windows (not tested yet).
 
+After that, new releases install over the air from Settings > Onigiri Software >
+Software update. [docs/releasing.md](docs/releasing.md) explains how releases
+and updates are made.
+
 A few things to keep in mind:
 
-- The build creates a private key at `security/onigiri_platform.pk8`. Keep it
-  safe, don't share it, and use the same one for every future update.
+- The build creates two private keys, `security/onigiri_platform.pk8` and
+  `security/onigiri_ota.pk8` (recovery only installs updates signed with it).
+  Keep them safe, don't share them, and use the same ones for every future update.
 - Only install the Flip5's own low-level parts (bootloader, modem and
   hardware files). Never put Fold5 ones on the phone.
 - Parts of the build are made for this exact Samsung software version. If you

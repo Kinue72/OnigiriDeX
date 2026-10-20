@@ -56,7 +56,7 @@ run_cmd()
             "$SRC_DIR/scripts/$CMD.sh" "$@" |& tee "$OUT_DIR/target/b5q/$CMD-$(date +%Y%m%d_%H%M%S).log"
         )
     else
-        echo "Commands: download_fw, extract_fw, build_dependencies, build_kernel, make_rom, build_odin, apktool, cleanup" >&2
+        echo "Commands: download_fw, extract_fw, build_dependencies, build_kernel, make_rom, build_odin, make_ota, release, apktool, cleanup" >&2
         return 1
     fi
 }

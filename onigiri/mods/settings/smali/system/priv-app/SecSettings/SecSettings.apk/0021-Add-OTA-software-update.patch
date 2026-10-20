@@ -1,0 +1,163 @@
+From: Onigiri
+Subject: [PATCH] Add OTA software update
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index c781530..4e481dd 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -15410,4 +15410,5 @@ In Camera, you can use the Top button to take pictures."</string>
+     <string name="onigiri_car_standby_summary">Airplane mode, sensors off, apps closed and no power to the monitor while unplugged. Shuts down below 10% or after the time below.</string>
+     <string name="onigiri_car_standby_hours_title">Shut down after</string>
+     <string name="onigiri_settings_category_title">Onigiri settings</string>
++    <string name="onigiri_update_title">Software update</string>
+ </resources>
+diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
+index 3c36c3f..f57fca2 100644
+--- a/res/xml/onigiri_settings.xml
++++ b/res/xml/onigiri_settings.xml
+@@ -2,6 +2,7 @@
+ <PreferenceScreen android:title="@string/onigiri_settings_title" settings:hierarchicalParentFragment="com.android.settings.homepage.TopLevelSettings" settings:keywords="@string/keywords_onigiri_settings" settings:topLevelPreferenceKey="top_level_onigiri"
+   xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
+     <Preference android:title="@string/onigiri_rom_version_title" android:key="onigiri_rom_version" android:summary="@string/summary_placeholder" android:fragment="com.samsung.android.settings.deviceinfo.softwareinfo.SoftwareInfoSettings" settings:controller="moe.foss.onigiri.settings.ROMVersionPreferenceController" />
++    <Preference android:title="@string/onigiri_update_title" android:key="onigiri_update" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.UpdatePreferenceController" />
+     <Preference android:title="@string/onigiri_device_name_title" android:key="onigiri_device_name" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.DeviceNamePreferenceController" />
+     <SecPreferenceCategory android:title="@string/onigiri_patch_settings_title">
+         <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.PIFVersionPreferenceController" />
+diff --git a/smali_classes4/moe/foss/onigiri/settings/UpdatePreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/UpdatePreferenceController.smali
+new file mode 100644
+index 0000000..293d1f5
+--- /dev/null
++++ b/smali_classes4/moe/foss/onigiri/settings/UpdatePreferenceController.smali
+@@ -0,0 +1,132 @@
++.class public Lmoe/foss/onigiri/settings/UpdatePreferenceController;
++.super Lcom/android/settings/core/BasePreferenceController;
++.source "UpdatePreferenceController.java"
++
++# interfaces
++.implements Ljava/lang/Runnable;
++
++
++# Software update: a tap sets sys.onigiri.update to "install" once a check found an update
++# (sys.onigiri.update.ready holds its tag), otherwise to "check". init then runs
++# onigiri-update.sh as root, which reports in sys.onigiri.update.status and clears
++# sys.onigiri.update when it ends. Until then the row re-reads the status every second.
++
++.field private final mHandler:Landroid/os/Handler;
++
++.field private mPreference:Landroidx/preference/Preference;
++
++
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .locals 1
++
++    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/BasePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++    new-instance v0, Landroid/os/Handler;
++    invoke-static {}, Landroid/os/Looper;->getMainLooper()Landroid/os/Looper;
++    move-result-object p1
++    invoke-direct {v0, p1}, Landroid/os/Handler;-><init>(Landroid/os/Looper;)V
++    iput-object v0, p0, Lmoe/foss/onigiri/settings/UpdatePreferenceController;->mHandler:Landroid/os/Handler;
++    return-void
++.end method
++
++
++# virtual methods
++.method public getAvailabilityStatus()I
++    .locals 0
++
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method public displayPreference(Landroidx/preference/PreferenceScreen;)V
++    .locals 1
++
++    invoke-super {p0, p1}, Lcom/android/settings/core/BasePreferenceController;->displayPreference(Landroidx/preference/PreferenceScreen;)V
++    invoke-virtual {p0}, Lcom/android/settings/core/BasePreferenceController;->getPreferenceKey()Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {p1, v0}, Landroidx/preference/PreferenceGroup;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
++    move-result-object p1
++    iput-object p1, p0, Lmoe/foss/onigiri/settings/UpdatePreferenceController;->mPreference:Landroidx/preference/Preference;
++    return-void
++.end method
++
++.method public updateState(Landroidx/preference/Preference;)V
++    .locals 3
++
++    const-string v0, "sys.onigiri.update.status"
++    const-string v1, "Tap to check for updates"
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {p1, v0}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V
++
++    # ponytail: if the script never starts the request stays set and this polls until reboot.
++    const-string v0, "sys.onigiri.update"
++    const-string v1, ""
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {v0}, Ljava/lang/String;->isEmpty()Z
++    move-result v0
++    if-nez v0, :done
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/UpdatePreferenceController;->mHandler:Landroid/os/Handler;
++    invoke-virtual {v0, p0}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
++    const-wide/16 v1, 0x3e8
++    invoke-virtual {v0, p0, v1, v2}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
++
++    :done
++    return-void
++.end method
++
++.method public run()V
++    .locals 1
++
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/UpdatePreferenceController;->mPreference:Landroidx/preference/Preference;
++    if-eqz v0, :done
++    invoke-virtual {p0, v0}, Lmoe/foss/onigiri/settings/UpdatePreferenceController;->updateState(Landroidx/preference/Preference;)V
++
++    :done
++    return-void
++.end method
++
++.method public handlePreferenceTreeClick(Landroidx/preference/Preference;)Z
++    .locals 3
++
++    invoke-virtual {p0}, Lcom/android/settings/core/BasePreferenceController;->getPreferenceKey()Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {p1}, Landroidx/preference/Preference;->getKey()Ljava/lang/String;
++    move-result-object v1
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    if-eqz v0, :other
++
++    # A run is still going: just refresh.
++    const-string v0, "sys.onigiri.update"
++    const-string v1, ""
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v2
++    invoke-virtual {v2}, Ljava/lang/String;->isEmpty()Z
++    move-result v2
++    if-eqz v2, :refresh
++
++    const-string v2, "sys.onigiri.update.ready"
++    invoke-static {v2, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v2
++    invoke-virtual {v2}, Ljava/lang/String;->isEmpty()Z
++    move-result v2
++    const-string v1, "check"
++    if-nez v2, :start
++    const-string v1, "install"
++
++    :start
++    :try_start
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    :try_end
++    .catch Ljava/lang/RuntimeException; {:try_start .. :try_end} :refresh
++
++    :refresh
++    invoke-virtual {p0, p1}, Lmoe/foss/onigiri/settings/UpdatePreferenceController;->updateState(Landroidx/preference/Preference;)V
++    const/4 p0, 0x1
++    return p0
++
++    :other
++    const/4 p0, 0x0
++    return p0
++.end method

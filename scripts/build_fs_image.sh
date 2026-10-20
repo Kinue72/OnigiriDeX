@@ -75,6 +75,8 @@ BUILD_IMAGE_MKFS()
             BUILD_CMD+="--fs-config-file \"$FS_CONFIG_FILE\" "
             BUILD_CMD+="--file-contexts \"$FILE_CONTEXT_FILE\" "
             BUILD_CMD+="-T \"1640995200\" "
+            # A random UUID would make every build's images differ even when no file did.
+            BUILD_CMD+="-U \"$(python3 -c 'import sys, uuid; print(uuid.uuid5(uuid.NAMESPACE_URL, sys.argv[1]))' "$MOUNT_POINT")\" "
             if $MAP_FILE; then
                 BUILD_CMD+="--block-list-file \"${OUTPUT_FILE//.img/.map}\" "
             fi

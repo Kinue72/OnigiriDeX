@@ -79,3 +79,8 @@ done
 
 SET_PROP system ro.build.display.id "${TARGET_FIRMWARE_VERSION%%/*}-onigiri-$ROM_VERSION"
 SET_PROP system ro.onigiri.version "$ROM_VERSION"
+# PackageManager keys its parse cache on a digest of the partition fingerprints, which Onigiri
+# keeps stock, and erofs stamps every file with the same time. Without a per-build value here an
+# update keeps stale manifests (e.g. "Invalid fragment" crashes). No partition sets "oem" on the
+# Flip5 and apps can't see it in Build.getFingerprintedPartitions().
+SET_PROP system ro.oem.build.fingerprint "onigiri/b5q/$ROM_VERSION/$ROM_BUILD_TIMESTAMP"
