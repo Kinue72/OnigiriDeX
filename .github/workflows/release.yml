@@ -40,22 +40,18 @@ jobs:
             exit 1
           fi
 
-      # The build needs ~100 GB: drop preinstalled SDKs and pool / and /mnt for the workspace.
-      - uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
-        with:
-          root-reserve-mb: 10240
-          swap-size-mb: 8192
-          remove-dotnet: true
-          remove-android: true
-          remove-haskell: true
-          remove-codeql: true
-          remove-docker-images: true
+      # The build needs ~100 GB: the runner's 145 GB disk has ~85 GB free, the SDKs below ~35 more.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL /usr/share/swift /usr/local/share/powershell
+          docker image prune --all --force > /dev/null
+          df -h /
 
       - uses: actions/checkout@v7
 
       # Build in Debian 13 like the build machine (Ubuntu 24.04's libfmt is too old for
-      # android-tools), as the runner's user so the host can still clean up. /tmp sits on the big
-      # workspace volume: apktool leaves ~70 MB there per APK.
+      # android-tools), as the runner's user so the host can still clean up.
       - name: Build environment
         run: |
           docker build --progress=plain -t onigiri-build - << 'EOF'
@@ -73,11 +69,8 @@ jobs:
           # depmod and debugfs live in sbin.
           ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
           EOF
-          mkdir -p .ci-tmp
           echo "DEBIAN=docker run --rm --user $(id -u):$(id -g) -e GH_TOKEN -e ONIGIRI_REPO -e GITHUB_REF_NAME \
-            -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE -v $GITHUB_WORKSPACE/.ci-tmp:/tmp -w $GITHUB_WORKSPACE \
-            onigiri-build bash -ec" >> "$GITHUB_ENV"
-          df -h "$GITHUB_WORKSPACE"
+            -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE -w $GITHUB_WORKSPACE onigiri-build bash -ec" >> "$GITHUB_ENV"
 
       - name: Signing keys
         env:
@@ -156,7 +149,7 @@ jobs:
           rm -rf out/target/b5q/work_dir out/target/b5q/apktool
           git submodule deinit --force --quiet external/kernel || true
           find out/fw -mindepth 2 -maxdepth 2 ! -name fota -exec rm -rf {} +
-          df -h "$GITHUB_WORKSPACE"
+          df -h /
 
       - name: Publish release
         if: github.event_name == 'push'  # TEMP
