@@ -39,8 +39,9 @@ echo "$ROM_VERSION $TAG" > "$WORK/version.txt"
 
 PREVIOUS_TAG="$(gh release view --repo "$REPO" --json tagName --jq .tagName 2> /dev/null || true)"
 if [ -n "$PREVIOUS_TAG" ]; then
-    PREVIOUS="$(gh release download "$PREVIOUS_TAG" --repo "$REPO" --pattern version.txt --output - | cut -d " " -f 1)"
-    if [ "$PREVIOUS" != "$ROM_VERSION" ]; then
+    # Releases without version.txt (made by hand) get no OTA.
+    PREVIOUS="$(gh release download "$PREVIOUS_TAG" --repo "$REPO" --pattern version.txt --output - 2> /dev/null | cut -d " " -f 1 || true)"
+    if [ -n "$PREVIOUS" ] && [ "$PREVIOUS" != "$ROM_VERSION" ]; then
         if [ ! -f "$RELEASES/$PREVIOUS.tar.md5" ]; then
             echo "- Downloading the $PREVIOUS_TAG AP"
             gh release download "$PREVIOUS_TAG" --repo "$REPO" --pattern "Onigiri_AP_*.tar.md5.*" --dir "$WORK/previous"
