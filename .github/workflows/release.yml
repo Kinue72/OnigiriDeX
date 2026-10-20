@@ -88,55 +88,46 @@ jobs:
           python3 scripts/verify_fw.py SM-F731B/XXV out/fw/SM-F731B_XXV
           python3 scripts/verify_fw.py SM-F946B/XXV out/fw/SM-F946B_XXV
 
+      # The build tools and the kernel only change with their own sources, so they are kept in the
+      # private "build-cache" draft release under a hash of those sources and reused by every release.
+      # (Actions caches are scoped to one tag, so they wouldn't carry over to the next release.)
       - name: Versions
         id: versions
         run: |
           source ./buildenv.sh SM-F731B > /dev/null
-          echo "kernel=$KERNEL_RELEASE" >> "$GITHUB_OUTPUT"
-          echo "tools=$(git ls-tree HEAD external/android-tools external/apktool external/erofs-utils \
-            external/samloader external/signapk | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+          echo "kernel=kernel-$KERNEL_RELEASE.tar.zst" >> "$GITHUB_OUTPUT"
+          TOOLS="$({ git ls-tree HEAD external/android-tools external/apktool external/erofs-utils \
+            external/samloader external/signapk; git ls-files -s scripts/build_dependencies.sh external/make.sh \
+            external/patches external/ext4_utils external/f2fs_utils; } | sha256sum | cut -c1-16)"
+          echo "tools=tools-$TOOLS.tar.zst" >> "$GITHUB_OUTPUT"
+          gh release view build-cache > /dev/null 2>&1 || gh release create build-cache --draft \
+            --title "Build cache for CI (never publish)" --notes "Built tools and kernels, reused by release.yml."
 
-      - name: Restore tools
-        id: tools
-        uses: actions/cache/restore@v6
-        with:
-          path: out/tools
-          key: tools-${{ steps.versions.outputs.tools }}-${{ hashFiles('scripts/build_dependencies.sh', 'external/make.sh', 'external/patches/**', 'external/ext4_utils/**', 'external/f2fs_utils/**') }}
-
-      - name: Build tools
-        if: steps.tools.outputs.cache-hit != 'true'
+      - name: Tools
+        env:
+          CACHE: ${{ steps.versions.outputs.tools }}
         run: |
-          git submodule update --init --recursive --depth 1 external/android-tools external/apktool \
-            external/erofs-utils external/samloader external/signapk
-          $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_dependencies'
+          mkdir -p out
+          if ! gh release download build-cache --pattern "$CACHE" --output - | zstd -dc | tar -x -C out; then
+            git submodule update --init --recursive --depth 1 external/android-tools external/apktool \
+              external/erofs-utils external/samloader external/signapk
+            $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_dependencies'
+            tar -C out -cf - tools | zstd -T0 > "$CACHE"
+            gh release upload build-cache "$CACHE" --clobber && rm "$CACHE"
+          fi
 
-      - if: steps.tools.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
-        with:
-          path: out/tools
-          key: ${{ steps.tools.outputs.cache-primary-key }}
-
-      # The kernel only changes with external/kernel and its patches (onigiri/configs/version.sh).
-      # Caches are per tag, so these two only save time when a failed release is re-run.
-      - name: Restore kernel
-        id: kernel
-        uses: actions/cache/restore@v6
-        with:
-          path: out/target/b5q/kernel
-          key: kernel-${{ steps.versions.outputs.kernel }}
-
-      - name: Build kernel
-        if: steps.kernel.outputs.cache-hit != 'true'
+      - name: Kernel
+        env:
+          CACHE: ${{ steps.versions.outputs.kernel }}
         run: |
-          git submodule update --init --depth 1 external/kernel
-          $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_kernel'
-          rm -rf external/kernel/out
-
-      - if: steps.kernel.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
-        with:
-          path: out/target/b5q/kernel
-          key: ${{ steps.kernel.outputs.cache-primary-key }}
+          mkdir -p out/target/b5q
+          if ! gh release download build-cache --pattern "$CACHE" --output - | zstd -dc | tar -x -C out/target/b5q; then
+            git submodule update --init --depth 1 external/kernel
+            $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_kernel'
+            rm -rf external/kernel/out
+            tar -C out/target/b5q -cf - kernel | zstd -T0 > "$CACHE"
+            gh release upload build-cache "$CACHE" --clobber && rm "$CACHE"
+          fi
 
       - name: Build ROM
         run: |

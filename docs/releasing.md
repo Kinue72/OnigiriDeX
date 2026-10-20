@@ -24,9 +24,10 @@ and run `scripts/release.sh`, which:
 2. uploads the AP split into parts under GitHub's 2 GiB asset limit, its `.sha256`, the OTA and
    `version.txt`.
 
-A release takes three to four hours; nothing else builds. If it fails late, **Re-run failed
-jobs** reuses the cached kernel and tools. Only an update from the previous release is made;
-someone two releases behind flashes the AP.
+Only tags build. The kernel (~70 minutes on GitHub's runners) and the build tools are kept in
+the private `build-cache` draft release under a hash of their sources and rebuilt only when those
+change, so a release that only changes the ROM takes about an hour. Only an update from the
+previous release is made; someone two releases behind flashes the AP.
 
 Without GitHub, the same works on the build machine from a clean git checkout:
 `onigiri build_odin`, then `onigiri release <tag> out/Onigiri_AP_*.tar.md5` (needs `gh` logged in
@@ -48,7 +49,7 @@ Odin before it can update again. Without the secret a release stops before build
 
 **Firmware.** Samsung's servers no longer serve the pinned firmware, so the workflow downloads
 `out/fw` (what `onigiri extract_fw` produces) from a draft release named `firmware`. Drafts are
-only visible to people with push access; never publish it. After changing the firmware pins in
+only visible to people with push access; never publish it (or `build-cache`). After changing the firmware pins in
 `onigiri/configs/firmware.json`, extract the new firmware and replace it:
 
 ```sh
