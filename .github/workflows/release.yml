@@ -66,8 +66,8 @@ jobs:
             libprotobuf-dev libsepol-dev libssl-dev libudev-dev libunwind-dev libusb-1.0-0-dev \
             libzstd-dev && rm -rf /var/lib/apt/lists/*
           RUN useradd -m -u 1001 runner
-          # depmod and debugfs live in sbin.
-          ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+          # depmod and debugfs live in sbin; Java needs a UTF-8 locale for non-ASCII file names.
+          ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8
           EOF
           echo "DEBIAN=docker run --rm --user $(id -u):$(id -g) -e GH_TOKEN -e ONIGIRI_REPO -e GITHUB_REF_NAME \
             -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE -w $GITHUB_WORKSPACE onigiri-build bash -ec" >> "$GITHUB_ENV"
