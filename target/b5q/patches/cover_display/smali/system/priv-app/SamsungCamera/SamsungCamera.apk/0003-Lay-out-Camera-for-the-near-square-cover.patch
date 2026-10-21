@@ -1,0 +1,169 @@
+From: Onigiri
+Subject: [PATCH] Lay out Camera for the near-square cover
+
+The Fold5 Camera lays the viewfinder out in portrait coordinates, so on the
+748x720 cover the preview ran past the bottom of the window and the zoom bar
+sat on the shutter. Use the real window shape outside DeX, keep a full-height
+preview inside the window, rest the zoom bar on the shutter area, stay in the
+cover layout when the hinge reads half open, and hide the button bar the
+controls were drawn under.
+
+diff --git a/smali_classes3/com/sec/android/app/camera/CameraWindowManager.smali b/smali_classes3/com/sec/android/app/camera/CameraWindowManager.smali
+--- a/smali_classes3/com/sec/android/app/camera/CameraWindowManager.smali
++++ b/smali_classes3/com/sec/android/app/camera/CameraWindowManager.smali
+@@ -2356,6 +2356,25 @@
+ 
+     invoke-virtual {v0, v3}, Landroid/view/Window;->setNavigationBarContrastEnforced(Z)V
+ 
++    # Onigiri: the controls are laid out to the bottom edge, under the cover's button bar.
++    invoke-virtual {v0}, Landroid/view/Window;->getInsetsController()Landroid/view/WindowInsetsController;
++
++    move-result-object v2
++
++    if-eqz v2, :onigiri_no_insets_controller
++
++    invoke-static {}, Landroid/view/WindowInsets$Type;->navigationBars()I
++
++    move-result v4
++
++    invoke-interface {v2, v4}, Landroid/view/WindowInsetsController;->hide(I)V
++
++    const/4 v4, 0x2
++
++    invoke-interface {v2, v4}, Landroid/view/WindowInsetsController;->setSystemBarsBehavior(I)V
++
++    :onigiri_no_insets_controller
++
+     iget-object v2, p0, Lcom/sec/android/app/camera/CameraWindowManager;->mMainLayout:Lcom/sec/android/app/camera/MainLayout;
+ 
+     invoke-virtual {v2}, Landroid/view/View;->getSystemUiVisibility()I
+diff --git a/smali_classes4/com/sec/android/app/camera/layer/keyscreen/zoom/uicontrol/FoldZoomUiController.smali b/smali_classes4/com/sec/android/app/camera/layer/keyscreen/zoom/uicontrol/FoldZoomUiController.smali
+--- a/smali_classes4/com/sec/android/app/camera/layer/keyscreen/zoom/uicontrol/FoldZoomUiController.smali
++++ b/smali_classes4/com/sec/android/app/camera/layer/keyscreen/zoom/uicontrol/FoldZoomUiController.smali
+@@ -1869,21 +1869,13 @@
+     goto :goto_1
+ 
+     :cond_3
+-    invoke-static {p1, p4}, Lcom/sec/android/app/camera/util/LayoutUtil;->clearConstraint(Landroidx/constraintlayout/widget/ConstraintLayout$LayoutParams;I)V
+-
+-    invoke-virtual {p0}, Lcom/sec/android/app/camera/layer/keyscreen/zoom/uicontrol/BaseZoomUiController;->getBinding()LA2/u0;
+-
+-    move-result-object p3
+-
+-    iget-object p3, p3, LA2/u0;->f:LA2/O;
+-
+-    iget-object p3, p3, LA2/O;->a:Landroidx/constraintlayout/widget/Guideline;
+-
+-    invoke-virtual {p3}, Landroid/view/View;->getId()I
++    # Onigiri: hanging the zoom row below the button-area guideline put it on top of the
++    # shutter on the 720 px tall cover. Sit it on the shutter area instead, as the layout does.
++    invoke-static {p1, v0}, Lcom/sec/android/app/camera/util/LayoutUtil;->clearConstraint(Landroidx/constraintlayout/widget/ConstraintLayout$LayoutParams;I)V
+ 
+-    move-result p3
++    const p3, 0x7f0a05f3
+ 
+-    invoke-static {p1, v0, p3, p4}, Lcom/sec/android/app/camera/util/LayoutUtil;->connectConstraint(Landroidx/constraintlayout/widget/ConstraintLayout$LayoutParams;III)V
++    invoke-static {p1, p4, p3, v0}, Lcom/sec/android/app/camera/util/LayoutUtil;->connectConstraint(Landroidx/constraintlayout/widget/ConstraintLayout$LayoutParams;III)V
+ 
+     :goto_1
+     invoke-virtual {p1, v1, v1, v1, v1}, Landroid/view/ViewGroup$MarginLayoutParams;->semSetMarginsRelative(IIII)V
+diff --git a/smali_classes4/com/sec/android/app/camera/preview/calculator/AbstractPreviewLayoutCalculator.smali b/smali_classes4/com/sec/android/app/camera/preview/calculator/AbstractPreviewLayoutCalculator.smali
+--- a/smali_classes4/com/sec/android/app/camera/preview/calculator/AbstractPreviewLayoutCalculator.smali
++++ b/smali_classes4/com/sec/android/app/camera/preview/calculator/AbstractPreviewLayoutCalculator.smali
+@@ -247,7 +247,7 @@
+ .end method
+ 
+ .method public final calculatePreviewLayoutInternal(Landroid/util/Size;Lcom/sec/android/app/camera/interfaces/Resolution;)Landroid/graphics/Rect;
+-    .locals 3
++    .locals 4
+ 
+     invoke-virtual {p0, p1, p2}, Lcom/sec/android/app/camera/preview/calculator/AbstractPreviewLayoutCalculator;->getPreviewLayoutSize(Landroid/util/Size;Lcom/sec/android/app/camera/interfaces/Resolution;)Landroid/util/Size;
+ 
+@@ -276,6 +276,32 @@
+ 
+     move-result-object v1
+ 
++    # Onigiri: on the short cover a full-height preview kept its phone top offset and ran
++    # off the bottom of the window; move it up just enough to fit.
++    invoke-virtual {p1}, Landroid/util/Size;->getHeight()I
++
++    move-result v2
++
++    invoke-virtual {v0}, Landroid/util/Size;->getHeight()I
++
++    move-result v3
++
++    sub-int/2addr v2, v3
++
++    iget v3, v1, Landroid/graphics/Point;->y:I
++
++    if-le v3, v2, :onigiri_preview_fits
++
++    const/4 v3, 0x0
++
++    invoke-static {v2, v3}, Ljava/lang/Math;->max(II)I
++
++    move-result v2
++
++    iput v2, v1, Landroid/graphics/Point;->y:I
++
++    :onigiri_preview_fits
++
+     iget-object v2, p0, Lcom/sec/android/app/camera/preview/calculator/AbstractPreviewLayoutCalculator;->TAG:Ljava/lang/String;
+ 
+     invoke-virtual {p0, p1, v0, v1, p2}, Lcom/sec/android/app/camera/preview/calculator/AbstractPreviewLayoutCalculator;->getCalculationMessage(Landroid/util/Size;Landroid/util/Size;Landroid/graphics/Point;Lcom/sec/android/app/camera/interfaces/Resolution;)Ljava/lang/String;
+@@ -617,8 +643,31 @@
+ .end method
+ 
+ .method public getScreenSize(II)Landroid/util/Size;
+-    .locals 0
++    .locals 1
++
++    # Onigiri: the 748x720 cover is wider than tall; swapping it to portrait made the preview
++    # overflow the window. Resizable (DeX) windows keep the portrait-normalized size.
++    invoke-virtual {p0}, Lcom/sec/android/app/camera/preview/calculator/AbstractPreviewLayoutCalculator;->getCameraContext()Lcom/sec/android/app/camera/interfaces/CameraContext;
++
++    move-result-object v0
++
++    invoke-interface {v0}, Lcom/sec/android/app/camera/interfaces/CameraContext;->getCameraSettings()Lcom/sec/android/app/camera/interfaces/CameraSettings;
++
++    move-result-object v0
++
++    invoke-interface {v0}, Lcom/sec/android/app/camera/interfaces/CameraSettings;->isResizableMode()Z
++
++    move-result v0
++
++    if-nez v0, :onigiri_portrait_normalized
++
++    invoke-static {p1, p2}, Lcom/sec/android/app/camera/util/factory/SizeFactory;->create(II)Landroid/util/Size;
++
++    move-result-object p0
++
++    return-object p0
+ 
++    :onigiri_portrait_normalized
+     invoke-static {p1, p2}, Ljava/lang/Math;->min(II)I
+ 
+     move-result p0
+diff --git a/smali_classes4/com/sec/android/app/camera/util/FoldUtil.smali b/smali_classes4/com/sec/android/app/camera/util/FoldUtil.smali
+--- a/smali_classes4/com/sec/android/app/camera/util/FoldUtil.smali
++++ b/smali_classes4/com/sec/android/app/camera/util/FoldUtil.smali
+@@ -843,15 +843,9 @@
+ .method public static isMainScreen()Z
+     .locals 1
+ 
+-    invoke-static {}, Lcom/samsung/android/view/SemWindowManager;->getInstance()Lcom/samsung/android/view/SemWindowManager;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Lcom/samsung/android/view/SemWindowManager;->isFolded()Z
+-
+-    move-result v0
+-
+-    xor-int/lit8 v0, v0, 0x1
++    # Onigiri: the inner panel never shows apps here, so the camera is on the cover in every
++    # hinge state. Without this a half-open hinge switched it to the Fold5 Flex layout.
++    const/4 v0, 0x0
+ 
+     return v0
+ .end method
