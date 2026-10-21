@@ -36,12 +36,40 @@ mirror_size() {
     fi
 }
 
-# The cover's current "size" or "density": its override, else the physical value. Never restore
-# with `wm size reset`: Samsung's reset forces a resolution of its own (840x808 on the cover),
-# while setting the physical value clears the override.
+# The cover's current "size" or "density": its override (with "override"), else the physical
+# value. Never restore with `wm size reset`: Samsung's reset forces a resolution of its own
+# (840x808 on the cover), while setting the physical value clears the override.
 current() {
     value=$(wm $1 -d 0)
-    echo "$value" | sed -n "s/^Override $1: //p" | grep . || echo "$value" | sed -n "s/^Physical $1: //p"
+    [ "$2" = override ] && echo "$value" | sed -n "s/^Override $1: //p" | grep . ||
+        echo "$value" | sed -n "s/^Physical $1: //p"
+}
+
+# Whether "$1" is a "WxH DENSITY" pair worth handing to wm.
+valid() {
+    case $1 in [1-9]*x[1-9]*' '[1-9]*) return 0 ;; esac
+    return 1
+}
+
+# Give the cover the monitor's shape $1. The cover's own values are saved first (through a temp
+# file, so a crash never leaves a half-written one), and not resized unless they could be.
+fit() {
+    if [ ! -e $SAVED ]; then
+        own="$(current size override) $(current density override)"
+        valid "$own" && echo "$own" > $SAVED.tmp && mv $SAVED.tmp $SAVED || return 1
+    fi
+    wm size $1 -d 0 && wm density $DPI -d 0
+}
+
+# Put the saved values back, or the physical ones if the saved file is unusable. The file is
+# kept until both are set, so a failure is retried.
+restore() {
+    [ -e $SAVED ] || return 0
+    read own < $SAVED
+    valid "$own" || own="$(current size) $(current density)"
+    valid "$own" || return 1
+    set -- $own
+    wm size $1 -d 0 && wm density $2 -d 0 && rm -f $SAVED
 }
 
 mkdir -p $DATA
@@ -72,15 +100,13 @@ while :; do
     elif [ -n "$had_dex" ] || [ $count -ge $STEADY ]; then
         want=$now
     fi
+    # Only a change that went through counts as applied: a failed one is retried next poll.
     if [ "$want" != "$applied" ]; then
         if [ -n "$want" ]; then
-            [ -e $SAVED ] || echo "$(current size) $(current density)" > $SAVED
-            wm size $want -d 0 && wm density $DPI -d 0 && log "cover fit to the monitor: $want"
-        elif [ -e $SAVED ]; then
-            read size density < $SAVED
-            wm size $size -d 0 && wm density $density -d 0 && rm -f $SAVED && log "cover restored"
+            fit $want && applied=$want && log "cover fit to the monitor: $want"
+        else
+            restore && applied= && log "cover restored"
         fi
-        applied=$want
     fi
     sleep 2
 done
