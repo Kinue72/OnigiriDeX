@@ -2,14 +2,15 @@ From: Onigiri
 Subject: [PATCH] Cut setup down to welcome, Wi-Fi, date and time, screen lock and done
 
 diff --git a/res/raw/custom_wizard_script.xml b/res/raw/custom_wizard_script.xml
-index cdd8752..ce982e9 100644
+index cdd8752..1f0a859 100644
 --- a/res/raw/custom_wizard_script.xml
 +++ b/res/raw/custom_wizard_script.xml
-@@ -1,470 +1,42 @@
+@@ -1,470 +1,43 @@
  <?xml version="1.0" encoding="utf-8"?>
 +<!--
-+    Onigiri: a short, GrapheneOS-style setup. The Samsung and Google terms, accounts, restore and
-+    consent pages don't fit the cover screen; everything they offer is still in Settings later.
++    Onigiri: a short, GrapheneOS-style setup for the phone's owner. The Samsung and Google terms,
++    account, restore and consent pages don't fit the cover screen; accounts and restore can be set
++    up later from Settings. Enterprise enrollment (QR, NFC, zero-touch, KME) is left out.
 +    No action has results, so each one simply goes on to the next.
 +-->
  <WizardScript xmlns:wizard="http://schemas.android.com/apk/res/com.google.android.setupwizard"
