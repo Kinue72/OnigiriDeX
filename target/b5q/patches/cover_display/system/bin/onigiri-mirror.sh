@@ -47,8 +47,7 @@ current() {
 
 # Whether "$1" is a "WxH DENSITY" pair worth handing to wm.
 valid() {
-    case $1 in [1-9]*x[1-9]*' '[1-9]*) return 0 ;; esac
-    return 1
+    echo "$1" | grep -qxE '[1-9][0-9]*x[1-9][0-9]* [1-9][0-9]*'
 }
 
 # Give the cover the monitor's shape $1. The cover's own values are saved first (through a temp
@@ -100,13 +99,13 @@ while :; do
     elif [ -n "$had_dex" ] || [ $count -ge $STEADY ]; then
         want=$now
     fi
-    # Only a change that went through counts as applied: a failed one is retried next poll.
-    if [ "$want" != "$applied" ]; then
-        if [ -n "$want" ]; then
-            fit $want && applied=$want && log "cover fit to the monitor: $want"
-        else
-            restore && applied= && log "cover restored"
-        fi
+    # Only a change that went through counts as applied: a failed one is retried next poll. A
+    # saved file means the cover may be off its own size (even after a half-done fit), so it is
+    # put back whenever no fit is wanted.
+    if [ -n "$want" ]; then
+        [ "$want" != "$applied" ] && fit $want && applied=$want && log "cover fit to the monitor: $want"
+    elif [ -e $SAVED ]; then
+        restore && applied= && log "cover restored"
     fi
     sleep 2
 done
