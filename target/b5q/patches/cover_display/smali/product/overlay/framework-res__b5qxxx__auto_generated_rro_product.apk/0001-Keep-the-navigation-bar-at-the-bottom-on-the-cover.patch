@@ -1,0 +1,17 @@
+Subject: [PATCH] Keep the navigation bar at the bottom on the cover
+
+The near-square cover counts as a phone, so in a landscape app the
+navigation bar moved to the short side and covered part of the app.
+Keep it at the bottom in every rotation.
+
+diff --git a/res/values/bools.xml b/res/values/bools.xml
+--- a/res/values/bools.xml
++++ b/res/values/bools.xml
+@@ -4,6 +4,7 @@
+     <bool name="config_cover_automatic_brightness_available">true</bool>
+     <bool name="config_dynamic_automatic_brightness_available">true</bool>
+     <bool name="config_showNavigationBar">true</bool>
++    <bool name="config_navBarCanMove">false</bool>
+     <bool name="config_supportAudioSourceUnprocessed">false</bool>
+     <bool name="config_systemCaptionsServiceCallsEnabled">true</bool>
+ </resources>
