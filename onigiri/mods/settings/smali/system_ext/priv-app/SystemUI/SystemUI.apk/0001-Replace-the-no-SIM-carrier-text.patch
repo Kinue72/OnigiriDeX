@@ -1,0 +1,96 @@
+From: Onigiri
+Subject: [PATCH] Replace the no-SIM carrier text with our own, without "Emergency calls only"
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 2faffa3..4043009 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -2372,7 +2372,7 @@ If you do not know your PUK, visit a customer service centre."</string>
+ 
+ If you don't know your PUK, visit a Customer Service location."</string>
+     <string name="kg_lockscreen_emergency_call_button_text">Emergency call</string>
+-    <string name="kg_missing_sim_message_short">No SIM card</string>
++    <string name="kg_missing_sim_message_short">If you paid for this, you’ve been scammed</string>
+     <string name="kg_multi_password_active_instructions">Use biometrics or enter password to open</string>
+     <string name="kg_multi_password_dex_instructions">Enter password or use your biometrics on your phone</string>
+     <string name="kg_multi_password_none_instructions">Use biometrics or enter password</string>
+diff --git a/res/values-en/strings.xml b/res/values-en/strings.xml
+index 8f3bdd1..a8c0e34 100644
+--- a/res/values-en/strings.xml
++++ b/res/values-en/strings.xml
+@@ -826,7 +826,7 @@ If you do not know your PUK, visit a customer service centre."</string>
+ 
+ If you don't know your PUK, visit a Customer Service location."</string>
+     <string name="kg_lockscreen_emergency_call_button_text">Emergency call</string>
+-    <string name="kg_missing_sim_message_short">No SIM</string>
++    <string name="kg_missing_sim_message_short">If you paid for this, you’ve been scammed</string>
+     <string name="kg_multi_password_active_instructions">Use biometrics or enter password to open</string>
+     <string name="kg_multi_password_dex_instructions">Enter password or use your biometrics on your phone</string>
+     <string name="kg_multi_password_none_instructions">Use biometrics or enter password</string>
+diff --git a/res/values-en-rCA/strings.xml b/res/values-en-rCA/strings.xml
+index 229e241..84c1847 100644
+--- a/res/values-en-rCA/strings.xml
++++ b/res/values-en-rCA/strings.xml
+@@ -1942,7 +1942,7 @@ If you do not know your PUK, visit a customer service centre."</string>
+ 
+ If you don't know your PUK, visit a Customer Service location."</string>
+     <string name="kg_lockscreen_emergency_call_button_text">Emergency call</string>
+-    <string name="kg_missing_sim_message_short">No SIM</string>
++    <string name="kg_missing_sim_message_short">If you paid for this, you’ve been scammed</string>
+     <string name="kg_multi_password_active_instructions">Use biometrics or enter password to open</string>
+     <string name="kg_multi_password_dex_instructions">Enter password or use your biometrics on your phone</string>
+     <string name="kg_multi_password_none_instructions">Use biometrics or enter password</string>
+diff --git a/res/values-en-rPH/strings.xml b/res/values-en-rPH/strings.xml
+index 076a3b3..6388d27 100644
+--- a/res/values-en-rPH/strings.xml
++++ b/res/values-en-rPH/strings.xml
+@@ -826,7 +826,7 @@ If you do not know your PUK, visit a customer service center."</string>
+ 
+ If you don't know your PUK, visit a Customer Service location."</string>
+     <string name="kg_lockscreen_emergency_call_button_text">Emergency call</string>
+-    <string name="kg_missing_sim_message_short">No SIM</string>
++    <string name="kg_missing_sim_message_short">If you paid for this, you’ve been scammed</string>
+     <string name="kg_multi_password_active_instructions">Use biometrics or enter password to open</string>
+     <string name="kg_multi_password_dex_instructions">Enter password or use your biometrics on your phone</string>
+     <string name="kg_multi_password_none_instructions">Use biometrics or enter password</string>
+diff --git a/res/values-en-rUS/strings.xml b/res/values-en-rUS/strings.xml
+index 3277ccc..4b68701 100644
+--- a/res/values-en-rUS/strings.xml
++++ b/res/values-en-rUS/strings.xml
+@@ -826,7 +826,7 @@ If you do not know your PUK, visit a customer service center."</string>
+ 
+ If you don't know your PUK, visit a Customer Service location."</string>
+     <string name="kg_lockscreen_emergency_call_button_text">Emergency call</string>
+-    <string name="kg_missing_sim_message_short">No SIM</string>
++    <string name="kg_missing_sim_message_short">If you paid for this, you’ve been scammed</string>
+     <string name="kg_multi_password_active_instructions">Use biometrics or enter password to open</string>
+     <string name="kg_multi_password_dex_instructions">Enter password or use your biometrics on your phone</string>
+     <string name="kg_multi_password_none_instructions">Use biometrics or enter password</string>
+diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
+index ad0ae73..dc21184 100644
+--- a/res/values-vi/strings.xml
++++ b/res/values-vi/strings.xml
+@@ -1953,7 +1953,7 @@ Nếu bạn không biết mã PUK, hãy đến trung tâm dịch vụ khách hà
+ 
+ Nếu bạn không biết mã PUK của mình, hãy đến trung tâm Dịch vụ khách hàng."</string>
+     <string name="kg_lockscreen_emergency_call_button_text">Cuộc gọi khẩn cấp</string>
+-    <string name="kg_missing_sim_message_short">Không có SIM</string>
++    <string name="kg_missing_sim_message_short">Nếu bạn trả tiền cho cái này, bạn đã bị lừa</string>
+     <string name="kg_multi_password_active_instructions">Dùng dữ liệu sinh trắc học hoặc nhập mật mã để mở</string>
+     <string name="kg_multi_password_dex_instructions">Nhập mật mã hoặc sử dụng dữ liệu sinh trắc học trên điện thoại của bạn</string>
+     <string name="kg_multi_password_none_instructions">Dùng dữ liệu sinh trắc học hoặc nhập mật mã</string>
+diff --git a/smali/com/android/keyguard/CarrierTextManager.smali b/smali/com/android/keyguard/CarrierTextManager.smali
+index a6e5348..dacb8e9 100644
+--- a/smali/com/android/keyguard/CarrierTextManager.smali
++++ b/smali/com/android/keyguard/CarrierTextManager.smali
+@@ -1416,7 +1416,9 @@
+ 
+     move-result-object v1
+ 
+-    goto :goto_8
++    move-object/from16 v16, v1
++
++    goto :goto_9
+ 
+     :cond_f
+     move-object v1, v5
