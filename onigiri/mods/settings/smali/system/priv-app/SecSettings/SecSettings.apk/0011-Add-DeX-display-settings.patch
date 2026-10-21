@@ -170,7 +170,7 @@ diff --git a/smali_classes4/moe/foss/onigiri/settings/ExternalDisplayModePrefere
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes4/moe/foss/onigiri/settings/ExternalDisplayModePreferenceController.smali
-@@ -0,0 +1,408 @@
+@@ -0,0 +1,414 @@
 +.class public Lmoe/foss/onigiri/settings/ExternalDisplayModePreferenceController;
 +.super Lcom/android/settings/core/BasePreferenceController;
 +.implements Landroidx/preference/Preference$OnPreferenceChangeListener;
@@ -578,6 +578,12 @@ new file mode 100644
 +    .locals 0
 +    const/4 p0, 0x0
 +    return-object p0
++.end method
++
++.method public getSliceHighlightMenuRes()I
++    .locals 0
++    const/4 p0, 0x0
++    return p0
 +.end method
 diff --git a/smali_classes4/moe/foss/onigiri/settings/ExternalDisplayRotationPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/ExternalDisplayRotationPreferenceController.smali
 new file mode 100644
