@@ -1,0 +1,63 @@
+Subject: [PATCH] Fit the keyboard on the near-square cover
+
+HoneyBoard sizes the cover keyboard from the donor's Fold5 cover table (the u5 branch
+of t80/c.c). In portrait, 0.88 of the baseline made toolbar, keys and navigation bar
+taller than the screen, so apps like Messages closed the keyboard at once; 0.5 leaves
+the app about 180 px. In landscape 0.7 left little room; use 0.6 (0.68 for the second
+keyboard type, which was proportionally taller). The old defaults stay as the largest
+size.
+
+diff --git a/smali_classes3/t80/b.smali b/smali_classes3/t80/b.smali
+--- a/smali_classes3/t80/b.smali
++++ b/smali_classes3/t80/b.smali
+@@ -1880,11 +1880,13 @@
+         0x41400000    # 12.0f
+     .end array-data
+ 
++    # Onigiri: cover keyboard heights (small, default, large) for the near-square cover;
++    # the donor's defaults left no room for the app. Large keeps the old default.
+     :array_51
+     .array-data 4
+-        0x3f333333    # 0.7f
++        0x3ed70a3d    # 0.42f
++        0x3f000000    # 0.5f
+         0x3f6147ae    # 0.88f
+-        0x3fa66666    # 1.3f
+     .end array-data
+ 
+     :array_52
+@@ -1903,9 +1905,9 @@
+ 
+     :array_54
+     .array-data 4
+-        0x3f333333    # 0.7f
++        0x3ed70a3d    # 0.42f
++        0x3f000000    # 0.5f
+         0x3f6147ae    # 0.88f
+-        0x3f8f5c29    # 1.12f
+     .end array-data
+ 
+     :array_55
+@@ -1924,9 +1926,9 @@
+ 
+     :array_57
+     .array-data 4
++        0x3f000000    # 0.5f
++        0x3f19999a    # 0.6f
+         0x3f333333    # 0.7f
+-        0x3f333333    # 0.7f
+-        0x3f6147ae    # 0.88f
+     .end array-data
+ 
+     :array_58
+@@ -1945,8 +1947,8 @@
+ 
+     :array_5a
+     .array-data 4
+-        0x3f333333    # 0.7f
+-        0x3f4a3d71    # 0.79f
++        0x3f000000    # 0.5f
++        0x3f2e147b    # 0.68f
+         0x3f4a3d71    # 0.79f
+     .end array-data
+ 
