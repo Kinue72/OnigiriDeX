@@ -60,7 +60,7 @@ new file mode 100644
 index 0000000..ef03904
 --- /dev/null
 +++ b/smali_classes4/moe/foss/onigiri/settings/CarStandbyHoursPreferenceController.smali
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,126 @@
 +.class public Lmoe/foss/onigiri/settings/CarStandbyHoursPreferenceController;
 +.super Lcom/android/settings/core/BasePreferenceController;
 +.source "CarStandbyHoursPreferenceController.java"
@@ -134,6 +134,56 @@ index 0000000..ef03904
 +    return p0
 +
 +    :failed
++    const/4 p0, 0x0
++    return p0
++.end method
++
++# Samsung's BasePreferenceController leaves these Controllable and Sliceable methods abstract,
++# and the Settings action and slice indexers call them on every controller.
++.method public getLaunchIntent()Landroid/content/Intent;
++    .locals 0
++    const/4 p0, 0x0
++    return-object p0
++.end method
++
++.method public getStatusText()Ljava/lang/String;
++    .locals 0
++    const/4 p0, 0x0
++    return-object p0
++.end method
++
++.method public getValue()Lcom/samsung/android/settings/cube/ControlValue;
++    .locals 0
++    const/4 p0, 0x0
++    return-object p0
++.end method
++
++.method public isControllable()Z
++    .locals 0
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method public needUserInteraction(Ljava/lang/Object;)Lcom/samsung/android/settings/cube/Controllable$ControllableType;
++    .locals 0
++    sget-object p0, Lcom/samsung/android/settings/cube/Controllable$ControllableType;->NO_INTERACTION:Lcom/samsung/android/settings/cube/Controllable$ControllableType;
++    return-object p0
++.end method
++
++.method public runDefaultAction()Z
++    .locals 0
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method public setValue(Lcom/samsung/android/settings/cube/ControlValue;)Lcom/samsung/android/settings/cube/ControlResult;
++    .locals 0
++    const/4 p0, 0x0
++    return-object p0
++.end method
++
++.method public getSliceHighlightMenuRes()I
++    .locals 0
 +    const/4 p0, 0x0
 +    return p0
 +.end method
