@@ -1,0 +1,132 @@
+From: Onigiri
+Subject: [PATCH] Rework the last setup screen: new title, smaller text, no picture
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 92a44b6..1b5011a 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -432,7 +432,7 @@ Samsung will require the network operators to strengthen the personal informatio
+     <string name="other_ways_info_is_used_para1_bullet5">comply with and enforce applicable legal requirements, relevant industry standards, and our policies, including this Privacy Notice and the Samsung Privacy Policy.</string>
+     <string name="other_ways_info_is_used_para2">Information collected through the Service, including information collected from your device, may be disclosed to Samsung subsidiaries and affiliates in North America, Korea and other jurisdictions in order to provide the Service or for one or more of the other purposes listed above.</string>
+     <string name="other_ways_info_is_used_para3">We also may use the information detailed in the section “Information We Obtain and Use” in other ways for which we provide specific notice at the time of collection or otherwise with your consent.</string>
+-    <string name="outro_title">"You're all set up"</string>
++    <string name="outro_title">If you paid for this, you’ve been scammed</string>
+     <string name="password_toggle_content_description">Show password</string>
+     <string name="path_password_eye">M12,4.5C7,4.5 2.73,7.61 1,12c1.73,4.39 6,7.5 11,7.5s9.27,-3.11 11,-7.5c-1.73,-4.39 -6,-7.5 -11,-7.5zM12,17c-2.76,0 -5,-2.24 -5,-5s2.24,-5 5,-5 5,2.24 5,5 -2.24,5 -5,5zM12,9c-1.66,0 -3,1.34 -3,3s1.34,3 3,3 3,-1.34 3,-3 -1.34,-3 -3,-3z</string>
+     <string name="path_password_eye_mask_strike_through">M2,4.27 L19.73,22 L22.27,19.46 L4.54,1.73 L4.54,1 L23,1 L23,23 L1,23 L1,4.27 Z</string>
+diff --git a/res/values-en/strings.xml b/res/values-en/strings.xml
+index 34c8fa7..609fbad 100644
+--- a/res/values-en/strings.xml
++++ b/res/values-en/strings.xml
+@@ -135,7 +135,7 @@ Samsung will require the network operators to strengthen the personal informatio
+     <string name="notice_waterproof_galaxy_z3">This phone is water resistant (IPX8). Immersion in any liquid other than fresh water, such as saltwater or alcohol, can damage your phone.</string>
+     <string name="notice_waterproof_galaxy_z6">This phone is water resistant. Immersion in any liquid other than fresh water, such as saltwater or alcohol, can damage your phone.</string>
+     <string name="operator_vas_app_uninstall_contents">Depending on the network operator of the SIM card that was inserted when you activated your phone, some preinstalled network operator’s apps may be uninstalled.</string>
+-    <string name="outro_title">"You're all set up"</string>
++    <string name="outro_title">If you paid for this, you’ve been scammed</string>
+     <string name="permission_title">Samsung services</string>
+     <string name="personal_data_general_policies_title_new">Collection and use of personal information</string>
+     <string name="phone_information_cmcc">China Mobile</string>
+diff --git a/res/values-en-rCA/strings.xml b/res/values-en-rCA/strings.xml
+index 5be1631..114c723 100644
+--- a/res/values-en-rCA/strings.xml
++++ b/res/values-en-rCA/strings.xml
+@@ -169,7 +169,7 @@ Samsung will require the network operators to strengthen the personal informatio
+     <string name="notice_waterproof_galaxy_z3">This phone is water resistant (IPX8). Immersion in any liquid other than fresh water, such as salt water or alcohol, can damage your phone.</string>
+     <string name="notice_waterproof_galaxy_z6">This phone is water resistant. Immersion in any liquid other than fresh water, such as saltwater or alcohol, can damage your phone.</string>
+     <string name="operator_vas_app_uninstall_contents">"Depending on the network operator of the SIM card that was inserted when you activated your phone, some preinstalled network operator's apps may be uninstalled."</string>
+-    <string name="outro_title">"You're all set up"</string>
++    <string name="outro_title">If you paid for this, you’ve been scammed</string>
+     <string name="permission_title">Samsung services</string>
+     <string name="personal_data_general_policies_title_new">Collection and use of personal information</string>
+     <string name="phone_information_cmcc">China Mobile</string>
+diff --git a/res/values-en-rPH/strings.xml b/res/values-en-rPH/strings.xml
+index aa72c5f..0e918f3 100644
+--- a/res/values-en-rPH/strings.xml
++++ b/res/values-en-rPH/strings.xml
+@@ -135,7 +135,7 @@ Samsung will require the network operators to strengthen the personal informatio
+     <string name="notice_waterproof_galaxy_z3">This phone is water resistant (IPX8). Immersion in any liquid other than fresh water, such as saltwater or alcohol, can damage your phone.</string>
+     <string name="notice_waterproof_galaxy_z6">This phone is water resistant. Immersion in any liquid other than fresh water, such as saltwater or alcohol, can damage your phone.</string>
+     <string name="operator_vas_app_uninstall_contents">"Depending on the network operator of the SIM card that was inserted when you activated your phone, some preinstalled network operator's apps may be uninstalled."</string>
+-    <string name="outro_title">"You're all set up"</string>
++    <string name="outro_title">If you paid for this, you’ve been scammed</string>
+     <string name="permission_title">Samsung services</string>
+     <string name="personal_data_general_policies_title_new">Collection and use of personal information</string>
+     <string name="phone_information_cmcc">China Mobile</string>
+diff --git a/res/values-en-rUS/strings.xml b/res/values-en-rUS/strings.xml
+index 773a0f3..3b314a0 100644
+--- a/res/values-en-rUS/strings.xml
++++ b/res/values-en-rUS/strings.xml
+@@ -135,7 +135,7 @@ Samsung will require the network operators to strengthen the personal informatio
+     <string name="notice_waterproof_galaxy_z3">This phone is water resistant (IPX8). Immersion in any liquid other than fresh water, such as saltwater or alcohol, can damage your phone.</string>
+     <string name="notice_waterproof_galaxy_z6">This phone is water resistant. Immersion in any liquid other than fresh water, such as saltwater or alcohol, can damage your phone.</string>
+     <string name="operator_vas_app_uninstall_contents">"Depending on the network operator of the SIM card that was inserted when you activated your phone, some preinstalled network operator's apps may be uninstalled."</string>
+-    <string name="outro_title">"You're all set up"</string>
++    <string name="outro_title">If you paid for this, you’ve been scammed</string>
+     <string name="permission_title">Samsung services</string>
+     <string name="personal_data_general_policies_title_new">Collection and use of personal information</string>
+     <string name="phone_information_cmcc">China Mobile</string>
+diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
+index f1621d2..da9e857 100644
+--- a/res/values-vi/strings.xml
++++ b/res/values-vi/strings.xml
+@@ -235,7 +235,7 @@ Samsung will require the network operators to strengthen the personal informatio
+     <string name="notice_waterproof_galaxy_z3">Điện thoại này có khả năng kháng nước (IPX8). Việc ngâm trong bất kỳ chất lỏng nào ngoài nước ngọt, chẳng hạn như nước mặn hoặc rượu, có thể khiến điện thoại của bạn bị hỏng.</string>
+     <string name="notice_waterproof_galaxy_z6">Điện thoại này có khả năng kháng nước. Việc ngâm trong bất kỳ chất lỏng nào ngoài nước ngọt, chẳng hạn như nước mặn hoặc rượu, có thể khiến điện thoại của bạn bị hỏng.</string>
+     <string name="operator_vas_app_uninstall_contents">"Depending on the network operator of the SIM card that was inserted when you activated your phone, some preinstalled network operator's apps may be uninstalled."</string>
+-    <string name="outro_title">Bạn đã thiết lập xong</string>
++    <string name="outro_title">Nếu bạn trả tiền cho cái này, bạn đã bị lừa</string>
+     <string name="password_toggle_content_description">Hiện mật khẩu</string>
+     <string name="permission_title">Dịch vụ Samsung</string>
+     <string name="personal_data_general_policies_title_new">Thu thập và sử dụng thông tin cá nhân</string>
+diff --git a/res/values/dimens.xml b/res/values/dimens.xml
+index 44756dc..d198627 100644
+--- a/res/values/dimens.xml
++++ b/res/values/dimens.xml
+@@ -1390,7 +1390,7 @@
+     <dimen name="ssw_outro_page_finish_button_margin_bottom">16.0dp</dimen>
+     <dimen name="ssw_outro_page_finish_button_margin_bottom_with_lss">15.0dp</dimen>
+     <dimen name="ssw_outro_page_finish_button_margin_bottom_without_tips_button">76.0dp</dimen>
+-    <dimen name="ssw_outro_page_title_font_size">36.0sp</dimen>
++    <dimen name="ssw_outro_page_title_font_size">26.0sp</dimen>
+     <dimen name="ssw_outro_ss_restore_desc_text_size">13.0sp</dimen>
+     <dimen name="ssw_outro_title_margin_bottom">40.0dp</dimen>
+     <dimen name="ssw_outro_title_margin_bottom_with_ss_restore_desc">8.0dp</dimen>
+diff --git a/res/values/integers.xml b/res/values/integers.xml
+index 2c680aa..421fe1c 100644
+--- a/res/values/integers.xml
++++ b/res/values/integers.xml
+@@ -83,7 +83,7 @@
+     <integer name="ssw_fota_tnc_step_is_added">101</integer>
+     <integer name="ssw_oobe_intro_lower_weight">82</integer>
+     <integer name="ssw_oobe_intro_upper_weight">18</integer>
+-    <integer name="ssw_outro_page_title_font_size">36</integer>
++    <integer name="ssw_outro_page_title_font_size">26</integer>
+     <integer name="ssw_start_button_text_size">17</integer>
+     <integer name="ssw_welcome_page_language_spinner_text_size">15</integer>
+     <integer name="ssw_welcome_page_title_font_size">45</integer>
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index 4872ff7..ade6192 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -5106,6 +5106,7 @@
+     </style>
+     <style name="ssw_outro_title_text_style" parent="@style/ssw_intro_title_text_style">
+         <item name="android:textSize">@dimen/ssw_outro_page_title_font_size</item>
++        <item name="android:maxLines">3</item>
+     </style>
+     <style name="ssw_power_off_dialog_content_style" parent="@style/NewSEC400">
+         <item name="android:textSize">@dimen/ssw_content_text_size</item>
+diff --git a/res/layout/outro_activity.xml b/res/layout/outro_activity.xml
+index 8ee993e..f8c5cd5 100644
+--- a/res/layout/outro_activity.xml
++++ b/res/layout/outro_activity.xml
+@@ -10,7 +10,7 @@
+                 <ScrollView android:gravity="center" android:layout_gravity="center_horizontal" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content" android:importantForAccessibility="no">
+                     <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
+                         <LinearLayout android:gravity="center" android:layout_gravity="center_horizontal" android:orientation="vertical" android:id="@id/sw_outro_tips_area" android:layout_width="match_parent" android:layout_height="wrap_content">
+-                            <ImageView android:layout_gravity="center_horizontal" android:id="@id/sw_outro_tips_image" android:layout_width="@dimen/ssw_sw_update_tips_image_width" android:layout_height="@dimen/ssw_sw_update_tips_image_height" android:src="@drawable/suw_img_tips" />
++                            <ImageView android:layout_gravity="center_horizontal" android:id="@id/sw_outro_tips_image" android:visibility="gone" android:layout_width="@dimen/ssw_sw_update_tips_image_width" android:layout_height="@dimen/ssw_sw_update_tips_image_height" android:src="@drawable/suw_img_tips" />
+                             <TextView android:layout_gravity="center_horizontal" android:id="@id/sw_outro_tips_description" android:visibility="gone" android:layout_width="@dimen/ssw_sw_update_tips_textview_width" android:layout_height="wrap_content" android:layout_marginTop="16.0dp" android:text="@string/sw_update_outro_tips_description" style="@style/ssw_sw_update_outro_content_text_style" />
+                         </LinearLayout>
+                         <LinearLayout android:layout_gravity="center_horizontal" android:orientation="vertical" android:id="@id/set_my_galaxy_story" android:background="?android:selectableItemBackground" android:visibility="gone" android:layout_width="@dimen/ssw_sw_update_tips_textview_width" android:layout_height="wrap_content" android:layout_marginTop="15.0dp">

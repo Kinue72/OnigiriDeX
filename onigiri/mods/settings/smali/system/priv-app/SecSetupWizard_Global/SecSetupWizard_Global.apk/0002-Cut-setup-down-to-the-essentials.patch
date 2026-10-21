@@ -1,0 +1,524 @@
+From: Onigiri
+Subject: [PATCH] Cut setup down to welcome, Wi-Fi, date and time, screen lock and done
+
+diff --git a/res/raw/custom_wizard_script.xml b/res/raw/custom_wizard_script.xml
+index cdd8752..1f0a859 100644
+--- a/res/raw/custom_wizard_script.xml
++++ b/res/raw/custom_wizard_script.xml
+@@ -1,470 +1,43 @@
+ <?xml version="1.0" encoding="utf-8"?>
++<!--
++    Onigiri: a short, GrapheneOS-style setup for the phone's owner. The Samsung and Google terms,
++    account, restore and consent pages don't fit the cover screen; accounts and restore can be set
++    up later from Settings. Enterprise enrollment (QR, NFC, zero-touch, KME) is left out.
++    No action has results, so each one simply goes on to the next.
++-->
+ <WizardScript xmlns:wizard="http://schemas.android.com/apk/res/com.google.android.setupwizard"
+     wizard:version="2">
+ 
+-    <!-- Preliminary setup for OEMs [CUSTOMIZABLE] -->
+     <WizardAction id="oem_pre_setup"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.android.setupwizard.OEM_PRE_SETUP;end" >
+-        <result
+-            wizard:name="sec_eula"
+-            wizard:action="sec_eula"
+-            wizard:resultCode="100" />
+-        <result
+-            wizard:name="sec_esim_setup"
+-            wizard:action="sec_esim_setup"
+-            wizard:resultCode="105" />
+-        <result
+-            wizard:name="check_quick_start"
+-            wizard:action="check_quick_start"
+-            wizard:resultCode="106" />
+-        <result
+-            wizard:action="cct_pre_setup"
+-            wizard:resultCode="302" />
+-        <result
+-            wizard:action="vzw_flow"
+-            wizard:resultCode="303" />
+-        <result
+-            wizard:name="sec_data_network_setup"
+-            wizard:action="sec_data_network"
+-            wizard:resultCode="400" />
+-        <result
+-            wizard:name="amx_agreement"
+-            wizard:action="amx_agreement"
+-            wizard:resultCode="401" />
+-        <result
+-            wizard:name="start_ae_provision"
+-            wizard:action="ae_provision_flow"
+-            wizard:resultCode="500" />
+-        <result
+-            wizard:name="start_kme_setup"
+-            wizard:action="kme_check_dialog"
+-            wizard:resultCode="501" />
+-        <result wizard:action="sec_welcome" />
+-    </WizardAction>
+-
+-    <WizardAction  id="cct_pre_setup"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.setupwizard;action=com.sec.android.app.setupwizard.OEM_PRE_SETUP;end" >
+-        <result wizard:action="sec_welcome" />
+-    </WizardAction>
++        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.android.setupwizard.OEM_PRE_SETUP;end" />
+ 
+-    <!-- Welcome screen with language selection [RECOMMENDED, CUSTOMIZABLE] -->
++    <!-- Welcome screen with language selection -->
+     <WizardAction id="sec_welcome"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.WELCOME;end" >
+-        <result
+-            wizard:name="start_qr_provision"
+-            wizard:action="qr_provision_flow"
+-            wizard:resultCode="101" />
+-        <result
+-            wizard:name="dpm_user_complete"
+-            wizard:action="oem_post_setup"
+-            wizard:resultCode="111" />
+-        <result
+-            wizard:name="dpm_profile_complete"
+-            wizard:action="oem_post_setup"
+-            wizard:resultCode="112" />
+-        <result
+-            wizard:name="nfc_provision_flow"
+-            wizard:action="nfc_provision_flow"
+-            wizard:resultCode="124" />
+-        <result
+-            wizard:name="work_setup_interrupted_nfc_tap"
+-            wizard:action="work_setup_interrupted_nfc_tap"
+-            wizard:resultCode="125" />
+-        <result
+-            wizard:name="sec_language_selection"
+-            wizard:action="sec_language_selection"
+-            wizard:resultCode="200" />
+-        <result
+-            wizard:name="sec_data_network_setup"
+-            wizard:action="sec_data_network"
+-            wizard:resultCode="400" />
+-        <result wizard:action="sec_eula" />
+-    </WizardAction>
+-
+-    <!-- Language selection for TSS Intro -->
+-    <WizardAction id="sec_language_selection"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.LANGUAGE_SELECTION;end" >
+-        <result
+-            wizard:name="start_qr_provision"
+-            wizard:action="qr_provision_flow"
+-            wizard:resultCode="101" />
+-        <result
+-            wizard:name="sec_country_selection"
+-            wizard:action="sec_country_selection"
+-            wizard:resultCode="300" />
+-        <result
+-            wizard:name="sec_data_network_setup"
+-            wizard:action="sec_data_network"
+-            wizard:resultCode="400" />
+-        <result wizard:action="sec_eula" />
+-    </WizardAction>
+-
+-    <!-- Country selection for WIFI Country Selection -->
+-    <WizardAction id="sec_country_selection"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.COUNTRY_SELECTION;end" >
+-        <result wizard:action="sec_eula" />
+-    </WizardAction>
+-
+-    <WizardAction id="vzw_flow"
+-        wizard:script="android.resource://com.sec.android.app.setupwizard/raw/wizard_script_main" >
+-    </WizardAction>
+-
+-    <WizardAction id="sec_data_network"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.DATANETWORK;end" >
+-        <result
+-            wizard:name="sec_esim_setup"
+-            wizard:action="sec_esim_setup"
+-            wizard:resultCode="105" />
+-        <result
+-            wizard:name="check_quick_start"
+-            wizard:action="check_quick_start"
+-            wizard:resultCode="106"/>
+-        <result
+-            wizard:name="start_ae_provision"
+-            wizard:action="ae_provision_flow"
+-            wizard:resultCode="500" />
+-        <result
+-            wizard:name="start_kme_setup"
+-            wizard:action="kme_check_dialog"
+-            wizard:resultCode="501" />
+-        <result wizard:action="sec_eula" />
+-    </WizardAction>
+-
+-    <WizardAction id="sec_eula"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.TERMS;end" >
+-        <result
+-            wizard:name="check_quick_start"
+-            wizard:action="check_quick_start"
+-            wizard:resultCode="106"/>
+-        <result
+-            wizard:name="kme_setup"
+-            wizard:action="kme_setup"
+-            wizard:resultCode="301" />
+-        <result
+-            wizard:name="kme_check_dialog"
+-            wizard:action="kme_check_dialog"
+-            wizard:resultCode="302" />
+-        <result
+-            wizard:name="usa_activation_flow"
+-            wizard:action="usa_activation_flow"
+-            wizard:resultCode="401"/>
+-        <result wizard:action="sec_wifi_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="usa_activation_flow"
+-        wizard:script="android.resource://com.sec.android.app.setupwizard/raw/wizard_script_usa_activation_flow" >
+-        <result
+-            wizard:name="sec_esim_post_setup"
+-            wizard:action="sec_esim_post_setup"
+-            wizard:resultCode="402" />
+-        <result wizard:action="check_quick_start" />
+-    </WizardAction>
+-
+-    <WizardAction id="check_quick_start"
+-        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.android.setupwizard.CHECK_QUICK_START;end" >
+-        <result wizard:name="quick_start"
+-            wizard:resultCode="101"
+-            wizard:action="quick_start_flow" />
+-        <result wizard:action="sec_wifi_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="quick_start_flow"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_quick_start_flow">
+-        <result wizard:name="sec_wifi_setup"
+-            wizard:resultCode="1"
+-            wizard:action="sec_wifi_setup" />
+-        <result wizard:action="sec_operator_setup" />
+-    </WizardAction>
++        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.WELCOME;end" />
+ 
+     <WizardAction id="sec_wifi_setup"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.SECWIFISETUP;end" >
+-        <result
+-            wizard:name="sec_device_activation_setup"
+-            wizard:action="sec_device_activation"
+-            wizard:resultCode="101" />
+-        <result
+-            wizard:name="net_tss_setup"
+-            wizard:action="net_tss_setup"
+-            wizard:resultCode="207" />
+-        <result
+-            wizard:name="sim_tss_setup"
+-            wizard:action="sim_tss_setup"
+-            wizard:resultCode="208" />
+-        <result
+-            wizard:name="kme_setup"
+-            wizard:action="kme_setup"
+-            wizard:resultCode="301" />
+-        <result
+-            wizard:name="kme_check_dialog"
+-            wizard:action="kme_check_dialog"
+-            wizard:resultCode="302" />
+-        <result
+-            wizard:name="amx_agreement"
+-            wizard:action="amx_agreement"
+-            wizard:resultCode="401" />
+-        <result wizard:action="sec_esim_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="amx_agreement"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.AMX_AGREEMENT;end" >
+-        <result wizard:action="sec_esim_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="net_tss_setup"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.NET_TSS_SETUP;end" >
+-        <result wizard:action="sec_esim_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="sim_tss_setup"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.SIM_TSS_SETUP;end" >
+-        <result wizard:action="sec_esim_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="sec_esim_setup"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.ESIM_SETUP;end" >
+-        <result
+-            wizard:action="usa_activation_flow"
+-            wizard:resultCode="401"/>
+-        <result wizard:action="sec_esim_post_setup" />
+-    </WizardAction>
++        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.SECWIFISETUP;end" />
+ 
+-    <WizardAction id="sec_esim_post_setup"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.POST_ESIM_SETUP;end" >
+-        <result
+-            wizard:name="no_network_flow"
+-            wizard:action="no_network_flow"
+-            wizard:resultCode="201" />
+-        <result wizard:action="check_frp" />
+-    </WizardAction>
+-
+-    <WizardAction id="kme_setup"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_kme_provision_flow">
+-        <result
+-            wizard:name="oem_post_setup"
+-            wizard:action="oem_post_setup"
+-            wizard:resultCode="202" />
+-        <result
+-            wizard:name="work_profile_setup"
+-            wizard:resultCode="122"
+-            wizard:action="work_profile_setup" />
+-        <result
+-            wizard:name="device_owner_setup"
+-            wizard:resultCode="123"
+-            wizard:action="post_dpm_user_flow" />
+-        <result
+-            wizard:name="sec_wifi_setup"
+-            wizard:action="sec_wifi_setup"
+-            wizard:resultCode="203" />
+-        <result
+-            wizard:name="net_tss_setup"
+-            wizard:action="net_tss_setup"
+-            wizard:resultCode="207" />
+-        <result wizard:action="sec_esim_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="kme_check_dialog"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.B2B_CHECK_PROGRESS;end" >
+-        <result
+-            wizard:name="kme_setup"
+-            wizard:action="kme_setup"
+-            wizard:resultCode="301" />
+-        <result
+-            wizard:name="sec_wifi_setup"
+-            wizard:action="sec_wifi_setup"
+-            wizard:resultCode="203" />
+-        <result
+-            wizard:name="net_tss_setup"
+-            wizard:action="net_tss_setup"
+-            wizard:resultCode="207" />
+-        <result wizard:action="sec_esim_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="sec_device_activation"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.DEVICEACTIVATION;end" >
+-        <result
+-            wizard:name="sec_wifi_setup"
+-            wizard:action="sec_wifi_setup"
+-            wizard:resultCode="203" />
+-        <result
+-            wizard:name="kme_setup"
+-            wizard:action="kme_setup"
+-            wizard:resultCode="301" />
+-        <result
+-            wizard:name="kme_check_dialog"
+-            wizard:action="kme_check_dialog"
+-            wizard:resultCode="302" />
+-        <result wizard:action="sec_esim_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="work_setup_interrupted_nfc_tap"
+-        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.WORK_SETUP_INTERRUPTED;end">
+-        <result wizard:name="continue_start_nfc_provisioning"
+-            wizard:resultCode="1"
+-            wizard:action="nfc_provision_flow" />
+-        <result wizard:action="factory_reset" />
+-    </WizardAction>
++    <WizardAction id="date_time"
++        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.android.setupwizard.DATE_TIME;end" />
+ 
+-    <WizardAction id="nfc_provision_flow"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_nfc_provision_flow">
+-        <result wizard:action="oem_post_setup" />
+-    </WizardAction>
+-
+-    <!-- Factory reset should cause a reboot, but if it returns unexpectedly, continue on to check_frp -->
+-    <WizardAction id="factory_reset"
+-        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.FACTORY_RESET;end" />
+-
+-    <!-- Wait to check factory reset protection status [RECOMMENDED] -->
+-    <WizardAction id="check_frp"
+-        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.CHECK_FRP;end" />
+-
+-    <!-- Network selection and packages update [REQUIRED, CUSTOMIZABLE] -->
+-    <WizardAction id="connect_and_update"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_connect_and_update_flow" >
+-        <result wizard:name="no_connection"
+-            wizard:resultCode="1"
+-            wizard:action="no_network_flow" />
+-        <result wizard:name="skip_in_esim_only"
+-            wizard:resultCode="102"
+-            wizard:action="no_network_flow" />
+-    </WizardAction>
+-
+-    <!-- Zero touch provisioning (for enterprise). This feature depends on Android Checkin and Early update. Place this action after Android Checkin and Early update, but before restore. [REQUIRED]. -->
+-    <WizardAction id="zero_touch"
+-        wizard:script="android.resource://com.google.android.setupwizard/xml/wizard_script_zero_touch_flow" >
+-        <result wizard:name="dpm_user_complete"
+-            wizard:resultCode="111"
+-            wizard:action="post_dpm_user_flow" />
+-        <!-- The restore flow would be set to cloud for COPE devices if the result code returned the adding personal account. -->
+-        <result wizard:name="add_personal_account_after_work_profile"
+-            wizard:resultCode="120"
+-            wizard:action="add_personal_account_after_work_profile" />
+-        <result wizard:name="financed_device_provisioning_complete"
+-            wizard:resultCode="121"
+-            wizard:action="setup_as_new_flow" />
+-        <result wizard:name="work_profile_setup"
+-            wizard:resultCode="122"
+-            wizard:action="work_profile_setup" />
+-        <result wizard:name="device_owner_setup"
+-            wizard:resultCode="123"
+-            wizard:action="post_dpm_user_flow" />
+-        <!-- GmsCore will handle ZeroTouch. Go to setup_as_new flow, it will handle ZeroTouch and FRP -->
+-        <result wizard:name="gmscore_zero_touch"
+-            wizard:resultCode="116"
+-            wizard:action="setup_as_new_flow"/>
+-    </WizardAction>
+-
+-    <!-- Branch to script for "release_frp_flow (frp)" or "unified_restore_flow" [SEC] -->
+-    <WizardAction id="restore_id_selection"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.RESTORE_ID_SELECTION;end" >
+-        <result wizard:name="release_frp_flow"
+-            wizard:action="release_frp_flow"
+-            wizard:resultCode="200"/>
+-        <result
+-            wizard:name="unified_restore_flow"
+-            wizard:action="unified_restore_flow"
+-            wizard:resultCode="204" />
+-        <result wizard:action="account_flow" />
+-    </WizardAction>
+-
+-    <!-- Release frp [SEC] -->
+-    <WizardAction id="release_frp_flow" wizard:flow="SetupAsNewFlow"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_release_frp_flow" >
+-        <result wizard:action="unified_restore_flow" />
+-    </WizardAction>
+-
+-    <!-- Restore from an existing account or device [RECOMMENDED, CUSTOMIZABLE] -->
+-    <WizardAction id="unified_restore_flow" wizard:flow="NetworkFlow"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_unified_restore_flow" >
+-        <result wizard:action="sec_operator_setup" />
+-    </WizardAction>
+-
+-    <!-- Restore from an existing account or device [SEC] -->
+-    <WizardAction id="account_flow"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_account_flow" >
+-        <result wizard:action="sec_operator_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="work_profile_setup"
+-        wizard:script="android.resource://com.google.android.setupwizard/xml/wizard_script_post_dpm_provision_finalization_flow">
+-        <result wizard:action="transition_to_personal_profile_setup" />
+-    </WizardAction>
+-
+-    <!-- Set up without a network connection [RECOMMENDED] -->
+-    <WizardAction id="no_network_flow"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_pre_no_network_flow" >
+-        <result wizard:action="sec_operator_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="transition_to_personal_profile_setup"
+-        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.TRANSITION_TO_PERSONAL_PROFILE_SETUP;end">
+-        <result wizard:name="skip_add_personal_account"
+-            wizard:resultCode="1"
+-            wizard:action="no_account_flow" />
+-        <result wizard:action="add_personal_account_after_work_profile" />
+-    </WizardAction>
+-
+-    <!-- Add personal account after work profile provisioning [REQUIRED] -->
+-    <WizardAction id="add_personal_account_after_work_profile"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_account_flow" >
+-        <result wizard:action="sec_operator_setup" />
+-    </WizardAction>
+-
+-    <!-- Setup as new [REQUIRED] -->
+-    <WizardAction id="setup_as_new_flow" wizard:flow="SetupAsNewFlow"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_account_flow" >
+-        <result wizard:action="sec_operator_setup" />
+-    </WizardAction>
+-
+-    <!-- Set up without an account [REQUIRED] -->
+-    <WizardAction id="no_account_flow"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_no_account_flow">
+-        <result wizard:action="sec_operator_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="sec_operator_setup"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.SEC_OPERATOR_SETUP;end" >
+-        <result wizard:action="oem_post_setup" />
+-    </WizardAction>
+-
+-    <!-- Flow to run after a user-led device policy managed setup. [RECOMMENDED] -->
+-    <WizardAction id="post_dpm_user_flow"
+-        wizard:script="android.resource://com.google.android.setupwizard/xml/wizard_script_post_dpm_user_flow">
+-        <result wizard:action="oem_post_setup" />
+-    </WizardAction>
+-
+-    <WizardAction id="ae_provision_flow"
+-        wizard:uri="intent:#Intent;action=com.samsung.android.knox.PROVISION_TSS;end">
+-        <result wizard:action="oem_post_setup" />
+-    </WizardAction>
+-
+-    <!-- Set up language for TSS model, before QR provision flow -->
+-    <WizardAction id="qr_provision_flow_language_selection"
+-        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.LANGUAGE_SELECTION;end" />
+-
+-    <!-- QR provision flow (for enterprise) [RECOMMENDED] -->
+-    <WizardAction id="qr_provision_flow"
+-        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_qr_provision_flow">
+-        <result wizard:action="oem_post_setup" />
+-    </WizardAction>
++    <WizardAction id="lock_screen"
++        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.GED_LOCK_SCREEN;end" />
+ 
+-    <!-- OEM completion [CUSTOMIZABLE] -->
++    <!-- Samsung's own steps (res/values/arrays.xml sequence_list), now only the last screen -->
+     <WizardAction id="oem_post_setup"
+         wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.android.setupwizard.OEM_POST_SETUP;end" />
+ 
+-    <!-- Enterprise provisioning finalization flow. Required only in init setup flow. [REQUIRED] -->
+     <WizardAction id="enterprise_finalization_flow"
+         wizard:script="android.resource://com.google.android.setupwizard/xml/wizard_script_post_dpm_provision_finalization_flow">
+     </WizardAction>
+ 
+-    <!-- Google kid account setup. Must be the last setup action. [REQUIRED] -->
+     <WizardAction id="kid_post_setup"
+         wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.KID_POST_SETUP;end" />
+ 
+-    <!-- Complete samsung setup wizard & Check deferred setup list for SEC actions [SEC] -->
+     <WizardAction id="sec_setup_complete"
+         wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.SEC_SETUP_COMPLETE;end" />
+ 
+-    <!-- Leave Setup Wizard [REQUIRED] -->
+     <WizardAction id="exit"
+         wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.android.setupwizard.EXIT;end" />
+-</WizardScript>
+\ No newline at end of file
++</WizardScript>
+diff --git a/res/values/arrays.xml b/res/values/arrays.xml
+index d181900..1a03b3f 100644
+--- a/res/values/arrays.xml
++++ b/res/values/arrays.xml
+@@ -108,24 +108,6 @@
+         <item>@string/notice_magnet_inches_galaxy_q4</item>
+     </string-array>
+     <string-array name="sequence_list">
+-        <item>@string/sequenceitem_sec_account_setup</item>
+-        <item>@string/sequenceitem_intelligence_service_agree</item>
+-        <item>@string/sequenceitem_sec_bixby_setup</item>
+-        <item>@string/sequenceitem_sec_pay_setup</item>
+-        <item>@string/sequenceitem_sec_backup_setup</item>
+-        <item>@string/sequenceitem_device_based_integration_agreement</item>
+-        <item>@string/sequenceitem_alternative_permission</item>
+-        <item>@string/sequenceitem_lgutv_home_selection</item>
+-        <item>@string/sequenceitem_skt_tphone</item>
+-        <item>@string/sequenceitem_skt_account</item>
+-        <item>@string/sequenceitem_carrier_location_notice</item>
+-        <item>@string/sequenceitem_navigationbar_setup</item>
+-        <item>@string/sequenceitem_homescreen_setup</item>
+-        <item>@string/sequenceitem_keyboard_setup</item>
+-        <item>@string/sequenceitem_darkmode_setup</item>
+-        <item>@string/sequenceitem_omcagent_setup</item>
+-        <item>@string/sequenceitem_notice</item>
+-        <item>@string/sequenceitem_disclaimer</item>
+         <item>@string/sequenceitem_outro</item>
+     </string-array>
+     <string-array name="sequence_list_chn_quick_start">
