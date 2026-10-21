@@ -1,0 +1,17 @@
+Subject: [PATCH] Let apps use the whole cover screen
+
+The cover's camera cutout is a wide strip along one edge, so the
+launcher dock, the navigation bar and apps were inset away from it and
+sat off-center whenever the screen rotated. Drop the cutout so every
+rotation lays out on the full screen.
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -3,5 +3,5 @@
+     <string name="config_mainBuiltInDisplayCutout">M 0,0 H -11.83333333333333 V 31.33333333333333 H 11.83333333333333 V 0 H 0 Z @dp</string>
+     <string name="config_mobile_hotspot_provision_app_no_ui">com.samsung.provisioning.SILENT_PROVISIONING_CHECK</string>
+     <string name="config_mobile_hotspot_provision_response">com.samsung.provisioning.SILENT_PROVISIONING_CHECK_RESULT</string>
+-    <string name="config_subBuiltInDisplayCutout">\@bottom @right M 0,0 H -173.6470588235294 V -31.05882352941176 H 0 V 0 Z @dp</string>
++    <string name="config_subBuiltInDisplayCutout" />
+ </resources>

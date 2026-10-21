@@ -1,0 +1,20 @@
+From: Onigiri
+Subject: [PATCH] Report the folded camera state at every hinge angle
+
+The inner panel never shows apps here, so the user always faces the cover and
+the rear lenses. Stock firmware only reports the folded camera state (front
+camera served by the rear sensor) while the hinge reads closed or tent; a
+half-open or open reading switched video calls back to the covered inner lens.
+
+diff --git a/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali b/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali
+--- a/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali
++++ b/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali
+@@ -178,6 +178,8 @@
+ 
+     :cond_4
+     :goto_2
++    const-wide/16 v0, 0x6
++
+     iget-object p0, p0, Lcom/samsung/android/camera/CameraServiceWorker$DeviceStateListener;->this$0:Lcom/samsung/android/camera/CameraServiceWorker;
+ 
+     invoke-virtual {p0, v0, v1}, Lcom/samsung/android/camera/CameraServiceWorker;->notifyDeviceChange(J)V

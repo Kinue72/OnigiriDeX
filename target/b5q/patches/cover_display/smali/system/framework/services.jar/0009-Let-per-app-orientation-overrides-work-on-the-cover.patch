@@ -1,0 +1,27 @@
+From: Onigiri
+Subject: [PATCH] Let per-app orientation overrides work on the cover
+
+OVERRIDE_ANY_ORIENTATION_TO_USER only applied while the display ignored
+orientation requests, which on the cover also letterboxed every other
+portrait app (and broke apps such as Messenger that drop their portrait
+request mid-launch). Honour the per-app override on its own, so a single app
+can be kept in the cover's current rotation:
+
+    am compat enable OVERRIDE_ANY_ORIENTATION_TO_USER <package>
+
+diff --git a/smali_classes2/com/android/server/wm/ActivityRecord.smali b/smali_classes2/com/android/server/wm/ActivityRecord.smali
+--- a/smali_classes2/com/android/server/wm/ActivityRecord.smali
++++ b/smali_classes2/com/android/server/wm/ActivityRecord.smali
+@@ -17153,10 +17153,10 @@
+ 
+     const-string v5, "Requested orientation  "
+ 
++    # Onigiri: let OVERRIDE_ANY_ORIENTATION_TO_USER keep a portrait-locked app in the cover's
++    # current rotation without also letterboxing every other app (ignoreOrientationRequest).
+     if-eqz v2, :cond_9
+ 
+-    if-eqz v4, :cond_9
+-
+     invoke-virtual {v6}, Lcom/android/server/wm/AppCompatCameraOverrides;->isCameraActive()Z
+ 
+     move-result v2
