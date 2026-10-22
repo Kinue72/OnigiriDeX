@@ -246,10 +246,12 @@ remove them in the **KernelSU** app; a module you remove stays removed.
 - **[Tricky Addon Enhanced](https://github.com/Enginex0/tricky-addon-enhanced)**:
   keeps TEESimulator's app list and key up to date by itself. It downloads the
   key from public sources online. It only works with TEESimulator 3.x, so skip
-  the TEESimulator 4 update the KernelSU app offers if you rely on it.
+  the TEESimulator 4 update the KernelSU app offers if you rely on it. It has
+  no entry of its own in the KernelSU app: it opens as TEESimulator's page,
+  which can also uninstall it.
 - **[BRENE](https://github.com/rrr333nnn333/BRENE)**: uses susFS to hide root
   from apps. **Hide Custom ROM Paths** and **Hide /system/addon.d Path** come
-  turned on.
+  turned on, and it leaves developer options and USB debugging to you.
 - **[Hybrid Mount](https://github.com/Hybrid-Mount/meta-hybrid_mount)**: lets
   modules change system files. KernelSU needs one module like it for that.
 
