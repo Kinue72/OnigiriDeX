@@ -233,8 +233,9 @@ remove them in the **KernelSU** app; a module you remove stays removed.
 - **[Vector](https://github.com/JingMatrix/Vector)**: runs Xposed modules.
   Open it from its notification or its action button in the KernelSU app.
 - **[HMA-OSS](https://github.com/frknkrc44/HMA-OSS)**: hides your other apps
-  from the apps you pick. It comes set up for common banking, shopping and
-  root checker apps; change that in its own app.
+  from the apps you pick. It comes set up for common banking, shopping,
+  root checker and driver apps (Grab Driver, Green SM Driver, ShopeeFood
+  Driver and beDriver/bePartner); change that in its own app.
 - **[TEESimulator](https://github.com/JingMatrix/TEESimulator)**: answers the
   hardware key checks that Play Integrity and some banking apps make, so they
   see a locked phone. For the apps in its list it takes over from the
