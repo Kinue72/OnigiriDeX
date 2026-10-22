@@ -132,7 +132,7 @@ diff --git a/smali_classes4/moe/foss/onigiri/settings/RootModPreferenceControlle
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes4/moe/foss/onigiri/settings/RootModPreferenceController.smali
-@@ -0,0 +1,800 @@
+@@ -0,0 +1,803 @@
 +.class public Lmoe/foss/onigiri/settings/RootModPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;
 +.source "RootModPreferenceController.java"
@@ -420,6 +420,9 @@ new file mode 100644
 +    const-string v1, "org.frknkrc44.hma_oss"
 +    const-string v2, "org.frknkrc44.hma_oss.ui.activity.MainActivity"
 +    invoke-virtual {v0, v1, v2}, Landroid/content/Intent;->setClassName(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;
++    move-result-object v0
++    const/high16 v1, 0x10000000
++    invoke-virtual {v0, v1}, Landroid/content/Intent;->addFlags(I)Landroid/content/Intent;
 +    move-result-object v0
 +    return-object v0
 +.end method

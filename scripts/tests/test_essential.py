@@ -17,7 +17,7 @@ class BootStateTest(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='essential-boot-test-')
         self.root = Path(self.temp.name)
         self.data = self.root / 'data/system/onigiri-essential'
-        self.rom = self.root / 'system/etc/onigiri-essential'
+        self.rom = self.root / 'system/framework/onigiri-essential'
         self.props = self.root / 'props'
         self.props.mkdir()
         (self.root / 'data/misc').mkdir(parents=True)

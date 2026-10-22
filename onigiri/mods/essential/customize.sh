@@ -9,6 +9,8 @@ cat >> "$WORK_DIR/system/system/etc/selinux/plat_sepolicy.cil" <<'CIL'
 (typeattributeset core_data_file_type (onigiri_essential_file))
 (allow system_server onigiri_essential_file (dir (getattr open read search)))
 (allow system_server onigiri_essential_file (file (getattr open read map execute)))
+; HMA's pinned hook engine creates anonymous RW trampolines, then changes them to RX.
+(allow system_server system_server (process (execmem)))
 (allow keystore onigiri_essential_file (dir (getattr open read search)))
 (allow keystore onigiri_essential_file (file (getattr open read map execute)))
 (allow keystore system_data_file (dir (search)))

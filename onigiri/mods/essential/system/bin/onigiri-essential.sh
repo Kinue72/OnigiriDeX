@@ -1,7 +1,7 @@
 #!/system/bin/sh
 # Runs in KernelSU's domain. Never sources an upstream module script or deletes user config.
 DATA=/data/system/onigiri-essential
-ROM=/system/etc/onigiri-essential
+ROM=/system/framework/onigiri-essential
 LEGACY=/data/adb/onigiri/rootmods
 
 log() { /system/bin/log -t onigiri-essential "$*"; }

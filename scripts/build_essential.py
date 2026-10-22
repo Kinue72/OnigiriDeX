@@ -20,7 +20,8 @@ def build(src, work, r8):
     feed = dict(line.split('=', 1) for line in (root / 'bundled.properties').read_text().splitlines()
                 if line and not line.startswith('#'))
     assets = json.loads((root / 'manifest.json').read_text())['assets']
-    dest = work / 'system/system/etc/onigiri-essential'
+    # Keystore's linker permits framework payloads, but not /system/etc libraries.
+    dest = work / 'system/system/framework/onigiri-essential'
     dest.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='onigiri-essential-') as temp:
         temp = Path(temp)

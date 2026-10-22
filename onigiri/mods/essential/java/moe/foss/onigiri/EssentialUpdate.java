@@ -14,7 +14,7 @@ import java.util.zip.*;
 /** PIF-style compatible-release feed. Never executes a module's installation scripts. */
 public final class EssentialUpdate {
     static final Path DATA = Paths.get("/data/system/onigiri-essential");
-    static final Path ROM = Paths.get("/system/etc/onigiri-essential");
+    static final Path ROM = Paths.get("/system/framework/onigiri-essential");
     static final String FEED = "https://raw.githubusercontent.com/Kinue72/OnigiriDeX/main/prebuilts/rootmods/updates.properties";
     static final long MAX_ZIP = 64L * 1024 * 1024;
 
@@ -293,5 +293,7 @@ public final class EssentialUpdate {
         try { result = update(id); }
         catch (Exception e) { System.err.println("Onigiri update: " + e); }
         finally { prop("sys.onigiri." + id + ".update", result); }
+        // Android's network workers can keep app_process alive after main returns.
+        System.exit(0);
     }
 }

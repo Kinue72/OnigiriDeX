@@ -18,6 +18,13 @@ its upstream signing certificate. PIF's existing certificate handling remains
 in place. This does not provide new keys, download keys, or guarantee an app's
 integrity result.
 
+Bundled payloads live under `/system/framework/onigiri-essential`, which is
+permitted by keystore's linker namespace. Updates use the root-owned
+`/data/system/onigiri-essential` tree. Both retain the dedicated SELinux label.
+HMA's hook engine also requires `system_server` to create anonymous executable
+memory for its trampolines; the policy grants that specific `execmem` permission.
+SELinux remains enforcing, and upstream crash status (work mode 4) stays unavailable.
+
 `onigiri/mods/rootmods/disable` prevents the legacy installer and its payloads
 from entering a new image. The original archives remain in the repository for
 source provenance and recovery. NeoZygisk, Vector, Hybrid Mount and Tricky Addon
