@@ -161,7 +161,7 @@ columns, a grid, or a priority grid.
 
 ### Phone settings
 
-![Sleep when folded, power on and car standby switches, and the car standby shutdown time](docs/images/onigiri-settings-car.png)
+![Sleep when folded, power on and standby switches, and the standby shutdown time](docs/images/onigiri-settings-car.png)
 
 - **Power on when power connected**: when the phone is off and gets power, it
   turns on by itself once the battery reaches 5%.
