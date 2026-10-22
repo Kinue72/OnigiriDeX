@@ -67,10 +67,12 @@ for ZIP in $SRC/*.zip; do
     ID=${ID%.zip}
     [ -e $STATE/$ID ] && continue
     # Already installed by hand before Onigiri shipped it: keep that one. Ours, if its install was
-    # cut short (KernelSU still turns on what it got of it), installs again.
-    if [ ! -d /data/adb/modules/$ID ] || [ -e $STATE/$ID.pending ]; then
+    # cut short (KernelSU still turns on what it got of it), installs again, unless it has been
+    # turned off or removed in the KernelSU app since: reinstalling would undo that.
+    MOD=/data/adb/modules/$ID
+    if [ ! -d $MOD ] || { [ -e $STATE/$ID.pending ] && [ ! -e $MOD/disable ] && [ ! -e $MOD/remove ]; }; then
         seed $ID || continue
-        touch $STATE/$ID.pending
+        touch $STATE/$ID.pending || { log "Couldn't mark $ID as installing"; continue; }
         # Through a pipe: pm, am and settings in the installers hand their output to
         # system_server, which fails ("Failed transaction") on a file in /data/adb.
         if ! $KSUD module install "$ZIP" 2>&1 | cat >> $STATE/install.log; then
