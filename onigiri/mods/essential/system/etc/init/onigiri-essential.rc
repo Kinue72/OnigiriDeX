@@ -1,0 +1,76 @@
+# post-fs-data follows load_persist_props in the pinned Samsung init.rc.
+service onigiri-essential-prepare /system/bin/sh /system/bin/onigiri-essential.sh prepare
+    user root
+    group root
+    seclabel u:r:ksu:s0
+    disabled
+    oneshot
+    timeout_period 30
+
+service onigiri-brene /system/bin/sh /system/bin/onigiri-essential.sh brene
+    user root
+    group root
+    seclabel u:r:ksu:s0
+    disabled
+    oneshot
+    timeout_period 60
+
+service onigiri-tee /system/bin/sh /system/bin/onigiri-essential.sh tee
+    user root
+    group root
+    seclabel u:r:ksu:s0
+    disabled
+    oneshot
+
+service onigiri-essential-boot /system/bin/sh /system/bin/onigiri-essential.sh boot-complete
+    user root
+    group root
+    seclabel u:r:ksu:s0
+    disabled
+    oneshot
+
+on post-fs-data
+    exec_start onigiri-essential-prepare
+    exec_start onigiri-brene
+
+on property:sys.boot_completed=1
+    start onigiri-tee
+    start onigiri-essential-boot
+
+service onigiri-update-hma /system/bin/sh /system/bin/onigiri-essential.sh update hma
+    user root
+    group root inet
+    seclabel u:r:ksu:s0
+    disabled
+    oneshot
+    timeout_period 170
+
+service onigiri-update-tee /system/bin/sh /system/bin/onigiri-essential.sh update tee
+    user root
+    group root inet
+    seclabel u:r:ksu:s0
+    disabled
+    oneshot
+    timeout_period 170
+
+service onigiri-update-brene /system/bin/sh /system/bin/onigiri-essential.sh update brene
+    user root
+    group root inet
+    seclabel u:r:ksu:s0
+    disabled
+    oneshot
+    timeout_period 170
+
+on property:sys.onigiri.hma.update=requested
+    start onigiri-update-hma
+on property:sys.onigiri.tee.update=requested
+    start onigiri-update-tee
+on property:sys.onigiri.brene.update=requested
+    start onigiri-update-brene
+
+on property:init.svc.onigiri-update-hma=stopped && property:sys.onigiri.hma.update=checking
+    setprop sys.onigiri.hma.update error
+on property:init.svc.onigiri-update-tee=stopped && property:sys.onigiri.tee.update=checking
+    setprop sys.onigiri.tee.update error
+on property:init.svc.onigiri-update-brene=stopped && property:sys.onigiri.brene.update=checking
+    setprop sys.onigiri.brene.update error

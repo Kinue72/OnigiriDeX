@@ -142,6 +142,7 @@ EROFS_UTILS=true
 SAMLOADER=true
 SIGNAPK=true
 MAGISK_TOOLS=true
+R8=true
 
 ANDROID_TOOLS_EXEC=(
     "adb" "append2simg" "avbtool" "e2fsdroid"
@@ -169,6 +170,7 @@ SIGNAPK_EXEC=(
 )
 CHECK_TOOLS "${SIGNAPK_EXEC[@]}" && SIGNAPK=false
 CHECK_TOOLS magiskboot busybox && MAGISK_TOOLS=false
+CHECK_TOOLS r8.jar && R8=false
 
 if [[ "$1" == "--check-tools" ]]; then
     if ! $ANDROID_TOOLS && \
@@ -176,7 +178,7 @@ if [[ "$1" == "--check-tools" ]]; then
             ! $EROFS_UTILS && \
             ! $SAMLOADER && \
             ! $SIGNAPK && \
-            ! $MAGISK_TOOLS; then
+            ! $MAGISK_TOOLS && ! $R8; then
         exit 0
     else
         exit 1
@@ -185,6 +187,25 @@ elif [ "$1" ]; then
     echo "Usage: $(basename "$0" | sed 's/build_dependencies.sh/build_dependencies/')" >&2
     echo "This script does not accept any arguments." >&2
     exit 1
+fi
+
+if $R8; then
+    python3 - "$TOOLS_DIR/bin/r8.jar" <<'PY'
+import hashlib
+from pathlib import Path
+import sys
+import urllib.request
+
+url = 'https://storage.googleapis.com/r8-releases/raw/9.4.24/r8.jar'
+data = urllib.request.urlopen(url, timeout=60).read()
+if hashlib.sha256(data).hexdigest() != 'f24d7ae8332eecd5329906656aa687022c111b1e31992c04a154f649377be3f2':
+    raise ValueError('R8 compiler checksum mismatch')
+dest = Path(sys.argv[1])
+temp = dest.with_suffix('.jar.new')
+temp.write_bytes(data)
+temp.replace(dest)
+PY
+    [ "$?" = 0 ] || exit 1
 fi
 
 if $MAGISK_TOOLS; then
