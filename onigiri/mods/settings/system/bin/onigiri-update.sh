@@ -18,7 +18,8 @@ RELEASES="${ONIGIRI_UPDATE_RELEASES:-https://github.com/Kinue72/OnigiriDeX/relea
 CURRENT="$(getprop ro.onigiri.version)"
 PACKAGE=/cache/update.zip
 
-case "$(getprop persist.sys.locale)" in vi*) VI=1 ;; esac
+LOCALE="$(getprop persist.sys.locale)"
+case "${LOCALE:-$(getprop ro.product.locale)}" in vi*) VI=1 ;; esac
 # status <English> <Vietnamese>
 status() { [ "$VI" ] && shift; setprop sys.onigiri.update.status "$1"; }
 fetch() { curl -fsSL --connect-timeout 20 "$@"; }
@@ -44,10 +45,12 @@ check)
     if [ "$1" = "$CURRENT" ]; then
         status "Onigiri is up to date ($2)" "Onigiri đã là bản mới nhất ($2)"
     elif SIZE="$(fetch --max-time 60 -I -o /dev/null -w '%header{content-length}' "$RELEASES/download/$2/Onigiri_OTA_$CURRENT.zip")"; then
-        setprop sys.onigiri.update.ready "$2"
         MB=$((${SIZE:-0} / 1048576 + 1))
+        # Offer the install only once it shows: a status too long to set would leave "Checking…"
+        # on screen with a tap that installs.
         status "Onigiri $2 is available ($MB MB). Tap to install." \
-            "Có bản mới Onigiri $2 ($MB MB). Chạm để cài đặt."
+            "Có bản mới Onigiri $2 ($MB MB). Chạm để cài đặt." &&
+            setprop sys.onigiri.update.ready "$2"
     else
         status "Onigiri $2 is out, but needs a full flash with Odin." \
             "Đã có Onigiri $2, nhưng cần flash full bằng Odin."

@@ -33,7 +33,7 @@ diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
 +    <string name="onigiri_dex_zones_columns">Chia cột</string>
 +    <string name="onigiri_dex_zones_grid">Lưới</string>
 +    <string name="onigiri_dex_zones_priority">Lưới ưu tiên</string>
-+    <string name="onigiri_dex_zone_apps">Ứng dụng gán cho vùng nào sẽ mở ở vùng đó. Tất cả tự mở khi máy khởi động lúc đang cắm màn hình có điện, và khi máy thức dậy sau chế độ chờ trên xe.</string>
++    <string name="onigiri_dex_zone_apps">Ứng dụng gán cho vùng nào sẽ mở ở vùng đó. Tất cả tự mở mỗi khi DeX khởi động.</string>
 +    <string name="onigiri_dex_zone_app_none">Không chọn</string>
 +    <string name="onigiri_dex_zone_map">Vùng bản đồ</string>
 +    <string name="onigiri_dex_zone_main">Vùng chính</string>
