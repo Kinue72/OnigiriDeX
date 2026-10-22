@@ -21,7 +21,7 @@ index fbbb069..e9de264 100644
 +    <string name="onigiri_dex_zone_bottom_left">Bottom left zone</string>
 +    <string name="onigiri_dex_zone_bottom_right">Bottom right zone</string>
      <string name="onigiri_autoboot_title">Power on when power connected</string>
-     <string name="onigiri_car_standby_title">Car standby when power is lost</string>
+     <string name="onigiri_car_standby_title">Standby when unplugged</string>
      <string name="onigiri_car_standby_summary">Airplane mode, sensors off, apps closed and no power to the monitor while unplugged. Shuts down after 4 days or below 10%.</string>
 diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
 index 0603c90..c01b51f 100644

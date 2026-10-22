@@ -37,7 +37,7 @@ index e9de264..c781530 100644
 @@ -15407,6 +15407,7 @@ In Camera, you can use the Top button to take pictures."</string>
      <string name="onigiri_dex_zone_bottom_right">Bottom right zone</string>
      <string name="onigiri_autoboot_title">Power on when power connected</string>
-     <string name="onigiri_car_standby_title">Car standby when power is lost</string>
+     <string name="onigiri_car_standby_title">Standby when unplugged</string>
 -    <string name="onigiri_car_standby_summary">Airplane mode, sensors off, apps closed and no power to the monitor while unplugged. Shuts down after 4 days or below 10%.</string>
 +    <string name="onigiri_car_standby_summary">Airplane mode, sensors off, apps closed and no power to the monitor while unplugged. Shuts down below 10% or after the time below.</string>
 +    <string name="onigiri_car_standby_hours_title">Shut down after</string>

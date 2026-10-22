@@ -139,8 +139,8 @@ A few things to keep in mind:
 
 ## Extra features
 
-Everything Onigiri adds lives in **Settings → Onigiri Software**. Here's what
-each part does.
+Everything Onigiri adds lives in **Settings → Onigiri Software**, in English
+or Vietnamese, following the phone's language. Here's what each part does.
 
 ### DeX zones
 
@@ -163,11 +163,11 @@ columns, a grid, or a priority grid.
 
 ### Phone settings
 
-![Sleep when folded, power on and car standby switches, and the car standby shutdown time](docs/images/onigiri-settings-car.png)
+![Sleep when folded, power on and standby switches, and the standby shutdown time](docs/images/onigiri-settings-car.png)
 
 - **Power on when power connected**: when the phone is off and gets power, it
   turns on by itself once the battery reaches 5%.
-- **Car standby when power is lost**: when the car turns off, the phone waits
+- **Standby when unplugged**: when the car turns off, the phone waits
   a minute and then goes into a deep sleep to save battery. It turns on
   airplane mode, turns off Wi-Fi, Bluetooth and location, closes apps and
   stops powering the monitor. It checks every 30 seconds whether the car is
