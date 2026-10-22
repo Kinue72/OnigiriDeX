@@ -8,7 +8,7 @@ current status, component-specific controls, and a PIF-style version/update row.
 
 | Component | Bundled release | Built-in integration |
 | --- | --- | --- |
-| HMA-OSS | oss-173 | Original dex and signed manager; a guarded services.jar entry loads the backend without Vector or Zygisk. Config schema remains 93. |
+| HMA-OSS | oss-173 | Original signed manager and backend with the hook-installation race fix below; a guarded services.jar entry loads it without Vector or Zygisk. Config schema remains 93. |
 | TEESimulator | v3.2, code 67 | Original arm64 injector, native library and dex run through an init service. |
 | BRENE | v0.0.72 | Original susfs CLI and ROM-name list; only custom-ROM path and addon.d hiding are ported. |
 
@@ -24,6 +24,16 @@ permitted by keystore's linker namespace. Updates use the root-owned
 HMA's hook engine also requires `system_server` to create anonymous executable
 memory for its trampolines; the policy grants that specific `execmem` permission.
 SELinux remains enforcing, and upstream crash status (work mode 4) stays unavailable.
+
+HMA's pinned AndroidVMTools revision publishes a hook before preparing its
+original-call trampoline. A concurrent Binder call can recursively re-enter the
+hook and crash system_server. Adapter 2 reverses those two operations during
+extraction. `HmaHookPatch` checks the complete input and output dex SHA-256,
+changes only the two calls and result registers, and repairs the dex header
+checksums. The archive and signed manager stay unchanged. Both bundled builds
+and downloaded updates use this same extractor. Unknown backend dex versions
+are rejected until reviewed; a changed backend or an upstream fix needs a new
+ROM adapter. Manager-only updates using the supported backend remain possible.
 
 `onigiri/mods/rootmods/disable` prevents the legacy installer and its payloads
 from entering a new image. The original archives remain in the repository for
@@ -45,6 +55,8 @@ signing identity. Manager commands have deadlines; a stalled manager cannot
 prevent the other components from completing their recovery checks. HMA's
 readiness deadline starts after boot completion. TEESimulator starts after
 boot and retries at most three times if its daemon exits.
+Only the TEE process adds KernelSU's root-owned bin directory to its PATH so
+upstream can invoke `resetprop` when started by init.
 
 Clean installations default the three features on. A phone with the legacy
 installer's state or existing KernelSU modules defaults them off. Explicit
@@ -85,8 +97,9 @@ A ROM carrying a newer release or different adapter supersedes an older override
 
 The feed's `adapter` is a compatibility contract, not an upstream version:
 
-- HMA adapter 1 requires its no-argument `ZygoteEntry.main()`, manager signing
-  identity, config schema 93, and current status.json semantics.
+- HMA adapter 2 requires the reviewed oss-173 backend dex and its hook-order fix,
+  no-argument `ZygoteEntry.main()`, manager signing identity, config schema 93,
+  and current status.json semantics.
 - TEE adapter 1 requires the v3.2 entry point, current-directory injector
   layout, and `/data/adb/tricky_store` configuration. TEESimulator v4 changes
   these and is explicitly reported as requiring a ROM update.
@@ -143,8 +156,8 @@ bash -n onigiri/mods/essential/system/bin/onigiri-essential.sh
 ```
 
 `scripts/build_essential.py` builds Java adapters with the checksum-pinned R8
-compiler installed by `build_dependencies`, then packages the untouched
-upstream dex/binaries/APK. Tests cover payload identity, invalid inputs,
+compiler installed by `build_dependencies`, then applies the verified HMA hook
+fix and packages the other upstream payloads unchanged. Tests cover payload identity, invalid inputs,
 archive boundaries, migration, desired/current state, and interrupted update
 recovery. Also apply and assemble the services.jar and Settings patches against
 the matching ROM and compile the policy additions.

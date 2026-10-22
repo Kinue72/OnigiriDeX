@@ -67,7 +67,7 @@ public final class PayloadPackager {
                 output.writestr(entry, path.read_bytes())
     hma_config = src / 'onigiri/mods/rootmods/hma-oss.json'
     if json.loads(hma_config.read_text())['configVersion'] != 93:
-        raise ValueError('HMA configuration is incompatible with adapter 1')
+        raise ValueError('HMA configuration is incompatible with adapter 2')
     shutil.copyfile(hma_config, dest / 'hma-oss.json')
     manager = work / 'system/system/app/HMAOSS/HMAOSS.apk'
     manager.parent.mkdir(parents=True, exist_ok=True)

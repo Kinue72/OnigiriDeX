@@ -201,7 +201,8 @@ tee() {
     # v3.2 resolves inject and its library relative to cwd. No live toggle unloads keystore hooks.
     for ATTEMPT in 1 2 3; do
         SINCE=$(date '+%m-%d %H:%M:%S.000')
-        /system/bin/app_process -Djava.class.path="$PAYLOAD/classes.dex" "$PAYLOAD" \
+        # init does not inherit KernelSU's PATH; upstream uses its resetprop helper.
+        PATH="$PATH:/data/adb/ksu/bin" /system/bin/app_process -Djava.class.path="$PAYLOAD/classes.dex" "$PAYLOAD" \
             --nice-name=TEESimulator org.matrix.TEESimulator.App &
         PID=$!
         trap 'state tee unavailable; kill "$PID" 2>/dev/null; exit' TERM INT

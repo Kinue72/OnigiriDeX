@@ -29,7 +29,19 @@ public final class EssentialUpdateTest {
                 Path dest = temp.resolve(id);
                 EssentialUpdate.extract(id, archive, dest, feed);
                 if (id.equals("hma")) {
-                    assert Arrays.equals(zipMember(archive, "classes.dex"), zipMember(dest.resolve("hma.jar"), "classes.dex"));
+                    byte[] originalDex = zipMember(archive, "classes.dex");
+                    byte[] fixedDex = zipMember(dest.resolve("hma.jar"), "classes.dex");
+                    assert !Arrays.equals(originalDex, fixedDex);
+                    Path patched = temp.resolve("patched.dex");
+                    Files.write(patched, fixedDex);
+                    assert EssentialUpdate.sha256(patched).equals("a93a489843bd52753d50c1caf127dc9878a33af1f3a8c2eb8562bf2a61ae88a0");
+                    for (int n = 0; n < originalDex.length; n++) {
+                        if ((n >= 8 && n < 32) || (n >= 0x655ae && n < 0x655be) || n == 0x655ce) continue;
+                        assert originalDex[n] == fixedDex[n] : "Unrelated HMA byte changed at " + n;
+                    }
+                    originalDex[originalDex.length - 1] ^= 1;
+                    rejects(() -> HmaHookPatch.apply(originalDex));
+                    rejects(() -> HmaHookPatch.apply(fixedDex));
                     assert Arrays.equals(zipMember(archive, "manager.apk"), Files.readAllBytes(dest.resolve("manager.apk")));
                 } else if (id.equals("tee")) {
                     assert Arrays.equals(zipMember(archive, "keybox.xml"), Files.readAllBytes(dest.resolve("keybox.xml")));

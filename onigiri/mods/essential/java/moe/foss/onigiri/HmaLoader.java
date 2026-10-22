@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.regex.Pattern;
 
-/** Loaded by services.jar; the upstream dex and signed manager remain unchanged. */
+/** Loaded by services.jar; the signed manager remains unchanged. */
 public final class HmaLoader implements Runnable {
     private static final String STATE = "sys.onigiri.hma.state";
 

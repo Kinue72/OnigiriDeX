@@ -147,6 +147,7 @@ public final class EssentialUpdate {
             if (id.equals("hma")) {
                 byte[] dex = member(zip, "classes.dex");
                 if (!new String(dex, StandardCharsets.ISO_8859_1).contains("Lorg/frknkrc44/hma_oss/zygote/ZygoteEntry;")) throw new IOException("Unsupported HMA entry point");
+                dex = HmaHookPatch.apply(dex);
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                 try (ZipOutputStream jar = new ZipOutputStream(bytes)) {
                     ZipEntry entry = new ZipEntry("classes.dex");
