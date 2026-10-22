@@ -1,6 +1,6 @@
-# Mirroring fit daemon (onigiri-mirror.sh). Like onigiri-standby, it runs as root in KernelSU's
-# unconfined ksu domain, which `wm` needs to change the cover's size and density. Not oneshot:
-# init restarts it if it dies, and it then puts back whatever it left applied.
+# Mirroring fit and zone apps daemon (onigiri-mirror.sh). Like onigiri-standby, it runs as root
+# in KernelSU's unconfined ksu domain, which `wm` needs to change the cover's size and density.
+# Not oneshot: init restarts it if it dies, and it then puts back whatever it left applied.
 service onigiri-mirror /system/bin/sh /system/bin/onigiri-mirror.sh
     user root
     group root

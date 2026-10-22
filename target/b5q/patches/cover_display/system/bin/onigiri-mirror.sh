@@ -2,7 +2,8 @@
 # Mirroring fit, like the SecondScreen app: while a wired monitor mirrors the phone (DeX off),
 # give the cover the monitor's shape at 240 dpi, so the mirror fills the monitor instead of a
 # square in the middle. The cover goes back to its own size and density as soon as the monitor
-# goes away or DeX starts. Started by onigiri-mirror.rc.
+# goes away or DeX starts. Each time DeX starts, it also opens the zone apps (Settings > Onigiri
+# Software > Zones). Started by onigiri-mirror.rc.
 
 DP=/sys/class/drm/card0-DP-1/status
 DPI=240
@@ -15,15 +16,17 @@ SAVED=$DATA/saved
 
 log() { /system/bin/log -t onigiri-mirror "$*"; }
 
-# WxH to give the cover, "dex" while DeX owns the monitor, "hold" while the monitor sleeps (the
-# screen is off in either mode), or nothing without a monitor.
+# WxH to give the cover, "dex ID" while DeX owns the monitor (ID: the desktop's display), "hold"
+# while the monitor sleeps (the screen is off in either mode), or nothing without a monitor.
 mirror_size() {
     read status 2>/dev/null < $DP
     [ "$status" = connected ] || return
     # `cmd display get-displays` leaves out the DeX desktop. It stays listed here after DeX
     # exits, but off.
     displays=$(dumpsys display | grep 'DisplayInfo{') || return
-    echo "$displays" | grep -q 'DisplayInfo{"Desktop", .*, state ON,' && { echo dex; return; }
+    desktop=$(echo "$displays" |
+        sed -n 's/.*DisplayInfo{"Desktop", displayId \([0-9]*\),.*, state ON,.*/\1/p' | head -n 1)
+    [ -n "$desktop" ] && { echo dex $desktop; return; }
     external=$(echo "$displays" | grep -m 1 'type EXTERNAL')
     [ -n "$external" ] || return
     case $external in *', state ON,'*) ;; *) echo hold; return ;; esac
@@ -71,6 +74,34 @@ restore() {
     wm size $1 -d 0 && wm density $2 -d 0 && rm -f $SAVED
 }
 
+# Apps given the zones of the current layout, if any.
+zone_apps() {
+    case "$(getprop persist.sys.onigiri.dex_zones)" in
+        map_left | map_right) zones="0 1" ;;
+        columns | priority) zones="0 1 2" ;;
+        grid) zones="0 1 2 3" ;;
+        *) return ;;
+    esac
+    for zone in $zones; do
+        getprop persist.sys.onigiri.dex_zone_app.$zone
+    done
+}
+
+# Start the zone apps on the DeX desktop $1; the window manager opens each in its zone.
+open_zone_apps() {
+    apps=$(echo $(zone_apps))
+    [ -n "$apps" ] || return
+    for app in $apps; do
+        # The package's own launcher activity (resolve-activity can answer with the chooser).
+        activity=$(cmd package query-activities --brief --components -a android.intent.action.MAIN \
+            -c android.intent.category.LAUNCHER $app | grep / | head -n 1)
+        # As a launcher does, so an open task comes to the front instead of getting a new activity.
+        [ -n "$activity" ] && am start --display $1 -a android.intent.action.MAIN \
+            -c android.intent.category.LAUNCHER -n "$activity" >/dev/null 2>&1
+    done
+    log "opened zone apps: $apps"
+}
+
 mkdir -p $DATA
 applied=
 [ -e $SAVED ] && applied=unknown  # left applied by an earlier run: recheck at once
@@ -79,17 +110,22 @@ count=0
 had_dex=  # DeX ran on this monitor
 while :; do
     now=$(mirror_size)
-    case $now in
-        hold) sleep 2; continue ;;
-        dex) had_dex=1; now= ;;
-        '') had_dex= ;;
-    esac
+    [ "$now" = hold ] && { sleep 2; continue; }
     if [ "$now" = "$seen" ]; then
         count=$((count + 1))
     else
         seen=$now
         count=0
     fi
+    case $now in
+        dex*)
+            had_dex=1
+            # On the second poll, once the desktop has settled: once per DeX start.
+            [ $count = 1 ] && open_zone_apps ${now#dex }
+            now=
+            ;;
+        '') had_dex= ;;
+    esac
     # Plugging in a monitor often starts DeX a few seconds later: wait for mirroring to hold, so
     # docking doesn't relayout the cover twice. Turning DeX off is the user's choice, and putting
     # the cover back never waits.
