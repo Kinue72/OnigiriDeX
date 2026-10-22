@@ -191,9 +191,9 @@ columns, a grid, or a priority grid.
 - **DeX high refresh rate** (experimental, off by default): lets the desktop
   run smoother than 60 frames per second on fast monitors. In testing, a
   144 Hz monitor reached about 142 frames per second instead of 60. Unplug and
-  plug the cable back in after turning it on. Some apps may still run slower,
-  and it may stay at 60 while the phone's own screen is on. Battery saver and
-  overheating protection still work as usual.
+  plug the cable back in after turning it on. Some apps may still run slower.
+  The phone's own screen can stay on; it keeps showing 60 frames per second.
+  Battery saver and overheating protection still work as usual.
 
 <details>
 <summary><b>Boring stuffs</b></summary>

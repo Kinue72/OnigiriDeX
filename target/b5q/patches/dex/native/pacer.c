@@ -6,9 +6,14 @@ extern U64 native_display_id(void *display);
 extern int native_property_bool(const char *name, int fallback);
 extern void native_activate(void *sf, void *old_display, void *new_display);
 extern void native_unregister(void *scheduler, U64 removed, U64 active);
+extern void native_begin_frame(void *targeter, void *args, void *vsync_source, void *is_fence_pending);
+extern void *native_previous_present_fence(void *target);
+extern int native_is_fence_pending(void *fence, int grace_ms);
+extern void native_add_targeter(void *targeters, void *id, void **targeter);
 
 static U64 read64(void *p, unsigned offset) { return *(U64 *)((Byte *)p + offset); }
 static unsigned read32(void *p, unsigned offset) { return *(unsigned *)((Byte *)p + offset); }
+static int dex_high_refresh(void) { return native_property_bool("persist.sys.onigiri.dex_high_refresh", 0); }
 
 /* Samsung's ftl::SmallMap has inline and heap storage in this exact firmware. */
 static Byte *map_start(void *sf, unsigned offset, unsigned tag, unsigned stride, Byte **end) {
@@ -36,7 +41,7 @@ static int connection(void *sf, U64 id) {
 
 void onigiri_power_on(void *sf, void *display, void *active, int internal) {
     int external = connection(sf, native_display_id(display)) == 1;
-    if ((external && native_property_bool("persist.sys.onigiri.dex_high_refresh", 0)) ||
+    if ((external && dex_high_refresh()) ||
             (internal && (!active || read32(active, 0xa4) == 0)))
         native_activate(sf, active, display);
 }
@@ -60,4 +65,20 @@ void onigiri_unregister(void *scheduler, U64 removed, U64 active, void *sf) {
         }
     }
     native_unregister(scheduler, removed, active);
+}
+
+/* SurfaceFlinger presents every display in the pacesetter's frame. With the monitor pacing
+ * DeX, the 60 Hz cover stalls that frame twice: sleeping until its own vsync, then in the
+ * composer while its last frame is still going out. Both hold a 144 Hz monitor at 60.
+ * A skipped follower releases buffers latched meanwhile without a fence, which is only
+ * safe for the mostly still cover, so this stays behind the DeX high refresh switch. */
+void onigiri_follower_frame(void *targeter, void *args, void *vsync_source, void *is_fence_pending) {
+    native_begin_frame(targeter, args, vsync_source, is_fence_pending);
+    if (dex_high_refresh()) *((Byte *)targeter + 0x20) = 0; /* FrameTarget::mEarliestPresentTime has_value */
+}
+
+/* Leave a follower out of this frame while its last one is still pending; a later frame takes it. */
+void onigiri_follower_composite(void *targeters, void *id, void **targeter) {
+    if (dex_high_refresh() && native_is_fence_pending(native_previous_present_fence(*targeter), 0)) return;
+    native_add_targeter(targeters, id, targeter);
 }

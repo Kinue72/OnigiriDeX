@@ -8,7 +8,7 @@ import sys
 import tempfile
 
 STOCK_SHA = 'fdb8f2a6242c589f6c9c34f42fb410d877624f8ca4b40b39f8f93ecc27e2383f'
-PATCHED_SHA = '593a3275820156cfd27b9dba3bfece391c22426f23cf8f27dbf929db5d2528a0'
+PATCHED_SHA = 'ef35b2d709090eed16b57ad6487481543bba966ecd02a6dc170ea61c0fb8e4b4'
 
 
 def patch(binary, clang):
@@ -30,6 +30,8 @@ def patch(binary, clang):
         subprocess.run([str(clang / 'ld.lld'), '-static', '-e', 'onigiri_power_bridge', '-T', str(build / 'pacer.ld'),
             '--defsym=native_display_id=0x1ade40', '--defsym=native_property_bool=0x73eb48',
             '--defsym=native_activate=0x29e598', '--defsym=native_unregister=0x276f90',
+            '--defsym=native_begin_frame=0x71a914', '--defsym=native_previous_present_fence=0x71a8b0',
+            '--defsym=native_is_fence_pending=0x71adb0', '--defsym=native_add_targeter=0x278130',
             '--defsym=power_continue=0x2b2cd0', str(build / 'pacer.c.o'), str(build / 'bridges.S.o'),
             '-o', str(build / 'pacer.elf')], check=True)
         subprocess.run([str(clang / 'llvm-objcopy'), '--only-section=.text', '-O', 'binary',
@@ -49,7 +51,9 @@ def patch(binary, clang):
     size = 0x742328 + len(code) - 0x188000
     struct.pack_into('<QQ', patched, program_header + 32, size, size)
     for offset, expected, target, link in ((0x2b2cb0, '18010034', 'onigiri_power_bridge', False),
-                                           (0x29dc7c, 'c564ff97', 'onigiri_unregister_bridge', True)):
+                                           (0x29dc7c, 'c564ff97', 'onigiri_unregister_bridge', True),
+                                           (0x277c88, '238b1294', 'onigiri_follower_frame', True),
+                                           (0x277e14, 'c7000094', 'onigiri_follower_composite', True)):
         delta = symbols[target] - offset
         if stock[offset:offset + 4].hex() != expected or delta % 4 or not -(1 << 27) <= delta < 1 << 27:
             raise SystemExit('SurfaceFlinger hook mismatch')
