@@ -154,7 +154,7 @@ columns, a grid, or a priority grid.
   zone there.
 - **New windows** open in the main zone.
 - **Zone apps**: pick an app for each zone. It opens in its zone every time it
-  starts, and all of them open by themselves when the phone starts on a
+  starts, and all of them open by themselves each time DeX starts on a wired
   monitor (handy in the car). Each app can only have one zone.
 
 ![DeX desktop with the Map left layout](docs/images/dex-zones-map-left.jpg)

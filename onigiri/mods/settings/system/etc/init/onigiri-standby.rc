@@ -9,8 +9,9 @@ service onigiri-standby /system/bin/sh /system/bin/onigiri-standby.sh
 
 # Opt-in (Settings > Onigiri Software). It also starts at every boot, so state left by a
 # shutdown, crash or restart in standby is put back even after the switch was turned off, and
-# zone apps open when the phone starts docked; while switched off it does only that and stops
-# itself. Not oneshot: init restarts it if it dies, so a killed run gets cleaned up too.
+# a monitor the phone starts docked on gets DeX (and its zone apps); while switched off it does
+# only that and stops itself. Not oneshot: init restarts it if it dies, so a killed run gets
+# cleaned up too.
 on property:sys.boot_completed=1
     start onigiri-standby
 
