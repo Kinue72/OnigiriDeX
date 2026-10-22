@@ -25,6 +25,8 @@ def block_hashes(path):
 def match(src, tgt):
     """[(target start, source start, length)]: runs of equal non-zero blocks. Block 0 always ships
     whole (the generator's clobbered block), and no source block is used twice."""
+    # ponytail: only the first copy of a repeated block can start a run; keep every position per
+    # hash if duplicate-heavy images ever make updates noticeably bigger.
     first = {}
     for i, h in enumerate(src):
         if i and h != ZERO:

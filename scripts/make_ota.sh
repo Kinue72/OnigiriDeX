@@ -3,8 +3,9 @@
 #
 # Builds a signed incremental OTA between two Onigiri Odin packages with the generator Samsung
 # ships in the target firmware (extract_fw puts it in out/fw/SM-F731B_XXV/fota). Recovery checks
-# every block it reads against the installed build first, so the package only installs on a
-# phone that holds exactly that build. Needs ~60 GB free under out/tmp.
+# every block it reads against the installed build before it writes anything, so a phone on
+# another build fails untouched; blocks the update doesn't read go unchecked. Needs ~60 GB free
+# under out/tmp.
 
 set -eo pipefail
 
