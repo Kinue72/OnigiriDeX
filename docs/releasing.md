@@ -35,6 +35,16 @@ Without GitHub, the same works on the build machine from a clean git checkout:
 `onigiri build_odin`, then `onigiri release <tag> out/Onigiri_AP_*.tar.md5` (needs `gh` logged in
 with push access).
 
+## Testing a branch on a phone
+
+Run the Release workflow manually with the branch and the release already installed on the
+phone, for example `gh workflow run release.yml --ref <branch> -f base_tag=2026.10.22.1`.
+Manual runs use the existing signing keys and upload a seven-day `phone-test-<commit>` Actions
+artifact containing the update, reverse update, runtime files, source commit and checksums.
+They do not publish a release or change the version offered to other phones. Check the device's
+installed version against `base-version.txt` and verify `SHA256SUMS` before testing. Keep the
+rollback package and the original AP available until the test build is accepted.
+
 ## Setup (once)
 
 **Signing keys.** The workflow reads the keys from the `ONIGIRI_SIGNING_KEYS` secret. Set it
