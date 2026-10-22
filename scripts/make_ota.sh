@@ -21,11 +21,12 @@ fi
 mkdir -p "$OUT_DIR/tmp"
 WORK="$(mktemp -d "$OUT_DIR/tmp/ota.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
+PARTITIONS=(system vendor product system_ext odm vendor_dlkm system_dlkm)
 
-# TARGET_FILES <AP> <zip>: the target-files layout ota_from_target_files reads, from an Odin AP.
+# TARGET_FILES <AP> <dir>: the target-files layout ota_from_target_files reads, from an Odin AP.
 TARGET_FILES()
 {
-    local TF="$WORK/tf"
+    local TF="$2"
     mkdir -p "$TF/IMAGES" "$TF/META" "$TF/OTA/bin" "$TF/RECOVERY/RAMDISK/system/etc"
     tar -xf "$1" -C "$TF/IMAGES"
     for IMAGE in "$TF"/IMAGES/*.lz4; do
@@ -36,10 +37,8 @@ TARGET_FILES()
     simg2img "$TF/IMAGES/super.img" "$TF/IMAGES/super.raw"
     rm "$TF/IMAGES/super.img"
     local PARTITION
-    for PARTITION in system vendor product system_ext odm vendor_dlkm system_dlkm; do
+    for PARTITION in "${PARTITIONS[@]}"; do
         lpunpack -p "$PARTITION" "$TF/IMAGES/super.raw" "$TF/IMAGES" > /dev/null
-        # erofs images are not sparse, so the generator diffs them whole and needs no block map.
-        : > "$TF/IMAGES/$PARTITION.map"
         mkdir "$TF/${PARTITION^^}"
         case "$PARTITION" in
             system) PROP=/system/build.prop ;;
@@ -52,14 +51,29 @@ TARGET_FILES()
     cp "$FOTA/META/misc_info.txt" "$FOTA/META/dynamic_partitions_info.txt" "$TF/META/"
     cp "$FOTA/RECOVERY/RAMDISK/system/etc/recovery.fstab" "$TF/RECOVERY/RAMDISK/system/etc/"
     cp "$FOTA/OTA/bin/updater" "$TF/OTA/bin/"
-    (cd "$TF" && zip -q -0 -r "$2" .)
-    rm -rf "$TF"
 }
 
 echo "- Unpacking $(basename "$SOURCE")"
-TARGET_FILES "$SOURCE" "$WORK/source.zip"
+TARGET_FILES "$SOURCE" "$WORK/source"
 echo "- Unpacking $(basename "$TARGET")"
-TARGET_FILES "$TARGET" "$WORK/target.zip"
+TARGET_FILES "$TARGET" "$WORK/target"
+
+# Without block maps the generator diffs each image block by block at the same offsets, so data
+# that only moved (behind a new or grown file) would ship again in full. The maps name the
+# unchanged runs, and it only reads the maps of sparse images.
+for PARTITION in "${PARTITIONS[@]}"; do
+    printf -- "- Matching %s: " "$PARTITION"
+    python3 "$SRC_DIR/scripts/ota_blockmap.py" \
+        "$WORK"/{source,target}/IMAGES/"$PARTITION".img "$WORK"/{source,target}/IMAGES/"$PARTITION".map
+    for TF in source target; do
+        img2simg "$WORK/$TF/IMAGES/$PARTITION.img" "$WORK/$TF/IMAGES/$PARTITION.simg"
+        mv "$WORK/$TF/IMAGES/$PARTITION.simg" "$WORK/$TF/IMAGES/$PARTITION.img"
+    done
+done
+for TF in source target; do
+    (cd "$WORK/$TF" && zip -q -0 -r "$WORK/$TF.zip" .)
+    rm -rf "${WORK:?}/$TF"
+done
 
 # The generator expects an AOSP host-tools layout.
 mkdir -p "$WORK/host/framework"
