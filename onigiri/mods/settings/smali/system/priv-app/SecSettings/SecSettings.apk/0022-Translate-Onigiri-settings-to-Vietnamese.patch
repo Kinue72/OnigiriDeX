@@ -1,0 +1,66 @@
+From: Onigiri
+Subject: [PATCH] Translate the rest of Onigiri Settings to Vietnamese
+
+Strings added after the UN1CA port were English only. Add new Onigiri strings here too.
+
+diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
+--- a/res/values-vi/strings.xml
++++ b/res/values-vi/strings.xml
+@@ -8010,4 +8010,39 @@
+     <string name="onigiri_spoof_settings_title">Ngụy trang</string>
+     <string name="onigiri_ss_detection_title">Không cho ứng dụng biết khi chụp màn hình</string>
+     <string name="onigiri_ui_settings_title">Giao diện</string>
++    <string name="keywords_onigiri_settings">Cài đặt Onigiri</string>
++    <string name="onigiri_settings_summary">Tính năng bổ sung</string>
++    <string name="onigiri_update_title">Cập nhật phần mềm</string>
++    <string name="onigiri_patch_settings_title">Bản vá</string>
++    <string name="onigiri_settings_category_title">Cài đặt Onigiri</string>
++    <string name="onigiri_sleep_when_folded_title">Tắt màn hình khi gập máy</string>
++    <string name="onigiri_autoboot_title">Tự bật máy khi cắm sạc</string>
++    <string name="onigiri_car_standby_title">Chế độ chờ khi không cắm sạc</string>
++    <string name="onigiri_car_standby_summary">Khi rút sạc, máy sẽ: bật chế độ máy bay, tắt cảm biến, đóng ứng dụng và ngắt điện màn hình. Máy tự tắt khi pin dưới 10% hoặc sau một khoảng thời gian được tuỳ chọn bên dưới.</string>
++    <string name="onigiri_car_standby_hours_title">Tự tắt máy sau</string>
++    <string name="onigiri_display_settings_title">Màn hình</string>
++    <string name="onigiri_dex_high_refresh_title">Tần số quét cao cho DeX</string>
++    <string name="onigiri_external_mode_title">Độ phân giải màn hình rời</string>
++    <string name="onigiri_external_rotation_title">Xoay màn hình rời</string>
++    <string name="onigiri_display_automatic">Tự động</string>
++    <string name="onigiri_external_reconnect">Cắm lại màn hình rời để áp dụng</string>
++    <string name="onigiri_dex_zones_title">Chia vùng DeX</string>
++    <string name="onigiri_dex_zones_off">Tắt</string>
++    <string name="onigiri_dex_zones_map_left">Bản đồ trái</string>
++    <string name="onigiri_dex_zones_map_right">Bản đồ phải</string>
++    <string name="onigiri_dex_zones_columns">Chia cột</string>
++    <string name="onigiri_dex_zones_grid">Lưới</string>
++    <string name="onigiri_dex_zones_priority">Lưới ưu tiên</string>
++    <string name="onigiri_dex_zone_apps">Ứng dụng gán cho vùng nào sẽ mở ở vùng đó. Tất cả tự mở khi máy khởi động lúc đang cắm màn hình có điện, và khi máy thức dậy sau chế độ chờ trên xe.</string>
++    <string name="onigiri_dex_zone_app_none">Không chọn</string>
++    <string name="onigiri_dex_zone_map">Vùng bản đồ</string>
++    <string name="onigiri_dex_zone_main">Vùng chính</string>
++    <string name="onigiri_dex_zone_left">Vùng bên trái</string>
++    <string name="onigiri_dex_zone_middle">Vùng giữa</string>
++    <string name="onigiri_dex_zone_right">Vùng bên phải</string>
++    <string name="onigiri_dex_zone_top_left">Vùng trên bên trái</string>
++    <string name="onigiri_dex_zone_top_right">Vùng trên bên phải</string>
++    <string name="onigiri_dex_zone_bottom_left">Vùng dưới bên trái</string>
++    <string name="onigiri_dex_zone_bottom_right">Vùng dưới bên phải</string>
++    <string name="onigiri_dark_mode_schedule_summary">Chế độ Tối sẽ bật và tắt đúng giờ đã hẹn.</string>
+ </resources>
+diff --git a/res/values-vi/arrays.xml b/res/values-vi/arrays.xml
+--- a/res/values-vi/arrays.xml
++++ b/res/values-vi/arrays.xml
+@@ -609,4 +609,14 @@
+         <item>Tỷ lệ hình động 5x</item>
+         <item>Tỷ lệ hình động 10x</item>
+     </string-array>
++    <string-array name="onigiri_car_standby_hours_entries">
++        <item>1 giờ</item>
++        <item>2 giờ</item>
++        <item>4 giờ</item>
++        <item>8 giờ</item>
++        <item>12 giờ</item>
++        <item>1 ngày</item>
++        <item>2 ngày</item>
++        <item>4 ngày</item>
++    </string-array>
+ </resources>

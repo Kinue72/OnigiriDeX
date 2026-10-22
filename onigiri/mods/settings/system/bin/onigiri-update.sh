@@ -6,7 +6,8 @@
 #             it carries an update from this build
 #   install   download that update to /cache and reboot; recovery installs it
 #
-# Progress goes to sys.onigiri.update.status (92 bytes at most), which Settings shows. Each
+# Progress goes to sys.onigiri.update.status (91 bytes at most, and Vietnamese letters take 2-3
+# each), which Settings shows in the phone's language: English, or Vietnamese. Each
 # release carries version.txt ("<ro.onigiri.version> <tag>") and
 # Onigiri_OTA_<from ro.onigiri.version>.zip, an incremental package that recovery only accepts
 # when it is signed with the Onigiri OTA key and the phone holds exactly the build it was made
@@ -17,7 +18,9 @@ RELEASES="${ONIGIRI_UPDATE_RELEASES:-https://github.com/Kinue72/OnigiriDeX/relea
 CURRENT="$(getprop ro.onigiri.version)"
 PACKAGE=/cache/update.zip
 
-status() { setprop sys.onigiri.update.status "$1"; }
+case "$(getprop persist.sys.locale)" in vi*) VI=1 ;; esac
+# status <English> <Vietnamese>
+status() { [ "$VI" ] && shift; setprop sys.onigiri.update.status "$1"; }
 fetch() { curl -fsSL --connect-timeout 20 "$@"; }
 trap 'setprop sys.onigiri.update ""' EXIT
 set -f  # version.txt is split into words below; never expand them as file names
@@ -25,39 +28,45 @@ set -f  # version.txt is split into words below; never expand them as file names
 case "$(getprop sys.onigiri.update)" in
 check)
     setprop sys.onigiri.update.ready ""
-    status "Checking for updates…"
+    status "Checking for updates…" "Đang kiểm tra bản cập nhật…"
     LATEST="$(fetch --max-time 60 "$RELEASES/latest/download/version.txt")" || {
         # curl exits 22 when GitHub answers with an error, e.g. no release yet.
         if [ $? = 22 ]; then
-            status "No Onigiri release with updates on GitHub yet."
+            status "No Onigiri release with updates on GitHub yet." \
+                "Chưa có bản cập nhật Onigiri nào trên GitHub."
         else
-            status "Couldn't reach GitHub. Tap to try again."
+            status "Couldn't reach GitHub. Tap to try again." \
+                "Không kết nối được GitHub. Chạm để thử lại."
         fi
         exit 1
     }
     set -- $LATEST
     if [ "$1" = "$CURRENT" ]; then
-        status "Onigiri is up to date ($2)"
+        status "Onigiri is up to date ($2)" "Onigiri đã là bản mới nhất ($2)"
     elif SIZE="$(fetch --max-time 60 -I -o /dev/null -w '%header{content-length}' "$RELEASES/download/$2/Onigiri_OTA_$CURRENT.zip")"; then
         setprop sys.onigiri.update.ready "$2"
-        status "Onigiri $2 is available ($((${SIZE:-0} / 1048576 + 1)) MB). Tap to install."
+        MB=$((${SIZE:-0} / 1048576 + 1))
+        status "Onigiri $2 is available ($MB MB). Tap to install." \
+            "Có bản mới Onigiri $2 ($MB MB). Chạm để cài đặt."
     else
-        status "Onigiri $2 is out, but needs a full flash with Odin."
+        status "Onigiri $2 is out, but needs a full flash with Odin." \
+            "Đã có Onigiri $2, nhưng cần flash full bằng Odin."
     fi
     ;;
 install)
     TAG="$(getprop sys.onigiri.update.ready)"
     [ "$TAG" ] || exit 1
-    status "Downloading Onigiri $TAG…"
+    status "Downloading Onigiri $TAG…" "Đang tải Onigiri $TAG…"
     rm -f "$PACKAGE"
     # From the release the check found, even if a newer one came out since.
     fetch --max-time 3600 -o "$PACKAGE" "$RELEASES/download/$TAG/Onigiri_OTA_$CURRENT.zip" || {
         rm -f "$PACKAGE"
         setprop sys.onigiri.update.ready ""
-        status "Download failed. Tap to check again."
+        status "Download failed. Tap to check again." \
+            "Tải về không thành công. Chạm để kiểm tra lại."
         exit 1
     }
-    status "Restarting to install Onigiri $TAG…"
+    status "Restarting to install Onigiri $TAG…" "Đang khởi động lại để cài Onigiri $TAG…"
     echo "--update_package=$PACKAGE" > /cache/recovery/command && sync && reboot recovery
     ;;
 esac
