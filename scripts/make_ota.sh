@@ -2,10 +2,10 @@
 # Usage: make_ota <installed AP .tar.md5> <new AP .tar.md5> <output .zip>
 #
 # Builds a signed incremental OTA between two Onigiri Odin packages with the generator Samsung
-# ships in the target firmware (extract_fw puts it in out/fw/SM-F731B_XXV/fota). Recovery checks
-# every block it reads against the installed build before it writes anything, so a phone on
-# another build fails untouched; blocks the update doesn't read go unchecked. Needs ~60 GB free
-# under out/tmp.
+# ships in the target firmware (extract_fw puts it in out/fw/SM-F731B_XXV/fota). Phones only
+# fetch the package named for their own build; recovery also checks every block the package reads
+# against that build before it writes anything (blocks it doesn't read go unchecked). Needs
+# ~60 GB free under out/tmp.
 
 set -eo pipefail
 

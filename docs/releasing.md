@@ -8,8 +8,10 @@ new kernel 40 MB, instead of the 8 GB AP. Phones on any other build need the ful
 
 The AP ships Samsung's stock recovery with one change: `otacerts.zip` holds only the Onigiri OTA
 certificate, so recovery installs packages signed with `security/onigiri_ota.pk8` and nothing
-else. Before it writes anything, the package checks every block it reads against the build it
-was made from, so a package for another build fails without touching the phone.
+else. A phone only downloads the package named for its own `ro.onigiri.version`, and before it
+writes anything the package checks every block it reads against the build it was made from.
+Blocks it doesn't read go unchecked, so that check catches another build only where the two
+differ in those blocks.
 
 ## Making a release
 
