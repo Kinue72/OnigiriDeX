@@ -1,0 +1,31 @@
+From: Onigiri
+Subject: [PATCH 6/6] fix(audio): keep audio_pkt usable when it probes during registration
+
+diff --git a/vendor/qcom/opensource/audio-kernel/ipc/audio-pkt.c b/vendor/qcom/opensource/audio-kernel/ipc/audio-pkt.c
+index d6600f71..39a80493 100755
+--- a/vendor/qcom/opensource/audio-kernel/ipc/audio-pkt.c
++++ b/vendor/qcom/opensource/audio-kernel/ipc/audio-pkt.c
+@@ -588,6 +588,12 @@ static int audio_pkt_plaform_driver_register_gpr(struct platform_device *pdev,
+ 	if (!ap_priv)
+ 		return -ENOMEM;
+ 
++	/* Registering can probe at once when the DSP is already up; set INIT before that. */
++	mutex_init(&ap_priv->lock);
++	ap_priv->status = AUDIO_PKT_INIT;
++	ap_priv->ap_dev = audpkt_dev;
++	ap_priv->dev = audpkt_dev->dev;
++
+ 	ret = gpr_driver_register(&audio_pkt_driver);
+ 	if (ret < 0) {
+ 		dev_err(&pdev->dev, "%s: registering to gpr driver failed, err = %d\n",
+@@ -595,10 +601,6 @@ static int audio_pkt_plaform_driver_register_gpr(struct platform_device *pdev,
+ 		goto err;
+ 	}
+ 
+-	mutex_init(&ap_priv->lock);
+-	ap_priv->status = AUDIO_PKT_INIT;
+-	ap_priv->ap_dev = audpkt_dev;
+-	ap_priv->dev = audpkt_dev->dev;
+ err:
+ 	return ret;
+ }
