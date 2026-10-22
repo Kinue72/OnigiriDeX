@@ -62,7 +62,7 @@ class BootStateTest(unittest.TestCase):
         original = '{"configVersion":93,"apps":["com.grabtaxi.driver2"]}'
         config.write_text(original)
         self.prepare()
-        self.assertEqual(self.prop('sys.onigiri.hma.state'), 'ready')
+        self.assertEqual(self.prop('sys.onigiri.hma.state'), 'loading')
         self.assertEqual(self.prop('sys.onigiri.hma.enabled'), 'true')
         self.assertEqual(config.read_text(), original)
         # Switch writes affect desired state only, never the current boot snapshot.
@@ -80,7 +80,7 @@ class BootStateTest(unittest.TestCase):
         self.assertFalse((self.data / 'hma/guard').exists())
         (module / 'disable').touch()
         self.prepare()
-        self.assertEqual(self.prop('sys.onigiri.hma.state'), 'ready')
+        self.assertEqual(self.prop('sys.onigiri.hma.state'), 'loading')
         self.assertTrue((module / 'disable').exists())
 
     def test_completed_legacy_install_is_not_silently_reenabled(self):
@@ -165,6 +165,105 @@ class BootStateTest(unittest.TestCase):
         self.prepare()
         self.assertEqual(self.prop('sys.onigiri.hma.state'), 'unavailable')
         self.assertFalse((self.data / 'hma/guard').exists())
+
+    def test_failed_brene_probe_rolls_back_on_next_boot(self):
+        component = self.data / 'brene'
+        old, new = 'a' * 64, 'b' * 64
+        for digest, code in ((old, 2), (new, 3)):
+            release = component / 'releases' / digest
+            release.mkdir()
+            (release / 'version.properties').write_text(f'version={code}\ncode={code}\nadapter=1\n')
+        probe = component / 'releases' / new / 'susfs'
+        probe.write_text('#!/bin/sh\nexit 42\n')
+        probe.chmod(0o755)
+        (component / 'active').write_text(old)
+        (component / 'pending').write_text(new)
+        self.prepare()
+        result = subprocess.run(['bash', str(self.script), 'brene'], env=self.env, capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.prop('sys.onigiri.brene.state'), 'unavailable')
+        self.assertTrue((component / 'guard').exists())
+        self.prepare()
+        self.assertEqual((component / 'active').read_text().strip(), old)
+        self.assertFalse((component / 'trial').exists())
+        self.assertFalse((component / 'guard').exists())
+        self.assertEqual(self.prop('sys.onigiri.brene.enabled'), 'false')
+
+    def assert_manager_rollback(self, previous):
+        component = self.data / 'hma'
+        old, new = 'a' * 64, 'b' * 64
+        (self.rom / 'hma/manager.apk').write_text('1')
+        for digest, code in ((old, 2), (new, 3)):
+            release = component / 'releases' / digest
+            release.mkdir()
+            (release / 'version.properties').write_text(f'version={code}\ncode={code}\nadapter=1\n')
+            (release / 'manager.apk').write_text(str(code))
+        installed = self.root / 'installed.apk'
+        installed.write_text('2' if previous else '1')
+        self.env['INSTALLED_APK'] = str(installed)
+        pm = self.bin / 'pm'
+        pm.write_text('''#!/bin/sh
+case "$1" in
+    path) printf 'package:%s\n' "$INSTALLED_APK";;
+    install)
+        shift
+        downgrade=false
+        for arg in "$@"; do
+            case "$arg" in -d) downgrade=true;; -r) ;; *) apk=$arg;; esac
+        done
+        if [ "$(cat "$apk")" -lt "$(cat "$INSTALLED_APK")" ] && [ "$downgrade" != true ]; then
+            echo 'Failure [INSTALL_FAILED_VERSION_DOWNGRADE]'
+            exit 1
+        fi
+        cp "$apk" "$INSTALLED_APK"
+        echo install >> "$INSTALLED_APK.log"
+        echo Success;;
+esac
+''')
+        pm.chmod(0o755)
+        # Keep the real monitor loop, but skip wall-clock delays in this manager-sync test.
+        (self.bin / 'sleep').write_text('#!/bin/sh\nexit 0\n')
+        (self.bin / 'sleep').chmod(0o755)
+        for name in ('tee', 'brene'):
+            self.prop(f'persist.sys.onigiri.{name}', 'false')
+        config = self.root / 'data/misc/hide_my_applist_existing/config.json'
+        config.parent.mkdir()
+        original = '{"configVersion":93,"apps":["com.grabtaxi.driver2"]}'
+        config.write_text(original)
+        if previous:
+            (component / 'active').write_text(old)
+        (component / 'pending').write_text(new)
+        self.prepare()
+
+        def boot_complete():
+            subprocess.run(['bash', str(self.script), 'boot-complete'], env=self.env,
+                           check=True, capture_output=True, timeout=30)
+
+        boot_complete()
+        self.assertEqual(installed.read_text(), '3')
+        self.assertEqual(self.prop('sys.onigiri.hma.state'), 'ready')
+        # No loader reports Active: the trial fails and its guard must remain armed.
+        self.assertTrue((component / 'guard').exists())
+        self.prepare()
+        self.assertFalse((component / 'trial').exists())
+        self.assertEqual(self.prop('sys.onigiri.hma.enabled'), 'false')
+        self.prop('persist.sys.onigiri.hma', 'true')
+        self.prepare()
+        self.assertEqual(self.prop('sys.onigiri.hma.state'), 'loading')
+        boot_complete()
+        self.assertEqual(installed.read_text(), '2' if previous else '1')
+        self.assertEqual(self.prop('sys.onigiri.hma.state'), 'ready')
+        self.assertEqual(config.read_text(), original)
+        # The next boot leaves an identical manager in place.
+        self.prop('sys.onigiri.hma.state', 'loading')
+        boot_complete()
+        self.assertEqual(Path(str(installed) + '.log').read_text().splitlines(), ['install', 'install'])
+
+    def test_hma_rollback_restores_previous_manager(self):
+        self.assert_manager_rollback(previous=True)
+
+    def test_hma_rollback_restores_bundled_manager(self):
+        self.assert_manager_rollback(previous=False)
 
     def test_update_marks_checking_even_when_java_cannot_start(self):
         launcher = self.root / 'system/bin/app_process'

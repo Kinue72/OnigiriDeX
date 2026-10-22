@@ -31,8 +31,10 @@ boot snapshots and runs the BRENE rules before zygote starts. These two init
 services have time limits so their failure cannot indefinitely block boot.
 
 HMA loads on a daemon thread in system_server, once per boot. Its original
-backend waits for Android services. A downloaded manager is installed after
-boot, before its corresponding backend is loaded. TEESimulator starts after
+backend waits for Android services. After boot, the manager is matched to the
+selected payload before its backend loads. An identical APK is left in place;
+updates and rollbacks replace it while retaining app data and checking its
+signing identity. TEESimulator starts after
 boot and retries at most three times if its daemon exits.
 
 Clean installations default the three features on. A phone with the legacy
@@ -95,7 +97,9 @@ the candidate on the target phone before publishing the feed change.
 A persistent guard is written before a component executes. After Android
 finishes booting, 60 consecutive seconds of Active status accepts the trial
 and clears the guard. An unfinished start disables the feature on the next
-boot and, for a trial update, restores the previous payload reference. A
+boot and, for a trial update, restores the previous payload reference. On retry,
+HMA also restores the matching manager, including a downgrade to the bundled
+version, without enabling the general app-downgrade setting. A
 system_server restart within the same boot does not inject HMA a second time.
 
 For manual recovery, create this file as root or from recovery, then restart:

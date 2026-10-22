@@ -43,7 +43,7 @@ rollback() {
     # A trial that has never started (for example while switched off) is not a failed boot.
     [ -f "$DIR/guard" ] || return 0
     # References are replaced atomically. A power cut at any step returns to the old payload.
-    if [ -s "$DIR/previous" ]; then
+    if [ -n "$(cat "$DIR/previous" 2>/dev/null)" ]; then
         atomic "$DIR/active" "$(cat "$DIR/previous")" || return 1
     else
         rm -f "$DIR/active" || return 1
@@ -124,8 +124,8 @@ prepare() {
                 seed_hma || continue
                 touch "$DATA/hma/guard" || continue
                 sync
-                # Updated managers are installed after PackageManager starts, before loading hooks.
-                if [ "$PAYLOAD" = "$ROM/hma" ]; then state hma ready; else state hma loading; fi
+                # Match the manager after PackageManager starts, including rollback to the ROM.
+                state hma loading
                 ;;
             tee) state tee ready;;
             brene) state brene ready;;
@@ -164,9 +164,9 @@ brene() {
     state brene unavailable
     PAYLOAD=$(payload brene) || return 1
     SUSFS=$PAYLOAD/susfs
-    "$SUSFS" show version > /dev/null || return 1
     touch "$DATA/brene/guard" || return 1
     sync
+    "$SUSFS" show version > /dev/null || return 1
     if [ "$(getprop sys.onigiri.brene.addon_d)" = true ]; then hide_path /system/addon.d || return 1; fi
     if [ "$(getprop sys.onigiri.brene.rom_paths)" = true ]; then
         # One scan per filesystem, with the upstream list as data, not executable shell.
@@ -228,10 +228,12 @@ tee() {
 }
 
 boot_complete() {
-    if [ "$(getprop sys.onigiri.hma.state)" = loading ] && [ -f "$DATA/hma/active" ]; then
+    if [ "$(getprop sys.onigiri.hma.state)" = loading ]; then
         PAYLOAD=$(payload hma) || return 1
-        # PackageManager enforces the original manager signing identity.
-        if pm install -r "$PAYLOAD/manager.apk" 2>&1 | grep -q '^Success'; then
+        INSTALLED=$(pm path org.frknkrc44.hma_oss | sed -n 's/^package://p')
+        # Root may downgrade during rollback; PackageManager still enforces signing identity.
+        if cmp -s "$INSTALLED" "$PAYLOAD/manager.apk" ||
+                pm install -r -d "$PAYLOAD/manager.apk" 2>&1 | grep -q '^Success'; then
             state hma ready
         else
             state hma unavailable
