@@ -3,6 +3,7 @@
 from pathlib import Path
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -265,6 +266,33 @@ esac
     def test_hma_rollback_restores_bundled_manager(self):
         self.assert_manager_rollback(previous=False)
 
+    def test_stalled_manager_is_bounded_and_other_trials_are_accepted(self):
+        (self.rom / 'hma/manager.apk').write_text('manager')
+        self.prepare()
+        for name in ('tee', 'brene'):
+            self.prop(f'sys.onigiri.{name}.state', 'active')
+            (self.data / name / 'guard').touch()
+            (self.data / name / 'trial').touch()
+        # Shorten the command deadlines, but use a real timeout and a real blocked process.
+        timeout = self.bin / 'timeout'
+        timeout.write_text('#!/bin/sh\nshift 3\nexec ' + shutil.which('timeout') + ' -k 0.1 0.1 "$@"\n')
+        timeout.chmod(0o755)
+        pm = self.bin / 'pm'
+        pm.write_text('#!/bin/sh\necho "$1" >> "$PROPS/pm.calls"\n/bin/sleep 2\n'
+                      'touch "$PROPS/pm.finished"\necho Success\n')
+        pm.chmod(0o755)
+        (self.bin / 'sleep').write_text('#!/bin/sh\nexit 0\n')
+        (self.bin / 'sleep').chmod(0o755)
+        subprocess.run(['bash', str(self.script), 'boot-complete'], env=self.env,
+                       check=True, capture_output=True, timeout=10)
+        self.assertEqual(self.prop('sys.onigiri.hma.state'), 'unavailable')
+        self.assertEqual(self.prop('pm.calls').splitlines(), ['path', 'install'])
+        self.assertFalse((self.props / 'pm.finished').exists())
+        self.assertTrue((self.data / 'hma/guard').exists())
+        for name in ('tee', 'brene'):
+            self.assertFalse((self.data / name / 'guard').exists())
+            self.assertFalse((self.data / name / 'trial').exists())
+
     def test_update_marks_checking_even_when_java_cannot_start(self):
         launcher = self.root / 'system/bin/app_process'
         launcher.write_text('#!/bin/sh\n[ "$(getprop sys.onigiri.hma.update)" = checking ] || exit 99\nexit 41\n')
@@ -279,8 +307,15 @@ esac
 
 if __name__ == '__main__':
     with tempfile.TemporaryDirectory(prefix='essential-javac-') as classes:
-        sources = sorted((ROOT / 'onigiri/mods/essential/java').glob('**/*.java'))
+        # The production readiness loop runs unchanged except for a virtual one-second sleep.
+        loader = ROOT / 'onigiri/mods/essential/java/moe/foss/onigiri/HmaLoader.java'
+        virtual_loader = Path(classes) / 'HmaLoader.java'
+        virtual_loader.write_text(loader.read_text().replace('Thread.sleep(1000);', 'android.os.SystemProperties.tick();'))
+        sources = [p for p in sorted((ROOT / 'onigiri/mods/essential/java').glob('**/*.java')) if p != loader]
         subprocess.run(['javac', '--release', '8', '-Xlint:-options', '-d', classes, *map(str, sources),
+                        str(virtual_loader), str(ROOT / 'scripts/tests/SystemProperties.java'),
+                        str(ROOT / 'scripts/tests/HmaLoaderWaitTest.java'),
                         str(ROOT / 'scripts/tests/EssentialUpdateTest.java')], check=True)
         subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.EssentialUpdateTest', str(ROOT)], check=True)
+        subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.HmaLoaderWaitTest'], check=True)
     unittest.main()

@@ -22,10 +22,13 @@ public final class HmaLoader implements Runnable {
                 return;
             }
             boolean ready = false;
-            for (int i = 0; i < 240; i++) {
+            int waited = 0;
+            while (waited < 240) {
                 if ("ready".equals(EssentialUpdate.prop(STATE))) { ready = true; break; }
                 if ("true".equals(EssentialUpdate.prop("sys.onigiri.essential.prepared")) &&
                         !"loading".equals(EssentialUpdate.prop(STATE))) return;
+                // Manager reconciliation starts at boot completion, even after a slow first boot.
+                if ("1".equals(EssentialUpdate.prop("sys.boot_completed"))) waited++;
                 Thread.sleep(1000);
             }
             if (!ready) return;

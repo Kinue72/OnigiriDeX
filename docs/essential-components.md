@@ -34,7 +34,9 @@ HMA loads on a daemon thread in system_server, once per boot. Its original
 backend waits for Android services. After boot, the manager is matched to the
 selected payload before its backend loads. An identical APK is left in place;
 updates and rollbacks replace it while retaining app data and checking its
-signing identity. TEESimulator starts after
+signing identity. Manager commands have deadlines; a stalled manager cannot
+prevent the other components from completing their recovery checks. HMA's
+readiness deadline starts after boot completion. TEESimulator starts after
 boot and retries at most three times if its daemon exits.
 
 Clean installations default the three features on. A phone with the legacy

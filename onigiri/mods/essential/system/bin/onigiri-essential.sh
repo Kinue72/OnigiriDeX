@@ -230,10 +230,10 @@ tee() {
 boot_complete() {
     if [ "$(getprop sys.onigiri.hma.state)" = loading ]; then
         PAYLOAD=$(payload hma) || return 1
-        INSTALLED=$(pm path org.frknkrc44.hma_oss | sed -n 's/^package://p')
+        INSTALLED=$(timeout -k 5 15 pm path org.frknkrc44.hma_oss | sed -n 's/^package://p')
         # Root may downgrade during rollback; PackageManager still enforces signing identity.
         if cmp -s "$INSTALLED" "$PAYLOAD/manager.apk" ||
-                pm install -r -d "$PAYLOAD/manager.apk" 2>&1 | grep -q '^Success'; then
+                timeout -k 5 60 pm install -r -d "$PAYLOAD/manager.apk" 2>&1 | grep -q '^Success'; then
             state hma ready
         else
             state hma unavailable
