@@ -1,0 +1,19 @@
+From: Onigiri
+Subject: [PATCH] Center the Quick controls button on the cover
+
+The cover's 339dp width picks Camera's sw338dp sizes for the Quick controls
+button and its round background, but that set leaves out the button's end
+margin, so it fell back to sw329dp's 8dp and the icon sat 17 px left of its
+background. The sw338dp sizes only line up with no margin, so set it to 0.
+
+diff --git a/res/values-sw338dp-xxxhdpi/dimens.xml b/res/values-sw338dp-xxxhdpi/dimens.xml
+--- a/res/values-sw338dp-xxxhdpi/dimens.xml
++++ b/res/values-sw338dp-xxxhdpi/dimens.xml
+@@ -841,6 +841,7 @@
+     <dimen name="quick_setting_entry_bg_right_margin">7.5dp</dimen>
+     <dimen name="quick_setting_entry_bg_width">30.0dp</dimen>
+     <dimen name="quick_setting_entry_button_size">45.099976dp</dimen>
++    <dimen name="quick_setting_entry_button_right_margin">0.0dp</dimen>
+     <dimen name="quick_setting_height">56.299988dp</dimen>
+     <dimen name="quick_setting_indicator_disable_partial_blur_background_radius">7.5dp</dimen>
+     <dimen name="quick_setting_indicator_divider_item_image_width">13.099976dp</dimen>

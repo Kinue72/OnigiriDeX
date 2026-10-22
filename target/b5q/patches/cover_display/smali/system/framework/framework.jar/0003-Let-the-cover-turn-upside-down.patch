@@ -1,0 +1,22 @@
+From: Onigiri
+Subject: [PATCH] Let the cover turn upside down
+
+The cover is a landscape display, so its rotation 180 is the hinge-down,
+cameras-up pose. Samsung only lets the rotation sensor pick 180 on tablets
+(FW_ALLOW_ALL_ROTATION follows IS_TABLET_DEVICE), so auto-rotate never got
+there and users needed a rotation app. Allow every rotation. This also lets
+the rotate button offer 180 and keeps 180 when rotation gets locked.
+
+diff --git a/smali_classes6/com/samsung/android/rune/CoreRune.smali b/smali_classes6/com/samsung/android/rune/CoreRune.smali
+--- a/smali_classes6/com/samsung/android/rune/CoreRune.smali
++++ b/smali_classes6/com/samsung/android/rune/CoreRune.smali
+@@ -3343,7 +3343,8 @@
+
+     sput-boolean v1, Lcom/samsung/android/rune/CoreRune;->FW_DEVELOPMENT_DISABLE_STARTING_WINDOW:Z
+
+-    sget-boolean v1, Lcom/samsung/android/rune/CoreRune;->IS_TABLET_DEVICE:Z
++    # Onigiri: rotation 180 is the cover's hinge-down pose; let auto-rotate reach it.
++    const/4 v1, 0x1
+
+     sput-boolean v1, Lcom/samsung/android/rune/CoreRune;->FW_ALLOW_ALL_ROTATION:Z
+

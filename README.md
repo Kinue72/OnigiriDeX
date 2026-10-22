@@ -5,6 +5,8 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on 
 ## What it does
 
 - Runs the whole phone on the **small outside screen** because this uses the software from the **Galaxy Z Fold5**, so the outside screen works like a full phone screen.
+  With auto-rotate on, it also turns upside down, so you can hold the phone
+  hinge down with the cameras on top.
 - Lets you plug the phone into a monitor and use **Samsung DeX** (a desktop mode, like a small computer).
   A live wallpaper you set for the home screen, like one from Wallpaper
   Engine, shows on the DeX desktop too. Pick a wallpaper in DeX's own
@@ -138,8 +140,9 @@ A few things to keep in mind:
 
 ## Extra features
 
-Onigiri's own settings live in **Settings → Onigiri Software**, and its root
-modules in the **KernelSU** app. Here's what each part does.
+Onigiri's own settings live in **Settings → Onigiri Software**, in English or
+Vietnamese following the phone's language, and its root modules in the
+**KernelSU** app. Here's what each part does.
 
 ### DeX zones
 
@@ -153,7 +156,7 @@ columns, a grid, or a priority grid.
   zone there.
 - **New windows** open in the main zone.
 - **Zone apps**: pick an app for each zone. It opens in its zone every time it
-  starts, and all of them open by themselves when the phone starts on a
+  starts, and all of them open by themselves each time DeX starts on a wired
   monitor (handy in the car). Each app can only have one zone.
 
 ![DeX desktop with the Map left layout](docs/images/dex-zones-map-left.jpg)
@@ -162,11 +165,11 @@ columns, a grid, or a priority grid.
 
 ### Phone settings
 
-![Sleep when folded, power on and car standby switches, and the car standby shutdown time](docs/images/onigiri-settings-car.png)
+![Sleep when folded, power on and standby switches, and the standby shutdown time](docs/images/onigiri-settings-car.png)
 
 - **Power on when power connected**: when the phone is off and gets power, it
   turns on by itself once the battery reaches 5%.
-- **Car standby when power is lost**: when the car turns off, the phone waits
+- **Standby when unplugged**: when the car turns off, the phone waits
   a minute and then goes into a deep sleep to save battery. It turns on
   airplane mode, turns off Wi-Fi, Bluetooth and location, closes apps and
   stops powering the monitor. It checks every 30 seconds whether the car is

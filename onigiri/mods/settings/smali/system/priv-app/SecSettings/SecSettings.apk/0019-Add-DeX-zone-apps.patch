@@ -9,7 +9,7 @@ index fbbb069..e9de264 100644
      <string name="onigiri_dex_zones_columns">Columns</string>
      <string name="onigiri_dex_zones_grid">Grid</string>
      <string name="onigiri_dex_zones_priority">Priority grid</string>
-+    <string name="onigiri_dex_zone_apps">Apps given a zone open in it. They all open by themselves when the phone starts on a powered monitor, and when car standby brings it back.</string>
++    <string name="onigiri_dex_zone_apps">Apps given a zone open in it. They all open by themselves each time DeX starts.</string>
 +    <string name="onigiri_dex_zone_app_none">None</string>
 +    <string name="onigiri_dex_zone_map">Map zone</string>
 +    <string name="onigiri_dex_zone_main">Main zone</string>
@@ -21,7 +21,7 @@ index fbbb069..e9de264 100644
 +    <string name="onigiri_dex_zone_bottom_left">Bottom left zone</string>
 +    <string name="onigiri_dex_zone_bottom_right">Bottom right zone</string>
      <string name="onigiri_autoboot_title">Power on when power connected</string>
-     <string name="onigiri_car_standby_title">Car standby when power is lost</string>
+     <string name="onigiri_car_standby_title">Standby when unplugged</string>
      <string name="onigiri_car_standby_summary">Airplane mode, sensors off, apps closed and no power to the monitor while unplugged. Shuts down after 4 days or below 10%.</string>
 diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
 index 0603c90..c01b51f 100644
@@ -54,8 +54,8 @@ index 0000000..9a35021
 +
 +
 +# Zone apps: rows onigiri_dex_zone_app_<i> pick a launcher app for zone i of the current layout
-+# (persist.sys.onigiri.dex_zone_app.<i>); the window manager opens that app in zone i, and car
-+# standby opens them all when the phone starts docked or power comes back. The rows and their
++# (persist.sys.onigiri.dex_zone_app.<i>); the window manager opens that app in zone i, and
++# onigiri-mirror opens them all each time DeX starts. The rows and their
 +# description (onigiri_dex_zone_apps) show only while zones are on, one row per zone;
 +# DexZonesPreferenceController refreshes them when the layout changes.
 +

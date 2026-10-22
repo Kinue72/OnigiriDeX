@@ -135,6 +135,7 @@ check_cable() {
 }
 
 # Apps given the zones of the current layout (Settings > Onigiri Software > Zones), if any.
+# onigiri-mirror opens them once DeX starts.
 zone_apps() {
     case "$(getprop persist.sys.onigiri.dex_zones)" in
         map_left | map_right) zones="0 1" ;;
@@ -147,31 +148,6 @@ zone_apps() {
     done
 }
 
-# Once the DeX desktop is up, start the zone apps; the window manager opens each in its zone.
-open_zone_apps() {
-    [ -n "$(zone_apps)" ] || return
-    desktop=
-    for i in $(seq 30); do
-        powered || return
-        desktop=$(dumpsys display | sed -n 's/.*DisplayInfo{"Desktop", displayId \([0-9]*\).*/\1/p' | head -n 1)
-        [ -n "$desktop" ] && break
-        sleep 2
-    done
-    [ -n "$desktop" ] || return
-    sleep 3  # let the DeX desktop settle
-    apps=$(echo $(zone_apps))  # again: zones or apps may have changed meanwhile
-    [ -n "$apps" ] && powered || return
-    for app in $apps; do
-        # The package's own launcher activity (resolve-activity can answer with the chooser).
-        activity=$(cmd package query-activities --brief --components -a android.intent.action.MAIN \
-            -c android.intent.category.LAUNCHER $app | grep / | head -n 1)
-        # As a launcher does, so an open task comes to the front instead of getting a new activity.
-        [ -n "$activity" ] && am start --display $desktop -a android.intent.action.MAIN \
-            -c android.intent.category.LAUNCHER -n "$activity" >/dev/null 2>&1
-    done
-    log "opened zone apps: $apps"
-}
-
 # With VBUS cut, a monitor that gets car power back just waits for VBUS, and nothing makes
 # either side look again. Writing port_type swaps the CC terminations and both sides
 # re-detect: a powered monitor then charges the phone. Alternate writes land on both roles.
@@ -182,7 +158,7 @@ recheck_usb() {
     echo $role > $TYPEC/port_type &
     hold_power_off 4 once
     found=$?
-    wait $!  # not a zone apps run started in the background
+    wait $!
     [ $found = 0 ] && log "USB-C recheck: power is back"
     return $found
 }
@@ -306,7 +282,7 @@ fi
 
 # Started on power with something on USB-C (autoboot in the car), with car standby on or zone
 # apps set: a powered monitor stays USB host after the boot, ignores data role swaps and DeX
-# never starts, so replug it, then open the zone apps. Once per boot (sys.* props reset on
+# never starts (nor do its zone apps), so replug it. Once per boot (sys.* props reset on
 # reboot), not when the switch is toggled or the service restarts; booting on a computer's USB
 # costs two short disconnects. With neither set the flag stays unset, so switching car standby
 # on later in the boot still checks. The data role is settled long before boot completes.
@@ -330,7 +306,6 @@ if [ "$(getprop sys.onigiri.docked_boot)" != 1 ] && powered && [ -e $TYPEC-partn
             done
             ;;
     esac
-    open_zone_apps
 fi
 
 # A leftover $STATE (shutdown or crash in standby) is restored on power or once standby is
@@ -355,9 +330,7 @@ while :; do
         exit 0
     elif powered; then
         [ -d "$STATE" ] && leave
-        if unblock_host; then
-            open_zone_apps &  # DisplayPort (and DeX) restarts now
-        fi
+        unblock_host  # DisplayPort (and DeX) restarts now
         in_standby=0
         since=
         dead_monitor=1
