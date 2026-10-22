@@ -22,9 +22,9 @@ mirror_size() {
     read status 2>/dev/null < $DP
     [ "$status" = connected ] || return
     # `cmd display get-displays` leaves out the DeX desktop. It stays listed here after DeX
-    # exits, but off.
+    # exits, but off. Only the system's own one: an app can name a display "Desktop" too.
     displays=$(dumpsys display | grep 'DisplayInfo{') || return
-    desktop=$(echo "$displays" |
+    desktop=$(echo "$displays" | grep -F 'uniqueId "virtual:android,1000,Desktop,' |
         sed -n 's/.*DisplayInfo{"Desktop", displayId \([0-9]*\),.*, state ON,.*/\1/p' | head -n 1)
     [ -n "$desktop" ] && { echo dex $desktop; return; }
     external=$(echo "$displays" | grep -m 1 'type EXTERNAL')
@@ -120,8 +120,9 @@ while :; do
     case $now in
         dex*)
             had_dex=1
-            # On the second poll, once the desktop has settled: once per DeX start.
-            [ $count = 1 ] && open_zone_apps ${now#dex }
+            # On the second poll, once the desktop has settled: once per DeX start. In the
+            # background, so a slow launch never holds up the cover.
+            [ $count = 1 ] && { open_zone_apps ${now#dex } & }
             now=
             ;;
         '') had_dex= ;;
