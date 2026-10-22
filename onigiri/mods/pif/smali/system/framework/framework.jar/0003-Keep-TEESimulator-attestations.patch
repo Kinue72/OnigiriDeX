@@ -1,0 +1,136 @@
+From: Onigiri
+Subject: [PATCH] Keep TEESimulator attestations
+
+diff --git a/smali_classes6/moe/foss/onigiri/KeyStoreHooks.smali b/smali_classes6/moe/foss/onigiri/KeyStoreHooks.smali
+index c69fcfd..b98076c 100644
+--- a/smali_classes6/moe/foss/onigiri/KeyStoreHooks.smali
++++ b/smali_classes6/moe/foss/onigiri/KeyStoreHooks.smali
+@@ -75,6 +75,16 @@
+     .end annotation
+ .end field
+ 
++.field private static final blacklist sLeafResigned:Ljava/lang/ThreadLocal;
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "Ljava/lang/ThreadLocal<",
++            "Ljava/lang/Boolean;",
++            ">;"
++        }
++    .end annotation
++.end field
++
+ .field private static final blacklist sMessageDigest:Ljava/security/MessageDigest;
+ 
+ .field private static final blacklist sVerifiedBootHash:[B
+@@ -122,6 +132,12 @@
+ .method static constructor blacklist <clinit>()V
+     .locals 7
+ 
++    new-instance v0, Ljava/lang/ThreadLocal;
++
++    invoke-direct {v0}, Ljava/lang/ThreadLocal;-><init>()V
++
++    sput-object v0, Lmoe/foss/onigiri/KeyStoreHooks;->sLeafResigned:Ljava/lang/ThreadLocal;
++
+     const-string v0, "-"
+ 
+     const-string v1, "hash-"
+@@ -531,6 +547,16 @@
+ 
+     if-eqz v1, :cond_7
+ 
++    sget-object v1, Lmoe/foss/onigiri/KeyStoreHooks;->sLeafResigned:Ljava/lang/ThreadLocal;
++
++    invoke-virtual {v1}, Ljava/lang/ThreadLocal;->get()Ljava/lang/Object;
++
++    move-result-object v1
++
++    sget-object v2, Ljava/lang/Boolean;->TRUE:Ljava/lang/Boolean;
++
++    if-ne v1, v2, :cond_7
++
+     if-nez p0, :cond_0
+ 
+     goto/16 :goto_2
+@@ -776,6 +802,63 @@
+ .end method
+ 
+ .method public static blacklist handleLeafCertificate([B)[B
++    .locals 2
++
++    # KeyMetadata reads the leaf before the chain: remember whether this thread's leaf was
++    # re-signed, so handleCertificateChain swaps only the chain of a re-signed leaf.
++    invoke-static {p0}, Lmoe/foss/onigiri/KeyStoreHooks;->resignLeafCertificate([B)[B
++
++    move-result-object v0
++
++    sget-object v1, Lmoe/foss/onigiri/KeyStoreHooks;->sLeafResigned:Ljava/lang/ThreadLocal;
++
++    if-eq v0, p0, :cond_0
++
++    sget-object p0, Ljava/lang/Boolean;->TRUE:Ljava/lang/Boolean;
++
++    goto :goto_0
++
++    :cond_0
++    sget-object p0, Ljava/lang/Boolean;->FALSE:Ljava/lang/Boolean;
++
++    :goto_0
++    invoke-virtual {v1, p0}, Ljava/lang/ThreadLocal;->set(Ljava/lang/Object;)V
++
++    return-object v0
++.end method
++
++.method private static blacklist isDeviceLocked(Ljava/lang/Object;)Z
++    .locals 1
++
++    if-nez p0, :cond_0
++
++    const/4 p0, 0x0
++
++    return p0
++
++    :cond_0
++    invoke-static {p0}, Lcom/android/internal/org/bouncycastle/asn1/ASN1Sequence;->getInstance(Ljava/lang/Object;)Lcom/android/internal/org/bouncycastle/asn1/ASN1Sequence;
++
++    move-result-object p0
++
++    const/4 v0, 0x1
++
++    invoke-virtual {p0, v0}, Lcom/android/internal/org/bouncycastle/asn1/ASN1Sequence;->getObjectAt(I)Lcom/android/internal/org/bouncycastle/asn1/ASN1Encodable;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/android/internal/org/bouncycastle/asn1/ASN1Boolean;->getInstance(Ljava/lang/Object;)Lcom/android/internal/org/bouncycastle/asn1/ASN1Boolean;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Lcom/android/internal/org/bouncycastle/asn1/ASN1Boolean;->isTrue()Z
++
++    move-result p0
++
++    return p0
++.end method
++
++.method private static blacklist resignLeafCertificate([B)[B
+     .locals 24
+ 
+     move-object/from16 v1, p0
+@@ -977,6 +1060,17 @@
+     goto :goto_0
+ 
+     :cond_6
++    # This TEE always reports an unlocked bootloader. A locked root of trust means TEESimulator
++    # already attested the key with its keybox: keep that cert and its chain.
++    invoke-static {v9}, Lmoe/foss/onigiri/KeyStoreHooks;->isDeviceLocked(Ljava/lang/Object;)Z
++
++    move-result v7
++
++    if-eqz v7, :cond_locked
++
++    return-object v1
++
++    :cond_locked
+     const-string v7, "EC"
+ 
+     invoke-virtual {v0}, Ljava/security/cert/X509Certificate;->getPublicKey()Ljava/security/PublicKey;
