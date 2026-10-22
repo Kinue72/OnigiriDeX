@@ -5,6 +5,8 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on 
 ## What it does
 
 - Runs the whole phone on the **small outside screen** because this uses the software from the **Galaxy Z Fold5**, so the outside screen works like a full phone screen.
+  With auto-rotate on, it also turns upside down, so you can hold the phone
+  hinge down with the cameras on top.
 - Lets you plug the phone into a monitor and use **Samsung DeX** (a desktop mode, like a small computer).
   A live wallpaper you set for the home screen, like one from Wallpaper
   Engine, shows on the DeX desktop too. Pick a wallpaper in DeX's own
