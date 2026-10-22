@@ -232,9 +232,7 @@ first time the phone starts and turn on after the next restart. Update or
 remove them in the **KernelSU** app; a module you remove stays removed.
 
 - **[NeoZygisk](https://github.com/JingMatrix/NeoZygisk)**: lets modules run
-  inside apps (Zygisk). Vector and HMA-OSS need it.
-- **[Vector](https://github.com/JingMatrix/Vector)**: runs Xposed modules.
-  Open it from its notification or its action button in the KernelSU app.
+  inside apps (Zygisk). HMA-OSS needs it.
 - **[HMA-OSS](https://github.com/frknkrc44/HMA-OSS)**: hides your other apps
   from the apps you pick. It comes set up for common banking, shopping,
   root checker and driver apps (Grab Driver, Green SM Driver, ShopeeFood

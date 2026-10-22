@@ -33,7 +33,6 @@ Bundled KernelSU modules (prebuilts/rootmods, unmodified upstream releases liste
 download URLs in prebuilts/rootmods/manifest.json). Each keeps its own license; their source
 code is at the matching release tag:
 NeoZygisk v2.4: GPL-3.0, https://github.com/JingMatrix/NeoZygisk
-Vector v2.2: GPL-3.0, https://github.com/JingMatrix/Vector
 HMA-OSS oss-173: AGPL-3.0, https://github.com/frknkrc44/HMA-OSS
 TEESimulator v3.2: GPL-3.0, https://github.com/JingMatrix/TEESimulator
 Tricky Addon Enhanced v5.53.1: GPL-3.0, https://github.com/Enginex0/tricky-addon-enhanced
