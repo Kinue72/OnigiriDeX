@@ -1,0 +1,11 @@
+# Installs the KernelSU modules Onigiri ships (onigiri-rootmods.sh). It runs as root in KernelSU's
+# ksu domain like onigiri-standby: it writes to /data/adb and runs ksud.
+service onigiri-rootmods /system/bin/sh /system/bin/onigiri-rootmods.sh
+    user root
+    group root
+    seclabel u:r:ksu:s0
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    start onigiri-rootmods

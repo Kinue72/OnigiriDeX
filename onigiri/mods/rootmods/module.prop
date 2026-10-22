@@ -1,0 +1,4 @@
+id=rootmods
+name=Root modules
+author=Onigiri
+description=Ships KernelSU modules that onigiri-rootmods.sh installs on the phone.

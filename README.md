@@ -13,7 +13,8 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on 
   settings to go back to a picture there.
 - Can split the DeX desktop into **zones** and open your favourite apps in them.
 - Can work as a **car screen**: it turns on with the car and sleeps when the car turns off.
-- Comes with root access (KernelSU + susFS) built in.
+- Comes with root access (KernelSU + susFS) built in, plus a set of
+  [root modules](#root-modules) for Xposed, hiding root and passing app checks.
 
 ## Please read first
 
@@ -139,8 +140,9 @@ A few things to keep in mind:
 
 ## Extra features
 
-Everything Onigiri adds lives in **Settings → Onigiri Software**, in English
-or Vietnamese, following the phone's language. Here's what each part does.
+Onigiri's own settings live in **Settings → Onigiri Software**, in English or
+Vietnamese following the phone's language, and its root modules in the
+**KernelSU** app. Here's what each part does.
 
 ### DeX zones
 
@@ -222,6 +224,41 @@ columns, a grid, or a priority grid.
   apps from installing or running.
 
 </details>
+
+### Root modules
+
+Onigiri also sets up these KernelSU modules. They install by themselves the
+first time the phone starts and turn on after the next restart. Update or
+remove them in the **KernelSU** app; a module you remove stays removed.
+
+- **[NeoZygisk](https://github.com/JingMatrix/NeoZygisk)**: lets modules run
+  inside apps (Zygisk). Vector and HMA-OSS need it.
+- **[Vector](https://github.com/JingMatrix/Vector)**: runs Xposed modules.
+  Open it from its notification or its action button in the KernelSU app.
+- **[HMA-OSS](https://github.com/frknkrc44/HMA-OSS)**: hides your other apps
+  from the apps you pick. It comes set up for common banking, shopping,
+  root checker and driver apps (Grab Driver, Green SM Driver, ShopeeFood
+  Driver and beDriver/bePartner); change that in its own app.
+- **[TEESimulator](https://github.com/JingMatrix/TEESimulator)**: answers the
+  hardware key checks that Play Integrity and some banking apps make, so they
+  see a locked phone. For the apps in its list it takes over from the
+  built-in Play Integrity Fix.
+- **[Tricky Addon Enhanced](https://github.com/Enginex0/tricky-addon-enhanced)**:
+  keeps TEESimulator's app list and key up to date by itself. It downloads the
+  key from public sources online. It only works with TEESimulator 3.x, so skip
+  the TEESimulator 4 update the KernelSU app offers if you rely on it. It has
+  no entry of its own in the KernelSU app: it opens as TEESimulator's page,
+  which can also uninstall it.
+- **[BRENE](https://github.com/rrr333nnn333/BRENE)**: uses susFS to hide root
+  from apps. **Hide Custom ROM Paths** and **Hide /system/addon.d Path** come
+  turned on, and it leaves developer options and USB debugging to you.
+- **[Hybrid Mount](https://github.com/Hybrid-Mount/meta-hybrid_mount)**: lets
+  modules change system files. KernelSU needs one module like it for that.
+
+If the phone already had KernelSU modules when it first started this version,
+Onigiri leaves them alone and installs none of these, since some would turn
+off or delete the modules they replace. To get them anyway, delete
+`/data/adb/onigiri/rootmods/skip` and restart twice.
 
 ## For contributors
 

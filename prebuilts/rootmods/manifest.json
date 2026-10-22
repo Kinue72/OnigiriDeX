@@ -1,0 +1,60 @@
+{
+  "assets": [
+    {
+      "path": "system/etc/onigiri-rootmods/10-zygisksu.zip",
+      "sha256": "93a1425c67bb89f58a0dcb9fc823ec93f6472214f221e667a70b67c6a6e061a1",
+      "bytes": 2401208,
+      "source": "JingMatrix/NeoZygisk v2.4",
+      "url": "https://github.com/JingMatrix/NeoZygisk/releases/download/v2.4/NeoZygisk-v2.4-289-release.zip",
+      "publisher_digest_verified": true
+    },
+    {
+      "path": "system/etc/onigiri-rootmods/20-zygisk_vector.zip",
+      "sha256": "9ee8323575d615f7b3f1076ff60b2a63a49390ef11881b52632311a37f6f79cc",
+      "bytes": 9316843,
+      "source": "JingMatrix/Vector v2.2",
+      "url": "https://github.com/JingMatrix/Vector/releases/download/v2.2/Vector-v2.2-3080-Release.zip",
+      "publisher_digest_verified": true
+    },
+    {
+      "path": "system/etc/onigiri-rootmods/30-hma_oss_zygisk.zip",
+      "sha256": "be364502b3d34510c856a742bbb67d91560ec033dcaef06e431991a1ba3a98ec",
+      "bytes": 2743824,
+      "source": "frknkrc44/HMA-OSS oss-173",
+      "url": "https://github.com/frknkrc44/HMA-OSS/releases/download/oss-173/HMA-OSS-ZYGISK-oss-173-release.zip",
+      "publisher_digest_verified": true
+    },
+    {
+      "path": "system/etc/onigiri-rootmods/40-tricky_store.zip",
+      "sha256": "af8d38e427d6f8893305d9dba00256e0ba6e1afbadf32aab5ca8afc785404aab",
+      "bytes": 1883723,
+      "source": "JingMatrix/TEESimulator v3.2",
+      "url": "https://github.com/JingMatrix/TEESimulator/releases/download/v3.2/TEESimulator-v3.2-67-Release.zip",
+      "publisher_digest_verified": true
+    },
+    {
+      "path": "system/etc/onigiri-rootmods/50-TA_enhanced.zip",
+      "sha256": "f2a4c511cf210a96adadea313f983c06a9f8c3762bf6365eda1aa69bf1a67fef",
+      "bytes": 11346217,
+      "source": "Enginex0/tricky-addon-enhanced v5.53.1",
+      "url": "https://github.com/Enginex0/tricky-addon-enhanced/releases/download/v5.53.1/TA_enhanced-v5.53.1.zip",
+      "publisher_digest_verified": true
+    },
+    {
+      "path": "system/etc/onigiri-rootmods/60-brene.zip",
+      "sha256": "2bdb02236e5e37a6585495573042daafbd8914b9ee84a3fd0f7b13d841d32709",
+      "bytes": 120224,
+      "source": "rrr333nnn333/BRENE v0.0.72",
+      "url": "https://github.com/rrr333nnn333/BRENE/releases/download/v0.0.72/BRENE-v0.0.72.zip",
+      "publisher_digest_verified": true
+    },
+    {
+      "path": "system/etc/onigiri-rootmods/90-hybrid_mount.zip",
+      "sha256": "973eb81dac3b8e604185369fb9b1497a2faf0709e5cdaa94cb4ffa632dd9278a",
+      "bytes": 4959776,
+      "source": "Hybrid-Mount/meta-hybrid_mount v6.2.5",
+      "url": "https://github.com/Hybrid-Mount/meta-hybrid_mount/releases/download/v6.2.5/Hybrid-Mount-6.2.5-2118.zip",
+      "publisher_digest_verified": true
+    }
+  ]
+}
