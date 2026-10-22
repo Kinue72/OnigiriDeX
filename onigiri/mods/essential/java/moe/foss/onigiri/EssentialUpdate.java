@@ -231,6 +231,10 @@ public final class EssentialUpdate {
         }
     }
 
+    static boolean compatibleAdapter(Properties feed, String id, Path builtin) throws IOException {
+        return required(feed, id + ".adapter").equals(required(readProperties(builtin.resolve(id).resolve("version.properties")), "adapter"));
+    }
+
     static String update(String id) throws Exception {
         repo(id);
         Path dir = DATA.resolve(id);
@@ -253,7 +257,7 @@ public final class EssentialUpdate {
                 download(FEED, feedPath, 65536);
                 Properties feed = readProperties(feedPath);
                 String p = id + ".";
-                if (!"1".equals(required(feed, p + "adapter"))) return "incompatible";
+                if (!compatibleAdapter(feed, id, ROM)) return "incompatible";
                 long code = Long.parseLong(required(feed, p + "code"));
                 Properties current = readProperties(payload(DATA, ROM, id).resolve("version.properties"));
                 if (code <= Long.parseLong(required(current, "code"))) {

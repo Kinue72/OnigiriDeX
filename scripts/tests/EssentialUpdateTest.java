@@ -28,6 +28,12 @@ public final class EssentialUpdateTest {
                 Path archive = inputs.resolve("system/etc/onigiri-rootmods/" + archives[i]);
                 Path dest = temp.resolve(id);
                 EssentialUpdate.extract(id, archive, dest, feed);
+                assert EssentialUpdate.compatibleAdapter(feed, id, temp);
+                Properties otherAdapter = new Properties(); otherAdapter.putAll(feed);
+                otherAdapter.setProperty(id + ".adapter", id.equals("hma") ? "1" : "2");
+                assert !EssentialUpdate.compatibleAdapter(otherAdapter, id, temp);
+                otherAdapter.remove(id + ".adapter");
+                rejects(() -> EssentialUpdate.compatibleAdapter(otherAdapter, id, temp));
                 if (id.equals("hma")) {
                     byte[] originalDex = zipMember(archive, "classes.dex");
                     byte[] fixedDex = zipMember(dest.resolve("hma.jar"), "classes.dex");
