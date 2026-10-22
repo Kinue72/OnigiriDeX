@@ -37,13 +37,18 @@ with push access).
 
 ## Testing a branch on a phone
 
-Run the Release workflow manually with the branch and the release already installed on the
-phone, for example `gh workflow run release.yml --ref <branch> -f base_tag=2026.10.22.1`.
-Manual runs use the existing signing keys and upload a seven-day `phone-test-<commit>` Actions
-artifact containing the update, reverse update, runtime files, source commit and checksums.
-They do not publish a release or change the version offered to other phones. Check the device's
-installed version against `base-version.txt` and verify `SHA256SUMS` before testing. Keep the
-rollback package and the original AP available until the test build is accepted.
+Build locally; CI ROM builds run only for release tags. Use the existing firmware and
+build-tool caches and keep the installed build's AP available for rollback:
+
+```sh
+source buildenv.sh SM-F731B
+onigiri build_odin
+```
+
+Flash only the resulting AP for the connected SM-F731B. Preserve the phone's data and
+module configuration. Reuse the original signing keys in `security` when updating an
+existing installation. Verify the AP checksum and keep the original AP until the test
+build is accepted. Do not publish a release for a phone test.
 
 ## Setup (once)
 

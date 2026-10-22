@@ -1,24 +1,17 @@
 # Builds and publishes a release for every pushed tag: the checks in check.yml first, then the
 # AP on GitHub's runners and scripts/release.sh (the AP, an OTA from the previous release and
-# version.txt). Manual runs build signed phone-test packages without publishing a release.
-# Setup (firmware draft release, signing key secret) is in docs/releasing.md.
+# version.txt). Setup (firmware draft release, signing key secret) is in docs/releasing.md.
 name: Release
 
 on:
   push:
     tags: ["*"]
-  workflow_dispatch:
-    inputs:
-      base_tag:
-        description: Existing release installed on the test phone
-        required: true
-        type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: ${{ github.event_name == 'workflow_dispatch' && github.ref || 'release' }}
+  group: release
 
 jobs:
   check:
@@ -152,18 +145,6 @@ jobs:
           $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_odin'
           ls -l out/Onigiri_AP_*
 
-      - name: Keep phone-test runtime files
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          mkdir -p out/phone-test
-          git rev-parse HEAD > out/phone-test/source-commit.txt
-          tar -C out/target/b5q/work_dir -czf out/phone-test/runtime.tar.gz \
-            system/system/priv-app/SecSettings/SecSettings.apk \
-            system/system/framework/services.jar system/system/framework/onigiri-essential.jar \
-            system/system/etc/onigiri-essential system/system/app/HMAOSS \
-            system/system/etc/init/onigiri-essential.rc system/system/bin/onigiri-essential.sh \
-            system/system/etc/selinux/plat_sepolicy.cil system/system/etc/selinux/plat_file_contexts
-
       # Room for the OTA: only the OTA tools are still needed from the firmware.
       - name: Free build space
         run: |
@@ -173,53 +154,4 @@ jobs:
           df -h /
 
       - name: Publish release
-        if: github.event_name == 'push'
         run: $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri release "$GITHUB_REF_NAME" out/Onigiri_AP_*.tar.md5'
-
-      - name: Build signed phone update and rollback
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          BASE_TAG: ${{ inputs.base_tag }}
-        run: |
-          mkdir -p out/test-base
-          gh release download "$BASE_TAG" --pattern 'Onigiri_AP_*.tar.md5.*' --dir out/test-base
-          gh release download "$BASE_TAG" --pattern version.txt --output out/phone-test/base-version.txt
-          python3 - <<'PY'
-          import hashlib
-          import re
-          from pathlib import Path
-          root = Path('out/test-base')
-          checksum, = root.glob('*.sha256')
-          digest, name = checksum.read_text().strip().split()
-          if not re.fullmatch(r'Onigiri_AP_[A-Za-z0-9_.-]+\.tar\.md5', name):
-              raise ValueError('Unexpected base AP filename')
-          base = Path('out/phone-test/base-version.txt').read_text().split()[0]
-          if not re.fullmatch(r'[0-9a-f]{7,40}', base) or f'_{base}_' not in name:
-              raise ValueError('Base version does not match AP')
-          parts = sorted(root.glob(name + '.[0-9]*'))
-          if not parts:
-              raise ValueError('Missing base AP parts')
-          actual = hashlib.sha256()
-          with (root / name).open('wb') as out:
-              for part in parts:
-                  with part.open('rb') as src:
-                      while chunk := src.read(1024 * 1024):
-                          actual.update(chunk)
-                          out.write(chunk)
-                  part.unlink()
-          if actual.hexdigest() != digest:
-              raise ValueError('Base AP checksum mismatch')
-          PY
-          $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri make_ota out/test-base/*.tar.md5 out/Onigiri_AP_*.tar.md5 out/phone-test/update.zip'
-          $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri make_ota out/Onigiri_AP_*.tar.md5 out/test-base/*.tar.md5 out/phone-test/rollback.zip'
-          (cd out/phone-test && sha256sum *.zip *.tar.gz *.txt > SHA256SUMS)
-
-      - name: Upload phone-test packages
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v7
-        with:
-          name: phone-test-${{ github.sha }}
-          path: out/phone-test/
-          compression-level: 0
-          retention-days: 7
-          if-no-files-found: error
