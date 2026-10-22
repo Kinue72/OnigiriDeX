@@ -1,0 +1,22 @@
+From: Onigiri
+Subject: [PATCH] Keep Camera controls upright with the cover upside down
+
+On a display that is landscape by default, Camera turns its whole layout
+180 degrees when the display is at 180, keeping the controls fixed to the
+hardware. On the cover that put the shutter at the top when the phone is held
+hinge down. Lay it out as at 0 instead, as Camera already does on portrait
+displays. The preview is a SurfaceView, which stays upright on its own.
+
+diff --git a/smali_classes3/com/sec/android/app/camera/MainLayout.smali b/smali_classes3/com/sec/android/app/camera/MainLayout.smali
+--- a/smali_classes3/com/sec/android/app/camera/MainLayout.smali
++++ b/smali_classes3/com/sec/android/app/camera/MainLayout.smali
+@@ -375,7 +375,8 @@
+     goto :goto_1
+
+     :cond_6
+-    const/16 v0, 0xb4
++    # Onigiri: hinge down on the cover is rotation 180; keep the shutter at the bottom.
++    move v0, v5
+
+     :goto_1
+     iput v0, p0, Lcom/sec/android/app/camera/MainLayout;->mRotation:I
