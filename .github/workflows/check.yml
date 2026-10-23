@@ -32,6 +32,7 @@ jobs:
           python3 scripts/test_make_odin4_ap.py
           python3 scripts/test_ota_blockmap.py
           python3 scripts/tests/test_essential.py
+          python3 scripts/tests/test_cooler_policy.py
 
       - name: Patches
         run: |

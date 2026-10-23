@@ -194,6 +194,10 @@ columns, a grid, or a priority grid.
   and it may stay at 60 while the phone's own screen is on. Battery saver and
   overheating protection still work as usual.
 
+The experimental [High performance option](docs/thermal.md) in Onigiri Software is
+off by default, with English and Vietnamese text. With an external cooler, it
+relaxes early thermal restrictions without raising peak clocks. Restart to apply.
+
 <details>
 <summary><b>Boring stuffs</b></summary>
 
