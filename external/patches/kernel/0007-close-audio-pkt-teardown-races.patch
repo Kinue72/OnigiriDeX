@@ -1,0 +1,233 @@
+From: Onigiri
+Subject: [PATCH] fix(audio): close audio_pkt and gpr teardown races
+
+diff --git a/vendor/qcom/opensource/audio-kernel/ipc/audio-pkt.c b/vendor/qcom/opensource/audio-kernel/ipc/audio-pkt.c
+index 39a80493..0deb347a 100755
+--- a/vendor/qcom/opensource/audio-kernel/ipc/audio-pkt.c
++++ b/vendor/qcom/opensource/audio-kernel/ipc/audio-pkt.c
+@@ -274,8 +274,11 @@ ssize_t audio_pkt_read(struct file *file, char __user *buf,
+ 
+ 		/* Wait until we get data or the endpoint goes away */
+ 		if (wait_event_interruptible(audpkt_dev->readq,
+-					!skb_queue_empty(&audpkt_dev->queue)))
++					!skb_queue_empty(&audpkt_dev->queue) ||
++					READ_ONCE(ap_priv->status) != AUDIO_PKT_PROBED))
+ 			return -ERESTARTSYS;
++		if (READ_ONCE(ap_priv->status) != AUDIO_PKT_PROBED)
++			return -ENETRESET;
+ 
+ 		spin_lock_irqsave(&audpkt_dev->queue_lock, flags);
+ 	}
+@@ -403,7 +406,13 @@ ssize_t audio_pkt_write(struct file *file, const char __user *buf,
+ 		mutex_unlock(&audpkt_dev->lock);
+ 		goto free_kbuf;
+ 	}
+-	ret = gpr_send_pkt(ap_priv->adev,(struct gpr_pkt *) kbuf);
++	/* audio_pkt_remove() takes this lock, so adev stays valid while the packet goes out. */
++	mutex_lock(&ap_priv->lock);
++	if (AUDIO_PKT_PROBED == ap_priv->status)
++		ret = gpr_send_pkt(ap_priv->adev,(struct gpr_pkt *) kbuf);
++	else
++		ret = -ENETRESET;
++	mutex_unlock(&ap_priv->lock);
+ 	if (ret < 0) {
+ 		AUDIO_PKT_ERR("APR Send Packet Failed ret -%d\n", ret);
+ 		if (ret == -ECONNRESET)
+@@ -436,6 +445,11 @@ static unsigned int audio_pkt_poll(struct file *file, poll_table *wait)
+ 		return POLLERR;
+ 	}
+ 
++	/*
++	 * No POLLERR while the DSP is away: libar-gpr's receiver polls again
++	 * right after one and would spin through the restart. read() reports
++	 * the reset instead.
++	 */
+ 	poll_wait(file, &audpkt_dev->readq, wait);
+ 	mutex_lock(&audpkt_dev->lock);
+ 
+@@ -469,12 +483,17 @@ static int audio_pkt_srvc_callback(struct gpr_device *adev,
+ 				void *data)
+ {
+ 	struct audio_pkt_priv *ap_priv =  dev_get_drvdata(&adev->dev);
+-	struct audio_pkt_device *audpkt_dev = ap_priv->ap_dev;
++	struct audio_pkt_device *audpkt_dev;
+ 
+ 	unsigned long flags;
+ 	struct sk_buff *skb;
+ 	struct gpr_hdr *hdr = (struct gpr_hdr *)data;
+ 	uint16_t hdr_size, pkt_size;
++
++	/* The bus can deliver before audio_pkt_probe() has set drvdata. */
++	if (!ap_priv)
++		return -ENODEV;
++	audpkt_dev = ap_priv->ap_dev;
+ 	hdr_size = GPR_PKT_GET_HEADER_BYTE_SIZE(hdr->header);
+ 	pkt_size = GPR_PKT_GET_PACKET_BYTE_SIZE(hdr->header);
+ 
+@@ -510,13 +529,13 @@ static int audio_pkt_probe(struct gpr_device *adev)
+ {
+ 	if(ap_priv)
+ 	{
++		dev_set_drvdata(&adev->dev, ap_priv);
++
+ 		mutex_lock(&ap_priv->lock);
+ 		ap_priv->adev = adev;
+ 		ap_priv->status = AUDIO_PKT_PROBED;
+ 		mutex_unlock(&ap_priv->lock);
+ 
+-		dev_set_drvdata(&adev->dev, ap_priv);
+-
+ 		dev_dbg(&adev->dev, "%s: Driver[%s] Probed\n",
+ 		 __func__, adev->name);
+ 	}
+@@ -549,6 +568,8 @@ static int audio_pkt_remove(struct gpr_device *adev)
+ 		ap_priv->adev = NULL;
+ 		ap_priv->status = AUDIO_PKT_REMOVED;
+ 		mutex_unlock(&ap_priv->lock);
++		/* Blocked readers would otherwise sleep through the DSP restart. */
++		wake_up_interruptible(&ap_priv->ap_dev->readq);
+ 		dev_dbg(&adev->dev, "%s: Driver[%s] Removing\n",
+ 		 __func__, adev->name);
+ 		dev_set_drvdata(&adev->dev, NULL);
+@@ -662,14 +683,7 @@ static int audio_pkt_platform_driver_probe(struct platform_device *pdev)
+ 	cdev_init(&audpkt_dev->cdev, &audio_pkt_fops);
+ 	audpkt_dev->cdev.owner = THIS_MODULE;
+ 
+-	ret = cdev_add(&audpkt_dev->cdev, audpkt_dev->audio_pkt_major,
+-		       MINOR_NUMBER_COUNT);
+-	if (ret) {
+-		AUDIO_PKT_ERR("cdev_add failed for %s ret:%d\n",
+-			      audpkt_dev->dev_name, ret);
+-		goto free_dev;
+-	}
+-
++	/* audio_pkt_open() uses ap_priv, so set it up before cdev_add() lets anyone in. */
+ 	ret = audio_pkt_plaform_driver_register_gpr(pdev, audpkt_dev);
+ 	if (ret < 0) {
+ 		dev_err(&pdev->dev, "%s: Failed to register with gpr, err = %d\n",
+@@ -677,18 +691,28 @@ static int audio_pkt_platform_driver_probe(struct platform_device *pdev)
+ 		goto free_dev;
+ 	}
+ 
++	ret = cdev_add(&audpkt_dev->cdev, audpkt_dev->audio_pkt_major,
++		       MINOR_NUMBER_COUNT);
++	if (ret) {
++		AUDIO_PKT_ERR("cdev_add failed for %s ret:%d\n",
++			      audpkt_dev->dev_name, ret);
++		goto unregister_gpr;
++	}
++
+ 	platform_set_drvdata(pdev, ap_priv);
+ 	AUDIO_PKT_INFO("Audio Packet Port Driver Initialized\n");
+ 
+ 	goto done;
+ 	//return of_platform_populate(dev->of_node, NULL, NULL, dev);
+ 
++unregister_gpr:
++	gpr_driver_unregister(&audio_pkt_driver);
+ free_dev:
+ 	device_destroy(audpkt_dev->audio_pkt_class,audpkt_dev->audio_pkt_major);
+ err_device:
+ 	class_destroy(audpkt_dev->audio_pkt_class);
+ err_class:
+-	unregister_chrdev_region(MAJOR(audpkt_dev->audio_pkt_major),
++	unregister_chrdev_region(audpkt_dev->audio_pkt_major,
+ 				 MINOR_NUMBER_COUNT);
+ err_chrdev:
+ done:
+@@ -719,7 +743,7 @@ static int audio_pkt_platform_driver_remove(struct platform_device *adev)
+ 		cdev_del(&audpkt_dev->cdev);
+ 		device_destroy(audpkt_dev->audio_pkt_class,audpkt_dev->audio_pkt_major);
+ 		class_destroy(audpkt_dev->audio_pkt_class);
+-		unregister_chrdev_region(MAJOR(audpkt_dev->audio_pkt_major),
++		unregister_chrdev_region(audpkt_dev->audio_pkt_major,
+ 				 MINOR_NUMBER_COUNT);
+ 	}
+ 
+@@ -743,6 +767,8 @@ static struct platform_driver audio_pkt_core_platform_driver = {
+ 	.driver         = {
+ 		.name = MODULE_NAME,
+ 		.of_match_table = of_match_ptr(audio_pkt_platform_match_table),
++		/* Unbinding frees ap_priv under open files; module unload waits for them. */
++		.suppress_bind_attrs = true,
+ 	},
+ };
+ 
+diff --git a/vendor/qcom/opensource/audio-kernel/ipc/gpr-lite.c b/vendor/qcom/opensource/audio-kernel/ipc/gpr-lite.c
+index dd22d393..0986d15f 100755
+--- a/vendor/qcom/opensource/audio-kernel/ipc/gpr-lite.c
++++ b/vendor/qcom/opensource/audio-kernel/ipc/gpr-lite.c
+@@ -323,6 +323,17 @@ static int gpr_callback(struct rpmsg_device *rpdev, void *buf,
+ 		if (svc && svc->dev.driver)
+ 			adrv = to_gpr_driver(svc->dev.driver);
+ 	}
++
++	/*
++	 * NOTE: hdr_size is not same as GPR_HDR_SIZE as remote can include
++	 * optional headers in to gpr_hdr which should be ignored
++	 *
++	 * The callback runs under svcs_lock so gpr_device_remove() can't
++	 * tear the service down underneath it. Callbacks must not sleep;
++	 * glink already calls this with interrupts off.
++	 */
++	if (adrv)
++		adrv->callback(svc, buf);
+ 	spin_unlock_irqrestore(&gpr->svcs_lock, flags);
+ 
+ 	if (!adrv) {
+@@ -332,13 +343,6 @@ static int gpr_callback(struct rpmsg_device *rpdev, void *buf,
+ 		return -EINVAL;
+ 	}
+ 
+-	/*
+-	 * NOTE: hdr_size is not same as GPR_HDR_SIZE as remote can include
+-	 * optional headers in to gpr_hdr which should be ignored
+-	 */
+-
+-	adrv->callback(svc, buf);
+-
+ 	return 0;
+ }
+ 
+@@ -378,14 +382,16 @@ static void gpr_device_remove(struct device *dev)
+ 	struct gpr_device *adev = to_gpr_device(dev);
+ 	struct gpr_driver *adrv;
+ 	struct gpr *gpr = dev_get_drvdata(adev->dev.parent);
++	unsigned long flags;
+ 
+ 	if (dev->driver) {
+ 		adrv = to_gpr_driver(dev->driver);
++		/* Unpublish first: this waits out a running callback and stops new ones. */
++		spin_lock_irqsave(&gpr->svcs_lock, flags);
++		idr_remove(&gpr->svcs_idr, adev->svc_id);
++		spin_unlock_irqrestore(&gpr->svcs_lock, flags);
+ 		if (adrv->remove)
+ 			adrv->remove(adev);
+-		spin_lock(&gpr->svcs_lock);
+-		idr_remove(&gpr->svcs_idr, adev->svc_id);
+-		spin_unlock(&gpr->svcs_lock);
+ 	}
+ 
+ 	return;
+@@ -417,6 +423,7 @@ static int gpr_add_device(struct device *dev, struct device_node *np,
+ {
+ 	struct gpr *gpr = dev_get_drvdata(dev);
+ 	struct gpr_device *adev = NULL;
++	unsigned long flags;
+ 	int ret;
+ 
+ 	adev = kzalloc(sizeof(*adev), GFP_KERNEL);
+@@ -442,10 +449,11 @@ static int gpr_add_device(struct device *dev, struct device_node *np,
+ 	adev->dev.release = gpr_dev_release;
+ 	adev->dev.driver = NULL;
+ 
+-	spin_lock(&gpr->svcs_lock);
++	/* gpr_callback() takes svcs_lock from the glink interrupt. */
++	spin_lock_irqsave(&gpr->svcs_lock, flags);
+ 	idr_alloc(&gpr->svcs_idr, adev, id->svc_id,
+ 		  id->svc_id + 1, GFP_ATOMIC);
+-	spin_unlock(&gpr->svcs_lock);
++	spin_unlock_irqrestore(&gpr->svcs_lock, flags);
+ 
+ 	dev_info_ratelimited(dev, "Adding GPR dev: %s\n", dev_name(&adev->dev));
+ 
