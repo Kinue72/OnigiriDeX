@@ -5,7 +5,8 @@
 # goes away or DeX starts. With "Mirroring high refresh rate" on, opening the phone while it
 # mirrors shows the 120 Hz inner panel instead (device state 5), so the mirror is no longer held
 # to the cover's 60 Hz. Each time DeX starts, it also opens the zone apps (Settings > Onigiri
-# Software > Zones). Started by onigiri-mirror.rc.
+# Software > Zones). It also keeps power saving, which holds every screen to 60 Hz, off while
+# the phone charges. Started by onigiri-mirror.rc.
 
 DP=/sys/class/drm/card0-DP-1/status
 DPI=240
@@ -23,6 +24,8 @@ OWN=$DATA/own
 # min_refresh_rate from before the inner panel showed ("null" if unset; Force peak refresh rate
 # sets it). Held at 120 meanwhile: the adaptive policy otherwise idles the panel at 60.
 MIN_RATE=$DATA/min-refresh-rate
+# Power saving was on when charging started; it goes back on once charging stops.
+SAVER=$DATA/power-saving
 
 log() { /system/bin/log -t onigiri-mirror "$*"; }
 
@@ -100,6 +103,26 @@ inner_wanted() {
     return 1
 }
 
+charging() {
+    for supply in ac usb wireless pogo; do
+        read online 2>/dev/null < /sys/class/power_supply/$supply/online && [ "$online" = 1 ] &&
+            return 0
+    done
+    return 1
+}
+
+# Power saving off while charging, back on afterwards if it was on. Car standby turns it on by
+# itself when the car goes off, after this has already put it back.
+power_saving() {
+    if charging; then
+        [ "$(settings get global low_power)" = 1 ] || return 0
+        touch $SAVER && { settings put global low_power 0 || rm -f $SAVER; } &&
+            log "power saving off while charging"
+    elif [ -e $SAVER ]; then
+        settings put global low_power 1 && rm -f $SAVER && log "power saving back on"
+    fi
+}
+
 # Apps given the zones of the current layout, if any.
 zone_apps() {
     case "$(getprop persist.sys.onigiri.dex_zones)" in
@@ -137,6 +160,7 @@ had_dex=  # DeX ran on this monitor
 inner=    # state 5 requested; left from before a restart if it is still the committed state
 [ "$(state)" = $INNER ] && inner=1
 while :; do
+    power_saving
     now=$(mirror_size)
     [ "$now" = hold ] && { sleep 2; continue; }
     if [ "$now" = "$seen" ]; then

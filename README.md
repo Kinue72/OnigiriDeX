@@ -191,8 +191,8 @@ columns, a grid, or a priority grid.
   run smoother than 60 frames per second on fast monitors. In testing, a
   144 Hz monitor reached about 142 frames per second instead of 60. Unplug and
   plug the cable back in after turning it on. Some apps may still run slower,
-  and it may stay at 60 while the phone's own screen is on. Battery saver and
-  overheating protection still work as usual.
+  and it may stay at 60 while the phone's own screen is on. Overheating
+  protection still works as usual.
 - **Mirroring high refresh rate** (experimental, off by default): the outside
   screen only runs at 60 Hz, which holds a mirrored monitor to 60 frames per
   second too. With this on, opening the phone while it mirrors a monitor (DeX
@@ -200,6 +200,9 @@ columns, a grid, or a priority grid.
   Closing the phone goes back to the outside screen. In testing, scrolling
   reached about 118 frames per second on a 120 Hz monitor and about 90 on a
   90 Hz one, with or without **DeX high refresh rate**.
+
+Power saving holds every screen to 60 Hz, so the phone turns it off while it
+charges and back on when charging stops, if it was on before.
 
 <details>
 <summary><b>Boring stuffs</b></summary>
