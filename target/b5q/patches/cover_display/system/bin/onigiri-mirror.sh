@@ -3,8 +3,8 @@
 # give the cover the monitor's shape at 240 dpi, so the mirror fills the monitor instead of a
 # square in the middle. The cover goes back to its own size and density as soon as the monitor
 # goes away or DeX starts. With "Mirroring high refresh rate" on, opening the phone while it
-# mirrors shows the 120 Hz inner panel instead (device state 5), so the mirror is no longer held
-# to the cover's 60 Hz. Each time DeX starts, it also opens the zone apps (Settings > Onigiri
+# mirrors shows the 120 Hz inner panel instead (device state 5), fitted the same way, so the
+# mirror is no longer held to the cover's 60 Hz. Each time DeX starts, it also opens the zone apps (Settings > Onigiri
 # Software > Zones). It also keeps power saving, which holds every screen to 60 Hz, off while
 # the phone charges. Started by onigiri-mirror.rc.
 
@@ -194,18 +194,24 @@ while :; do
         want=$now
     fi
     # The inner panel takes over display 0, and with it display 0's size and density overrides:
-    # the cover's own values are saved, display 0 goes to physical ones before the switch, and
-    # nothing is resized while the inner panel shows. Entering waits like a fit does; staying
-    # only needs mirroring. Folding cancels state 5 by itself; resetting then is harmless.
+    # the cover's own values are saved (kept if already saved: display 0 may hold a fit by now),
+    # display 0 goes to physical ones before the switch, and the inner panel gets the fit once it
+    # shows (again whenever the switch's leftovers replace it). Entering waits like a fit does;
+    # staying only needs mirroring. Folding cancels state 5 by itself; resetting then is harmless.
     if [ -n "$now" ] && { [ -n "$inner" ] || [ -n "$want" ]; } && inner_wanted; then
         if [ -z "$inner" ] || [ "$(state)" != $INNER ]; then
-            restore && applied= && own="$(current size override) $(current density override)" &&
-                valid "$own" && echo "$own" > $OWN &&
-                wm size $(current size) -d 0 && wm density $(current density) -d 0 &&
+            restore && applied= && {
+                [ -e $OWN ] || {
+                    own="$(current size override) $(current density override)"
+                    valid "$own" && echo "$own" > $OWN
+                }
+            } && wm size $(current size) -d 0 && wm density $(current density) -d 0 &&
                 { [ -e $MIN_RATE ] || settings get system min_refresh_rate > $MIN_RATE; } &&
                 settings put system min_refresh_rate 120 && setprop $LAYOUT 1 &&
                 cmd device_state state $INNER >/dev/null 2>&1 && inner=1 &&
                 log "inner screen shows the mirror"
+        elif [ "$(current size override)" != "$now" ]; then
+            wm size $now -d 0 && wm density $DPI -d 0 && log "inner screen fit to the monitor: $now"
         fi
         sleep 2
         continue
