@@ -167,6 +167,17 @@ class BootStateTest(unittest.TestCase):
         self.assertEqual(self.prop('sys.onigiri.hma.state'), 'unavailable')
         self.assertFalse((self.data / 'hma/guard').exists())
 
+    def test_brene_hides_module_mounts_from_apps(self):
+        susfs = self.rom / 'brene/susfs'
+        susfs.write_text('#!/bin/sh\necho "$*" >> "$PROPS/susfs.calls"\n')
+        susfs.chmod(0o755)
+        self.prop('persist.sys.onigiri.brene.rom_paths', 'false')
+        self.prop('persist.sys.onigiri.brene.addon_d', 'false')
+        self.prepare()
+        subprocess.run(['bash', str(self.script), 'brene'], env=self.env, check=True, capture_output=True)
+        self.assertIn('hide_sus_mnts_for_non_su_procs 1', self.prop('susfs.calls').splitlines())
+        self.assertEqual(self.prop('sys.onigiri.brene.state'), 'active')
+
     def test_failed_brene_probe_rolls_back_on_next_boot(self):
         component = self.data / 'brene'
         old, new = 'a' * 64, 'b' * 64

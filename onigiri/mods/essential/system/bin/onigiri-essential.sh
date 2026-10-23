@@ -167,6 +167,9 @@ brene() {
     touch "$DATA/brene/guard" || return 1
     sync
     "$SUSFS" show version > /dev/null || return 1
+    # susfs ships this off for Zygisk, which the built-in setup lacks. Without it, apps see the
+    # mounts of remaining KernelSU modules, such as bindhosts' /system/etc/hosts.
+    "$SUSFS" hide_sus_mnts_for_non_su_procs 1 || return 1
     if [ "$(getprop sys.onigiri.brene.addon_d)" = true ]; then hide_path /system/addon.d || return 1; fi
     if [ "$(getprop sys.onigiri.brene.rom_paths)" = true ]; then
         # One scan per filesystem, with the upstream list as data, not executable shell.

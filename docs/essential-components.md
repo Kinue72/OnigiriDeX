@@ -10,7 +10,7 @@ current status, component-specific controls, and a PIF-style version/update row.
 | --- | --- | --- |
 | HMA-OSS | oss-173 | Original signed manager and backend with the hook-installation race fix below; a guarded services.jar entry loads it without Vector or Zygisk. Config schema remains 93. |
 | TEESimulator | v3.2, code 67 | Original arm64 injector, native library and dex run through an init service. |
-| BRENE | v0.0.72 | Original susfs CLI and ROM-name list; only custom-ROM path and addon.d hiding are ported. |
+| BRENE | v0.0.72 | Original susfs CLI and ROM-name list; only custom-ROM path, addon.d and module-mount hiding are ported. |
 
 The build verifies the original archives against `prebuilts/rootmods/manifest.json`
 and `bundled.properties`. It never executes their installers. The HMA manager keeps
@@ -145,8 +145,13 @@ internal startup states). Version and pending version use
 HMA reports Active only from a fresh upstream status.json after loading.
 TEESimulator reports Active from its own successful interceptor initialization
 message and returns to Unavailable when the daemon exits. BRENE requires a
-responding susfs interface and successful requested path operations. None of
-these statuses proves an integrity verdict from a third-party app.
+responding susfs interface, mount hiding for non-root processes, and successful
+requested path operations. None of these statuses proves an integrity verdict
+from a third-party app.
+
+susfs ships that mount hiding off for Zygisk, which these adapters do not use.
+Without it, apps see the mounts of KernelSU modules that stay enabled, such as
+bindhosts' `/system/etc/hosts`. VNeID rejects that with code CA-E003.
 
 ## Validation
 
