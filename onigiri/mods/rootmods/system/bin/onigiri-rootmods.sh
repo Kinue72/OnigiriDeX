@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Installs the KernelSU modules Onigiri ships in /system/etc/onigiri-rootmods (NeoZygisk, Vector,
+# Installs the KernelSU modules Onigiri ships in /system/etc/onigiri-rootmods (NeoZygisk,
 # HMA-OSS, TEESimulator, Tricky Addon, BRENE, Hybrid Mount) with Onigiri's defaults for HMA-OSS
 # and BRENE. onigiri-rootmods.rc starts it at every boot: KernelSU only installs modules once the
 # phone has started, and they turn on at the next restart.

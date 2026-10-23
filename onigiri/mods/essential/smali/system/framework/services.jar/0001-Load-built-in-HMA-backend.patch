@@ -1,0 +1,56 @@
+From: Onigiri
+Subject: [PATCH] Load the built-in HMA adapter without Zygisk
+
+diff --git a/smali/com/android/server/SystemServer.smali b/smali/com/android/server/SystemServer.smali
+--- a/smali/com/android/server/SystemServer.smali
++++ b/smali/com/android/server/SystemServer.smali
+@@ -2318,6 +2318,8 @@
+ .method public static main([Ljava/lang/String;)V
+     .locals 13
+ 
++    invoke-static {}, Lmoe/foss/onigiri/EssentialBootstrap;->start()V
++
+     new-instance p0, Lcom/android/server/SystemServer;
+ 
+     invoke-direct {p0}, Lcom/android/server/SystemServer;-><init>()V
+diff --git a/smali/moe/foss/onigiri/EssentialBootstrap.smali b/smali/moe/foss/onigiri/EssentialBootstrap.smali
+new file mode 100644
+--- /dev/null
++++ b/smali/moe/foss/onigiri/EssentialBootstrap.smali
+@@ -0,0 +1,36 @@
++.class public final Lmoe/foss/onigiri/EssentialBootstrap;
++.super Ljava/lang/Object;
++
++.method public static start()V
++    .locals 5
++
++    :try_start
++    new-instance v0, Ldalvik/system/PathClassLoader;
++    const-string v1, "/system/framework/onigiri-essential.jar"
++    const-class v2, Lcom/android/server/SystemServer;
++    invoke-virtual {v2}, Ljava/lang/Class;->getClassLoader()Ljava/lang/ClassLoader;
++    move-result-object v2
++    invoke-direct {v0, v1, v2}, Ldalvik/system/PathClassLoader;-><init>(Ljava/lang/String;Ljava/lang/ClassLoader;)V
++    const-string v1, "moe.foss.onigiri.HmaLoader"
++    const/4 v2, 0x1
++    invoke-static {v1, v2, v0}, Ljava/lang/Class;->forName(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;
++    move-result-object v0
++    const-string v1, "start"
++    const/4 v2, 0x0
++    new-array v3, v2, [Ljava/lang/Class;
++    invoke-virtual {v0, v1, v3}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
++    move-result-object v0
++    const/4 v1, 0x0
++    new-array v3, v2, [Ljava/lang/Object;
++    invoke-virtual {v0, v1, v3}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
++    :try_end
++    .catch Ljava/lang/Throwable; {:try_start .. :try_end} :failed
++    return-void
++
++    :failed
++    move-exception v0
++    const-string v1, "OnigiriHMA"
++    const-string v2, "Could not load HMA adapter"
++    invoke-static {v1, v2, v0}, Landroid/util/Slog;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++    return-void
++.end method

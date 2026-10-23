@@ -1,0 +1,1013 @@
+From: Onigiri
+Subject: [PATCH] Add HMA-OSS, TEESimulator and BRENE to Onigiri settings
+
+Each module gets a row under Patch settings, like Play Integrity Fix: its switch stores the
+choice in persist.sys.onigiri.<id> for the next start, and its name opens the module's page with
+an On/Off bar, Status, a Version row that asks root for an update, and HMA-OSS's app rules or
+BRENE's options. RootModPreferenceController describes the properties it reads and writes.
+
+diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
+--- a/res/values-vi/strings.xml
++++ b/res/values-vi/strings.xml
+@@ -8045,4 +8045,20 @@ Trong Máy ảnh, bạn có thể sử dụng phím Trên cùng để chụp ả
+     <string name="onigiri_dex_zone_bottom_left">Vùng dưới bên trái</string>
+     <string name="onigiri_dex_zone_bottom_right">Vùng dưới bên phải</string>
+     <string name="onigiri_dark_mode_schedule_summary">Chế độ Tối sẽ bật và tắt đúng giờ đã hẹn.</string>
++    <string name="onigiri_hma_summary">Ẩn các ứng dụng khác của bạn khỏi những ứng dụng bạn chọn.</string>
++    <string name="onigiri_hma_rules_title">Quy tắc ứng dụng</string>
++    <string name="onigiri_hma_rules_summary">Mở HMA-OSS</string>
++    <string name="onigiri_tee_summary">Trả lời các yêu cầu kiểm tra khóa phần cứng của ứng dụng.</string>
++    <string name="onigiri_brene_summary">Dùng susFS để ẩn root khỏi ứng dụng.</string>
++    <string name="onigiri_brene_rom_paths_title">Ẩn đường dẫn ROM tùy biến</string>
++    <string name="onigiri_brene_addon_d_title">Ẩn /system/addon.d</string>
++    <string name="onigiri_rootmod_status_title">Trạng thái</string>
++    <string name="onigiri_rootmod_version_title">Phiên bản</string>
++    <string name="onigiri_rootmod_active">Đang hoạt động</string>
++    <string name="onigiri_rootmod_unavailable">Không khả dụng</string>
++    <string name="onigiri_rootmod_after_restart">%1$s sau khi khởi động lại</string>
++    <string name="onigiri_rootmod_on_after_restart">%1$s, bật sau khi khởi động lại</string>
++    <string name="onigiri_rootmod_off_after_restart">%1$s, tắt sau khi khởi động lại</string>
++    <string name="onigiri_rootmod_restart_pending">%1$s, chờ khởi động lại</string>
++    <string name="onigiri_rootmod_incompatible">Cập nhật Onigiri trước để có bản mới hơn.</string>
+ </resources>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -15411,4 +15411,23 @@ In Camera, you can use the Top button to take pictures."</string>
+     <string name="onigiri_car_standby_hours_title">Shut down after</string>
+     <string name="onigiri_settings_category_title">Onigiri settings</string>
+     <string name="onigiri_update_title">Software update</string>
++    <string name="onigiri_hma_title">HMA-OSS</string>
++    <string name="onigiri_hma_summary">Hides your other apps from the apps you pick.</string>
++    <string name="onigiri_hma_rules_title">App rules</string>
++    <string name="onigiri_hma_rules_summary">Opens HMA-OSS</string>
++    <string name="onigiri_tee_title">TEESimulator</string>
++    <string name="onigiri_tee_summary">Answers hardware key checks from apps.</string>
++    <string name="onigiri_brene_title">BRENE</string>
++    <string name="onigiri_brene_summary">Uses susFS to hide root from apps.</string>
++    <string name="onigiri_brene_rom_paths_title">Hide custom ROM paths</string>
++    <string name="onigiri_brene_addon_d_title">Hide /system/addon.d</string>
++    <string name="onigiri_rootmod_status_title">Status</string>
++    <string name="onigiri_rootmod_version_title">Version</string>
++    <string name="onigiri_rootmod_active">Active</string>
++    <string name="onigiri_rootmod_unavailable">Unavailable</string>
++    <string name="onigiri_rootmod_after_restart">%1$s after restart</string>
++    <string name="onigiri_rootmod_on_after_restart">%1$s, on after restart</string>
++    <string name="onigiri_rootmod_off_after_restart">%1$s, off after restart</string>
++    <string name="onigiri_rootmod_restart_pending">%1$s, restart pending</string>
++    <string name="onigiri_rootmod_incompatible">Update Onigiri first to get the newer version.</string>
+ </resources>
+diff --git a/res/xml/onigiri_brene_settings.xml b/res/xml/onigiri_brene_settings.xml
+new file mode 100644
+--- /dev/null
++++ b/res/xml/onigiri_brene_settings.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="utf-8"?>
++<PreferenceScreen android:title="@string/onigiri_brene_title"
++  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
++    <com.android.settings.widget.SettingsMainSwitchPreference android:key="onigiri_brene" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++    <com.samsung.android.settings.widget.SecInsetCategoryPreference settings:removable="false" />
++    <SecPreferenceCategory>
++        <Preference android:title="@string/onigiri_rootmod_status_title" android:key="onigiri_brene_status" android:summary="@string/summary_placeholder" android:selectable="false" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++        <Preference android:title="@string/onigiri_rootmod_version_title" android:key="onigiri_brene_version" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++    </SecPreferenceCategory>
++    <com.samsung.android.settings.widget.SecInsetCategoryPreference settings:removable="false" />
++    <SecPreferenceCategory>
++        <SecSwitchPreference android:title="@string/onigiri_brene_rom_paths_title" android:key="onigiri_brene_rom_paths" android:dependency="onigiri_brene" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_brene_addon_d_title" android:key="onigiri_brene_addon_d" android:dependency="onigiri_brene" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++    </SecPreferenceCategory>
++    <com.samsung.android.settings.widget.SecUnclickablePreference android:title="@string/onigiri_brene_summary" android:selectable="false" android:key="onigiri_brene_summary" />
++</PreferenceScreen>
+diff --git a/res/xml/onigiri_hma_settings.xml b/res/xml/onigiri_hma_settings.xml
+new file mode 100644
+--- /dev/null
++++ b/res/xml/onigiri_hma_settings.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<PreferenceScreen android:title="@string/onigiri_hma_title"
++  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
++    <com.android.settings.widget.SettingsMainSwitchPreference android:key="onigiri_hma" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++    <com.samsung.android.settings.widget.SecInsetCategoryPreference settings:removable="false" />
++    <SecPreferenceCategory>
++        <Preference android:title="@string/onigiri_rootmod_status_title" android:key="onigiri_hma_status" android:summary="@string/summary_placeholder" android:selectable="false" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++        <Preference android:title="@string/onigiri_rootmod_version_title" android:key="onigiri_hma_version" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++    </SecPreferenceCategory>
++    <com.samsung.android.settings.widget.SecInsetCategoryPreference settings:removable="false" />
++    <SecPreferenceCategory>
++        <Preference android:title="@string/onigiri_hma_rules_title" android:key="onigiri_hma_rules" android:summary="@string/onigiri_hma_rules_summary" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++    </SecPreferenceCategory>
++    <com.samsung.android.settings.widget.SecUnclickablePreference android:title="@string/onigiri_hma_summary" android:selectable="false" android:key="onigiri_hma_summary" />
++</PreferenceScreen>
+diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
+--- a/res/xml/onigiri_settings.xml
++++ b/res/xml/onigiri_settings.xml
+@@ -5,6 +5,15 @@
+     <Preference android:title="@string/onigiri_device_name_title" android:key="onigiri_device_name" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.DeviceNamePreferenceController" />
+     <SecPreferenceCategory android:title="@string/onigiri_patch_settings_title">
+         <SecSwitchPreferenceScreen android:title="@string/onigiri_pif_version_title" android:key="onigiri_pif_version" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.PIFVersionPreferenceController" />
++        <SecSwitchPreferenceScreen android:title="@string/onigiri_hma_title" android:key="onigiri_hma" android:summary="@string/summary_placeholder" android:fragment="moe.foss.onigiri.settings.RootModSettingsFragment" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController">
++            <extra android:name="onigiri_screen" android:value="onigiri_hma_settings" />
++        </SecSwitchPreferenceScreen>
++        <SecSwitchPreferenceScreen android:title="@string/onigiri_tee_title" android:key="onigiri_tee" android:summary="@string/summary_placeholder" android:fragment="moe.foss.onigiri.settings.RootModSettingsFragment" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController">
++            <extra android:name="onigiri_screen" android:value="onigiri_tee_settings" />
++        </SecSwitchPreferenceScreen>
++        <SecSwitchPreferenceScreen android:title="@string/onigiri_brene_title" android:key="onigiri_brene" android:summary="@string/summary_placeholder" android:fragment="moe.foss.onigiri.settings.RootModSettingsFragment" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController">
++            <extra android:name="onigiri_screen" android:value="onigiri_brene_settings" />
++        </SecSwitchPreferenceScreen>
+     </SecPreferenceCategory>
+     <SecPreferenceCategory android:title="@string/onigiri_settings_category_title">
+         <SecSwitchPreference android:title="@string/onigiri_sleep_when_folded_title" android:key="onigiri_sleep_when_folded" settings:controller="moe.foss.onigiri.settings.SleepOnFoldPreferenceController" />
+diff --git a/res/xml/onigiri_tee_settings.xml b/res/xml/onigiri_tee_settings.xml
+new file mode 100644
+--- /dev/null
++++ b/res/xml/onigiri_tee_settings.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<PreferenceScreen android:title="@string/onigiri_tee_title"
++  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
++    <com.android.settings.widget.SettingsMainSwitchPreference android:key="onigiri_tee" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++    <com.samsung.android.settings.widget.SecInsetCategoryPreference settings:removable="false" />
++    <SecPreferenceCategory>
++        <Preference android:title="@string/onigiri_rootmod_status_title" android:key="onigiri_tee_status" android:summary="@string/summary_placeholder" android:selectable="false" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++        <Preference android:title="@string/onigiri_rootmod_version_title" android:key="onigiri_tee_version" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
++    </SecPreferenceCategory>
++    <com.samsung.android.settings.widget.SecUnclickablePreference android:title="@string/onigiri_tee_summary" android:selectable="false" android:key="onigiri_tee_summary" />
++</PreferenceScreen>
+diff --git a/smali_classes4/moe/foss/onigiri/settings/RootModPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/RootModPreferenceController.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes4/moe/foss/onigiri/settings/RootModPreferenceController.smali
+@@ -0,0 +1,824 @@
++.class public Lmoe/foss/onigiri/settings/RootModPreferenceController;
++.super Lcom/android/settings/core/TogglePreferenceController;
++.source "RootModPreferenceController.java"
++
++# Rows for the built-in root modules HMA-OSS (hma), TEESimulator (tee) and BRENE (brene). The key
++# picks the row: onigiri_<id> is the module switch (its row on the Onigiri page and the On/Off bar
++# on its own page), onigiri_brene_<option> a BRENE option, onigiri_<id>_status, _version and _rules
++# the rest of the module's page.
++#
++# A switch only stores the choice in persist.sys.onigiri.<id>[.<option>]. init applies it at the
++# next start and records what it started with in sys.onigiri.<id>.enabled and
++# sys.onigiri.brene.<option>; until then the change reads "after restart" and offers a restart.
++# sys.onigiri.<id>.state is what runs now: active, off, anything else reads Unavailable.
++#
++# Version asks root for an update with sys.onigiri.<id>.update=requested. Root answers checking,
++# then updated (sys.onigiri.<id>.pending_version waits for the next start), up_to_date,
++# incompatible or error. The row re-reads it every second while the page shows, for up to 180 s.
++
++# interfaces
++.implements Landroid/widget/CompoundButton$OnCheckedChangeListener;
++.implements Landroid/content/DialogInterface$OnClickListener;
++.implements Ljava/lang/Runnable;
++.implements Landroidx/lifecycle/LifecycleObserver;
++.implements Lcom/android/settingslib/core/lifecycle/events/OnStop;
++
++# instance fields
++.field private final mHad:Ljava/lang/String;
++
++.field private final mHandler:Landroid/os/Handler;
++
++.field private final mId:Ljava/lang/String;
++
++.field private mPolls:I
++
++.field private mPreference:Landroidx/preference/Preference;
++
++.field private final mRow:Ljava/lang/String;
++
++.field private mScreen:Landroidx/preference/PreferenceScreen;
++
++.field private final mWant:Ljava/lang/String;
++
++# direct methods
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .locals 4
++    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/TogglePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++    new-instance p1, Landroid/os/Handler;
++    invoke-static {}, Landroid/os/Looper;->getMainLooper()Landroid/os/Looper;
++    move-result-object v0
++    invoke-direct {p1, v0}, Landroid/os/Handler;-><init>(Landroid/os/Looper;)V
++    iput-object p1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mHandler:Landroid/os/Handler;
++    const/16 p1, 0x8
++    invoke-virtual {p2, p1}, Ljava/lang/String;->substring(I)Ljava/lang/String;
++    move-result-object p1
++    const/16 p2, 0x5f
++    invoke-virtual {p1, p2}, Ljava/lang/String;->indexOf(I)I
++    move-result p2
++    if-gez p2, :cond_0
++    move-object v0, p1
++    goto :goto_0
++    :cond_0
++    const/4 v0, 0x0
++    invoke-virtual {p1, v0, p2}, Ljava/lang/String;->substring(II)Ljava/lang/String;
++    move-result-object v0
++    :goto_0
++    iput-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    const-string v1, ""
++    if-gez p2, :cond_1
++    move-object p1, v1
++    goto :goto_1
++    :cond_1
++    add-int/lit8 p2, p2, 0x1
++    invoke-virtual {p1, p2}, Ljava/lang/String;->substring(I)Ljava/lang/String;
++    move-result-object p1
++    :goto_1
++    iput-object p1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mRow:Ljava/lang/String;
++    const-string p2, "persist.sys.onigiri."
++    invoke-virtual {p2, v0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p2
++    invoke-virtual {p1}, Ljava/lang/String;->isEmpty()Z
++    move-result v2
++    const-string v3, "."
++    if-eqz v2, :cond_2
++    goto :goto_2
++    :cond_2
++    invoke-virtual {v3, p1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v1
++    :goto_2
++    invoke-virtual {p2, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p2
++    iput-object p2, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mWant:Ljava/lang/String;
++    const-string p2, "sys.onigiri."
++    invoke-virtual {p2, v0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p2
++    invoke-virtual {p1}, Ljava/lang/String;->isEmpty()Z
++    move-result v0
++    if-eqz v0, :cond_3
++    const-string p1, ".enabled"
++    goto :goto_3
++    :cond_3
++    invoke-virtual {v3, p1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p1
++    :goto_3
++    invoke-virtual {p2, p1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p1
++    iput-object p1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mHad:Ljava/lang/String;
++    return-void
++.end method
++
++.method private afterRestart(Ljava/lang/Object;)Ljava/lang/String;
++    .locals 2
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    const-string v1, "onigiri_rootmod_after_restart"
++    invoke-direct {p0, v1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->id(Ljava/lang/String;)I
++    move-result p0
++    filled-new-array {p1}, [Ljava/lang/Object;
++    move-result-object p1
++    invoke-virtual {v0, p0, p1}, Landroid/content/Context;->getString(I[Ljava/lang/Object;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++.end method
++
++.method private busy()Z
++    .locals 1
++    const-string v0, "update"
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->prop(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    const-string v0, "requested"
++    invoke-virtual {p0, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    if-nez v0, :cond_1
++    const-string v0, "checking"
++    invoke-virtual {p0, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result p0
++    if-eqz p0, :cond_0
++    goto :goto_0
++    :cond_0
++    const/4 p0, 0x0
++    return p0
++    :cond_1
++    :goto_0
++    const/4 p0, 0x1
++    return p0
++.end method
++
++.method private id(Ljava/lang/String;)I
++    .locals 2
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++    move-result-object v0
++    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
++    move-result-object p0
++    const-string v1, "string"
++    invoke-virtual {v0, p1, v1, p0}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
++    move-result p0
++    return p0
++.end method
++
++.method private static on(Ljava/lang/String;)Z
++    .locals 1
++    const/4 v0, 0x0
++    invoke-static {p0, v0}, Landroid/os/SemSystemProperties;->getBoolean(Ljava/lang/String;Z)Z
++    move-result p0
++    return p0
++.end method
++
++# Only BRENE has options; the others read as unchanged.
++.method private optionChanged(Ljava/lang/String;)Z
++    .locals 3
++    const-string v0, "persist.sys.onigiri."
++    iget-object v1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    invoke-virtual {v0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, "."
++    invoke-virtual {v0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {v0, p1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    invoke-static {v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->on(Ljava/lang/String;)Z
++    move-result v0
++    const-string v2, "sys.onigiri."
++    iget-object p0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    invoke-virtual {v2, p0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    invoke-virtual {p0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    invoke-virtual {p0, p1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    invoke-static {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->on(Ljava/lang/String;)Z
++    move-result p0
++    if-eq v0, p0, :cond_0
++    const/4 p0, 0x1
++    return p0
++    :cond_0
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method private poll()V
++    .locals 3
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mHandler:Landroid/os/Handler;
++    invoke-virtual {v0, p0}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mHandler:Landroid/os/Handler;
++    const-wide/16 v1, 0x3e8
++    invoke-virtual {v0, p0, v1, v2}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->refresh()V
++    return-void
++.end method
++
++.method private prop(Ljava/lang/String;)Ljava/lang/String;
++    .locals 1
++    const-string v0, "sys.onigiri."
++    iget-object p0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    invoke-virtual {v0, p0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    const-string v0, "."
++    invoke-virtual {p0, v0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    invoke-virtual {p0, p1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    const-string p1, ""
++    invoke-static {p0, p1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++.end method
++
++.method private refresh()V
++    .locals 3
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mPreference:Landroidx/preference/Preference;
++    if-eqz v0, :cond_0
++    invoke-virtual {p0, v0}, Lcom/android/settingslib/core/AbstractPreferenceController;->refreshSummary(Landroidx/preference/Preference;)V
++    :cond_0
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mScreen:Landroidx/preference/PreferenceScreen;
++    if-eqz v0, :cond_1
++    const-string v1, "onigiri_"
++    iget-object v2, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    invoke-virtual {v1, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v1
++    const-string v2, "_status"
++    invoke-virtual {v1, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v1
++    invoke-virtual {v0, v1}, Landroidx/preference/PreferenceGroup;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
++    move-result-object v0
++    if-eqz v0, :cond_1
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->status()Ljava/lang/String;
++    move-result-object p0
++    invoke-virtual {v0, p0}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V
++    :cond_1
++    return-void
++.end method
++
++# This switch differs from what the phone started with (an option counts while BRENE is on).
++.method private restartNeeded()Z
++    .locals 2
++    invoke-virtual {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->isChecked()Z
++    move-result v0
++    iget-object v1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mHad:Ljava/lang/String;
++    invoke-static {v1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->on(Ljava/lang/String;)Z
++    move-result v1
++    if-eq v0, v1, :cond_1
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mRow:Ljava/lang/String;
++    invoke-virtual {v0}, Ljava/lang/String;->isEmpty()Z
++    move-result v0
++    if-nez v0, :cond_0
++    const-string v0, "persist.sys.onigiri."
++    iget-object p0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    invoke-virtual {v0, p0}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    invoke-static {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->on(Ljava/lang/String;)Z
++    move-result p0
++    if-eqz p0, :cond_1
++    :cond_0
++    const/4 p0, 0x1
++    return p0
++    :cond_1
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method private static rulesIntent()Landroid/content/Intent;
++    .locals 3
++    new-instance v0, Landroid/content/Intent;
++    invoke-direct {v0}, Landroid/content/Intent;-><init>()V
++    const-string v1, "org.frknkrc44.hma_oss"
++    const-string v2, "org.frknkrc44.hma_oss.ui.activity.MainActivity"
++    invoke-virtual {v0, v1, v2}, Landroid/content/Intent;->setClassName(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;
++    move-result-object v0
++    const/high16 v1, 0x10000000
++    invoke-virtual {v0, v1}, Landroid/content/Intent;->addFlags(I)Landroid/content/Intent;
++    move-result-object v0
++    return-object v0
++.end method
++
++.method private showRestartDialog()V
++    .locals 2
++    new-instance v0, Landroidx/appcompat/app/AlertDialog$Builder;
++    iget-object v1, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-direct {v0, v1}, Landroidx/appcompat/app/AlertDialog$Builder;-><init>(Landroid/content/Context;)V
++    sget v1, Lcom/android/settings/R$string;->onigiri_native_blur_dialog_title:I
++    invoke-virtual {v0, v1}, Landroidx/appcompat/app/AlertDialog$Builder;->setTitle(I)V
++    sget v1, Lcom/android/settings/R$string;->onigiri_native_blur_dialog_msg:I
++    invoke-virtual {v0, v1}, Landroidx/appcompat/app/AlertDialog$Builder;->setMessage(I)V
++    sget v1, Lcom/android/settings/R$string;->onigiri_native_blur_dialog_positive:I
++    invoke-virtual {v0, v1, p0}, Landroidx/appcompat/app/AlertDialog$Builder;->setPositiveButton(ILandroid/content/DialogInterface$OnClickListener;)V
++    sget p0, Lcom/android/settings/R$string;->onigiri_native_blur_dialog_negative:I
++    const/4 v1, 0x0
++    invoke-virtual {v0, p0, v1}, Landroidx/appcompat/app/AlertDialog$Builder;->setNegativeButton(ILandroid/content/DialogInterface$OnClickListener;)V
++    invoke-virtual {v0}, Landroidx/appcompat/app/AlertDialog$Builder;->show()Landroidx/appcompat/app/AlertDialog;
++    return-void
++.end method
++
++.method private staged()Ljava/lang/String;
++    .locals 2
++    const-string v0, "pending_version"
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->prop(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {v0}, Ljava/lang/String;->isEmpty()Z
++    move-result v1
++    if-nez v1, :cond_1
++    const-string v1, "version"
++    invoke-direct {p0, v1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->prop(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result p0
++    if-eqz p0, :cond_0
++    goto :goto_0
++    :cond_0
++    return-object v0
++    :cond_1
++    :goto_0
++    const/4 p0, 0x0
++    return-object p0
++.end method
++
++# What runs now, and what changes at the next start.
++.method private status()Ljava/lang/String;
++    .locals 4
++    const-string v0, "state"
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->prop(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, "active"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v1
++    if-eqz v1, :cond_0
++    const-string v0, "onigiri_rootmod_active"
++    goto :goto_0
++    :cond_0
++    const-string v1, "off"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    if-eqz v0, :cond_1
++    const-string v0, "switch_off_text"
++    goto :goto_0
++    :cond_1
++    const-string v0, "onigiri_rootmod_unavailable"
++    :goto_0
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->string(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, "persist.sys.onigiri."
++    iget-object v2, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    invoke-virtual {v1, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v1
++    invoke-static {v1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->on(Ljava/lang/String;)Z
++    move-result v1
++    const-string v2, "sys.onigiri."
++    iget-object v3, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    invoke-virtual {v2, v3}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v2
++    const-string v3, ".enabled"
++    invoke-virtual {v2, v3}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v2
++    invoke-static {v2}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->on(Ljava/lang/String;)Z
++    move-result v2
++    if-eq v1, v2, :cond_3
++    iget-object v2, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    if-eqz v1, :cond_2
++    const-string v1, "onigiri_rootmod_on_after_restart"
++    goto :goto_1
++    :cond_2
++    const-string v1, "onigiri_rootmod_off_after_restart"
++    :goto_1
++    invoke-direct {p0, v1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->id(Ljava/lang/String;)I
++    move-result p0
++    filled-new-array {v0}, [Ljava/lang/Object;
++    move-result-object v0
++    invoke-virtual {v2, p0, v0}, Landroid/content/Context;->getString(I[Ljava/lang/Object;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++    :cond_3
++    if-eqz v1, :cond_5
++    const-string v1, "rom_paths"
++    invoke-direct {p0, v1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->optionChanged(Ljava/lang/String;)Z
++    move-result v1
++    if-nez v1, :cond_4
++    const-string v1, "addon_d"
++    invoke-direct {p0, v1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->optionChanged(Ljava/lang/String;)Z
++    move-result v1
++    if-nez v1, :cond_4
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->staged()Ljava/lang/String;
++    move-result-object v1
++    if-eqz v1, :cond_5
++    :cond_4
++    iget-object v1, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    const-string v2, "onigiri_rootmod_restart_pending"
++    invoke-direct {p0, v2}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->id(Ljava/lang/String;)I
++    move-result p0
++    filled-new-array {v0}, [Ljava/lang/Object;
++    move-result-object v0
++    invoke-virtual {v1, p0, v0}, Landroid/content/Context;->getString(I[Ljava/lang/Object;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++    :cond_5
++    return-object v0
++.end method
++
++.method private string(Ljava/lang/String;)Ljava/lang/String;
++    .locals 1
++    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-direct {p0, p1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->id(Ljava/lang/String;)I
++    move-result p0
++    invoke-virtual {v0, p0}, Landroid/content/Context;->getString(I)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++.end method
++
++.method private toast(I)V
++    .locals 1
++    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    const/4 v0, 0x0
++    invoke-static {p0, p1, v0}, Landroid/widget/Toast;->makeText(Landroid/content/Context;II)Landroid/widget/Toast;
++    move-result-object p0
++    invoke-virtual {p0}, Landroid/widget/Toast;->show()V
++    return-void
++.end method
++
++.method private version()Ljava/lang/String;
++    .locals 2
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->busy()Z
++    move-result v0
++    if-eqz v0, :cond_0
++    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    sget v0, Lcom/android/settings/R$string;->onigiri_pif_checking:I
++    invoke-virtual {p0, v0}, Landroid/content/Context;->getString(I)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++    :cond_0
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->staged()Ljava/lang/String;
++    move-result-object v0
++    if-eqz v0, :cond_1
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->afterRestart(Ljava/lang/Object;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++    :cond_1
++    const-string v0, "version"
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->prop(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {v0}, Ljava/lang/String;->isEmpty()Z
++    move-result v1
++    if-eqz v1, :cond_2
++    const-string v0, "onigiri_rootmod_unavailable"
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->string(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++    :cond_2
++    return-object v0
++.end method
++
++# virtual methods
++.method public displayPreference(Landroidx/preference/PreferenceScreen;)V
++    .locals 1
++    invoke-super {p0, p1}, Lcom/android/settings/core/TogglePreferenceController;->displayPreference(Landroidx/preference/PreferenceScreen;)V
++    iput-object p1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mScreen:Landroidx/preference/PreferenceScreen;
++    invoke-virtual {p0}, Lcom/android/settings/core/BasePreferenceController;->getPreferenceKey()Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {p1, v0}, Landroidx/preference/PreferenceGroup;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
++    move-result-object p1
++    iput-object p1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mPreference:Landroidx/preference/Preference;
++    instance-of v0, p1, Lcom/android/settings/widget/SettingsMainSwitchPreference;
++    if-eqz v0, :cond_0
++    check-cast p1, Lcom/android/settings/widget/SettingsMainSwitchPreference;
++    invoke-virtual {p1, p0}, Lcom/android/settings/widget/SettingsMainSwitchPreference;->addOnSwitchChangeListener(Landroid/widget/CompoundButton$OnCheckedChangeListener;)V
++    :cond_0
++    return-void
++.end method
++
++# App rules opens HMA-OSS's own app, greyed out while that isn't installed.
++.method public getAvailabilityStatus()I
++    .locals 2
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mRow:Ljava/lang/String;
++    const-string v1, "rules"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    const/4 v1, 0x0
++    if-eqz v0, :cond_0
++    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
++    move-result-object p0
++    invoke-static {}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->rulesIntent()Landroid/content/Intent;
++    move-result-object v0
++    invoke-virtual {p0, v0, v1}, Landroid/content/pm/PackageManager;->resolveActivity(Landroid/content/Intent;I)Landroid/content/pm/ResolveInfo;
++    move-result-object p0
++    if-nez p0, :cond_0
++    const/4 p0, 0x5
++    return p0
++    :cond_0
++    return v1
++.end method
++
++.method public getSliceHighlightMenuRes()I
++    .locals 0
++    sget p0, Lcom/android/settings/R$string;->menu_key_onigiri_settings:I
++    return p0
++.end method
++
++.method public getSummary()Ljava/lang/CharSequence;
++    .locals 2
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mRow:Ljava/lang/String;
++    invoke-virtual {v0}, Ljava/lang/String;->isEmpty()Z
++    move-result v0
++    if-nez v0, :cond_6
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mRow:Ljava/lang/String;
++    const-string v1, "status"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    if-eqz v0, :cond_0
++    goto :goto_1
++    :cond_0
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mRow:Ljava/lang/String;
++    const-string v1, "version"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    if-eqz v0, :cond_1
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->version()Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++    :cond_1
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mRow:Ljava/lang/String;
++    const-string v1, "rules"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    if-eqz v0, :cond_3
++    invoke-virtual {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->getAvailabilityStatus()I
++    move-result v0
++    if-nez v0, :cond_2
++    const/4 p0, 0x0
++    return-object p0
++    :cond_2
++    const-string v0, "onigiri_rootmod_unavailable"
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->string(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++    :cond_3
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->restartNeeded()Z
++    move-result v0
++    if-eqz v0, :cond_5
++    invoke-virtual {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->isChecked()Z
++    move-result v0
++    if-eqz v0, :cond_4
++    const-string v0, "switch_on_text"
++    goto :goto_0
++    :cond_4
++    const-string v0, "switch_off_text"
++    :goto_0
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->string(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->afterRestart(Ljava/lang/Object;)Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++    :cond_5
++    const-string p0, ""
++    return-object p0
++    :cond_6
++    :goto_1
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->status()Ljava/lang/String;
++    move-result-object p0
++    return-object p0
++.end method
++
++.method public handlePreferenceTreeClick(Landroidx/preference/Preference;)Z
++    .locals 3
++    invoke-virtual {p0}, Lcom/android/settings/core/BasePreferenceController;->getPreferenceKey()Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {p1}, Landroidx/preference/Preference;->getKey()Ljava/lang/String;
++    move-result-object p1
++    invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result p1
++    const/4 v0, 0x0
++    if-nez p1, :cond_0
++    return v0
++    :cond_0
++    iget-object p1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mRow:Ljava/lang/String;
++    const-string v1, "version"
++    invoke-virtual {p1, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result p1
++    const/4 v1, 0x1
++    if-eqz p1, :cond_2
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->busy()Z
++    move-result p1
++    if-nez p1, :cond_1
++    :try_start_0
++    const-string p1, "sys.onigiri."
++    iget-object v2, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    invoke-virtual {p1, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p1
++    const-string v2, ".update"
++    invoke-virtual {p1, v2}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p1
++    const-string v2, "requested"
++    invoke-static {p1, v2}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    :try_end_0
++    .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_0
++    iput v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mPolls:I
++    goto :goto_0
++    :catch_0
++    sget p1, Lcom/android/settings/R$string;->onigiri_pif_error:I
++    invoke-direct {p0, p1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->toast(I)V
++    return v1
++    :cond_1
++    :goto_0
++    sget p1, Lcom/android/settings/R$string;->onigiri_pif_checking:I
++    invoke-direct {p0, p1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->toast(I)V
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->poll()V
++    return v1
++    :cond_2
++    iget-object p1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mRow:Ljava/lang/String;
++    const-string v2, "rules"
++    invoke-virtual {p1, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result p1
++    if-eqz p1, :cond_3
++    :try_start_1
++    iget-object p1, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    invoke-static {}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->rulesIntent()Landroid/content/Intent;
++    move-result-object v0
++    invoke-virtual {p1, v0}, Landroid/content/Context;->startActivity(Landroid/content/Intent;)V
++    :try_end_1
++    .catch Ljava/lang/RuntimeException; {:try_start_1 .. :try_end_1} :catch_1
++    goto :goto_1
++    :catch_1
++    sget p1, Lcom/android/settings/R$string;->onigiri_pif_error:I
++    invoke-direct {p0, p1}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->toast(I)V
++    :goto_1
++    return v1
++    :cond_3
++    return v0
++.end method
++
++.method public isChecked()Z
++    .locals 0
++    iget-object p0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mWant:Ljava/lang/String;
++    invoke-static {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->on(Ljava/lang/String;)Z
++    move-result p0
++    return p0
++.end method
++
++.method public isSliceable()Z
++    .locals 0
++    const/4 p0, 0x0
++    return p0
++.end method
++
++# The On/Off bar also reports our own corrections, so only a real change is written; a write
++# that fails puts the bar back.
++.method public onCheckedChanged(Landroid/widget/CompoundButton;Z)V
++    .locals 0
++    invoke-virtual {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->isChecked()Z
++    move-result p1
++    if-eq p2, p1, :cond_0
++    invoke-virtual {p0, p2}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->setChecked(Z)Z
++    move-result p1
++    if-nez p1, :cond_0
++    iget-object p1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mPreference:Landroidx/preference/Preference;
++    check-cast p1, Landroidx/preference/TwoStatePreference;
++    invoke-virtual {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->isChecked()Z
++    move-result p0
++    invoke-virtual {p1, p0}, Landroidx/preference/TwoStatePreference;->setChecked(Z)V
++    :cond_0
++    return-void
++.end method
++
++.method public onClick(Landroid/content/DialogInterface;I)V
++    .locals 0
++    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    const-string p1, "power"
++    invoke-virtual {p0, p1}, Landroid/content/Context;->getSystemService(Ljava/lang/String;)Ljava/lang/Object;
++    move-result-object p0
++    check-cast p0, Landroid/os/PowerManager;
++    const/4 p1, 0x0
++    invoke-virtual {p0, p1}, Landroid/os/PowerManager;->reboot(Ljava/lang/String;)V
++    return-void
++.end method
++
++.method public onStop()V
++    .locals 1
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mHandler:Landroid/os/Handler;
++    invoke-virtual {v0, p0}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
++    const/4 v0, 0x0
++    iput v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mPolls:I
++    return-void
++.end method
++
++# ponytail: a request root never picks up stays requested, and the row keeps showing the check,
++# until root clears it or the phone restarts.
++.method public run()V
++    .locals 3
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->busy()Z
++    move-result v0
++    if-eqz v0, :cond_1
++    iget v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mPolls:I
++    add-int/lit8 v0, v0, 0x1
++    iput v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mPolls:I
++    const/16 v1, 0xb4
++    if-ge v0, v1, :cond_0
++    iget-object v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mHandler:Landroid/os/Handler;
++    const-wide/16 v1, 0x3e8
++    invoke-virtual {v0, p0, v1, v2}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
++    return-void
++    :cond_0
++    const-string v0, "init.svc.onigiri-update-"
++    iget-object v1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    invoke-virtual {v0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, ""
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, "running"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    if-nez v0, :cond_1
++    :try_start_0
++    const-string v0, "sys.onigiri."
++    iget-object v1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mId:Ljava/lang/String;
++    invoke-virtual {v0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, ".update"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, "error"
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    :try_end_0
++    .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_0
++    :catch_0
++    :cond_1
++    const/4 v0, 0x0
++    iput v0, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mPolls:I
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->refresh()V
++    const-string v0, "update"
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->prop(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object v0
++    const-string v1, "updated"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v1
++    if-eqz v1, :cond_2
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->showRestartDialog()V
++    goto :goto_1
++    :cond_2
++    const-string v1, "up_to_date"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v1
++    if-eqz v1, :cond_3
++    sget v0, Lcom/android/settings/R$string;->onigiri_pif_up_to_date:I
++    :goto_0
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->toast(I)V
++    goto :goto_1
++    :cond_3
++    const-string v1, "incompatible"
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result v0
++    if-eqz v0, :cond_4
++    const-string v0, "onigiri_rootmod_incompatible"
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->id(Ljava/lang/String;)I
++    move-result v0
++    goto :goto_0
++    :cond_4
++    sget v0, Lcom/android/settings/R$string;->onigiri_pif_error:I
++    goto :goto_0
++    :goto_1
++    return-void
++.end method
++
++# Read back, so a refused write never offers a restart.
++.method public setChecked(Z)Z
++    .locals 3
++    const/4 v0, 0x0
++    :try_start_0
++    iget-object v1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mWant:Ljava/lang/String;
++    invoke-static {p1}, Ljava/lang/Boolean;->toString(Z)Ljava/lang/String;
++    move-result-object v2
++    invoke-static {v1, v2}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    :try_end_0
++    .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_0
++    invoke-virtual {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->isChecked()Z
++    move-result v1
++    if-eq v1, p1, :cond_0
++    return v0
++    :cond_0
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->refresh()V
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->restartNeeded()Z
++    move-result p1
++    if-eqz p1, :cond_1
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->showRestartDialog()V
++    :cond_1
++    const/4 p0, 0x1
++    return p0
++    :catch_0
++    return v0
++.end method
++
++.method public updateState(Landroidx/preference/Preference;)V
++    .locals 1
++    invoke-super {p0, p1}, Lcom/android/settings/core/TogglePreferenceController;->updateState(Landroidx/preference/Preference;)V
++    invoke-virtual {p0, p1}, Lcom/android/settingslib/core/AbstractPreferenceController;->refreshSummary(Landroidx/preference/Preference;)V
++    iget-object p1, p0, Lmoe/foss/onigiri/settings/RootModPreferenceController;->mRow:Ljava/lang/String;
++    const-string v0, "version"
++    invoke-virtual {p1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result p1
++    if-eqz p1, :cond_0
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->busy()Z
++    move-result p1
++    if-eqz p1, :cond_0
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/RootModPreferenceController;->poll()V
++    :cond_0
++    return-void
++.end method
+diff --git a/smali_classes4/moe/foss/onigiri/settings/RootModSettingsFragment.smali b/smali_classes4/moe/foss/onigiri/settings/RootModSettingsFragment.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes4/moe/foss/onigiri/settings/RootModSettingsFragment.smali
+@@ -0,0 +1,44 @@
++.class public Lmoe/foss/onigiri/settings/RootModSettingsFragment;
++.super Lcom/android/settings/dashboard/DashboardFragment;
++.source "RootModSettingsFragment.java"
++
++# A root module's page. The row that opens it names the page's XML in its onigiri_screen extra.
++
++# direct methods
++.method public constructor <init>()V
++    .locals 0
++    invoke-direct {p0}, Lcom/android/settings/dashboard/DashboardFragment;-><init>()V
++    return-void
++.end method
++
++# virtual methods
++.method public getLogTag()Ljava/lang/String;
++    .locals 0
++    const-string p0, "RootModSettingsFragment"
++    return-object p0
++.end method
++
++.method public getMetricsCategory()I
++    .locals 0
++    const/16 p0, 0x2e8
++    return p0
++.end method
++
++.method public getPreferenceScreenResId()I
++    .locals 3
++    invoke-virtual {p0}, Landroidx/fragment/app/Fragment;->getContext()Landroid/content/Context;
++    move-result-object v0
++    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++    move-result-object v1
++    invoke-virtual {p0}, Landroidx/fragment/app/Fragment;->getArguments()Landroid/os/Bundle;
++    move-result-object p0
++    const-string v2, "onigiri_screen"
++    invoke-virtual {p0, v2}, Landroid/os/Bundle;->getString(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    const-string v2, "xml"
++    invoke-virtual {v0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
++    move-result-object v0
++    invoke-virtual {v1, p0, v2, v0}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
++    move-result p0
++    return p0
++.end method

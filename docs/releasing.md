@@ -35,6 +35,21 @@ Without GitHub, the same works on the build machine from a clean git checkout:
 `onigiri build_odin`, then `onigiri release <tag> out/Onigiri_AP_*.tar.md5` (needs `gh` logged in
 with push access).
 
+## Testing a branch on a phone
+
+Build locally; CI ROM builds run only for release tags. Use the existing firmware and
+build-tool caches and keep the installed build's AP available for rollback:
+
+```sh
+source buildenv.sh SM-F731B
+onigiri build_odin
+```
+
+Flash only the resulting AP for the connected SM-F731B. Preserve the phone's data and
+module configuration. Reuse the original signing keys in `security` when updating an
+existing installation. Verify the AP checksum and keep the original AP until the test
+build is accepted. Do not publish a release for a phone test.
+
 ## Setup (once)
 
 **Signing keys.** The workflow reads the keys from the `ONIGIRI_SIGNING_KEYS` secret. Set it

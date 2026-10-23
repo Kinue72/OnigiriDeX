@@ -29,13 +29,21 @@ onigiri/configs/qssi.sh: Copyright (C) 2025 Salvo Giangreco
 onigiri/configs/essi.sh: Copyright (C) 2025 Salvo Giangreco
 external/make.sh: Copyright (C) 2025 Salvo Giangreco
 
-Bundled KernelSU modules (prebuilts/rootmods, unmodified upstream releases listed with their
+Upstream archives (prebuilts/rootmods, unmodified releases listed with their
 download URLs in prebuilts/rootmods/manifest.json). Each keeps its own license; their source
 code is at the matching release tag:
 NeoZygisk v2.4: GPL-3.0, https://github.com/JingMatrix/NeoZygisk
-Vector v2.2: GPL-3.0, https://github.com/JingMatrix/Vector
 HMA-OSS oss-173: AGPL-3.0, https://github.com/frknkrc44/HMA-OSS
 TEESimulator v3.2: GPL-3.0, https://github.com/JingMatrix/TEESimulator
 Tricky Addon Enhanced v5.53.1: GPL-3.0, https://github.com/Enginex0/tricky-addon-enhanced
 BRENE v0.0.72: AGPL-3.0, https://github.com/rrr333nnn333/BRENE
 Hybrid Mount v6.2.5: GPL-3.0, https://github.com/Hybrid-Mount/meta-hybrid_mount
+
+The built-in essential integration extracts HMA-OSS's original dex and signed manager,
+TEESimulator's original dex and arm64 binaries, and BRENE's susfs binary and ROM-name list.
+Their original licenses still apply. The remaining archives are retained as source inputs
+and legacy references, not installed on the phone. Onigiri's adapters and build code are
+available in onigiri/mods/essential and scripts/build_essential.py.
+
+R8 9.4.24 (build-time Java-to-dex compiler): BSD-3-Clause,
+https://r8.googlesource.com/r8/+/refs/tags/9.4.24

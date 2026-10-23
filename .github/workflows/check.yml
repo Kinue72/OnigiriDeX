@@ -31,6 +31,7 @@ jobs:
           python3 -m py_compile $(git ls-files '*.py')
           python3 scripts/test_make_odin4_ap.py
           python3 scripts/test_ota_blockmap.py
+          python3 scripts/tests/test_essential.py
 
       - name: Patches
         run: |

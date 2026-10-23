@@ -9,14 +9,6 @@
       "publisher_digest_verified": true
     },
     {
-      "path": "system/etc/onigiri-rootmods/20-zygisk_vector.zip",
-      "sha256": "9ee8323575d615f7b3f1076ff60b2a63a49390ef11881b52632311a37f6f79cc",
-      "bytes": 9316843,
-      "source": "JingMatrix/Vector v2.2",
-      "url": "https://github.com/JingMatrix/Vector/releases/download/v2.2/Vector-v2.2-3080-Release.zip",
-      "publisher_digest_verified": true
-    },
-    {
       "path": "system/etc/onigiri-rootmods/30-hma_oss_zygisk.zip",
       "sha256": "be364502b3d34510c856a742bbb67d91560ec033dcaef06e431991a1ba3a98ec",
       "bytes": 2743824,
