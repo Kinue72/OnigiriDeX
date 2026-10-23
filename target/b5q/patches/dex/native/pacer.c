@@ -34,11 +34,37 @@ static int connection(void *sf, U64 id) {
     return -1;
 }
 
+/* hal::PowerMode::OFF is 0. */
+static int on(void *display) { return read32(display, 0xa4) != 0; }
+
+/* The Flip5's inner panel: port 131, the low byte of its physical display id. It only turns on
+ * for "Mirroring high refresh rate"; every other layout keeps it off. */
+static int inner(void *display) { return (native_display_id(display) & 0xff) == 0x83; }
+
+static void *external_on(void *sf) {
+    Byte *end;
+    for (Byte *p = map_start(sf, 0x700, 0x780, 0x18, &end); p != end; p += 0x18) {
+        void *display = (void *)read64(p, 0x10);
+        if (display && on(display) && connection(sf, native_display_id(display)) == 1) return display;
+    }
+    return 0;
+}
+
+/* Runs as a display turns on and picks the pacesetter: the 120 Hz inner panel while it shows,
+ * else the monitor with DeX high refresh on, else stock (an internal panel replacing one that is
+ * off). Leaving the inner panel hands the lead back to the monitor. */
 void onigiri_power_on(void *sf, void *display, void *active, int internal) {
-    int external = connection(sf, native_display_id(display)) == 1;
-    if ((external && native_property_bool("persist.sys.onigiri.dex_high_refresh", 0)) ||
-            (internal && (!active || read32(active, 0xa4) == 0)))
-        native_activate(sf, active, display);
+    void *lead = 0;
+    if (internal && inner(display))
+        lead = display;
+    else if (active && on(active) && inner(active))
+        lead = 0;
+    else if (native_property_bool("persist.sys.onigiri.dex_high_refresh", 0) && (lead = external_on(sf)))
+        ;
+    else if (internal && (!active || !on(active)))
+        lead = display;
+    if (lead && lead != active)
+        native_activate(sf, active, lead);
 }
 
 void onigiri_unregister(void *scheduler, U64 removed, U64 active, void *sf) {

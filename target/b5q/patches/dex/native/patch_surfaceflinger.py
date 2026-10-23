@@ -8,7 +8,7 @@ import sys
 import tempfile
 
 STOCK_SHA = 'fdb8f2a6242c589f6c9c34f42fb410d877624f8ca4b40b39f8f93ecc27e2383f'
-PATCHED_SHA = '593a3275820156cfd27b9dba3bfece391c22426f23cf8f27dbf929db5d2528a0'
+PATCHED_SHA = '1c7842b9db1d0e2b0c0f9ffbec30c1b375a830adf81249fc4447c7bfc66c44dc'
 
 
 def patch(binary, clang):
