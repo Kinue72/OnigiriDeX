@@ -26,6 +26,7 @@ OWN=$DATA/own
 MIN_RATE=$DATA/min-refresh-rate
 # Power saving was on when charging started; it goes back on once charging stops.
 SAVER=$DATA/power-saving
+UNPLUGGED=3  # polls without charging before that: USB mode changes drop the charger for ~1 s
 
 log() { /system/bin/log -t onigiri-mirror "$*"; }
 
@@ -115,10 +116,13 @@ charging() {
 # itself when the car goes off, after this has already put it back.
 power_saving() {
     if charging; then
+        unplugged=0
         [ "$(settings get global low_power)" = 1 ] || return 0
         touch $SAVER && { settings put global low_power 0 || rm -f $SAVER; } &&
             log "power saving off while charging"
     elif [ -e $SAVER ]; then
+        unplugged=$((unplugged + 1))
+        [ $unplugged -ge $UNPLUGGED ] || return 0
         settings put global low_power 1 && rm -f $SAVER && log "power saving back on"
     fi
 }
@@ -158,6 +162,7 @@ seen=
 count=0
 had_dex=  # DeX ran on this monitor
 inner=    # state 5 requested; left from before a restart if it is still the committed state
+unplugged=0
 [ "$(state)" = $INNER ] && inner=1
 while :; do
     power_saving
