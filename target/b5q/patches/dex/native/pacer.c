@@ -15,6 +15,9 @@ extern unsigned native_display_stack(void *display);
 extern void *native_get_snapshot(void *builder, unsigned sequence);
 extern int native_timeline(void *sf, void *flush);
 
+/* Refreshed once per cover follower frame, shared by the main thread's policy checks. */
+static int high_refresh;
+
 static U64 read64(void *p, unsigned offset) { return *(U64 *)((Byte *)p + offset); }
 static unsigned read32(void *p, unsigned offset) { return *(unsigned *)((Byte *)p + offset); }
 
@@ -106,17 +109,17 @@ static void *cover_on(void *sf) {
     return 0;
 }
 
-/* Only a faster, separate desktop gets this policy; a mirrored cover still needs every buffer. */
-static int fast_desktop(void *sf) {
-    if (!native_property_bool("persist.sys.onigiri.dex_high_refresh", 0)) return 0;
+/* Return the cover's stack only for a faster, separate desktop; unknown means stock policy. */
+static unsigned fast_desktop(void *sf) {
+    if (!high_refresh) return ~0u;
     U64 active = read64(sf, 0xaa0);
-    if (connection(sf, active) != 1) return 0;
+    if (connection(sf, active) != 1) return ~0u;
     void *cover = cover_on(sf), *monitor = external_on(sf);
-    if (!cover || !monitor || native_display_id(monitor) != active) return 0;
+    if (!cover || !monitor || native_display_id(monitor) != active) return ~0u;
     unsigned cover_stack = native_display_stack(cover), desktop_stack = native_display_stack(monitor);
-    if (cover_stack == ~0u || desktop_stack == ~0u || cover_stack == desktop_stack) return 0;
+    if (cover_stack == ~0u || desktop_stack == ~0u || cover_stack == desktop_stack) return ~0u;
     U64 period = native_period((void *)read64(sf, 0x1248));
-    return period > 0 && period < 16000000;
+    return period > 0 && period < 16000000 ? cover_stack : ~0u;
 }
 
 static void *cover_targeter(void *sf) {
@@ -136,14 +139,14 @@ static void *snapshot(void *sf, unsigned sequence) {
 }
 
 /* The lifecycle manager's snapshots own the effective stack; legacy Layer state stays at zero. */
-static int cover_changed(void *sf, unsigned head, unsigned size) {
+static int cover_changed(void *sf, unsigned head, unsigned size, unsigned cover_stack) {
     U64 node = read64(sf, head), remaining = read64(sf, size);
     if (remaining > 4096) return 1;
     while (node && remaining) {
         void *layer = (void *)read64((void *)node, 0x10);
         if (!layer) return 1;
         void *state = snapshot(sf, read32(layer, 0x1d4));
-        if (!state || read32(state, 0xc) == 0 || read32(state, 0xc) == ~0u) return 1;
+        if (!state || read32(state, 0xc) == cover_stack || read32(state, 0xc) == ~0u) return 1;
         node = read64((void *)node, 0);
         --remaining;
     }
@@ -153,15 +156,19 @@ static int cover_changed(void *sf, unsigned head, unsigned size) {
 void onigiri_follower_frame(void *targeter, void *args, void *source, void *pending,
                             U64 id, void *sf) {
     native_begin_frame(targeter, args, source, pending);
-    if ((id & 0xff) == 0x84 && fast_desktop(sf))
-        *((Byte *)targeter + 0x20) = 0;
+    if ((id & 0xff) == 0x84) {
+        high_refresh = native_property_bool("persist.sys.onigiri.dex_high_refresh", 0);
+        if (fast_desktop(sf) != ~0u) *((Byte *)targeter + 0x20) = 0;
+    }
 }
 
 void onigiri_follower_composite(void *targeters, void *id, void **targeter, void *sf) {
-    if ((read64(id, 0) & 0xff) == 0x84 && fast_desktop(sf) &&
+    unsigned cover_stack = (read64(id, 0) & 0xff) == 0x84 ? fast_desktop(sf) : ~0u;
+    if (cover_stack != ~0u &&
             !*((Byte *)sf + 0x5f8) && !*((Byte *)sf + 0x417) &&
             !*((Byte *)sf + 0x568) && !*((Byte *)sf + 0x600) &&
-            !cover_changed(sf, 0x618, 0x620) && !cover_changed(sf, 0x640, 0x648) &&
+            !cover_changed(sf, 0x618, 0x620, cover_stack) &&
+            !cover_changed(sf, 0x640, 0x648, cover_stack) &&
             cover_pending(*targeter)) return;
     native_add_targeter(targeters, id, targeter);
 }
@@ -169,13 +176,14 @@ void onigiri_follower_composite(void *targeters, void *id, void **targeter, void
 /* Hold the whole transaction before latch, so skipped cover frames never release a scanned buffer.
  * Geometry or already-latched cover changes still force normal composition above. */
 int onigiri_transaction_ready(void *sf, void *flush) {
-    if (fast_desktop(sf) && cover_pending(cover_targeter(sf))) {
+    unsigned cover_stack = fast_desktop(sf);
+    if (cover_stack != ~0u && cover_pending(cover_targeter(sf))) {
         void *transaction = (void *)read64(flush, 0);
         U64 first = read64(transaction, 0x38), last = read64(transaction, 0x40);
         if (last >= first && (last - first) % 0x3b0 == 0 && last - first <= 4096 * 0x3b0) {
             for (Byte *p = (Byte *)first; p != (Byte *)last; p += 0x3b0) {
                 void *state = snapshot(sf, read32(p, 0x3a0));
-                if (state && read32(state, 0xc) == 0) return 1; /* TransactionReadiness::NotReady */
+                if (state && read32(state, 0xc) == cover_stack) return 1; /* TransactionReadiness::NotReady */
             }
         }
     }
