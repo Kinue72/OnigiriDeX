@@ -1,0 +1,59 @@
+From: Onigiri
+Subject: [PATCH] fix(audio): keep gpr state alive until its callbacks stop
+
+diff --git a/vendor/qcom/opensource/audio-kernel/ipc/gpr-lite.c b/vendor/qcom/opensource/audio-kernel/ipc/gpr-lite.c
+index 0986d15f..521bc678 100755
+--- a/vendor/qcom/opensource/audio-kernel/ipc/gpr-lite.c
++++ b/vendor/qcom/opensource/audio-kernel/ipc/gpr-lite.c
+@@ -502,6 +502,11 @@ static void gpr_notifier_register(struct work_struct *work)
+ 	return;
+ }
+ 
++static void gpr_wakeup_source_release(void *ws)
++{
++	wakeup_source_unregister(ws);
++}
++
+ static int gpr_probe(struct rpmsg_device *rpdev)
+ {
+ 	struct device *dev = &rpdev->dev;
+@@ -557,6 +562,13 @@ static int gpr_probe(struct rpmsg_device *rpdev)
+ 	}
+ 
+ 	gpr_priv->wsource = wakeup_source_register(gpr_priv->dev, "audio-gpr");
++	/*
++	 * gpr_callback() can use it until rpmsg destroys the endpoint, after
++	 * gpr_remove(). devres releases it after that.
++	 */
++	if (devm_add_action_or_reset(dev, gpr_wakeup_source_release,
++				     gpr_priv->wsource))
++		gpr_priv->wsource = NULL;
+ 	dev_info(dev, "%s: gpr-lite probe success\n",
+ 		__func__);
+ 
+@@ -566,6 +578,17 @@ static int gpr_probe(struct rpmsg_device *rpdev)
+ static int gpr_remove_device(struct device *dev, void *null)
+ {
+ 	struct gpr_device *adev = to_gpr_device(dev);
++	struct gpr *gpr = dev_get_drvdata(adev->dev.parent);
++	unsigned long flags;
++
++	/* The wakeup source's sysfs device is a child too, until devres frees it. */
++	if (dev->bus != &gprbus)
++		return 0;
++
++	/* A service no driver bound is still published; drop it before it's freed. */
++	spin_lock_irqsave(&gpr->svcs_lock, flags);
++	idr_remove(&gpr->svcs_idr, adev->svc_id);
++	spin_unlock_irqrestore(&gpr->svcs_lock, flags);
+ 	device_unregister(&adev->dev);
+ 	return 0;
+ }
+@@ -574,7 +597,6 @@ static void gpr_remove(struct rpmsg_device *rpdev)
+ {
+ 	struct device *dev = &rpdev->dev;
+ 
+-	wakeup_source_unregister(gpr_priv->wsource);
+ 	snd_event_client_deregister(&rpdev->dev);
+ 	dev_info(dev, "%s: deregistering via subsys_notif_register for domain_id(%d)",
+ 		__func__, gpr_priv->dest_domain_id );
