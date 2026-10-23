@@ -32,26 +32,22 @@ def cooler_policy(stock, fold, default):
         target.remove(limiter)
         target.append(deepcopy(fold.find(path + "/limiter[@name='CPUFreqMax']")))
 
+    # SDHMS enters stage i at temp[i] and leaves it below temp[i-1]; a single temp is expanded by
+    # gap per stage. So 440:460 restricts at 46°C, below the 47°C emergency, and releases below 44°C.
     # Regional radio rules remain stock; this ROM targets the XXV Flip5 firmware.
     cp = policy.find("components/component[@name='CP']")
     for limiter in cp:
         if 'region' in limiter.attrib:
             continue
         if limiter.get('name') == 'CpLowMode':
-            limiter.set('temp', '340:360:450:460')
+            limiter.set('temp', '340:360:440:460')
         elif limiter.get('name') in ('SCellDropNSA', 'SCellDropSA', 'SADisable', 'LteCCDrop'):
-            limiter.set('temp', '450:460')
-
-    display = policy.find("components/component[@name='DISPLAY']")
-    for name in ('AppCastDisable', 'MultiWindow'):
-        limiter = deepcopy(default.find(f"components/component[@name='DISPLAY']/limiter[@name='{name}']"))
-        limiter.set('temp', '460:470:500')
-        display.append(limiter)
+            limiter.set('temp', '440:460')
 
     for name in ('Dex', 'MultiWindow'):
         scenario = deepcopy(default.find(f"scenarios/scenario[@name='{name}']"))
         for limiter in scenario:
-            limiter.set('temp', '460')
+            limiter.set('temp', '440:460')
         policy.find('scenarios').append(scenario)
 
     if ET.tostring(policy.find('overheatcontrol')) != ET.tostring(stock.find('overheatcontrol')):

@@ -13,6 +13,16 @@ cooler = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cooler)
 
 
+def final_stage(limiter):
+    """SDHMS expands a single temp by gap per stage; the last stage enters at temps[-1] and
+    leaves below temps[-2]."""
+    temps = [int(t) for t in limiter.get('temp').split(':')]
+    stages = len(limiter.get('value').split(':'))
+    if len(temps) == 1:
+        temps = [temps[0] + i * int(limiter.get('gap', '20')) for i in range(stages)]
+    return temps[-1], temps[-2]
+
+
 class CoolerPolicyTest(unittest.TestCase):
     def setUp(self):
         self.stock = ET.fromstring('''<siop_document>
@@ -24,8 +34,8 @@ class CoolerPolicyTest(unittest.TestCase):
               <limiter name="GPUFreqMax" temp="360:390:410:440"/>
               <limiter name="OverLimit" value="2092800:1977600:-1"/>
               <limiter name="JobRestriction" temp="360" value="-1:1"/></component>
-            <component name="CP" tempType="SKIN"><limiter name="CpLowMode" temp="340:360:415:440"/>
-              <limiter name="CpLowMode" temp="415:440" region="China"/>
+            <component name="CP" tempType="SKIN"><limiter name="CpLowMode" temp="340:360:415:440" value="-1:2:2:1"/>
+              <limiter name="CpLowMode" temp="415:440" region="China" value="-1:1"/>
               <limiter name="SADisable" temp="430:450" value="-1:1"/>
               <limiter name="SCellDropNSA" temp="420:425" value="-1:1"/></component>
             <component name="CP" tempType="SKIN" region="JP"><limiter name="SADisable" temp="420:440"/></component>
@@ -47,10 +57,7 @@ class CoolerPolicyTest(unittest.TestCase):
                     limiter.set('temp', '380:400:420:450')
         for name in ('SIPStart', 'AppStart', 'Badge', 'CallStart', 'WakeUp'):
             self.fold.find(f"scenarios/scenario[@name='{name}']/limiter").set('value', '-1:2841600')
-        self.default = ET.fromstring('''<siop_document><components><component name="DISPLAY">
-          <limiter name="AppCastDisable" temp="450:470:500" value="-1:1:1" delay="0:300:0"/>
-          <limiter name="MultiWindow" temp="450:470:500" value="-1:1:1" delay="0:300:0"/>
-        </component></components><scenarios>
+        self.default = ET.fromstring('''<siop_document><scenarios>
           <scenario name="Dex" tempType="SKIN"><limiter name="LimitHrr" temp="430" value="-1:1"/>
             <limiter name="DynamicFpsLevel" temp="430" value="-1:30"/></scenario>
           <scenario name="MultiWindow" tempType="SKIN"><limiter name="LimitHrr" temp="430" value="-1:1"/></scenario>
@@ -67,13 +74,18 @@ class CoolerPolicyTest(unittest.TestCase):
                 self.assertEqual(ET.tostring(policy.find(path)), ET.tostring(self.stock.find(path)))
         self.assertEqual(ET.tostring(self.stock), before)
 
-    def test_delays_early_limits_below_emergency_without_disabling_them(self):
+    def test_early_limits_engage_at_46c_before_the_47c_emergency(self):
         policy = cooler.cooler_policy(self.stock, self.fold, self.default)
+        limiters = (list(policy.find("components/component[@name='CP']"))
+                    + policy.findall("scenarios/scenario[@name='Dex']/limiter")
+                    + policy.findall("scenarios/scenario[@name='MultiWindow']/limiter"))
+        for limiter in limiters:
+            if limiter.get('region'):
+                continue
+            with self.subTest(limiter=limiter.attrib):
+                self.assertEqual(final_stage(limiter), (460, 440))
         dex = policy.find("scenarios/scenario[@name='Dex']/limiter[@name='DynamicFpsLevel']")
-        self.assertEqual(dex.attrib, {'name': 'DynamicFpsLevel', 'temp': '460', 'value': '-1:30'})
-        radio = policy.find("components/component[@name='CP']/limiter[@name='SADisable']")
-        self.assertEqual(radio.get('temp'), '450:460')
-        self.assertEqual(radio.get('value'), '-1:1')
+        self.assertEqual(dex.get('value'), '-1:30')
         ap = policy.find("components/component[@name='AP']/limiter[@name='CPUFreqMax']")
         self.assertEqual(ET.tostring(ap), ET.tostring(self.fold.find("components/component[@name='AP']/limiter[@name='CPUFreqMax']")))
         launch = policy.find("scenarios/scenario[@name='AppStart']/limiter[@name='CPUFreqMax']")
