@@ -11,11 +11,14 @@ With an external cooler running, the profile:
 
 - Uses the Fold5 CPU/GPU and over-limit stages for normal and Light mode.
 - Uses its CPU boost limits for app launch, typing, badges, calls, and wakeup.
-- Moves the early DeX 30 fps and multiwindow refresh restrictions from 43°C
-  estimated SKIN temperature to 46°C.
-- Moves the default XXV 5G cell-drop, SA-disable, and LTE carrier restrictions
-  to 45/46°C SKIN stages. Regional overrides and hysteresis stay stock.
-- Delays the first app-casting/multiwindow restriction from 45°C to 46°C.
+- Moves the DeX 30 fps and DeX/multiwindow refresh restrictions from 45°C
+  estimated SKIN temperature to 46°C. They release below 44°C instead of 43°C.
+- Moves the default XXV 5G cell-drop, SA-disable, LTE carrier, and final modem
+  low-power restrictions from 42.5–45°C to 46°C SKIN. They release below 44°C.
+  Regional overrides stay stock.
+
+Samsung enters each stage at its own threshold and leaves it below the previous
+one, so `temp="440:460"` restricts at 46°C, one degree before the emergency stage.
 
 The original 47°C SKIN emergency/DeX protection remains. Camera, brightness,
 Wi-Fi, low-temperature, and sensor-calibration settings remain stock. This
@@ -30,7 +33,7 @@ is off by default and is shown only for the supported Flip5 thermal policy. Turn
 with an external cooler running, then use the restart prompt to apply the change.
 Turning it off also requires a restart to reload Samsung Device Health's policy.
 
-The root command equivalent keeps the original property name for compatibility:
+The root command equivalent uses the property's internal name:
 
 ```sh
 su -c 'setprop persist.sys.onigiri.overclocking true'
@@ -85,6 +88,11 @@ The display name was then corrected to **High performance** / **Hiệu năng cao
 Both labels were verified on the phone. The preview update changed only its
 resource table; the controller, saved property, and off-by-default behavior stayed
 the same.
+
+Review then found that the tested table entered the DeX and multiwindow limits
+at 48°C, above the emergency stage. The table now enters every relaxed limit at
+46°C and leaves the app-casting rules stock. The corrected table has not been
+loaded on the phone.
 
 The user had removed SDHMS before this Settings check. Android could not restore
 it with `install-existing`, and installing its original system APK was rejected
