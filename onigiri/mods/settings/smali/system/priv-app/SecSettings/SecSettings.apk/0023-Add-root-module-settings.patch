@@ -66,12 +66,12 @@ new file mode 100644
 +<PreferenceScreen android:title="@string/onigiri_brene_title"
 +  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
 +    <com.android.settings.widget.SettingsMainSwitchPreference android:key="onigiri_brene" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
-+    <com.samsung.android.settings.widget.SecInsetCategoryPreference />
++    <com.samsung.android.settings.widget.SecInsetCategoryPreference settings:removable="false" />
 +    <SecPreferenceCategory>
 +        <Preference android:title="@string/onigiri_rootmod_status_title" android:key="onigiri_brene_status" android:summary="@string/summary_placeholder" android:selectable="false" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
 +        <Preference android:title="@string/onigiri_rootmod_version_title" android:key="onigiri_brene_version" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
 +    </SecPreferenceCategory>
-+    <com.samsung.android.settings.widget.SecInsetCategoryPreference />
++    <com.samsung.android.settings.widget.SecInsetCategoryPreference settings:removable="false" />
 +    <SecPreferenceCategory>
 +        <SecSwitchPreference android:title="@string/onigiri_brene_rom_paths_title" android:key="onigiri_brene_rom_paths" android:dependency="onigiri_brene" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
 +        <SecSwitchPreference android:title="@string/onigiri_brene_addon_d_title" android:key="onigiri_brene_addon_d" android:dependency="onigiri_brene" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
@@ -87,12 +87,12 @@ new file mode 100644
 +<PreferenceScreen android:title="@string/onigiri_hma_title"
 +  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
 +    <com.android.settings.widget.SettingsMainSwitchPreference android:key="onigiri_hma" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
-+    <com.samsung.android.settings.widget.SecInsetCategoryPreference />
++    <com.samsung.android.settings.widget.SecInsetCategoryPreference settings:removable="false" />
 +    <SecPreferenceCategory>
 +        <Preference android:title="@string/onigiri_rootmod_status_title" android:key="onigiri_hma_status" android:summary="@string/summary_placeholder" android:selectable="false" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
 +        <Preference android:title="@string/onigiri_rootmod_version_title" android:key="onigiri_hma_version" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
 +    </SecPreferenceCategory>
-+    <com.samsung.android.settings.widget.SecInsetCategoryPreference />
++    <com.samsung.android.settings.widget.SecInsetCategoryPreference settings:removable="false" />
 +    <SecPreferenceCategory>
 +        <Preference android:title="@string/onigiri_hma_rules_title" android:key="onigiri_hma_rules" android:summary="@string/onigiri_hma_rules_summary" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
 +    </SecPreferenceCategory>
@@ -126,7 +126,7 @@ new file mode 100644
 +<PreferenceScreen android:title="@string/onigiri_tee_title"
 +  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:settings="http://schemas.android.com/apk/res-auto">
 +    <com.android.settings.widget.SettingsMainSwitchPreference android:key="onigiri_tee" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
-+    <com.samsung.android.settings.widget.SecInsetCategoryPreference />
++    <com.samsung.android.settings.widget.SecInsetCategoryPreference settings:removable="false" />
 +    <SecPreferenceCategory>
 +        <Preference android:title="@string/onigiri_rootmod_status_title" android:key="onigiri_tee_status" android:summary="@string/summary_placeholder" android:selectable="false" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
 +        <Preference android:title="@string/onigiri_rootmod_version_title" android:key="onigiri_tee_version" android:summary="@string/summary_placeholder" settings:controller="moe.foss.onigiri.settings.RootModPreferenceController" />
