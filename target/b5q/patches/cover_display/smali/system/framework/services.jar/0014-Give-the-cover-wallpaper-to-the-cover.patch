@@ -1,0 +1,68 @@
+From: Onigiri
+Subject: [PATCH] Give the cover wallpaper to the cover, not a monitor
+
+Display Manager's primary physical display was the first display it added. After
+a framework restart with a monitor plugged in, SurfaceFlinger lists the monitor
+first, so the monitor became primary: the wallpaper service gave the main-screen
+wallpaper to the monitor and the sub-display (cover) wallpaper to the inner
+panel, and the cover showed no wallpaper at all. The primary display is now the
+first internal panel, and only an internal panel can be the sub display (the
+monitor also comes before the cover in SurfaceFlinger's list).
+
+diff --git a/smali/com/android/server/display/DisplayManagerService$BinderService.smali b/smali/com/android/server/display/DisplayManagerService$BinderService.smali
+--- a/smali/com/android/server/display/DisplayManagerService$BinderService.smali
++++ b/smali/com/android/server/display/DisplayManagerService$BinderService.smali
+@@ -2786,11 +2786,18 @@
+ 
+     check-cast v3, Lcom/android/server/display/DisplayDevice;
+ 
+-    invoke-virtual {v3}, Lcom/android/server/display/DisplayDevice;->isFirstDisplay()Z
++    # Onigiri: the first internal panel, not the first display ever added: after a framework
++    # restart with a monitor plugged in, SurfaceFlinger lists the monitor first and it became the
++    # "primary" display, which put the cover's wallpaper on the monitor.
++    invoke-virtual {v3}, Lcom/android/server/display/DisplayDevice;->getDisplayDeviceInfoLocked()Lcom/android/server/display/DisplayDeviceInfo;
+ 
+-    move-result v4
++    move-result-object v4
++
++    iget v4, v4, Lcom/android/server/display/DisplayDeviceInfo;->type:I
++
++    add-int/lit8 v4, v4, -0x1
+ 
+-    if-eqz v4, :cond_0
++    if-nez v4, :cond_0
+ 
+     goto :goto_0
+ 
+diff --git a/smali_classes2/com/android/server/wallpaper/WallpaperManagerService$DisplayConnector.smali b/smali_classes2/com/android/server/wallpaper/WallpaperManagerService$DisplayConnector.smali
+--- a/smali_classes2/com/android/server/wallpaper/WallpaperManagerService$DisplayConnector.smali
++++ b/smali_classes2/com/android/server/wallpaper/WallpaperManagerService$DisplayConnector.smali
+@@ -237,6 +237,28 @@
+ 
+     if-eqz v17, :cond_5
+ 
++    # Onigiri: only an internal panel can be the sub display. SurfaceFlinger lists a plugged-in
++    # monitor before the cover, which then took the cover wallpaper and left the cover black.
++    invoke-static {v9, v10}, Landroid/view/SurfaceControl;->getStaticDisplayInfo(J)Landroid/view/SurfaceControl$StaticDisplayInfo;
++
++    move-result-object v6
++
++    if-nez v6, :onigiri_sub_info
++
++    const/4 v6, 0x0
++
++    goto :cond_5
++
++    :onigiri_sub_info
++    iget-boolean v6, v6, Landroid/view/SurfaceControl$StaticDisplayInfo;->isInternal:Z
++
++    if-nez v6, :onigiri_sub_internal
++
++    const/4 v6, 0x0
++
++    goto :cond_5
++
++    :onigiri_sub_internal
+     invoke-static {v9, v10}, Landroid/view/DisplayAddress;->fromPhysicalDisplayId(J)Landroid/view/DisplayAddress$Physical;
+ 
+     move-result-object v6

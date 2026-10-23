@@ -1,0 +1,66 @@
+From: Onigiri
+Subject: [PATCH] Finish orphaned wallpaper fixed-rotation transforms
+
+A wallpaper token joins the fixed-rotation transform of the app it shows
+behind and keeps it until that app finishes it. When the app goes away first,
+only wallpaper tokens are left in the transform and nothing ever finishes it;
+one is left behind on every framework start. The cover's wallpaper then stays
+at the cover's own 748x720, which shows as a box in the corner once
+onigiri-mirror sizes the cover to a monitor. Finish such a transform when the
+wallpaper tokens are updated.
+
+diff --git a/smali_classes2/com/android/server/wm/WallpaperController.smali b/smali_classes2/com/android/server/wm/WallpaperController.smali
+--- a/smali_classes2/com/android/server/wm/WallpaperController.smali
++++ b/smali_classes2/com/android/server/wm/WallpaperController.smali
+@@ -1010,6 +1010,51 @@
+     invoke-virtual {v2, v3}, Lcom/android/server/wm/WallpaperWindowToken;->setVisibility(Z)V
+ 
+     :cond_2e
++    # Onigiri: a wallpaper token keeps an app's fixed-rotation transform until that app finishes it.
++    # When the app goes away first, only wallpaper tokens are left in the transform and nothing ever
++    # finishes it: the wallpaper stays at the old display size, e.g. the cover's 748x720 in a box
++    # once onigiri-mirror sizes the cover to a monitor. Finish such a transform here.
++    iget-object v4, v2, Lcom/android/server/wm/WindowToken;->mFixedRotationTransformState:Lcom/android/server/wm/WindowToken$FixedRotationTransformState;
++
++    if-eqz v4, :onigiri_wallpaper_rotation_owned
++
++    iget-object v4, v4, Lcom/android/server/wm/WindowToken$FixedRotationTransformState;->mAssociatedTokens:Ljava/util/ArrayList;
++
++    invoke-virtual {v4}, Ljava/util/ArrayList;->size()I
++
++    move-result v5
++
++    :onigiri_wallpaper_rotation_next
++    add-int/lit8 v5, v5, -0x1
++
++    if-ltz v5, :onigiri_wallpaper_rotation_orphan
++
++    invoke-virtual {v4, v5}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
++
++    move-result-object v6
++
++    check-cast v6, Lcom/android/server/wm/WindowContainer;
++
++    invoke-virtual {v6}, Lcom/android/server/wm/WindowContainer;->asWallpaperToken()Lcom/android/server/wm/WallpaperWindowToken;
++
++    move-result-object v6
++
++    if-nez v6, :onigiri_wallpaper_rotation_next
++
++    goto :onigiri_wallpaper_rotation_owned
++
++    :onigiri_wallpaper_rotation_orphan
++    const-string v4, "WindowManager"
++
++    const-string v5, "Onigiri: finished an orphaned wallpaper fixed rotation"
++
++    invoke-static {v4, v5}, Landroid/util/Slog;->w(Ljava/lang/String;Ljava/lang/String;)I
++
++    const/4 v4, 0x0
++
++    invoke-virtual {v2, v4}, Lcom/android/server/wm/WindowToken;->finishFixedRotationTransform(Lcom/android/server/wm/DisplayContent$$ExternalSyntheticLambda6;)V
++
++    :onigiri_wallpaper_rotation_owned
+     iget-object v4, v2, Lcom/android/server/wm/WindowContainer;->mDisplayContent:Lcom/android/server/wm/DisplayContent;
+ 
+     iget-object v4, v4, Lcom/android/server/wm/DisplayContent;->mWallpaperController:Lcom/android/server/wm/WallpaperController;

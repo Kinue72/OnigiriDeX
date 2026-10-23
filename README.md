@@ -190,9 +190,20 @@ columns, a grid, or a priority grid.
 - **DeX high refresh rate** (experimental, off by default): lets the desktop
   run smoother than 60 frames per second on fast monitors. In testing, a
   144 Hz monitor reached about 142 frames per second instead of 60. Unplug and
-  plug the cable back in after turning it on. Some apps may still run slower,
-  and it may stay at 60 while the phone's own screen is on. Battery saver and
-  overheating protection still work as usual.
+  plug the cable back in after turning it on. The outside screen can stay on,
+  but it updates less often while the monitor runs faster. Some apps may still
+  run slower. Overheating protection still works as usual.
+- **Mirroring high refresh rate** (experimental, off by default): the outside
+  screen only runs at 60 Hz, which holds a mirrored monitor to 60 frames per
+  second too. With this on, opening the phone while it mirrors a monitor (DeX
+  off) shows the 120 Hz inside screen instead, shaped to fill the monitor, and
+  turns the outside one off.
+  Closing the phone goes back to the outside screen. In testing, scrolling
+  reached about 118 frames per second on a 120 Hz monitor and about 90 on a
+  90 Hz one, with or without **DeX high refresh rate**.
+
+Power saving holds every screen to 60 Hz, so the phone turns it off while it
+charges and back on when charging stops, if it was on before.
 
 <details>
 <summary><b>Boring stuffs</b></summary>
@@ -215,6 +226,9 @@ columns, a grid, or a priority grid.
   Off by default.
 - **Enable live blur effect**: gives menus and panels a frosted-glass look.
   The phone needs a restart after you change it.
+- **Keep apps in cover rotation**: apps that only work upright, like TikTok
+  and Messenger, no longer turn the outside screen sideways. They follow the
+  screen's rotation instead. Off by default.
 - **Allow application downgrade**: lets you install an older version of an
   app over a newer one.
 - **Disable low target SDK block**: lets you install very old apps that

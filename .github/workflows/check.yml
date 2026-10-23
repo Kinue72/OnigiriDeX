@@ -33,6 +33,9 @@ jobs:
           python3 scripts/test_ota_blockmap.py
           python3 scripts/tests/test_essential.py
 
+      - name: C
+        run: cc -Wall -Wextra -Werror scripts/tests/test_dex_pacer.c -o /tmp/test-dex-pacer && /tmp/test-dex-pacer
+
       - name: Patches
         run: |
           python3 scripts/check_patches.py
