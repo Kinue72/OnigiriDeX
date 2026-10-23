@@ -8,8 +8,8 @@ Subject: [PATCH] Introduce SamsungPropsHooks
  smali/android/app/Instrumentation.smali       |   4 +
  .../android/os/SystemProperties.smali         |  14 +
  .../android/provider/Settings$Global.smali    |   9 +
- .../moe/foss/onigiri/SamsungPropsHooks.smali | 716 ++++++++++++++++++
- 5 files changed, 749 insertions(+)
+ .../moe/foss/onigiri/SamsungPropsHooks.smali | 687 ++++++++++++++++++
+ 5 files changed, 720 insertions(+)
  create mode 100644 smali_classes6/moe/foss/onigiri/SamsungPropsHooks.smali
 
 diff --git a/smali/android/app/ApplicationPackageManager.smali b/smali/android/app/ApplicationPackageManager.smali
@@ -116,7 +116,7 @@ new file mode 100644
 index 00000000..c501ba81
 --- /dev/null
 +++ b/smali_classes6/moe/foss/onigiri/SamsungPropsHooks.smali
-@@ -0,0 +1,716 @@
+@@ -0,0 +1,687 @@
 +.class public final Lmoe/foss/onigiri/SamsungPropsHooks;
 +.super Ljava/lang/Object;
 +.source "SamsungPropsHooks.java"
@@ -440,37 +440,8 @@ index 00000000..c501ba81
 +    goto :goto_3
 +
 +    :cond_8
-+    sget-boolean p0, Lmoe/foss/onigiri/SamsungPropsHooks;->sIsUserApp:Z
-+
-+    if-eqz p0, :cond_9
-+
-+    const-string p0, "com.sec"
-+
-+    invoke-virtual {v0, p0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
-+
-+    move-result p0
-+
-+    if-nez p0, :cond_9
-+
-+    const-string p0, "com.samsung"
-+
-+    invoke-virtual {v0, p0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
-+
-+    move-result p0
-+
-+    if-nez p0, :cond_9
-+
-+    const-string p0, "ro.boot.em.model"
-+
-+    const-string v0, "SM-S911B"
-+
-+    invoke-static {p0, v0}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-+
-+    move-result-object p0
-+
-+    invoke-static {v2, p0}, Lmoe/foss/onigiri/SamsungPropsHooks;->setBuildField(Ljava/lang/String;Ljava/lang/String;)V
-+
-+    :cond_9
++    # Onigiri: no Build.MODEL rewrite for user apps. ro.product.model is already the real
++    # model, and rewriting it here undid Zygisk spoofers such as COPG.
 +    :goto_3
 +    return-void
 +.end method

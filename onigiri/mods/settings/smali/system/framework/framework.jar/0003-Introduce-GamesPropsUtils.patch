@@ -331,11 +331,11 @@ index 00000000..f54aa840
 +
 +    invoke-interface {v1, v5, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
-+    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createROG1Props()Ljava/util/Map;
++    invoke-static {}, Lmoe/foss/onigiri/GamesPropsUtils;->createGT50PProps()Ljava/util/Map;
 +
 +    move-result-object v4
 +
-+    const-string v5, "ROG1"
++    const-string v5, "GT50P"
 +
 +    invoke-interface {v0, v5, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
@@ -790,7 +790,7 @@ index 00000000..f54aa840
 +    return-object v0
 +.end method
 +
-+.method private static blacklist createROG1Props()Ljava/util/Map;
++.method private static blacklist createGT50PProps()Ljava/util/Map;
 +    .locals 4
 +    .annotation system Ldalvik/annotation/Signature;
 +        value = {
@@ -808,13 +808,13 @@ index 00000000..f54aa840
 +
 +    const-string v1, "BRAND"
 +
-+    const-string v2, "asus"
++    const-string v2, "INFINIX"
 +
 +    invoke-interface {v0, v1, v2}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
 +    const-string v1, "DEVICE"
 +
-+    const-string v3, "ASUS_Z01QD_1"
++    const-string v3, "INFINIX GT 50 PRO 5G"
 +
 +    invoke-interface {v0, v1, v3}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
@@ -824,7 +824,7 @@ index 00000000..f54aa840
 +
 +    const-string v1, "MODEL"
 +
-+    const-string v2, "ASUS_Z01QD"
++    const-string v2, "Infinix X6891"
 +
 +    invoke-interface {v0, v1, v2}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 +
