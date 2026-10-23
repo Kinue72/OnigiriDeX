@@ -1,0 +1,55 @@
+From: Onigiri
+Subject: [PATCH] Keep portrait apps from turning the cover
+
+Portrait-only apps such as TikTok and Messenger turn the landscape cover
+sideways. With persist.sys.onigiri.cover_keep_rotation on, treat every
+portrait request on the cover the way OVERRIDE_ANY_ORIENTATION_TO_USER treats
+one app: the app follows the cover's current rotation instead. Apps that opt
+out of orientation overrides and apps with the camera open keep their request.
+
+diff --git a/smali_classes2/com/android/server/wm/ActivityRecord.smali b/smali_classes2/com/android/server/wm/ActivityRecord.smali
+--- a/smali_classes2/com/android/server/wm/ActivityRecord.smali
++++ b/smali_classes2/com/android/server/wm/ActivityRecord.smali
+@@ -17155,8 +17155,42 @@
+ 
+     # Onigiri: let OVERRIDE_ANY_ORIENTATION_TO_USER keep a portrait-locked app in the cover's
+     # current rotation without also letterboxing every other app (ignoreOrientationRequest).
++    if-nez v2, :onigiri_keep_rotation
++
++    # Onigiri: with persist.sys.onigiri.cover_keep_rotation on, do the same for every
++    # portrait-locked app. Only while the default display is the landscape cover, so DeX windows
++    # and a portrait default display keep their usual rotation.
++    invoke-static {p0}, Landroid/content/pm/ActivityInfo;->isFixedOrientationPortrait(I)Z
++
++    move-result v2
++
++    if-eqz v2, :cond_9
++
++    iget-object v2, v1, Lcom/android/server/wm/WindowContainer;->mDisplayContent:Lcom/android/server/wm/DisplayContent;
++
++    if-eqz v2, :cond_9
++
++    iget v7, v2, Lcom/android/server/wm/DisplayContent;->mDisplayId:I
++
++    if-nez v7, :cond_9
++
++    iget v7, v2, Lcom/android/server/wm/DisplayContent;->mInitialDisplayWidth:I
++
++    iget v2, v2, Lcom/android/server/wm/DisplayContent;->mInitialDisplayHeight:I
++
++    if-le v7, v2, :cond_9
++
++    const-string v2, "persist.sys.onigiri.cover_keep_rotation"
++
++    const/4 v7, 0x0
++
++    invoke-static {v2, v7}, Landroid/os/SystemProperties;->getBoolean(Ljava/lang/String;Z)Z
++
++    move-result v2
++
+     if-eqz v2, :cond_9
+ 
++    :onigiri_keep_rotation
+     invoke-virtual {v6}, Lcom/android/server/wm/AppCompatCameraOverrides;->isCameraActive()Z
+ 
+     move-result v2

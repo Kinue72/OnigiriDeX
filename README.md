@@ -215,6 +215,9 @@ columns, a grid, or a priority grid.
   Off by default.
 - **Enable live blur effect**: gives menus and panels a frosted-glass look.
   The phone needs a restart after you change it.
+- **Keep apps in cover rotation**: apps that only work upright, like TikTok
+  and Messenger, no longer turn the outside screen sideways. They follow the
+  screen's rotation instead. Off by default.
 - **Allow application downgrade**: lets you install an older version of an
   app over a newer one.
 - **Disable low target SDK block**: lets you install very old apps that
