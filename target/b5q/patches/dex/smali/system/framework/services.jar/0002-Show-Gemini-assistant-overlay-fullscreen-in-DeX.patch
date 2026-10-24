@@ -2,7 +2,7 @@ From: Onigiri
 Subject: [PATCH] Show the Gemini assistant overlay fullscreen in DeX
 
 diff --git a/smali_classes2/com/android/server/wm/LaunchParamsController.smali b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
-index 9d4eb5b..3c5cf26 100644
+index 9d4eb5b..220f85e 100644
 --- a/smali_classes2/com/android/server/wm/LaunchParamsController.smali
 +++ b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
 @@ -56,7 +56,7 @@
@@ -14,7 +14,7 @@ index 9d4eb5b..3c5cf26 100644
      .locals 31
  
      move-object/from16 v0, p0
-@@ -4163,3 +4163,50 @@
+@@ -4163,3 +4163,61 @@
  
      throw v0
  .end method
@@ -30,15 +30,10 @@ index 9d4eb5b..3c5cf26 100644
 +.end method
 +
 +.method public static applyAssistantOverlayDexPolicy(Lcom/android/server/wm/ActivityRecord;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
-+    .locals 2
++    .locals 3
 +
 +    if-eqz p0, :done
 +    if-eqz p1, :done
-+
-+    # DeX resolves every launch on its display to freeform; only override that case.
-+    iget v0, p1, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mWindowingMode:I
-+    const/4 v1, 0x5
-+    if-ne v0, v1, :done
 +
 +    # Google app assistant/Gemini overlay (robin "floaty" surfaces).
 +    iget-object v0, p0, Lcom/android/server/wm/ActivityRecord;->packageName:Ljava/lang/String;
@@ -55,6 +50,22 @@ index 9d4eb5b..3c5cf26 100644
 +    invoke-virtual {v0, v1}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
 +    move-result v0
 +    if-eqz v0, :done
++
++    # Only while DeX runs: Samsung pins the DeX desktop to display 2 and keeps it ON only then.
++    iget-object v0, p0, Lcom/android/server/wm/ActivityRecord;->mRootWindowContainer:Lcom/android/server/wm/RootWindowContainer;
++    const/4 v1, 0x2
++    invoke-virtual {v0, v1}, Lcom/android/server/wm/RootWindowContainer;->getDisplayContent(I)Lcom/android/server/wm/DisplayContent;
++    move-result-object v0
++    if-eqz v0, :done
++    iget-object v2, v0, Lcom/android/server/wm/DisplayContent;->mDisplayInfo:Landroid/view/DisplayInfo;
++    iget v2, v2, Landroid/view/DisplayInfo;->state:I
++    # Display.STATE_ON
++    if-ne v2, v1, :done
++
++    # Gemini asks for display 0 (the cover) unless told otherwise, and "Hey Google" never tells it.
++    invoke-virtual {v0}, Lcom/android/server/wm/DisplayContent;->getDefaultTaskDisplayArea()Lcom/android/server/wm/TaskDisplayArea;
++    move-result-object v0
++    iput-object v0, p1, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mPreferredTaskDisplayArea:Lcom/android/server/wm/TaskDisplayArea;
 +
 +    # Fullscreen + translucent: the overlay floats over the desktop like on the phone.
 +    const/4 v0, 0x1
