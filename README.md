@@ -183,8 +183,9 @@ columns, a grid, or a priority grid.
 
 - **External display mode**: pick the resolution and refresh rate for your
   monitor. The list shows what your monitor supports. Unplug and plug the
-  cable back in after changing it. Choose **Automatic** to go back to the
-  monitor's default.
+  cable back in after changing it. **Automatic** uses the monitor's default,
+  or its fastest refresh rate while **DeX high refresh rate** or **Mirroring
+  high refresh rate** is on.
 - **External display rotation**: turns the desktop on the monitor. It changes
   right away.
 - **DeX high refresh rate** (experimental, off by default): lets the desktop
@@ -197,10 +198,11 @@ columns, a grid, or a priority grid.
   screen only runs at 60 Hz, which holds a mirrored monitor to 60 frames per
   second too. With this on, opening the phone while it mirrors a monitor (DeX
   off) shows the 120 Hz inside screen instead, shaped to fill the monitor, and
-  turns the outside one off.
+  turns the outside one off. Plug the cable back in after turning it on, so
+  the monitor switches to its fastest refresh rate.
   Closing the phone goes back to the outside screen. In testing, scrolling
-  reached about 118 frames per second on a 120 Hz monitor and about 90 on a
-  90 Hz one, with or without **DeX high refresh rate**.
+  reached about 118 frames per second on a 144 Hz monitor, the most the
+  inside screen can show.
 
 Power saving holds every screen to 60 Hz, so the phone turns it off while it
 charges and back on when charging stops, if it was on before.
