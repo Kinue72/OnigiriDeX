@@ -8,7 +8,7 @@ import sys
 import tempfile
 
 STOCK_SHA = 'fdb8f2a6242c589f6c9c34f42fb410d877624f8ca4b40b39f8f93ecc27e2383f'
-PATCHED_SHA = '199e03664aceb6d9a7548ba36b513b124f4c7fbdacac7f2fd058edc5eb57578c'
+PATCHED_SHA = 'dd05ace47fe59dd6b4f6aa5f080d0bce58046b3c50bd1ee43391ac342f4a034d'
 
 
 def patch(binary, clang):
@@ -30,6 +30,10 @@ def patch(binary, clang):
         subprocess.run([str(clang / 'ld.lld'), '-static', '-e', 'onigiri_power_bridge', '-T', str(build / 'pacer.ld'),
             '--defsym=native_display_id=0x1ade40', '--defsym=native_property_bool=0x73eb48',
             '--defsym=native_activate=0x29e598', '--defsym=native_unregister=0x276f90',
+            '--defsym=native_vsync_schedule=0x27857c', '--defsym=native_request_vsync=0x2b37bc',
+            '--defsym=native_synthetic_vsync=0x279980', '--defsym=native_resync=0x27a654',
+            '--defsym=native_lock=0x73c2b0', '--defsym=native_unlock=0x73c2c8',
+            '--defsym=native_fetch_add=0x188a40', '--defsym=native_release_weak=0x73c268',
             '--defsym=native_begin_frame=0x71a914', '--defsym=native_previous_present_fence=0x71a8b0',
             '--defsym=native_is_fence_pending=0x71adb0', '--defsym=native_add_targeter=0x278130',
             '--defsym=native_period=0x229bf0', '--defsym=native_get_snapshot=0x208640',

@@ -6,12 +6,15 @@
 static int enabled = 1, pending = 1, composites, property_reads;
 static U64 period = 11111111;
 static Byte snapshots[3][0x20];
+static void *activated;
+static U64 acquired;
 U64 native_display_id(void *d) { return read64(d, 0); }
 unsigned native_display_stack(void *d) { return read32(d, 8); }
 int native_property_bool(const char *name, int fallback) {
     (void)name; (void)fallback; ++property_reads; return enabled;
 }
-void native_activate(void *sf, void *old, void *next) { (void)sf; (void)old; (void)next; }
+void native_activate(void *sf, void *old, void *next) { (void)sf; (void)old; activated = next; }
+void native_acquire(void *sf, U64 id) { (void)sf; acquired = id; }
 void native_unregister(void *s, U64 removed, U64 active) { (void)s; (void)removed; (void)active; }
 void native_begin_frame(void *t, void *a, void *s, void *f) {
     (void)a; (void)s; (void)f; *((Byte *)t + 0x20) = 1;
@@ -25,6 +28,35 @@ int native_timeline(void *sf, void *flush) { (void)sf; (void)flush; return 0; }
 
 static void put64(void *p, unsigned o, U64 value) { memcpy((Byte *)p + o, &value, sizeof(value)); }
 static void put32(void *p, unsigned o, unsigned value) { memcpy((Byte *)p + o, &value, sizeof(value)); }
+
+static void power_handoff(void) {
+    Byte sf[0xb00] = {0}, inner[0xb0] = {0}, cover[0xb0] = {0}, monitor[0xb0] = {0};
+    put64(inner, 0, 0x83); put32(inner, 0xa4, 2);
+    put64(cover, 0, 0x84); put32(cover, 0xa4, 2);
+    put64(monitor, 0, 5); put32(monitor, 0xa4, 2);
+    put64(sf, 0x700, 1); put64(sf, 0x718, (U64)monitor);
+    put64(sf, 0x790, 1); put64(sf, 0x798, 5); put32(sf, 0x7b0, 1);
+    onigiri_power_on(sf, monitor, inner, 0);
+    assert(!activated && !acquired); /* The lit inner panel keeps the monitor a follower. */
+    put32(inner, 0xa4, 0);
+    onigiri_power_on(sf, cover, inner, 1);
+    assert(activated == monitor && acquired == 5);
+    activated = 0; acquired = 0;
+    onigiri_power_on(sf, cover, monitor, 1);
+    assert(!activated && !acquired);
+    onigiri_power_on(sf, monitor, inner, 0);
+    assert(activated == monitor && !acquired); /* Stock restores vsync at the lead's own power-on. */
+    put32(monitor, 0xa4, 3); activated = 0;
+    onigiri_power_on(sf, cover, inner, 1);
+    assert(activated == monitor && !acquired); /* DOZE_SUSPEND keeps hardware vsync disabled. */
+    enabled = 0; activated = 0;
+    onigiri_power_on(sf, cover, inner, 1);
+    assert(activated == cover && !acquired);
+    enabled = 1; activated = 0;
+    put32(inner, 0xa4, 2);
+    onigiri_power_on(sf, inner, monitor, 1);
+    assert(activated == inner && !acquired);
+}
 
 int main(void) {
     Byte sf[0x2000] = {0}, scheduler[0x700] = {0}, cover[0xb0] = {0}, monitor[0xb0] = {0};
@@ -92,5 +124,6 @@ int main(void) {
     enabled = 1; assert(onigiri_transaction_ready(sf, &flush) == 0);
     onigiri_follower_frame(target, 0, 0, 0, cover_id, sf); assert(target[0x20] == 0);
     assert(onigiri_transaction_ready(sf, &flush) == 1); assert(property_reads == 4);
+    power_handoff();
     return 0;
 }

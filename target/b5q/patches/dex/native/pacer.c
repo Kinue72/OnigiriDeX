@@ -5,6 +5,7 @@ _Static_assert(sizeof(void *) == 8 && sizeof(U64) == 8, "64-bit SurfaceFlinger A
 extern U64 native_display_id(void *display);
 extern int native_property_bool(const char *name, int fallback);
 extern void native_activate(void *sf, void *old_display, void *new_display);
+extern void native_acquire(void *sf, U64 id);
 extern void native_unregister(void *scheduler, U64 removed, U64 active);
 extern void native_begin_frame(void *targeter, void *args, void *source, void *pending);
 extern void *native_previous_present_fence(void *targeter);
@@ -74,8 +75,12 @@ void onigiri_power_on(void *sf, void *display, void *active, int internal) {
         ;
     else if (internal && (!active || !on(active)))
         lead = display;
-    if (lead && lead != active)
+    if (lead && lead != active) {
         native_activate(sf, active, lead);
+        /* An already-on lead misses the power-on path's vsync restore. */
+        if (lead != display && read32(lead, 0xa4) != 3)
+            native_acquire(sf, native_display_id(lead));
+    }
 }
 
 void onigiri_unregister(void *scheduler, U64 removed, U64 active, void *sf) {
