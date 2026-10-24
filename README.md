@@ -190,10 +190,12 @@ columns, a grid, or a priority grid.
   right away.
 - **DeX high refresh rate** (experimental, off by default): lets the desktop
   run smoother than 60 frames per second on fast monitors. In testing, a
-  144 Hz monitor reached about 142 frames per second instead of 60. Unplug and
-  plug the cable back in after turning it on. The outside screen can stay on,
-  but it updates less often while the monitor runs faster. Some apps may still
-  run slower. Overheating protection still works as usual.
+  144 Hz monitor reached about 120 frames per second instead of 60, with the
+  outside screen on or off. Unplug and plug the cable back in after turning it
+  on. The outside screen can stay on, but it updates less often while the
+  monitor runs faster. Starting DeX right after mirroring on the inside screen
+  runs about 100 instead; plug the cable back in for the full rate. Some apps
+  may still run slower. Overheating protection still works as usual.
 - **Mirroring high refresh rate** (experimental, off by default): the outside
   screen only runs at 60 Hz, which holds a mirrored monitor to 60 frames per
   second too. With this on, opening the phone while it mirrors a monitor (DeX
