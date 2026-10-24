@@ -1,5 +1,13 @@
-on boot
+# early-boot: persistent properties are loaded (post-fs-data) and the display composer has not
+# started yet (class hal starts on boot), so a monitor connected at boot gets these too.
+on early-boot
     write /sys/module/msm_drm/parameters/secdp_high_refresh 1
+
+on early-boot && property:persist.sys.onigiri.dex_high_refresh=true
+    write /sys/module/msm_drm/parameters/secdp_prefer_high_refresh 1
+
+on early-boot && property:persist.sys.onigiri.mirror_high_refresh=true
+    write /sys/module/msm_drm/parameters/secdp_prefer_high_refresh 1
 
 on property:persist.sys.onigiri.dex_output=*
     setprop vendor.display.hdmi_cfg_idx ${persist.sys.onigiri.dex_output}
