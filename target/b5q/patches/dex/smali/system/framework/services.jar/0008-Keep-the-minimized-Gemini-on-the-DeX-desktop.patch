@@ -3,16 +3,17 @@ Subject: [PATCH] Keep the minimized Gemini on the DeX desktop
 
 diff --git a/smali_classes2/com/android/server/voiceinteraction/OnigiriSessionDisplayListener.smali b/smali_classes2/com/android/server/voiceinteraction/OnigiriSessionDisplayListener.smali
 new file mode 100644
-index 00000000..e98f1877
+index 00000000..787e93cd
 --- /dev/null
 +++ b/smali_classes2/com/android/server/voiceinteraction/OnigiriSessionDisplayListener.smali
-@@ -0,0 +1,60 @@
+@@ -0,0 +1,73 @@
 +.class public final Lcom/android/server/voiceinteraction/OnigiriSessionDisplayListener;
 +.super Ljava/lang/Object;
 +.source "OnigiriSessionDisplayListener.java"
 +
 +# interfaces
 +.implements Landroid/hardware/display/DisplayManager$DisplayListener;
++.implements Ljava/lang/Runnable;
 +
 +
 +# Onigiri: ends a voice interaction session whose windows (e.g. the minimized Gemini bubble) are
@@ -60,6 +61,18 @@ index 00000000..e98f1877
 +    return-void
 +.end method
 +
++.method public final run()V
++    .locals 1
++
++    # Posted once after registering: catches a DeX change between choosing the display and
++    # registering this listener.
++    const/4 v0, 0x2
++
++    invoke-virtual {p0, v0}, Lcom/android/server/voiceinteraction/OnigiriSessionDisplayListener;->onDisplayChanged(I)V
++
++    return-void
++.end method
++
 +.method public final onDisplayRemoved(I)V
 +    .locals 0
 +
@@ -68,7 +81,7 @@ index 00000000..e98f1877
 +    return-void
 +.end method
 diff --git a/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali b/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali
-index cac461cd..2f823276 100644
+index cac461cd..a794fa05 100644
 --- a/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali
 +++ b/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali
 @@ -86,6 +86,10 @@
@@ -109,7 +122,7 @@ index cac461cd..2f823276 100644
      :try_start_0
      invoke-interface {p6, v0, p2, p3, p1}, Landroid/view/IWindowManager;->addWindowToken(Landroid/os/IBinder;IILandroid/os/Bundle;)V
      :try_end_0
-@@ -364,6 +377,143 @@
+@@ -364,6 +377,147 @@
      return-void
  .end method
  
@@ -172,6 +185,10 @@ index cac461cd..2f823276 100644
 +    iget-object v2, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mHandler:Landroid/os/Handler;
 +
 +    invoke-virtual {v1, v0, v2}, Landroid/hardware/display/DisplayManager;->registerDisplayListener(Landroid/hardware/display/DisplayManager$DisplayListener;Landroid/os/Handler;)V
++
++    check-cast v0, Ljava/lang/Runnable;
++
++    invoke-virtual {v2, v0}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 +
 +    return-void
 +.end method
@@ -253,7 +270,7 @@ index cac461cd..2f823276 100644
  .method public static getTopVisibleActivityInfosLocked()Landroid/util/ArrayMap;
      .locals 8
  
-@@ -458,7 +608,7 @@
+@@ -458,7 +612,7 @@
  .end method
  
  .method public final cancelLocked(Z)V
@@ -262,7 +279,7 @@ index cac461cd..2f823276 100644
  
      const/4 v0, 0x0
  
-@@ -521,12 +671,16 @@
+@@ -521,12 +675,16 @@
  
      invoke-virtual {p1, p0}, Landroid/content/Context;->unbindService(Landroid/content/ServiceConnection;)V
  
