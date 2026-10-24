@@ -1,5 +1,13 @@
-on boot
+# early-boot: persistent properties are loaded (post-fs-data) and the display composer has not
+# started yet (class hal starts on boot), so a monitor connected at boot gets these too.
+on early-boot
     write /sys/module/msm_drm/parameters/secdp_high_refresh 1
+
+on early-boot && property:persist.sys.onigiri.dex_high_refresh=true
+    write /sys/module/msm_drm/parameters/secdp_prefer_high_refresh 1
+
+on early-boot && property:persist.sys.onigiri.mirror_high_refresh=true
+    write /sys/module/msm_drm/parameters/secdp_prefer_high_refresh 1
 
 on property:persist.sys.onigiri.dex_output=*
     setprop vendor.display.hdmi_cfg_idx ${persist.sys.onigiri.dex_output}
@@ -7,3 +15,21 @@ on property:persist.sys.onigiri.dex_output=*
 # Empty properties cannot be expanded by init.
 on property:persist.sys.onigiri.dex_output=
     setprop vendor.display.hdmi_cfg_idx ""
+
+# With either high refresh switch on, a monitor connects at the fastest rate of its preferred
+# resolution instead of its own default (often 60 Hz). A mode picked in External display mode
+# still wins. Takes effect on the next plug-in.
+on property:persist.sys.onigiri.dex_high_refresh=true
+    write /sys/module/msm_drm/parameters/secdp_prefer_high_refresh 1
+
+on property:persist.sys.onigiri.mirror_high_refresh=true
+    write /sys/module/msm_drm/parameters/secdp_prefer_high_refresh 1
+
+on property:persist.sys.onigiri.dex_high_refresh=false && property:persist.sys.onigiri.mirror_high_refresh=false
+    write /sys/module/msm_drm/parameters/secdp_prefer_high_refresh 0
+
+on property:persist.sys.onigiri.dex_high_refresh=false && property:persist.sys.onigiri.mirror_high_refresh=
+    write /sys/module/msm_drm/parameters/secdp_prefer_high_refresh 0
+
+on property:persist.sys.onigiri.dex_high_refresh= && property:persist.sys.onigiri.mirror_high_refresh=false
+    write /sys/module/msm_drm/parameters/secdp_prefer_high_refresh 0

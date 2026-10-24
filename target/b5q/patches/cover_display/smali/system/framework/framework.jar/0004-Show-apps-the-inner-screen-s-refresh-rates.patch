@@ -1,0 +1,50 @@
+From: Onigiri
+Subject: [PATCH] Show apps the inner screen's refresh rates
+
+Display.getSupportedModes() filters internal displays through RefreshRateConfig,
+which here only knows the cover's 60 Hz, so apps on the inner panel saw a
+60 Hz display. Chrome-based apps (TestUFO measured 59 fps) then rendered at
+60 while the panel ran at 120. The inner panel only shows for "Mirroring high
+refresh rate", so return all of its modes unfiltered.
+
+diff --git a/smali_classes4/android/view/Display.smali b/smali_classes4/android/view/Display.smali
+--- a/smali_classes4/android/view/Display.smali
++++ b/smali_classes4/android/view/Display.smali
+@@ -466,6 +466,37 @@
+     return-object v0
+ 
+     :cond_0
++    # Onigiri: RefreshRateConfig only knows the cover's 60 Hz. The inner panel (port 131) only
++    # shows for "Mirroring high refresh rate", so apps see all of its modes, up to 120 Hz.
++    iget-object v0, p0, Landroid/view/Display;->mDisplayInfo:Landroid/view/DisplayInfo;
++
++    iget-object v0, v0, Landroid/view/DisplayInfo;->address:Landroid/view/DisplayAddress;
++
++    instance-of v2, v0, Landroid/view/DisplayAddress$Physical;
++
++    if-eqz v2, :onigiri_filter_modes
++
++    check-cast v0, Landroid/view/DisplayAddress$Physical;
++
++    invoke-virtual {v0}, Landroid/view/DisplayAddress$Physical;->getPort()I
++
++    move-result v0
++
++    const/16 v2, 0x83
++
++    if-ne v0, v2, :onigiri_filter_modes
++
++    array-length v0, p1
++
++    invoke-static {p1, v0}, Ljava/util/Arrays;->copyOf([Ljava/lang/Object;I)[Ljava/lang/Object;
++
++    move-result-object v0
++
++    check-cast v0, [Landroid/view/Display$Mode;
++
++    return-object v0
++
++    :onigiri_filter_modes
+     invoke-static {}, Lcom/samsung/android/hardware/display/RefreshRateConfig;->getInstance()Lcom/samsung/android/hardware/display/RefreshRateConfig;
+ 
+     move-result-object v0

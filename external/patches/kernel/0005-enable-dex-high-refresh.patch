@@ -1,21 +1,25 @@
 From: Onigiri
-Subject: [PATCH] Allow opt-in high refresh and UHD modes for native wired DeX
+Subject: [PATCH] Allow opt-in high refresh and UHD modes for wired monitors
 
 diff --git a/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c b/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c
 --- a/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c
 +++ b/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c
-@@ -308,6 +308,10 @@
- 	DP_DEBUG("en:%d, active:%d->%d\n", en, active_before, ws->active);
+@@ -309,6 +309,14 @@
  }
  #endif
-+
+ 
 +static bool secdp_high_refresh;
 +module_param(secdp_high_refresh, bool, 0644);
 +MODULE_PARM_DESC(secdp_high_refresh, "Allow EDID-validated DeX high refresh modes; reconnect to apply");
- 
++
++static bool secdp_prefer_high_refresh;
++module_param(secdp_prefer_high_refresh, bool, 0644);
++MODULE_PARM_DESC(secdp_prefer_high_refresh, "Connect at the fastest rate of the preferred resolution; reconnect to apply");
++
  static int secdp_param_lpcharge;
  module_param(secdp_param_lpcharge, int, 0444);
-@@ -5393,7 +5397,7 @@
+ 
+@@ -5393,7 +5401,7 @@
  }
  #endif
  
@@ -24,11 +28,25 @@ diff --git a/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c b/vendor
  		ret = true;
  		goto end;
  	}
-@@ -5541,6 +5545,15 @@
+@@ -5456,6 +5464,14 @@
  
+ 	if (mode->hdisplay == prefer->hdisp &&
+ 			mode->vdisplay == prefer->vdisp) {
++		/* Monitors often prefer 60 Hz. Every faster mode is marked preferred too, and the
++		 * mode list is sorted afterwards, so the fastest comes first and is connected at.
++		 */
++		if (READ_ONCE(secdp_prefer_high_refresh) && prefer->refresh < mode_refresh) {
++			ret = true;
++			goto end;
++		}
++
+ 		if (prefer->refresh >= PREFER_REFRESH_RATE_MIN)
+ 			goto end;
+ 
+@@ -5542,6 +5558,15 @@
  	if (!secdp_check_dex_refresh(mode))
  		goto end;
-+
+ 
 +	/* Link bandwidth and hardware limits are still checked by mode_valid. */
 +	if (READ_ONCE(secdp_high_refresh) && !mode_interlaced &&
 +			mode->hdisplay <= 3840 && mode->vdisplay <= 2160 &&
@@ -37,6 +55,7 @@ diff --git a/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c b/vendor
 +		ret = true;
 +		goto end;
 +	}
- 
++
  	if (prefer_support && prefer_mode &&
  			secdp_check_dex_rowcol(mode) &&
+ 			secdp_check_dex_ratio(mode_ratio)) {
