@@ -70,9 +70,10 @@ valid() {
 
 # The shape $1 as display 0's panel can take it: the window manager caps a forced size at 3x the
 # panel's longer side (2244 on the cover) by cutting that side alone, which squashed a 2560x1600
-# monitor, so a larger shape is scaled down whole instead.
+# monitor, so a larger shape is scaled down whole instead. Fails if the panel size is unknown.
 shape() {
     set -- ${1%x*} ${1#*x} $(current size | tr x ' ')
+    [ -n "$4" ] || return 1
     max=$((3 * ($3 > $4 ? $3 : $4)))
     big=$(($1 > $2 ? $1 : $2))
     if [ $big -gt $max ]; then
@@ -89,7 +90,7 @@ fit() {
         own="$(current size override) $(current density override)"
         valid "$own" && echo "$own" > $SAVED.tmp && mv $SAVED.tmp $SAVED || return 1
     fi
-    wm size $(shape $1) -d 0 && wm density $DPI -d 0
+    fitted=$(shape $1) && wm size $fitted -d 0 && wm density $DPI -d 0
 }
 
 # Put the saved values back, or the physical ones if the saved file is unusable. The file is
@@ -210,13 +211,14 @@ while :; do
     fi
     # The inner panel takes over display 0, and with it display 0's size and density overrides:
     # the cover's own values go to OWN (moved from SAVED while a cover fit is on; kept if already
-    # there, as display 0 may hold a fit by now), the inner panel keeps whatever display 0 had
-    # until its own fit replaces it (again whenever the switch's leftovers replace it). Apps then
-    # resize once per switch, not through the cover's own size too, which left Chrome drawing in
-    # a corner. Entering waits like a fit does; staying only needs mirroring. Folding cancels
-    # state 5 by itself; resetting then is harmless.
+    # there, as display 0 may hold a fit by now) rather than being restored first, and the inner
+    # panel is fitted as soon as it shows (again whenever the switch's leftovers replace it). Apps
+    # then skip the cover's own size and see the panel's own only briefly; resizing through both
+    # left Chrome drawing in a corner. Entering waits like a fit does; staying only needs
+    # mirroring. Folding cancels state 5 by itself; resetting then is harmless.
     if [ -n "$now" ] && { [ -n "$inner" ] || [ -n "$want" ]; } && inner_wanted; then
         if [ -z "$inner" ] || [ "$(state)" != $INNER ]; then
+            panel=$(current size)
             { [ -e $OWN ] || { [ -e $SAVED ] && mv $SAVED $OWN; } || {
                 own="$(current size override) $(current density override)"
                 valid "$own" && echo "$own" > $OWN
@@ -226,12 +228,18 @@ while :; do
                 cmd device_state state $INNER >/dev/null 2>&1 && inner=1 &&
                 log "inner screen shows the mirror"
             # Fit as soon as the panel shows: the switch drops the override, and apps would lay out
-            # for the panel's own portrait size until the next poll.
-            for n in 1 2 3 4 5 6 7 8 9 10; do [ "$(state)" = $INNER ] && break; sleep 0.3; done
+            # for the panel's own portrait size until the next poll. The state commits before
+            # display 0 changes panels, so wait for its physical size to change too.
+            for n in 1 2 3 4 5 6 7 8 9 10; do
+                [ "$(state)" = $INNER ] && [ "$(current size)" != "$panel" ] && break
+                sleep 0.3
+            done
         fi
-        if [ -n "$inner" ] && [ "$(state)" = $INNER ] &&
-                [ "$(current size override)" != "$(shape $now)" ]; then
-            wm size $(shape $now) -d 0 && wm density $DPI -d 0 &&
+        # Density counts too, so a failed density write is retried.
+        if [ -n "$inner" ] && [ "$(state)" = $INNER ] && fitted=$(shape $now) &&
+                { [ "$(current size override)" != "$fitted" ] ||
+                    [ "$(current density override)" != $DPI ]; }; then
+            wm size $fitted -d 0 && wm density $DPI -d 0 &&
                 log "inner screen fit to the monitor: $now"
         fi
         sleep 2
