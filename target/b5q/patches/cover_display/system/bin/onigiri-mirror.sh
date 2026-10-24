@@ -19,7 +19,8 @@ DATA=/data/misc/onigiri-mirror
 # in between still puts them back.
 SAVED=$DATA/saved
 # The cover's own size and density while the inner panel shows: switching panels leaves a stray
-# size override on the cover (840x808, 1080x2244 seen), so they are put back afterwards.
+# size override on the cover (840x808, 1080x2244 seen), so they are put back afterwards (or
+# handed back to SAVED when a cover fit follows).
 OWN=$DATA/own
 # min_refresh_rate from before the inner panel showed ("null" if unset; Force peak refresh rate
 # sets it). Held at 120 meanwhile: the adaptive policy otherwise idles the panel at 60.
@@ -208,23 +209,28 @@ while :; do
         want=$now
     fi
     # The inner panel takes over display 0, and with it display 0's size and density overrides:
-    # the cover's own values are saved (kept if already saved: display 0 may hold a fit by now),
-    # display 0 goes to physical ones before the switch, and the inner panel gets the fit once it
-    # shows (again whenever the switch's leftovers replace it). Entering waits like a fit does;
-    # staying only needs mirroring. Folding cancels state 5 by itself; resetting then is harmless.
+    # the cover's own values go to OWN (moved from SAVED while a cover fit is on; kept if already
+    # there, as display 0 may hold a fit by now), the inner panel keeps whatever display 0 had
+    # until its own fit replaces it (again whenever the switch's leftovers replace it). Apps then
+    # resize once per switch, not through the cover's own size too, which left Chrome drawing in
+    # a corner. Entering waits like a fit does; staying only needs mirroring. Folding cancels
+    # state 5 by itself; resetting then is harmless.
     if [ -n "$now" ] && { [ -n "$inner" ] || [ -n "$want" ]; } && inner_wanted; then
         if [ -z "$inner" ] || [ "$(state)" != $INNER ]; then
-            restore && applied= && {
-                [ -e $OWN ] || {
-                    own="$(current size override) $(current density override)"
-                    valid "$own" && echo "$own" > $OWN
-                }
-            } && wm size $(current size) -d 0 && wm density $(current density) -d 0 &&
+            { [ -e $OWN ] || { [ -e $SAVED ] && mv $SAVED $OWN; } || {
+                own="$(current size override) $(current density override)"
+                valid "$own" && echo "$own" > $OWN
+            }; } && rm -f $SAVED && applied= &&
                 { [ -e $MIN_RATE ] || settings get system min_refresh_rate > $MIN_RATE; } &&
                 settings put system min_refresh_rate 120 && setprop $LAYOUT 1 &&
                 cmd device_state state $INNER >/dev/null 2>&1 && inner=1 &&
                 log "inner screen shows the mirror"
-        elif [ "$(current size override)" != "$(shape $now)" ]; then
+            # Fit as soon as the panel shows: the switch drops the override, and apps would lay out
+            # for the panel's own portrait size until the next poll.
+            for n in 1 2 3 4 5 6 7 8 9 10; do [ "$(state)" = $INNER ] && break; sleep 0.3; done
+        fi
+        if [ -n "$inner" ] && [ "$(state)" = $INNER ] &&
+                [ "$(current size override)" != "$(shape $now)" ]; then
             wm size $(shape $now) -d 0 && wm density $DPI -d 0 &&
                 log "inner screen fit to the monitor: $now"
         fi
@@ -239,7 +245,9 @@ while :; do
     elif { [ -e $OWN ] || [ -e $MIN_RATE ] || [ -n "$(getprop $LAYOUT)" ]; } &&
             [ "$(state)" != $INNER ]; then
         setprop $LAYOUT ""
-        if [ -e $OWN ]; then
+        if [ -e $OWN ] && [ -n "$want" ] && [ ! -e $SAVED ]; then
+            mv $OWN $SAVED  # the cover fit below applies directly; it puts these back when it ends
+        elif [ -e $OWN ]; then
             read own < $OWN
             set -- $own
             wm size $1 -d 0 && wm density $2 -d 0 && rm -f $OWN
