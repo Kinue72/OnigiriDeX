@@ -67,6 +67,20 @@ valid() {
     echo "$1" | grep -qxE '[1-9][0-9]*x[1-9][0-9]* [1-9][0-9]*'
 }
 
+# The shape $1 as display 0's panel can take it: the window manager caps a forced size at 3x the
+# panel's longer side (2244 on the cover) by cutting that side alone, which squashed a 2560x1600
+# monitor, so a larger shape is scaled down whole instead.
+shape() {
+    set -- ${1%x*} ${1#*x} $(current size | tr x ' ')
+    max=$((3 * ($3 > $4 ? $3 : $4)))
+    big=$(($1 > $2 ? $1 : $2))
+    if [ $big -gt $max ]; then
+        echo $(($1 * max / big))x$(($2 * max / big))
+    else
+        echo ${1}x$2
+    fi
+}
+
 # Give the cover the monitor's shape $1. The cover's own values are saved first (through a temp
 # file, so a crash never leaves a half-written one), and not resized unless they could be.
 fit() {
@@ -74,7 +88,7 @@ fit() {
         own="$(current size override) $(current density override)"
         valid "$own" && echo "$own" > $SAVED.tmp && mv $SAVED.tmp $SAVED || return 1
     fi
-    wm size $1 -d 0 && wm density $DPI -d 0
+    wm size $(shape $1) -d 0 && wm density $DPI -d 0
 }
 
 # Put the saved values back, or the physical ones if the saved file is unusable. The file is
@@ -210,8 +224,9 @@ while :; do
                 settings put system min_refresh_rate 120 && setprop $LAYOUT 1 &&
                 cmd device_state state $INNER >/dev/null 2>&1 && inner=1 &&
                 log "inner screen shows the mirror"
-        elif [ "$(current size override)" != "$now" ]; then
-            wm size $now -d 0 && wm density $DPI -d 0 && log "inner screen fit to the monitor: $now"
+        elif [ "$(current size override)" != "$(shape $now)" ]; then
+            wm size $(shape $now) -d 0 && wm density $DPI -d 0 &&
+                log "inner screen fit to the monitor: $now"
         fi
         sleep 2
         continue

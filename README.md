@@ -204,7 +204,7 @@ columns, a grid, or a priority grid.
   the monitor switches to its fastest refresh rate.
   Closing the phone goes back to the outside screen. In testing, scrolling
   reached about 118 frames per second on a 144 Hz monitor, the most the
-  inside screen can show.
+  inside screen can show. Web browsers still run at 60 there.
 
 Power saving holds every screen to 60 Hz, so the phone turns it off while it
 charges and back on when charging stops, if it was on before.
