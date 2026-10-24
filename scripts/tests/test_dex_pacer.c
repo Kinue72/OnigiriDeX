@@ -14,7 +14,11 @@ int native_property_bool(const char *name, int fallback) {
     (void)name; (void)fallback; ++property_reads; return enabled;
 }
 void native_activate(void *sf, void *old, void *next) { (void)sf; (void)old; activated = next; }
-void native_acquire(void *sf, U64 id) { (void)sf; acquired = id; }
+void native_acquire(void *sf, U64 id) {
+    (void)sf;
+    assert(!activated); /* Promotion's forced period transition must survive the restore. */
+    acquired = id;
+}
 void native_unregister(void *s, U64 removed, U64 active) { (void)s; (void)removed; (void)active; }
 void native_begin_frame(void *t, void *a, void *s, void *f) {
     (void)a; (void)s; (void)f; *((Byte *)t + 0x20) = 1;

@@ -76,10 +76,11 @@ void onigiri_power_on(void *sf, void *display, void *active, int internal) {
     else if (internal && (!active || !on(active)))
         lead = display;
     if (lead && lead != active) {
-        native_activate(sf, active, lead);
-        /* An already-on lead misses the power-on path's vsync restore. */
+        /* Restore an already-on lead before promotion; resync after it cancels the forced
+         * period transition that discards follower fences and relearns hardware vsync. */
         if (lead != display && read32(lead, 0xa4) != 3)
             native_acquire(sf, native_display_id(lead));
+        native_activate(sf, active, lead);
     }
 }
 
