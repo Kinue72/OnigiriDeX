@@ -1,0 +1,172 @@
+From: Onigiri
+Subject: [PATCH] Keep the minimized Gemini on the DeX desktop
+
+diff --git a/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali b/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali
+index cac461cd..f4034ada 100644
+--- a/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali
++++ b/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali
+@@ -86,6 +86,8 @@
+ 
+ .field public final mVisibleActivityInfoForToken:Landroid/util/ArrayMap;
+ 
++.field public mOnigiriTokenDisplayId:I
++
+ 
+ # direct methods
+ .method static constructor <clinit>()V
+@@ -319,6 +321,12 @@
+ 
+     iput-boolean p1, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mBound:Z
+ 
++    invoke-static {}, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->onigiriAssistantDisplayId()I
++
++    move-result p3
++
++    iput p3, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mOnigiriTokenDisplayId:I
++
+     const-string p0, "VoiceInteractionServiceManager"
+ 
+     if-eqz p1, :cond_0
+@@ -327,8 +335,6 @@
+ 
+     const/16 p2, 0x7ef
+ 
+-    const/4 p3, 0x0
+-
+     :try_start_0
+     invoke-interface {p6, v0, p2, p3, p1}, Landroid/view/IWindowManager;->addWindowToken(Landroid/os/IBinder;IILandroid/os/Bundle;)V
+     :try_end_0
+@@ -364,6 +370,42 @@
+     return-void
+ .end method
+ 
++.method public static onigiriAssistantDisplayId()I
++    .locals 2
++
++    # Onigiri: session windows (e.g. the minimized Gemini overlay) show on the DeX desktop while
++    # DeX runs, like the overlay itself. Samsung pins DeX to display 2 and keeps it ON only then.
++    const-class v0, Landroid/hardware/display/DisplayManagerInternal;
++
++    invoke-static {v0}, Lcom/android/server/LocalServices;->getService(Ljava/lang/Class;)Ljava/lang/Object;
++
++    move-result-object v0
++
++    check-cast v0, Landroid/hardware/display/DisplayManagerInternal;
++
++    if-eqz v0, :default
++
++    const/4 v1, 0x2
++
++    invoke-virtual {v0, v1}, Landroid/hardware/display/DisplayManagerInternal;->getDisplayInfo(I)Landroid/view/DisplayInfo;
++
++    move-result-object v0
++
++    if-eqz v0, :default
++
++    iget v0, v0, Landroid/view/DisplayInfo;->state:I
++
++    # Display.STATE_ON
++    if-ne v0, v1, :default
++
++    return v1
++
++    :default
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
+ .method public static getTopVisibleActivityInfosLocked()Landroid/util/ArrayMap;
+     .locals 8
+ 
+@@ -458,7 +500,7 @@
+ .end method
+ 
+ .method public final cancelLocked(Z)V
+-    .locals 3
++    .locals 4
+ 
+     const/4 v0, 0x0
+ 
+@@ -526,7 +568,9 @@
+ 
+     iget-object v1, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mToken:Landroid/os/IBinder;
+ 
+-    invoke-interface {p1, v1, v0}, Landroid/view/IWindowManager;->removeWindowToken(Landroid/os/IBinder;I)V
++    iget v3, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mOnigiriTokenDisplayId:I
++
++    invoke-interface {p1, v1, v3}, Landroid/view/IWindowManager;->removeWindowToken(Landroid/os/IBinder;I)V
+     :try_end_2
+     .catch Landroid/os/RemoteException; {:try_start_2 .. :try_end_2} :catch_2
+ 
+diff --git a/smali_classes2/com/android/server/wm/WindowManagerService.smali b/smali_classes2/com/android/server/wm/WindowManagerService.smali
+index 6b5228bb..53a0d565 100644
+--- a/smali_classes2/com/android/server/wm/WindowManagerService.smali
++++ b/smali_classes2/com/android/server/wm/WindowManagerService.smali
+@@ -4066,9 +4066,7 @@
+ 
+     :cond_3
+     :try_start_1
+-    iget-object v7, v13, Landroid/view/WindowManager$LayoutParams;->token:Landroid/os/IBinder;
+-
+-    invoke-virtual {v0, v1, v7}, Lcom/android/server/wm/WindowManagerService;->getDisplayContentOrCreate(ILandroid/os/IBinder;)Lcom/android/server/wm/DisplayContent;
++    invoke-virtual {v0, v1, v13}, Lcom/android/server/wm/WindowManagerService;->onigiriDisplayForNewWindow(ILandroid/view/WindowManager$LayoutParams;)Lcom/android/server/wm/DisplayContent;
+ 
+     move-result-object v7
+ 
+@@ -17335,6 +17333,55 @@
+     throw p0
+ .end method
+ 
++.method public final onigiriDisplayForNewWindow(ILandroid/view/WindowManager$LayoutParams;)Lcom/android/server/wm/DisplayContent;
++    .locals 3
++
++    iget-object v0, p2, Landroid/view/WindowManager$LayoutParams;->token:Landroid/os/IBinder;
++
++    if-eqz v0, :default
++
++    # Onigiri: a sub-window (popup, panel) goes on its parent window's display. Its token is the
++    # parent's IWindow rather than a WindowToken, so the lookup below would fall back to the
++    # client's display: the minimized Gemini adds popups to its session window on the DeX desktop
++    # from a context on display 0, which failed with BadTokenException.
++    iget v1, p2, Landroid/view/WindowManager$LayoutParams;->type:I
++
++    # FIRST_SUB_WINDOW
++    const/16 v2, 0x3e8
++
++    if-lt v1, v2, :default
++
++    # LAST_SUB_WINDOW
++    const/16 v2, 0x7cf
++
++    if-gt v1, v2, :default
++
++    iget-object v1, p0, Lcom/android/server/wm/WindowManagerService;->mWindowMap:Ljava/util/HashMap;
++
++    invoke-virtual {v1, v0}, Ljava/util/HashMap;->get(Ljava/lang/Object;)Ljava/lang/Object;
++
++    move-result-object v1
++
++    check-cast v1, Lcom/android/server/wm/WindowState;
++
++    if-eqz v1, :default
++
++    invoke-virtual {v1}, Lcom/android/server/wm/WindowContainer;->getDisplayContent()Lcom/android/server/wm/DisplayContent;
++
++    move-result-object v1
++
++    if-eqz v1, :default
++
++    return-object v1
++
++    :default
++    invoke-virtual {p0, p1, v0}, Lcom/android/server/wm/WindowManagerService;->getDisplayContentOrCreate(ILandroid/os/IBinder;)Lcom/android/server/wm/DisplayContent;
++
++    move-result-object p0
++
++    return-object p0
++.end method
++
+ .method public final getDisplayContentOrCreate(ILandroid/os/IBinder;)Lcom/android/server/wm/DisplayContent;
+     .locals 1
+ 
