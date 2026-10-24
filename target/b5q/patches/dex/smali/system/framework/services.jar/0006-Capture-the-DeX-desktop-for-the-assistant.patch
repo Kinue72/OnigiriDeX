@@ -64,3 +64,20 @@ index 36c5b48..6cdd56c 100644
      invoke-virtual {p0, v1}, Lcom/android/server/wm/RootWindowContainer;->getDisplayContent(I)Lcom/android/server/wm/DisplayContent;
  
      move-result-object p0
+diff --git a/smali_classes2/com/android/server/wm/DisplayContent.smali b/smali_classes2/com/android/server/wm/DisplayContent.smali
+index 1c8f1f29..6f1197cd 100644
+--- a/smali_classes2/com/android/server/wm/DisplayContent.smali
++++ b/smali_classes2/com/android/server/wm/DisplayContent.smali
+@@ -12329,6 +12329,12 @@
+ .method public final getLayerCaptureArgs(Ljava/util/Set;)Landroid/window/ScreenCapture$LayerCaptureArgs;
+     .locals 5
+ 
++    # Onigiri: only the default display follows the phone's screen state. The assistant only
++    # captures the DeX desktop while it is ON, and it stays on when the phone screen turns off.
++    iget v0, p0, Lcom/android/server/wm/DisplayContent;->mDisplayId:I
++
++    if-nez v0, :cond_0
++
+     iget-object v0, p0, Lcom/android/server/wm/WindowContainer;->mWmService:Lcom/android/server/wm/WindowManagerService;
+ 
+     iget-object v0, v0, Lcom/android/server/wm/WindowManagerService;->mPolicy:Lcom/android/server/policy/WindowManagerPolicy;
