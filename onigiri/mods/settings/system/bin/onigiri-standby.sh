@@ -318,6 +318,7 @@ while :; do
     if [ "$(getprop persist.sys.onigiri.car_standby)" != true ]; then
         in_standby=0  # if it is switched back on, standby starts over from GRACE
         since=
+        slept=
         [ "$(cat $HOST_BLOCK 2>/dev/null)" = ON_HOST_ONIGIRI ] && echo OFF > $HOST_BLOCK
         echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
         if [ -d "$STATE" ] && ! leave || [ -f $CC_LOCK ]; then
@@ -341,11 +342,14 @@ while :; do
     else
         check_cable
         powered && continue  # plugged into a running monitor
-        if [ "$(cat $HOST_BLOCK)" = OFF ]; then
-            # Turn the screen off now, not after GRACE: DeX ending lights it up and an app left on
-            # it can keep it on. In the background too, as VBUS needs cutting meanwhile.
+        # Turn the screen off now, not after GRACE: DeX ending lights it up and an app left on it
+        # can keep it on. Once per power loss (even one during unblock_host's wait), and in the
+        # background, as VBUS needs cutting meanwhile.
+        if [ -z "$slept" ]; then
             input keyevent SLEEP &
             slept=1
+        fi
+        if [ "$(cat $HOST_BLOCK)" = OFF ]; then
             block_host &  # DisplayPort teardown takes seconds: keep cutting VBUS meanwhile
             hold_power_off 6
             found=$?
