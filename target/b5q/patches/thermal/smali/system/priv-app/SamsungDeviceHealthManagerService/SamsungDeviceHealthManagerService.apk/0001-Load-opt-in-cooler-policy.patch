@@ -13,7 +13,7 @@ diff --git a/smali/com/sec/android/sdhms/settings/M.smali b/smali/com/sec/androi
  .field private final a:Z
  
  .field private b:Lcom/sec/android/sdhms/settings/L;
-@@ -245,12 +247,103 @@
+@@ -245,12 +247,102 @@
      return v2
  .end method
  
@@ -61,7 +61,6 @@ diff --git a/smali/com/sec/android/sdhms/settings/M.smali b/smali/com/sec/androi
 +    iput v2, p0, Lcom/sec/android/sdhms/settings/M;->onigiriCoolerState:I
 +    :onigiri_try_end
 +    .catch Ljava/lang/Exception; {:onigiri_try .. :onigiri_try_end} :onigiri_error
-+    invoke-static {}, Lcom/sec/android/sdhms/settings/M;->onigiriRaiseFloors()V
 +    return-object v1
 +
 +    :onigiri_error
@@ -121,7 +120,7 @@ diff --git a/smali/com/sec/android/sdhms/settings/M.smali b/smali/com/sec/androi
  .end method
  
  .method private h(Landroid/content/Context;Ljava/lang/String;)Lorg/w3c/dom/Document;
-@@ -608,7 +701,7 @@
+@@ -608,7 +700,7 @@
  
      check-cast v0, Ljava/util/List;
  
@@ -130,7 +129,19 @@ diff --git a/smali/com/sec/android/sdhms/settings/M.smali b/smali/com/sec/androi
  
      move-result-object v1
  
-@@ -666,6 +759,17 @@
+@@ -648,6 +740,11 @@
+     goto :goto_0
+ 
+     :cond_1
++    # Only once Samsung accepted the profile; a rejected one retries stock without floors.
++    iget v0, p0, Lcom/sec/android/sdhms/settings/M;->onigiriCoolerState:I
++    if-lez v0, :onigiri_floors_done
++    invoke-static {}, Lcom/sec/android/sdhms/settings/M;->onigiriRaiseFloors()V
++    :onigiri_floors_done
+     const/4 p2, 0x0
+ 
+     goto :goto_2
+@@ -666,6 +763,17 @@
  
      invoke-virtual {v3}, Lcom/sec/android/sdhms/settings/L;->f()V
  

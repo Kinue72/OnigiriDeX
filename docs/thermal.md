@@ -62,12 +62,12 @@ is detached. There is no automatic cooler detection.
 Samsung Device Health (SDHMS) must be installed and enabled for the profile to
 load. If a debloat or thermal-disable tool removed it, the switch can still save
 the choice, but changing the property alone cannot restore that service. SDHMS
-writes the minimum clocks when it loads the profile; it runs as `system_app`,
+writes the minimum clocks once it has accepted the profile; it runs as `system_app`,
 which may write cpufreq nodes (init may not).
 
 The generated policy is an APK asset, not an editable app-data file. An absent
 or malformed asset falls back to the stock policy. A rejected cooler table also
-retries the stock Flip5 policy before Samsung's generic fallback. The build checks the exact
+retries the stock Flip5 policy, without the minimum clocks, before Samsung's generic fallback. The build checks the exact
 three Samsung input-table hashes and stops on an unsupported donor version.
 
 Host checks:
