@@ -203,8 +203,9 @@ enter() {
     fi
     log "power lost: entering standby at $(capacity)%"
 
-    mark screen
-    input keyevent SLEEP
+    # Only with its marker, which leave() wakes it by (not change(): a failed SLEEP must not drop
+    # the marker of the screen-off at the power loss).
+    mark screen && input keyevent SLEEP
 
     if [ "$(cmd connectivity airplane-mode)" = disabled ]; then
         change airplane cmd connectivity airplane-mode enable
