@@ -203,6 +203,7 @@ enter() {
     fi
     log "power lost: entering standby at $(capacity)%"
 
+    mark screen
     input keyevent SLEEP
 
     if [ "$(cmd connectivity airplane-mode)" = disabled ]; then
@@ -242,7 +243,8 @@ enter() {
 
 # Each marker goes only once its restore worked; the rest are retried on the next call.
 leave() {
-    [ -n "$leaving" ] || log "power back: leaving standby at $(capacity)%"
+    wait  # a SLEEP from the power loss may still be landing
+    [ -n "$leaving" ] || log "restoring at $(capacity)%: $(ls "$STATE" | tr '\n' ' ')"
     for cpu in $BIG_CPUS; do
         marked cpu$cpu && echo 1 > /sys/devices/system/cpu/cpu$cpu/online && unmark cpu$cpu
     done
@@ -255,7 +257,7 @@ leave() {
     marked airplane && cmd connectivity airplane-mode disable && unmark airplane
     marked wifi && cmd wifi set-wifi-enabled enabled && unmark wifi
     marked bluetooth && cmd bluetooth_manager enable && unmark bluetooth
-    unmark screen  # woken below, once everything else is back
+    marked screen && input keyevent WAKEUP && unmark screen
     if ! rmdir "$STATE" 2>/dev/null; then
         [ -n "$leaving" ] || log "restore failed, retrying: $(ls "$STATE" | tr '\n' ' ')"
         leaving=1
@@ -263,7 +265,6 @@ leave() {
     fi
     leaving=
     setprop sys.onigiri.standby 0
-    input keyevent WAKEUP
 }
 
 power_off() {
@@ -331,8 +332,7 @@ while :; do
         setprop ctl.stop onigiri-standby
         exit 0
     elif powered; then
-        # Also wakes the screen turned off at the power loss, once its SLEEP has landed.
-        [ -d "$STATE" ] && { wait; leave; }
+        [ -d "$STATE" ] && leave  # also wakes the screen turned off at the power loss
         unblock_host  # DisplayPort (and DeX) restarts now
         in_standby=0
         since=
