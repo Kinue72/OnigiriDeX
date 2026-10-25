@@ -6,10 +6,11 @@
 #   persist.sys.onigiri.car_standby_hours   1|2|4|8|12|24|48|96   hours on battery before power off (96 by default)
 #   onigiri-standby.sh enter|leave                  run one transition by hand (testing)
 #
-# On battery: stop powering USB-C at once, standby after GRACE seconds, then recheck the USB-C
-# link every 30 s, backing off to 2 min on a long park (each recheck keeps the phone awake
-# ~11 s: sec-battery holds a 10 s wakelock per cable event); the power key or plugging in
-# power rechecks at once. Power off below LOW_PCT % or after car_standby_hours.
+# On battery: stop powering USB-C and turn the screen off at once, standby after GRACE seconds,
+# then recheck the USB-C link every 30 s, backing off to 2 min on a long park (each recheck
+# keeps the phone awake ~11 s: sec-battery holds a 10 s wakelock per cable event); the power
+# key or plugging in power rechecks at once. Power off below LOW_PCT % or after
+# car_standby_hours.
 # Autoboot only starts the phone again at 5% or more, so the two never loop.
 
 GRACE=60
@@ -202,7 +203,9 @@ enter() {
     fi
     log "power lost: entering standby at $(capacity)%"
 
-    input keyevent SLEEP
+    # Only with its marker, which leave() wakes it by (not change(): a failed SLEEP must not drop
+    # the marker of the screen-off at the power loss).
+    mark screen && input keyevent SLEEP
 
     if [ "$(cmd connectivity airplane-mode)" = disabled ]; then
         change airplane cmd connectivity airplane-mode enable
@@ -241,7 +244,8 @@ enter() {
 
 # Each marker goes only once its restore worked; the rest are retried on the next call.
 leave() {
-    [ -n "$leaving" ] || log "power back: leaving standby at $(capacity)%"
+    wait  # a SLEEP from the power loss may still be landing
+    [ -n "$leaving" ] || log "restoring at $(capacity)%: $(ls "$STATE" | tr '\n' ' ')"
     for cpu in $BIG_CPUS; do
         marked cpu$cpu && echo 1 > /sys/devices/system/cpu/cpu$cpu/online && unmark cpu$cpu
     done
@@ -254,6 +258,7 @@ leave() {
     marked airplane && cmd connectivity airplane-mode disable && unmark airplane
     marked wifi && cmd wifi set-wifi-enabled enabled && unmark wifi
     marked bluetooth && cmd bluetooth_manager enable && unmark bluetooth
+    marked screen && input keyevent WAKEUP && unmark screen
     if ! rmdir "$STATE" 2>/dev/null; then
         [ -n "$leaving" ] || log "restore failed, retrying: $(ls "$STATE" | tr '\n' ' ')"
         leaving=1
@@ -261,7 +266,6 @@ leave() {
     fi
     leaving=
     setprop sys.onigiri.standby 0
-    input keyevent WAKEUP
 }
 
 power_off() {
@@ -308,7 +312,7 @@ if [ "$(getprop sys.onigiri.docked_boot)" != 1 ] && powered && [ -e $TYPEC-partn
     esac
 fi
 
-# A leftover $STATE (shutdown or crash in standby) is restored on power or once standby is
+# A leftover $STATE (shutdown or crash on battery) is restored on power or once standby is
 # switched off, or standby is entered again after GRACE on battery.
 since=
 in_standby=0
@@ -329,7 +333,7 @@ while :; do
         setprop ctl.stop onigiri-standby
         exit 0
     elif powered; then
-        [ -d "$STATE" ] && leave
+        [ -d "$STATE" ] && leave  # also wakes the screen turned off at the power loss
         unblock_host  # DisplayPort (and DeX) restarts now
         in_standby=0
         since=
@@ -337,11 +341,18 @@ while :; do
     else
         check_cable
         powered && continue  # plugged into a running monitor
+        # Turn the screen off now, not after GRACE: DeX ending lights it up and an app left on it
+        # can keep it on. Once per power loss (even one during unblock_host's wait); the marker
+        # makes leave() wake it when power returns, even after a restart. In the background, as
+        # VBUS needs cutting meanwhile.
+        if ! marked screen && mkdir -p -m 0700 $DATA && mkdir -p "$STATE" && mark screen; then
+            input keyevent SLEEP &
+        fi
         if [ "$(cat $HOST_BLOCK)" = OFF ]; then
             block_host &  # DisplayPort teardown takes seconds: keep cutting VBUS meanwhile
             hold_power_off 6
             found=$?
-            wait $!
+            wait
             [ $found = 0 ] && continue
         fi
         recheck_usb && continue

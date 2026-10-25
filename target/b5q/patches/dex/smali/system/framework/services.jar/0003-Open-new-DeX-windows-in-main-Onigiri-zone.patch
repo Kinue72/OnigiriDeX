@@ -5,16 +5,17 @@ diff --git a/smali_classes2/com/android/server/wm/LaunchParamsController.smali b
 index 3c5cf26..3ef243e 100644
 --- a/smali_classes2/com/android/server/wm/LaunchParamsController.smali
 +++ b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
-@@ -4171,6 +4171,8 @@
+@@ -4171,6 +4171,9 @@
  
-     invoke-static {p3, p8}, Lcom/android/server/wm/LaunchParamsController;->applyAssistantOverlayDexPolicy(Lcom/android/server/wm/ActivityRecord;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
- 
++    # Zones first: the assistant overlay's DeX placement must win over a zone given to its app.
 +    invoke-static {p1, p3, p5, p8}, Lcom/android/server/wm/LaunchParamsController;->applyZoneLaunchPolicy(Lcom/android/server/wm/Task;Lcom/android/server/wm/ActivityRecord;Landroid/app/ActivityOptions;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
 +
+     invoke-static {p3, p8}, Lcom/android/server/wm/LaunchParamsController;->applyAssistantOverlayDexPolicy(Lcom/android/server/wm/ActivityRecord;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
+ 
      return-void
  .end method
  
-@@ -4210,3 +4212,155 @@
+@@ -4210,3 +4213,155 @@
      :done
      return-void
  .end method
