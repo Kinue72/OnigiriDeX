@@ -8,20 +8,20 @@ policy is siop_b5q_sm8550, and each saved change offers a restart.
 diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
 --- a/res/values-vi/strings.xml
 +++ b/res/values-vi/strings.xml
-@@ -8061,4 +8061,6 @@ Trong Máy ảnh, bạn có thể sử dụng phím Trên cùng để chụp ả
-     <string name="onigiri_rootmod_off_after_restart">%1$s, tắt sau khi khởi động lại</string>
-     <string name="onigiri_rootmod_restart_pending">%1$s, chờ khởi động lại</string>
+@@ -8063,4 +8063,6 @@ Trong Máy ảnh, bạn có thể sử dụng phím Trên cùng để chụp ả
      <string name="onigiri_rootmod_incompatible">Cập nhật Onigiri trước để có bản mới hơn.</string>
+     <string name="onigiri_cover_keep_rotation_title">Không cho ứng dụng xoay màn hình ngoài</string>
+     <string name="onigiri_mirror_high_refresh_title">Tần số quét cao khi phản chiếu màn hình</string>
 +    <string name="onigiri_overclocking_title">Hiệu năng cao</string>
 +    <string name="onigiri_overclocking_summary">Nới lỏng giới hạn nhiệt mà không tăng xung nhịp tối đa. Cần gắn tản nhiệt rời. Khởi động lại để áp dụng.</string>
  </resources>
 diff --git a/res/values/strings.xml b/res/values/strings.xml
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
-@@ -15430,4 +15430,6 @@ In Camera, you can use the Top button to take pictures."</string>
-     <string name="onigiri_rootmod_off_after_restart">%1$s, off after restart</string>
-     <string name="onigiri_rootmod_restart_pending">%1$s, restart pending</string>
+@@ -15432,4 +15432,6 @@ In Camera, you can use the Top button to take pictures."</string>
      <string name="onigiri_rootmod_incompatible">Update Onigiri first to get the newer version.</string>
+     <string name="onigiri_cover_keep_rotation_title">Keep apps in cover rotation</string>
+     <string name="onigiri_mirror_high_refresh_title">Mirroring high refresh rate</string>
 +    <string name="onigiri_overclocking_title">High performance</string>
 +    <string name="onigiri_overclocking_summary">Relaxes thermal limits without raising peak clocks. Requires an external cooler. Restart to apply.</string>
  </resources>

@@ -76,7 +76,7 @@ Host checks:
 python3 -B scripts/tests/test_cooler_policy.py
 bash -n target/b5q/patches/thermal/customize.sh
 python3 scripts/check_patches.py target/b5q/patches/thermal/smali/system/priv-app/SamsungDeviceHealthManagerService/SamsungDeviceHealthManagerService.apk/0001-Load-opt-in-cooler-policy.patch
-python3 scripts/check_patches.py onigiri/mods/settings/smali/system/priv-app/SecSettings/SecSettings.apk/0024-Add-overclocking-toggle.patch
+python3 scripts/check_patches.py onigiri/mods/settings/smali/system/priv-app/SecSettings/SecSettings.apk/0026-Add-high-performance-toggle.patch
 ```
 
 ## Measured
