@@ -3,10 +3,10 @@ Subject: [PATCH] Restart Gemini when DeX starts so it measures the desktop
 
 diff --git a/smali_classes2/com/android/server/voiceinteraction/OnigiriGeminiDexListener.smali b/smali_classes2/com/android/server/voiceinteraction/OnigiriGeminiDexListener.smali
 new file mode 100644
-index 00000000..af1e1fad
+index 00000000..f7577578
 --- /dev/null
 +++ b/smali_classes2/com/android/server/voiceinteraction/OnigiriGeminiDexListener.smali
-@@ -0,0 +1,151 @@
+@@ -0,0 +1,215 @@
 +.class public final Lcom/android/server/voiceinteraction/OnigiriGeminiDexListener;
 +.super Ljava/lang/Object;
 +.source "OnigiriGeminiDexListener.java"
@@ -16,8 +16,9 @@ index 00000000..af1e1fad
 +
 +
 +# Onigiri: Gemini sizes its overlay backdrop once per process, for the screen it first shows on.
-+# Started on the cover, its backdrop stays blurry on the DeX desktop, so restart its overlay
-+# process when DeX starts; Gemini starts it again on next use and measures the desktop.
++# Started on the cover, its backdrop stays blurry on the DeX desktop, so restart that process
++# (:search, which also runs the Google app and Gemini Live) when DeX starts, unless it is in use;
++# Gemini starts it again on next use and measures the desktop.
 +
 +# static fields
 +.field public static sListener:Lcom/android/server/voiceinteraction/OnigiriGeminiDexListener;
@@ -72,6 +73,63 @@ index 00000000..af1e1fad
 +
 +    :done
 +    return-void
++.end method
++
++
++.method public static isSearchProcessBusy(I)Z
++    .locals 5
++
++    # In use: a visible activity (Google app, Gemini overlay) or a foreground service (Gemini Live,
++    # screen sharing). Restarting it then would cut the user off; the backdrop waits for next time.
++    const-class v0, Lcom/android/server/wm/ActivityTaskManagerInternal;
++
++    invoke-static {v0}, Lcom/android/server/LocalServices;->getService(Ljava/lang/Class;)Ljava/lang/Object;
++
++    move-result-object v0
++
++    check-cast v0, Lcom/android/server/wm/ActivityTaskManagerService$LocalService;
++
++    iget-object v0, v0, Lcom/android/server/wm/ActivityTaskManagerService$LocalService;->this$0:Lcom/android/server/wm/ActivityTaskManagerService;
++
++    iget-object v1, v0, Lcom/android/server/wm/ActivityTaskManagerService;->mGlobalLock:Lcom/android/server/wm/WindowManagerGlobalLock;
++
++    monitor-enter v1
++
++    :try_start_0
++    const-string v2, "com.google.android.googlequicksearchbox:search"
++
++    invoke-virtual {v0, p0, v2}, Lcom/android/server/wm/ActivityTaskManagerService;->getProcessController(ILjava/lang/String;)Lcom/android/server/wm/WindowProcessController;
++
++    move-result-object v2
++
++    const/4 v3, 0x0
++
++    if-eqz v2, :unlock
++
++    iget-boolean v3, v2, Lcom/android/server/wm/WindowProcessController;->mHasForegroundServices:Z
++
++    if-nez v3, :unlock
++
++    invoke-virtual {v2}, Lcom/android/server/wm/WindowProcessController;->hasActivityInVisibleTask()Z
++
++    move-result v3
++
++    :unlock
++    monitor-exit v1
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    return v3
++
++    :catchall_0
++    move-exception v0
++
++    :try_start_1
++    monitor-exit v1
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_0
++
++    throw v0
 +.end method
 +
 +
@@ -131,6 +189,12 @@ index 00000000..af1e1fad
 +    move-result v1
 +
 +    if-ltz v1, :done
++
++    invoke-static {v1}, Lcom/android/server/voiceinteraction/OnigiriGeminiDexListener;->isSearchProcessBusy(I)Z
++
++    move-result v2
++
++    if-nez v2, :done
 +
 +    const-class v0, Landroid/app/ActivityManagerInternal;
 +
