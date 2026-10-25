@@ -5,7 +5,7 @@ diff --git a/smali_classes2/com/android/server/wm/LaunchParamsController.smali b
 index 3e19f40..3eda4dc 100644
 --- a/smali_classes2/com/android/server/wm/LaunchParamsController.smali
 +++ b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
-@@ -4213,7 +4213,8 @@
+@@ -4214,7 +4214,8 @@
      return-void
  .end method
  
@@ -15,7 +15,7 @@ index 3e19f40..3eda4dc 100644
  .method public static applyZoneLaunchPolicy(Lcom/android/server/wm/Task;Lcom/android/server/wm/ActivityRecord;Landroid/app/ActivityOptions;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
      .locals 9
  
-@@ -4234,7 +4235,11 @@
+@@ -4235,7 +4236,11 @@
      move-result v0
      :resolved_mode
      const/4 v1, 0x5
@@ -27,7 +27,7 @@ index 3e19f40..3eda4dc 100644
  
      # Explicit placement (launcher drag) wins.
      if-eqz p2, :no_options
-@@ -4262,37 +4267,35 @@
+@@ -4263,37 +4268,35 @@
      new-instance v2, Landroid/graphics/Rect;
      invoke-direct {v2}, Landroid/graphics/Rect;-><init>()V
      invoke-virtual {v0, v2}, Lcom/android/server/wm/DisplayArea;->getStableRect(Landroid/graphics/Rect;)V
