@@ -255,6 +255,7 @@ leave() {
     marked airplane && cmd connectivity airplane-mode disable && unmark airplane
     marked wifi && cmd wifi set-wifi-enabled enabled && unmark wifi
     marked bluetooth && cmd bluetooth_manager enable && unmark bluetooth
+    unmark screen  # woken below, once everything else is back
     if ! rmdir "$STATE" 2>/dev/null; then
         [ -n "$leaving" ] || log "restore failed, retrying: $(ls "$STATE" | tr '\n' ' ')"
         leaving=1
@@ -309,7 +310,7 @@ if [ "$(getprop sys.onigiri.docked_boot)" != 1 ] && powered && [ -e $TYPEC-partn
     esac
 fi
 
-# A leftover $STATE (shutdown or crash in standby) is restored on power or once standby is
+# A leftover $STATE (shutdown or crash on battery) is restored on power or once standby is
 # switched off, or standby is entered again after GRACE on battery.
 since=
 in_standby=0
@@ -318,7 +319,6 @@ while :; do
     if [ "$(getprop persist.sys.onigiri.car_standby)" != true ]; then
         in_standby=0  # if it is switched back on, standby starts over from GRACE
         since=
-        slept=
         [ "$(cat $HOST_BLOCK 2>/dev/null)" = ON_HOST_ONIGIRI ] && echo OFF > $HOST_BLOCK
         echo onigiri-standby > /sys/power/wake_unlock 2>/dev/null
         if [ -d "$STATE" ] && ! leave || [ -f $CC_LOCK ]; then
@@ -331,10 +331,8 @@ while :; do
         setprop ctl.stop onigiri-standby
         exit 0
     elif powered; then
-        # Wake the screen turned off at the power loss; after a standby, leave() does.
-        [ -n "$slept" ] && [ $in_standby = 0 ] && input keyevent WAKEUP
-        slept=
-        [ -d "$STATE" ] && leave
+        # Also wakes the screen turned off at the power loss, once its SLEEP has landed.
+        [ -d "$STATE" ] && { wait; leave; }
         unblock_host  # DisplayPort (and DeX) restarts now
         in_standby=0
         since=
@@ -343,11 +341,11 @@ while :; do
         check_cable
         powered && continue  # plugged into a running monitor
         # Turn the screen off now, not after GRACE: DeX ending lights it up and an app left on it
-        # can keep it on. Once per power loss (even one during unblock_host's wait), and in the
-        # background, as VBUS needs cutting meanwhile.
-        if [ -z "$slept" ]; then
+        # can keep it on. Once per power loss (even one during unblock_host's wait); the marker
+        # makes leave() wake it when power returns, even after a restart. In the background, as
+        # VBUS needs cutting meanwhile.
+        if ! marked screen && mkdir -p -m 0700 $DATA && mkdir -p "$STATE" && mark screen; then
             input keyevent SLEEP &
-            slept=1
         fi
         if [ "$(cat $HOST_BLOCK)" = OFF ]; then
             block_host &  # DisplayPort teardown takes seconds: keep cutting VBUS meanwhile
