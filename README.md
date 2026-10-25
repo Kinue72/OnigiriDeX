@@ -169,14 +169,14 @@ columns, a grid, or a priority grid.
 
 - **Power on when power connected**: when the phone is off and gets power, it
   turns on by itself once the battery reaches 5%.
-- **Standby when unplugged**: when the car turns off, the phone waits
-  a minute and then goes into a deep sleep to save battery. It turns on
-  airplane mode, turns off Wi-Fi, Bluetooth and location, closes apps and
-  stops powering the monitor. It checks every 30 seconds whether the car is
-  back (less often after a long time, or right away if you press the power
-  button), and turns everything back on when it is. If the car stays off
-  longer than **Shut down after** (1 hour to 4 days, 4 days by default), or
-  the battery drops below 10%, the phone shuts down.
+- **Standby when unplugged**: when the car turns off, the screen turns off
+  right away. The phone waits a minute and then goes into a deep sleep to save
+  battery. It turns on airplane mode, turns off Wi-Fi, Bluetooth and location,
+  closes apps and stops powering the monitor. It checks every 30 seconds
+  whether the car is back (less often after a long time, or right away if you
+  press the power button), and turns everything back on when it is. If the car
+  stays off longer than **Shut down after** (1 hour to 4 days, 4 days by
+  default), or the battery drops below 10%, the phone shuts down.
 
 ### Monitor settings
 

@@ -6,10 +6,11 @@
 #   persist.sys.onigiri.car_standby_hours   1|2|4|8|12|24|48|96   hours on battery before power off (96 by default)
 #   onigiri-standby.sh enter|leave                  run one transition by hand (testing)
 #
-# On battery: stop powering USB-C at once, standby after GRACE seconds, then recheck the USB-C
-# link every 30 s, backing off to 2 min on a long park (each recheck keeps the phone awake
-# ~11 s: sec-battery holds a 10 s wakelock per cable event); the power key or plugging in
-# power rechecks at once. Power off below LOW_PCT % or after car_standby_hours.
+# On battery: stop powering USB-C and turn the screen off at once, standby after GRACE seconds,
+# then recheck the USB-C link every 30 s, backing off to 2 min on a long park (each recheck
+# keeps the phone awake ~11 s: sec-battery holds a 10 s wakelock per cable event); the power
+# key or plugging in power rechecks at once. Power off below LOW_PCT % or after
+# car_standby_hours.
 # Autoboot only starts the phone again at 5% or more, so the two never loop.
 
 GRACE=60
@@ -329,6 +330,9 @@ while :; do
         setprop ctl.stop onigiri-standby
         exit 0
     elif powered; then
+        # Wake the screen turned off at the power loss; after a standby, leave() does.
+        [ -n "$slept" ] && [ $in_standby = 0 ] && input keyevent WAKEUP
+        slept=
         [ -d "$STATE" ] && leave
         unblock_host  # DisplayPort (and DeX) restarts now
         in_standby=0
@@ -338,10 +342,14 @@ while :; do
         check_cable
         powered && continue  # plugged into a running monitor
         if [ "$(cat $HOST_BLOCK)" = OFF ]; then
+            # Turn the screen off now, not after GRACE: DeX ending lights it up and an app left on
+            # it can keep it on. In the background too, as VBUS needs cutting meanwhile.
+            input keyevent SLEEP &
+            slept=1
             block_host &  # DisplayPort teardown takes seconds: keep cutting VBUS meanwhile
             hold_power_off 6
             found=$?
-            wait $!
+            wait
             [ $found = 0 ] && continue
         fi
         recheck_usb && continue
