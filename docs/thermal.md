@@ -111,6 +111,11 @@ raised minimums change. SDHMS loaded the profile through
 `persist.sys.onigiri.overclocking`, wrote the minimum clocks, and Qualcomm's perf
 HAL restored them after its launch boosts. No policy rejection or crash appeared.
 
+On a flashed build, SDHMS loaded the profile 30 seconds into boot and the
+minimum clocks were still raised 10 minutes later, after the vendor boot script.
+A profile Samsung rejected (a Dex limiter with no values) fell back to the stock
+policy and left the vendor minimum clocks.
+
 Earlier checks (2026-10-24): Samsung Device Health switched between the stock
 and cooler policies on demand while the native Samsung and Qualcomm thermal
 services kept running with real temperatures. The Settings switch rendered in
