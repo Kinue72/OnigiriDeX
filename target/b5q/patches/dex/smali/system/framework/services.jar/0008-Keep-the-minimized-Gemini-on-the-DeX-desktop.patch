@@ -1,0 +1,370 @@
+From: Onigiri
+Subject: [PATCH] Keep the minimized Gemini on the DeX desktop
+
+diff --git a/smali_classes2/com/android/server/voiceinteraction/OnigiriSessionDisplayListener.smali b/smali_classes2/com/android/server/voiceinteraction/OnigiriSessionDisplayListener.smali
+new file mode 100644
+index 00000000..787e93cd
+--- /dev/null
++++ b/smali_classes2/com/android/server/voiceinteraction/OnigiriSessionDisplayListener.smali
+@@ -0,0 +1,73 @@
++.class public final Lcom/android/server/voiceinteraction/OnigiriSessionDisplayListener;
++.super Ljava/lang/Object;
++.source "OnigiriSessionDisplayListener.java"
++
++# interfaces
++.implements Landroid/hardware/display/DisplayManager$DisplayListener;
++.implements Ljava/lang/Runnable;
++
++
++# Onigiri: ends a voice interaction session whose windows (e.g. the minimized Gemini bubble) are
++# on the wrong screen after DeX starts or ends. Gemini keeps its session while it is minimized,
++# so the display chosen when the session started goes stale.
++
++# instance fields
++.field public final mConnection:Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;
++
++
++# direct methods
++.method public constructor <init>(Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;)V
++    .locals 0
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    iput-object p1, p0, Lcom/android/server/voiceinteraction/OnigiriSessionDisplayListener;->mConnection:Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;
++
++    return-void
++.end method
++
++
++# virtual methods
++.method public final onDisplayAdded(I)V
++    .locals 0
++
++    invoke-virtual {p0, p1}, Lcom/android/server/voiceinteraction/OnigiriSessionDisplayListener;->onDisplayChanged(I)V
++
++    return-void
++.end method
++
++.method public final onDisplayChanged(I)V
++    .locals 1
++
++    # Samsung pins the DeX desktop to display 2.
++    const/4 v0, 0x2
++
++    if-ne p1, v0, :done
++
++    iget-object v0, p0, Lcom/android/server/voiceinteraction/OnigiriSessionDisplayListener;->mConnection:Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;
++
++    invoke-virtual {v0}, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->onigiriFinishIfAssistantMoved()V
++
++    :done
++    return-void
++.end method
++
++.method public final run()V
++    .locals 1
++
++    # Posted once after registering: catches a DeX change between choosing the display and
++    # registering this listener.
++    const/4 v0, 0x2
++
++    invoke-virtual {p0, v0}, Lcom/android/server/voiceinteraction/OnigiriSessionDisplayListener;->onDisplayChanged(I)V
++
++    return-void
++.end method
++
++.method public final onDisplayRemoved(I)V
++    .locals 0
++
++    invoke-virtual {p0, p1}, Lcom/android/server/voiceinteraction/OnigiriSessionDisplayListener;->onDisplayChanged(I)V
++
++    return-void
++.end method
+diff --git a/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali b/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali
+index cac461cd..a794fa05 100644
+--- a/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali
++++ b/smali_classes2/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.smali
+@@ -86,6 +86,10 @@
+ 
+ .field public final mVisibleActivityInfoForToken:Landroid/util/ArrayMap;
+ 
++.field public mOnigiriDisplayListener:Landroid/hardware/display/DisplayManager$DisplayListener;
++
++.field public mOnigiriTokenDisplayId:I
++
+ 
+ # direct methods
+ .method static constructor <clinit>()V
+@@ -319,6 +323,17 @@
+ 
+     iput-boolean p1, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mBound:Z
+ 
++    invoke-static {}, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->onigiriAssistantDisplayId()I
++
++    move-result p3
++
++    iput p3, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mOnigiriTokenDisplayId:I
++
++    if-eqz p1, :onigiri_unbound
++
++    invoke-virtual {p0}, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->onigiriRegisterDisplayListener()V
++
++    :onigiri_unbound
+     const-string p0, "VoiceInteractionServiceManager"
+ 
+     if-eqz p1, :cond_0
+@@ -327,8 +342,6 @@
+ 
+     const/16 p2, 0x7ef
+ 
+-    const/4 p3, 0x0
+-
+     :try_start_0
+     invoke-interface {p6, v0, p2, p3, p1}, Landroid/view/IWindowManager;->addWindowToken(Landroid/os/IBinder;IILandroid/os/Bundle;)V
+     :try_end_0
+@@ -364,6 +377,147 @@
+     return-void
+ .end method
+ 
++.method public static onigiriAssistantDisplayId()I
++    .locals 2
++
++    # Onigiri: session windows (e.g. the minimized Gemini overlay) show on the DeX desktop while
++    # DeX runs, like the overlay itself. Samsung pins DeX to display 2 and keeps it ON only then.
++    # OnigiriSessionDisplayListener ends the session when this changes.
++    const-class v0, Landroid/hardware/display/DisplayManagerInternal;
++
++    invoke-static {v0}, Lcom/android/server/LocalServices;->getService(Ljava/lang/Class;)Ljava/lang/Object;
++
++    move-result-object v0
++
++    check-cast v0, Landroid/hardware/display/DisplayManagerInternal;
++
++    if-eqz v0, :default
++
++    const/4 v1, 0x2
++
++    invoke-virtual {v0, v1}, Landroid/hardware/display/DisplayManagerInternal;->getDisplayInfo(I)Landroid/view/DisplayInfo;
++
++    move-result-object v0
++
++    if-eqz v0, :default
++
++    iget v0, v0, Landroid/view/DisplayInfo;->state:I
++
++    # Display.STATE_ON
++    if-ne v0, v1, :default
++
++    return v1
++
++    :default
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
++.method public final onigiriRegisterDisplayListener()V
++    .locals 3
++
++    new-instance v0, Lcom/android/server/voiceinteraction/OnigiriSessionDisplayListener;
++
++    invoke-direct {v0, p0}, Lcom/android/server/voiceinteraction/OnigiriSessionDisplayListener;-><init>(Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;)V
++
++    iput-object v0, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mOnigiriDisplayListener:Landroid/hardware/display/DisplayManager$DisplayListener;
++
++    iget-object v1, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mContext:Landroid/content/Context;
++
++    const-class v2, Landroid/hardware/display/DisplayManager;
++
++    invoke-virtual {v1, v2}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++
++    move-result-object v1
++
++    check-cast v1, Landroid/hardware/display/DisplayManager;
++
++    iget-object v2, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mHandler:Landroid/os/Handler;
++
++    invoke-virtual {v1, v0, v2}, Landroid/hardware/display/DisplayManager;->registerDisplayListener(Landroid/hardware/display/DisplayManager$DisplayListener;Landroid/os/Handler;)V
++
++    check-cast v0, Ljava/lang/Runnable;
++
++    invoke-virtual {v2, v0}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
++
++    return-void
++.end method
++
++.method public final onigiriUnregisterDisplayListener()V
++    .locals 3
++
++    iget-object v0, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mOnigiriDisplayListener:Landroid/hardware/display/DisplayManager$DisplayListener;
++
++    if-eqz v0, :done
++
++    iget-object v1, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mContext:Landroid/content/Context;
++
++    const-class v2, Landroid/hardware/display/DisplayManager;
++
++    invoke-virtual {v1, v2}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++
++    move-result-object v1
++
++    check-cast v1, Landroid/hardware/display/DisplayManager;
++
++    invoke-virtual {v1, v0}, Landroid/hardware/display/DisplayManager;->unregisterDisplayListener(Landroid/hardware/display/DisplayManager$DisplayListener;)V
++
++    const/4 v0, 0x0
++
++    iput-object v0, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mOnigiriDisplayListener:Landroid/hardware/display/DisplayManager$DisplayListener;
++
++    :done
++    return-void
++.end method
++
++.method public final onigiriFinishIfAssistantMoved()V
++    .locals 4
++
++    invoke-static {}, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->onigiriAssistantDisplayId()I
++
++    move-result v0
++
++    iget v1, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mOnigiriTokenDisplayId:I
++
++    if-eq v0, v1, :done
++
++    # Gemini keeps its session while minimized, and its windows can't follow a token moved to
++    # another display. End the session as if its service died (onServiceDisconnected); the next
++    # show starts one on the assistant's current display.
++    iget-object v0, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mCallback:Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection$Callback;
++
++    check-cast v0, Lcom/android/server/voiceinteraction/VoiceInteractionManagerServiceImpl;
++
++    iget-object v1, v0, Lcom/android/server/voiceinteraction/VoiceInteractionManagerServiceImpl;->mServiceStub:Lcom/android/server/voiceinteraction/VoiceInteractionManagerService$VoiceInteractionManagerServiceStub;
++
++    monitor-enter v1
++
++    :try_start_0
++    iget-object v2, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mToken:Landroid/os/IBinder;
++
++    const/4 v3, 0x0
++
++    invoke-virtual {v0, v2, v3}, Lcom/android/server/voiceinteraction/VoiceInteractionManagerServiceImpl;->finishLocked(Landroid/os/IBinder;Z)V
++
++    monitor-exit v1
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    :done
++    return-void
++
++    :catchall_0
++    move-exception v0
++
++    :try_start_1
++    monitor-exit v1
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_0
++
++    throw v0
++.end method
++
+ .method public static getTopVisibleActivityInfosLocked()Landroid/util/ArrayMap;
+     .locals 8
+ 
+@@ -458,7 +612,7 @@
+ .end method
+ 
+ .method public final cancelLocked(Z)V
+-    .locals 3
++    .locals 4
+ 
+     const/4 v0, 0x0
+ 
+@@ -521,12 +675,16 @@
+ 
+     invoke-virtual {p1, p0}, Landroid/content/Context;->unbindService(Landroid/content/ServiceConnection;)V
+ 
++    invoke-virtual {p0}, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->onigiriUnregisterDisplayListener()V
++
+     :try_start_2
+     iget-object p1, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mIWindowManager:Landroid/view/IWindowManager;
+ 
+     iget-object v1, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mToken:Landroid/os/IBinder;
+ 
+-    invoke-interface {p1, v1, v0}, Landroid/view/IWindowManager;->removeWindowToken(Landroid/os/IBinder;I)V
++    iget v3, p0, Lcom/android/server/voiceinteraction/VoiceInteractionSessionConnection;->mOnigiriTokenDisplayId:I
++
++    invoke-interface {p1, v1, v3}, Landroid/view/IWindowManager;->removeWindowToken(Landroid/os/IBinder;I)V
+     :try_end_2
+     .catch Landroid/os/RemoteException; {:try_start_2 .. :try_end_2} :catch_2
+ 
+diff --git a/smali_classes2/com/android/server/wm/WindowManagerService.smali b/smali_classes2/com/android/server/wm/WindowManagerService.smali
+index 6b5228bb..53a0d565 100644
+--- a/smali_classes2/com/android/server/wm/WindowManagerService.smali
++++ b/smali_classes2/com/android/server/wm/WindowManagerService.smali
+@@ -4066,9 +4066,7 @@
+ 
+     :cond_3
+     :try_start_1
+-    iget-object v7, v13, Landroid/view/WindowManager$LayoutParams;->token:Landroid/os/IBinder;
+-
+-    invoke-virtual {v0, v1, v7}, Lcom/android/server/wm/WindowManagerService;->getDisplayContentOrCreate(ILandroid/os/IBinder;)Lcom/android/server/wm/DisplayContent;
++    invoke-virtual {v0, v1, v13}, Lcom/android/server/wm/WindowManagerService;->onigiriDisplayForNewWindow(ILandroid/view/WindowManager$LayoutParams;)Lcom/android/server/wm/DisplayContent;
+ 
+     move-result-object v7
+ 
+@@ -17335,6 +17333,55 @@
+     throw p0
+ .end method
+ 
++.method public final onigiriDisplayForNewWindow(ILandroid/view/WindowManager$LayoutParams;)Lcom/android/server/wm/DisplayContent;
++    .locals 3
++
++    iget-object v0, p2, Landroid/view/WindowManager$LayoutParams;->token:Landroid/os/IBinder;
++
++    if-eqz v0, :default
++
++    # Onigiri: a sub-window (popup, panel) goes on its parent window's display. Its token is the
++    # parent's IWindow rather than a WindowToken, so the lookup below would fall back to the
++    # client's display: the minimized Gemini adds popups to its session window on the DeX desktop
++    # from a context on display 0, which failed with BadTokenException.
++    iget v1, p2, Landroid/view/WindowManager$LayoutParams;->type:I
++
++    # FIRST_SUB_WINDOW
++    const/16 v2, 0x3e8
++
++    if-lt v1, v2, :default
++
++    # LAST_SUB_WINDOW
++    const/16 v2, 0x7cf
++
++    if-gt v1, v2, :default
++
++    iget-object v1, p0, Lcom/android/server/wm/WindowManagerService;->mWindowMap:Ljava/util/HashMap;
++
++    invoke-virtual {v1, v0}, Ljava/util/HashMap;->get(Ljava/lang/Object;)Ljava/lang/Object;
++
++    move-result-object v1
++
++    check-cast v1, Lcom/android/server/wm/WindowState;
++
++    if-eqz v1, :default
++
++    invoke-virtual {v1}, Lcom/android/server/wm/WindowContainer;->getDisplayContent()Lcom/android/server/wm/DisplayContent;
++
++    move-result-object v1
++
++    if-eqz v1, :default
++
++    return-object v1
++
++    :default
++    invoke-virtual {p0, p1, v0}, Lcom/android/server/wm/WindowManagerService;->getDisplayContentOrCreate(ILandroid/os/IBinder;)Lcom/android/server/wm/DisplayContent;
++
++    move-result-object p0
++
++    return-object p0
++.end method
++
+ .method public final getDisplayContentOrCreate(ILandroid/os/IBinder;)Lcom/android/server/wm/DisplayContent;
+     .locals 1
+ 

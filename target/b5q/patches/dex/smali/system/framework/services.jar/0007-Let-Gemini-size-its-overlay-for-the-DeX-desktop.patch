@@ -1,0 +1,18 @@
+From: Onigiri
+Subject: [PATCH] Let Gemini size its overlay for the DeX desktop
+
+diff --git a/smali/com/android/server/am/ProcessServiceRecord.smali b/smali/com/android/server/am/ProcessServiceRecord.smali
+index 456f921..3421840 100644
+--- a/smali/com/android/server/am/ProcessServiceRecord.smali
++++ b/smali/com/android/server/am/ProcessServiceRecord.smali
+@@ -586,7 +586,9 @@
+     goto :goto_0
+ 
+     :cond_4
+-    move v5, v1
++    # Onigiri: let voice assistant processes follow their activity's display like any app.
++    # Gemini sizes its overlay backdrop from the process display, which stayed the cover
++    # while the overlay showed on the DeX desktop, so the backdrop came out blurry.
+ 
+     :goto_0
+     packed-switch v5, :pswitch_data_0
