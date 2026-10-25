@@ -209,6 +209,11 @@ columns, a grid, or a priority grid.
 Power saving holds every screen to 60 Hz, so the phone turns it off while it
 charges and back on when charging stops, if it was on before.
 
+The experimental [High performance option](docs/thermal.md) in Onigiri Software is
+off by default, with English and Vietnamese text. With an external cooler, it
+keeps DeX at a steady 144 Hz (143 fps instead of 127–131 in TestUFO) and holds
+higher clocks under sustained load, without raising peak clocks. Restart to apply.
+
 <details>
 <summary><b>Boring stuffs</b></summary>
 
