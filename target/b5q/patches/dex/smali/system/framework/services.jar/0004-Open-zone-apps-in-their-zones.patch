@@ -2,7 +2,7 @@ From: Onigiri
 Subject: [PATCH] Open zone apps in their zones
 
 diff --git a/smali_classes2/com/android/server/wm/LaunchParamsController.smali b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
-index 3ef243e..10ed00f 100644
+index 3e19f40..3eda4dc 100644
 --- a/smali_classes2/com/android/server/wm/LaunchParamsController.smali
 +++ b/smali_classes2/com/android/server/wm/LaunchParamsController.smali
 @@ -4213,7 +4213,8 @@
@@ -15,7 +15,19 @@ index 3ef243e..10ed00f 100644
  .method public static applyZoneLaunchPolicy(Lcom/android/server/wm/Task;Lcom/android/server/wm/ActivityRecord;Landroid/app/ActivityOptions;Lcom/android/server/wm/LaunchParamsController$LaunchParams;)V
      .locals 9
  
-@@ -4262,37 +4263,28 @@
+@@ -4234,7 +4235,11 @@
+     move-result v0
+     :resolved_mode
+     const/4 v1, 0x5
++    if-eq v0, v1, :freeform
++    # DeX reopens an app it last showed maximized in fullscreen; only an app given a zone leaves it.
++    const/4 v1, 0x1
+     if-ne v0, v1, :done
++    :freeform
+ 
+     # Explicit placement (launcher drag) wins.
+     if-eqz p2, :no_options
+@@ -4262,37 +4267,35 @@
      new-instance v2, Landroid/graphics/Rect;
      invoke-direct {v2}, Landroid/graphics/Rect;-><init>()V
      invoke-virtual {v0, v2}, Lcom/android/server/wm/DisplayArea;->getStableRect(Landroid/graphics/Rect;)V
@@ -25,6 +37,9 @@ index 3ef243e..10ed00f 100644
 +    invoke-static {v3, v1}, Lcom/android/server/wm/OnigiriZones;->assignedZone(Ljava/lang/String;[I)I
 +    move-result v3
 +    if-ltz v3, :probe
++    # Undefined: the desktop's freeform, also for an app DeX would reopen maximized.
++    const/4 v4, 0x0
++    iput v4, p3, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mWindowingMode:I
 +    invoke-static {v0}, Lcom/android/server/wm/OnigiriZones;->gap(Lcom/android/server/wm/WindowContainer;)I
 +    move-result v8
 +    iget-object v4, p3, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mBounds:Landroid/graphics/Rect;
@@ -32,6 +47,10 @@ index 3ef243e..10ed00f 100644
 +    return-void
 +
 +    :probe
++    # Any other app DeX reopens maximized stays that way.
++    iget v4, p3, Lcom/android/server/wm/LaunchParamsController$LaunchParams;->mWindowingMode:I
++    const/4 v5, 0x1
++    if-eq v4, v5, :done
      new-instance v3, Lcom/android/server/wm/OnigiriZoneProbe;
      invoke-direct {v3, v2, v1}, Lcom/android/server/wm/OnigiriZoneProbe;-><init>(Landroid/graphics/Rect;[I)V
      invoke-virtual {v0, v3}, Lcom/android/server/wm/WindowContainer;->forAllRootTasks(Ljava/util/function/Consumer;)V
