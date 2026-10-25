@@ -25,6 +25,13 @@ def cooler_policy(stock, fold, default):
             target.remove(limiter)
             target.append(replacement)
 
+    # Under sustained load the loop holds SKIN at a stage and clamps to that stage's minimum; with a
+    # cooler that was the Fold5's 348 MHz GPU. Raise the first two stage minimums and keep the last
+    # two, so the loop can still pull SKIN back well before the 47°C emergency.
+    for name, floor in (('GPUFreqMax', ['550', '401']), ('CPUFreqMax', ['2092800', '1843200'])):
+        limiter = policy.find(f"components/component[@name='AP']/limiter[@name='{name}']")
+        limiter.set('min', ':'.join(floor + limiter.get('min').split(':')[2:]))
+
     for name in ('SIPStart', 'AppStart', 'Badge', 'CallStart', 'WakeUp'):
         path = f"scenarios/scenario[@name='{name}']"
         target = policy.find(path)

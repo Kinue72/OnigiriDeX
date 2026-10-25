@@ -55,6 +55,9 @@ class CoolerPolicyTest(unittest.TestCase):
             for limiter in parent:
                 if limiter.get('name') != 'JobRestriction':
                     limiter.set('temp', '380:400:420:450')
+        ap = self.fold.find("components/component[@name='AP']")
+        ap.find("limiter[@name='CPUFreqMax']").set('min', '1843200:1593600:1363200:1132800')
+        ap.find("limiter[@name='GPUFreqMax']").set('min', '348:295:295:220')
         for name in ('SIPStart', 'AppStart', 'Badge', 'CallStart', 'WakeUp'):
             self.fold.find(f"scenarios/scenario[@name='{name}']/limiter").set('value', '-1:2841600')
         self.default = ET.fromstring('''<siop_document><scenarios>
@@ -86,10 +89,17 @@ class CoolerPolicyTest(unittest.TestCase):
                 self.assertEqual(final_stage(limiter), (460, 440))
         dex = policy.find("scenarios/scenario[@name='Dex']/limiter[@name='DynamicFpsLevel']")
         self.assertEqual(dex.get('value'), '-1:30')
-        ap = policy.find("components/component[@name='AP']/limiter[@name='CPUFreqMax']")
-        self.assertEqual(ET.tostring(ap), ET.tostring(self.fold.find("components/component[@name='AP']/limiter[@name='CPUFreqMax']")))
         launch = policy.find("scenarios/scenario[@name='AppStart']/limiter[@name='CPUFreqMax']")
         self.assertEqual(launch.get('value'), '-1:2841600')
+
+    def test_raises_only_the_first_two_ap_stage_minimums(self):
+        policy = cooler.cooler_policy(self.stock, self.fold, self.default)
+        for name, floor in (('CPUFreqMax', '2092800:1843200'), ('GPUFreqMax', '550:401')):
+            path = f"components/component[@name='AP']/limiter[@name='{name}']"
+            raised, donor = policy.find(path), self.fold.find(path)
+            with self.subTest(name=name):
+                self.assertEqual(raised.get('temp'), donor.get('temp'))
+                self.assertEqual(raised.get('min'), floor + ':' + donor.get('min').split(':', 2)[2])
 
     def test_unknown_donor_fails_before_writing_a_policy(self):
         with tempfile.TemporaryDirectory() as directory:

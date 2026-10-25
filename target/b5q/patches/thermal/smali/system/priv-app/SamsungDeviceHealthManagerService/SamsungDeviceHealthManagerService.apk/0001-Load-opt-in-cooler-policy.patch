@@ -1,5 +1,5 @@
 From: Onigiri
-Subject: [PATCH] Load opt-in High performance profile with stock thermal fallback
+Subject: [PATCH] Load opt-in High performance profile and CPU floors with stock thermal fallback
 
 diff --git a/smali/com/sec/android/sdhms/settings/M.smali b/smali/com/sec/android/sdhms/settings/M.smali
 --- a/smali/com/sec/android/sdhms/settings/M.smali
@@ -13,24 +13,22 @@ diff --git a/smali/com/sec/android/sdhms/settings/M.smali b/smali/com/sec/androi
  .field private final a:Z
  
  .field private b:Lcom/sec/android/sdhms/settings/L;
-@@ -245,12 +247,66 @@
+@@ -245,12 +247,103 @@
      return v2
  .end method
  
 -.method private g()Lorg/w3c/dom/Document;
 -    .locals 0
--
--    const/4 p0, 0x0
--
--    return-object p0
 +.method private g(Landroid/content/Context;)Lorg/w3c/dom/Document;
 +    .locals 4
-+
+ 
+-    const/4 p0, 0x0
 +    iget v0, p0, Lcom/sec/android/sdhms/settings/M;->onigiriCoolerState:I
 +    if-ltz v0, :onigiri_stock
 +    const/4 v0, 0x0
 +    iput v0, p0, Lcom/sec/android/sdhms/settings/M;->onigiriCoolerState:I
-+
+ 
+-    return-object p0
 +    const-string v0, "persist.sys.onigiri.overclocking"
 +    const/4 v1, 0x0
 +    invoke-static {v0, v1}, Landroid/os/SystemProperties;->getBoolean(Ljava/lang/String;Z)Z
@@ -63,6 +61,7 @@ diff --git a/smali/com/sec/android/sdhms/settings/M.smali b/smali/com/sec/androi
 +    iput v2, p0, Lcom/sec/android/sdhms/settings/M;->onigiriCoolerState:I
 +    :onigiri_try_end
 +    .catch Ljava/lang/Exception; {:onigiri_try .. :onigiri_try_end} :onigiri_error
++    invoke-static {}, Lcom/sec/android/sdhms/settings/M;->onigiriRaiseFloors()V
 +    return-object v1
 +
 +    :onigiri_error
@@ -83,10 +82,46 @@ diff --git a/smali/com/sec/android/sdhms/settings/M.smali b/smali/com/sec/androi
 +    :onigiri_stock
 +    const/4 v0, 0x0
 +    return-object v0
++.end method
++
++# At 144 Hz a frame has 6.9 ms; from the stock minimum clocks apps miss about one DeX frame in
++# eight. Thermal caps still win: the kernel clamps a minimum to a lower maximum.
++.method private static onigiriRaiseFloors()V
++    .locals 2
++
++    const-string v0, "/sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq"
++    const-string v1, "1228800"
++    invoke-static {v0, v1}, Lcom/sec/android/sdhms/settings/M;->onigiriWrite(Ljava/lang/String;Ljava/lang/String;)V
++    const-string v0, "/sys/devices/system/cpu/cpufreq/policy3/scaling_min_freq"
++    const-string v1, "1401600"
++    invoke-static {v0, v1}, Lcom/sec/android/sdhms/settings/M;->onigiriWrite(Ljava/lang/String;Ljava/lang/String;)V
++    const-string v0, "/sys/devices/system/cpu/cpufreq/policy7/scaling_min_freq"
++    const-string v1, "1363200"
++    invoke-static {v0, v1}, Lcom/sec/android/sdhms/settings/M;->onigiriWrite(Ljava/lang/String;Ljava/lang/String;)V
++    return-void
++.end method
++
++.method private static onigiriWrite(Ljava/lang/String;Ljava/lang/String;)V
++    .locals 1
++
++    :onigiri_write
++    new-instance v0, Ljava/io/FileWriter;
++    invoke-direct {v0, p0}, Ljava/io/FileWriter;-><init>(Ljava/lang/String;)V
++    invoke-virtual {v0, p1}, Ljava/io/Writer;->write(Ljava/lang/String;)V
++    invoke-virtual {v0}, Ljava/io/OutputStreamWriter;->close()V
++    :onigiri_write_end
++    .catch Ljava/io/IOException; {:onigiri_write .. :onigiri_write_end} :onigiri_write_error
++    return-void
++
++    :onigiri_write_error
++    move-exception v0
++    const-string p1, "OnigiriOverclocking"
++    invoke-static {p1, p0, v0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++    return-void
  .end method
  
  .method private h(Landroid/content/Context;Ljava/lang/String;)Lorg/w3c/dom/Document;
-@@ -608,7 +664,7 @@
+@@ -608,7 +701,7 @@
  
      check-cast v0, Ljava/util/List;
  
@@ -95,7 +130,7 @@ diff --git a/smali/com/sec/android/sdhms/settings/M.smali b/smali/com/sec/androi
  
      move-result-object v1
  
-@@ -666,6 +722,17 @@
+@@ -666,6 +759,17 @@
  
      invoke-virtual {v3}, Lcom/sec/android/sdhms/settings/L;->f()V
  
