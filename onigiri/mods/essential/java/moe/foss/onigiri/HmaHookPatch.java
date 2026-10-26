@@ -5,7 +5,10 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.zip.Adler32;
 
-/** Adapter 2: prepare oss-173's original-call trampoline before publishing its hook. */
+/**
+ * Adapter 2: prepare oss-173's original-call trampoline before publishing its hook, and drop the
+ * forced GC from its boot-time preset scan.
+ */
 final class HmaHookPatch {
     private static byte[] hex(String text) {
         byte[] bytes = new byte[text.length() / 2];
@@ -24,6 +27,10 @@ final class HmaHookPatch {
         byte[] calls = hex("7140b70b94ba0b027140b70b49100b00");
         System.arraycopy(calls, 0, dex, 0x655ae, calls.length);
         dex[0x655ae + 32] = 0x32; // Pair.second boxes v2/v3 instead of p0/p1.
+        // AppPresets.readManifest runs System.gc() and drops its manifest cache whenever
+        // freeMemory() < 2 MB, which its own churn hits every manifest. The blocking GCs stretch the
+        // scan from seconds to minutes on a busy boot, past the loader's deadline. 0 never matches.
+        Arrays.fill(dex, 0x7a77c, 0x7a780, (byte) 0); // const-wide/32 v3, 0x1f4000
         MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
         sha1.update(dex, 32, dex.length - 32);
         System.arraycopy(sha1.digest(), 0, dex, 12, 20);
@@ -31,7 +38,7 @@ final class HmaHookPatch {
         checksum.update(dex, 12, dex.length - 12);
         long value = checksum.getValue();
         for (int i = 0; i < 4; i++) dex[8 + i] = (byte) (value >>> (i * 8));
-        if (!Arrays.equals(sha256.digest(dex), hex("a93a489843bd52753d50c1caf127dc9878a33af1f3a8c2eb8562bf2a61ae88a0"))) {
+        if (!Arrays.equals(sha256.digest(dex), hex("98fce9faddb1ec1695d1e98d1b131a66b2dc5d92e70d3b8d2f9423cb60387264"))) {
             throw new IOException("HMA hook patch verification failed");
         }
         return dex;

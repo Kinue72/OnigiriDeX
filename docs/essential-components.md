@@ -8,7 +8,7 @@ current status, component-specific controls, and a PIF-style version/update row.
 
 | Component | Bundled release | Built-in integration |
 | --- | --- | --- |
-| HMA-OSS | oss-173 | Original signed manager and backend with the hook-installation race fix below; a guarded services.jar entry loads it without Vector or Zygisk. Config schema remains 93. |
+| HMA-OSS | oss-173 | Original signed manager and backend with the hook-installation race and preset-scan GC fixes below; a guarded services.jar entry loads it without Vector or Zygisk. Config schema remains 93. |
 | TEESimulator | v3.2, code 67 | Original arm64 injector, native library and dex run through an init service. |
 | BRENE | v0.0.72 | Original susfs CLI and ROM-name list; only custom-ROM path, addon.d and module-mount hiding are ported. |
 
@@ -28,9 +28,14 @@ SELinux remains enforcing, and upstream crash status (work mode 4) stays unavail
 HMA's pinned AndroidVMTools revision publishes a hook before preparing its
 original-call trampoline. A concurrent Binder call can recursively re-enter the
 hook and crash system_server. Adapter 2 reverses those two operations during
-extraction. `HmaHookPatch` checks the complete input and output dex SHA-256,
-changes only the two calls and result registers, and repairs the dex header
-checksums. The archive and signed manager stay unchanged. Both bundled builds
+extraction. Its boot-time preset scan also calls `System.gc()` and clears its
+manifest cache whenever `freeMemory()` drops below 2 MB, which its own allocations
+cause on nearly every manifest. On a busy boot those blocking GCs stretched the
+scan past the loader's deadline, and the guard then turned HMA off. Adapter 2
+sets that threshold to 0, which cut a from-scratch scan on the Flip5 from 12.7 s
+to 4.3 s with identical presets. `HmaHookPatch` checks the complete input and
+output dex SHA-256, changes only the two calls, the result registers and that
+constant, and repairs the dex header checksums. The archive and signed manager stay unchanged. Both bundled builds
 and downloaded updates use this same extractor. Unknown backend dex versions
 are rejected until reviewed; a changed backend or an upstream fix needs a new
 ROM adapter. Manager-only updates using the supported backend remain possible.
@@ -97,7 +102,7 @@ A ROM carrying a newer release or different adapter supersedes an older override
 
 The feed's `adapter` is a compatibility contract, not an upstream version:
 
-- HMA adapter 2 requires the reviewed oss-173 backend dex and its hook-order fix,
+- HMA adapter 2 requires the reviewed oss-173 backend dex, its hook-order fix and GC patch,
   no-argument `ZygoteEntry.main()`, manager signing identity, config schema 93,
   and current status.json semantics.
 - TEE adapter 1 requires the v3.2 entry point, current-directory injector
