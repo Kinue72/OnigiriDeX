@@ -206,6 +206,24 @@ USB-C port by itself. USB devices and charging drop out for a moment.
   high refresh rate** is on.
 - **External display rotation**: turns the desktop on the monitor. It changes
   right away.
+- **Monitor brightness**: sets the monitor's own brightness from the phone over
+  DDC/CI, the way BetterDisplay does on a Mac. In DeX, the quick panel (tap
+  the clock and battery corner of the taskbar) gets a brightness slider for
+  the monitor, styled like DeX's volume slider; the page has the same
+  **Brightness** slider. With **Auto** on (off by default), the monitor
+  follows the light sensor beside the screen in use: the inside one while the
+  inside screen is on, otherwise the one on the outside, which faces the cabin
+  when the phone sits folded in a car. Like a phone's own auto brightness, it
+  learns from the slider: move it in the dark and nights stay that way, move
+  it in sunlight and days do, without changing the rest. It brightens within
+  about 2 seconds and dims over about 8, so a tunnel or a shadow doesn't make
+  it flicker, and it waits for the light to change by 10% brighter or 20%
+  darker, so steady light holds a steady level. Auto's changes fade over a
+  second and a half, while the slider changes the monitor within about half a
+  second and teaches Auto where it stops. The page shows
+  the light and the monitor's level live. The monitor needs DDC/CI turned on
+  in its own menu; some USB-C to HDMI adapters don't pass it through, and then
+  the row says the monitor isn't supported.
 - **DeX high refresh rate** (experimental, off by default): lets the desktop
   run smoother than 60 frames per second on fast monitors. In testing, a
   144 Hz monitor reached about 120 frames per second instead of 60, with the
@@ -226,6 +244,10 @@ USB-C port by itself. USB devices and charging drop out for a moment.
 
 Power saving holds every screen to 60 Hz, so the phone turns it off while it
 charges and back on when charging stops, if it was on before.
+
+**Stay awake** in Developer options keeps the screen at its normal brightness
+while the phone charges. In stock Android it only stops the screen from
+turning off, and the screen still dims at the screen timeout.
 
 The experimental [High performance option](docs/thermal.md) in Onigiri Software is
 off by default, with English and Vietnamese text. With an external cooler, it

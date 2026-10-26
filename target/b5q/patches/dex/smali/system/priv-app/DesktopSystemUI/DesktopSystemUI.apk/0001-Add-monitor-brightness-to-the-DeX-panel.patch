@@ -1,0 +1,534 @@
+From: Onigiri
+Subject: [PATCH] Add a Monitor brightness slider to the DeX panel
+
+DeX hides its own brightness row on a monitor, which has no backlight of its own.
+MonitorBrightnessRow goes under it, drawn like DeX's volume slider. It shows while
+sys.onigiri.monitor.level holds a level or "ready" (a monitor is on and hasn't refused DDC/CI), and
+writes onigiri_monitor_level, then onigiri_monitor_adjust so an unchanged level still counts:
+services.jar's MonitorBrightness sets that level, and with Auto on learns it for the light of the
+moment.
+diff --git a/res/drawable/onigiri_monitor_sun.xml b/res/drawable/onigiri_monitor_sun.xml
+new file mode 100644
+--- /dev/null
++++ b/res/drawable/onigiri_monitor_sun.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- The Monitor brightness row's sun, drawn like DeX's brightness icon. -->
++<vector android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:strokeColor="@color/animated_brightness_icon_color" android:strokeWidth="2" android:strokeLineCap="round" android:fillColor="#00000000"
++        android:pathData="M12,8a4,4 0,1 1,0 8a4,4 0,1 1,0 -8M12,2.5v2.2M12,19.3v2.2M2.5,12h2.2M19.3,12h2.2M5.3,5.3l1.6,1.6M17.1,17.1l1.6,1.6M5.3,18.7l1.6,-1.6M17.1,6.9l1.6,-1.6" />
++</vector>
+diff --git a/res/layout/quick_setting_main.xml b/res/layout/quick_setting_main.xml
+--- a/res/layout/quick_setting_main.xml
++++ b/res/layout/quick_setting_main.xml
+@@ -15,6 +15,7 @@
+                     </LinearLayout>
+                     <com.sec.android.dexsystemui.components.qs.ui.QSTilePageIndicator android:gravity="center" android:orientation="horizontal" android:id="@id/layout_dot" android:tag="binding_6" android:layout_width="match_parent" android:layout_height="@dimen/page_indicator_height" android:layout_marginTop="@dimen/page_indicator_margin_top" />
+                     <include android:layout_width="match_parent" android:layout_height="wrap_content" layout="@layout/quick_settings_brightness_slider" />
++                    <moe.foss.onigiri.dex.MonitorBrightnessRow android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                     <include android:id="@id/privacy_item_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/privacy_container_margin_top" android:layout_marginBottom="@dimen/privacy_container_margin_bottom" layout="@layout/privacy_item_container" />
+                 </LinearLayout>
+                 <include android:id="@id/brightness_detail" android:visibility="gone" layout="@layout/qs_brightness_details_layout" />
+diff --git a/smali/moe/foss/onigiri/dex/MonitorBrightnessRow.smali b/smali/moe/foss/onigiri/dex/MonitorBrightnessRow.smali
+new file mode 100644
+--- /dev/null
++++ b/smali/moe/foss/onigiri/dex/MonitorBrightnessRow.smali
+@@ -0,0 +1,497 @@
++.class public Lmoe/foss/onigiri/dex/MonitorBrightnessRow;
++.super Landroid/widget/LinearLayout;
++.source "MonitorBrightnessRow.java"
++
++# interfaces
++.implements Landroid/widget/SeekBar$OnSeekBarChangeListener;
++.implements Ljava/lang/Runnable;
++
++
++# static fields
++.field private static final ADJUST:Ljava/lang/String; = "onigiri_monitor_adjust"
++
++.field private static final LEVEL:Ljava/lang/String; = "onigiri_monitor_level"
++
++.field private static final WRITE_MS:J = 0x96L
++
++
++# instance fields
++.field private mPending:I
++
++.field private final mSlider:Landroid/widget/SeekBar;
++
++.field private mTracking:Z
++
++.field private mWritten:J
++
++
++# direct methods
++.method public constructor <init>(Landroid/content/Context;Landroid/util/AttributeSet;)V
++    .locals 5
++
++    invoke-direct {p0, p1, p2}, Landroid/widget/LinearLayout;-><init>(Landroid/content/Context;Landroid/util/AttributeSet;)V
++
++    const/4 p2, -0x1
++
++    iput p2, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mPending:I
++
++    const-wide/16 v0, -0x3e8
++
++    iput-wide v0, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mWritten:J
++
++    const/4 p2, 0x0
++
++    invoke-virtual {p0, p2}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->setOrientation(I)V
++
++    const/16 v0, 0x10
++
++    invoke-virtual {p0, v0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->setGravity(I)V
++
++    const-string v0, "brightness_slider_height"
++
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->dimen(Ljava/lang/String;)I
++
++    move-result v0
++
++    invoke-virtual {p0, v0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->setMinimumHeight(I)V
++
++    const-string v0, "brightness_icon_margin_start"
++
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->dimen(Ljava/lang/String;)I
++
++    move-result v0
++
++    invoke-virtual {p0, v0, p2, v0, p2}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->setPaddingRelative(IIII)V
++
++    const-string v0, "volume_icon_background_size"
++
++    invoke-direct {p0, v0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->dimen(Ljava/lang/String;)I
++
++    move-result v0
++
++    new-instance v1, Landroid/widget/ImageView;
++
++    invoke-direct {v1, p1}, Landroid/widget/ImageView;-><init>(Landroid/content/Context;)V
++
++    const-string v2, "volume_icon_background"
++
++    const-string v3, "drawable"
++
++    invoke-direct {p0, v2, v3}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->id(Ljava/lang/String;Ljava/lang/String;)I
++
++    move-result v2
++
++    invoke-virtual {v1, v2}, Landroid/widget/ImageView;->setBackgroundResource(I)V
++
++    const-string v2, "onigiri_monitor_sun"
++
++    invoke-direct {p0, v2, v3}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->id(Ljava/lang/String;Ljava/lang/String;)I
++
++    move-result v2
++
++    invoke-virtual {v1, v2}, Landroid/widget/ImageView;->setImageResource(I)V
++
++    sget-object v2, Landroid/widget/ImageView$ScaleType;->CENTER_INSIDE:Landroid/widget/ImageView$ScaleType;
++
++    invoke-virtual {v1, v2}, Landroid/widget/ImageView;->setScaleType(Landroid/widget/ImageView$ScaleType;)V
++
++    const-string v2, "brightness_icon_size"
++
++    invoke-direct {p0, v2}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->dimen(Ljava/lang/String;)I
++
++    move-result v2
++
++    sub-int v2, v0, v2
++
++    div-int/lit8 v2, v2, 0x2
++
++    const/high16 v4, 0x40000000    # 2.0f
++
++    invoke-direct {p0, v4}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->dp(F)I
++
++    move-result v4
++
++    add-int/2addr v2, v4
++
++    invoke-virtual {v1, v2, v2, v2, v2}, Landroid/widget/ImageView;->setPadding(IIII)V
++
++    new-instance v2, Landroid/widget/LinearLayout$LayoutParams;
++
++    invoke-direct {v2, v0, v0}, Landroid/widget/LinearLayout$LayoutParams;-><init>(II)V
++
++    invoke-virtual {p0, v1, v2}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
++
++    new-instance v0, Landroid/widget/SeekBar;
++
++    invoke-direct {v0, p1}, Landroid/widget/SeekBar;-><init>(Landroid/content/Context;)V
++
++    iput-object v0, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mSlider:Landroid/widget/SeekBar;
++
++    const/16 v1, 0x64
++
++    invoke-virtual {v0, v1}, Landroid/widget/SeekBar;->setMax(I)V
++
++    const/4 v1, 0x0
++
++    invoke-virtual {v0, v1}, Landroid/widget/SeekBar;->setBackground(Landroid/graphics/drawable/Drawable;)V
++
++    invoke-virtual {v0, p2}, Landroid/widget/SeekBar;->setSplitTrack(Z)V
++
++    invoke-virtual {v0, p2, p2, p2, p2}, Landroid/widget/SeekBar;->setPaddingRelative(IIII)V
++
++    const-string v1, "volume_seekbar_drawable_expand"
++
++    invoke-direct {p0, v1, v3}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->id(Ljava/lang/String;Ljava/lang/String;)I
++
++    move-result v1
++
++    invoke-virtual {p1, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
++
++    move-result-object v1
++
++    invoke-virtual {v0, v1}, Landroid/widget/SeekBar;->setProgressDrawable(Landroid/graphics/drawable/Drawable;)V
++
++    const-string v1, "seekbar_thumb"
++
++    invoke-direct {p0, v1, v3}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->id(Ljava/lang/String;Ljava/lang/String;)I
++
++    move-result v1
++
++    invoke-virtual {p1, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
++
++    move-result-object v1
++
++    invoke-virtual {v0, v1}, Landroid/widget/SeekBar;->setThumb(Landroid/graphics/drawable/Drawable;)V
++
++    invoke-virtual {v0, p2}, Landroid/widget/SeekBar;->setThumbOffset(I)V
++
++    const-string v1, "qspanel_brightness_slider_talkback"
++
++    const-string v2, "string"
++
++    invoke-direct {p0, v1, v2}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->id(Ljava/lang/String;Ljava/lang/String;)I
++
++    move-result v1
++
++    invoke-virtual {p1, v1}, Landroid/content/Context;->getString(I)Ljava/lang/String;
++
++    move-result-object p1
++
++    invoke-virtual {v0, p1}, Landroid/widget/SeekBar;->setContentDescription(Ljava/lang/CharSequence;)V
++
++    invoke-virtual {v0, p0}, Landroid/widget/SeekBar;->setOnSeekBarChangeListener(Landroid/widget/SeekBar$OnSeekBarChangeListener;)V
++
++    new-instance p1, Landroid/widget/LinearLayout$LayoutParams;
++
++    const/4 v1, -0x2
++
++    const/high16 v2, 0x3f800000    # 1.0f
++
++    invoke-direct {p1, p2, v1, v2}, Landroid/widget/LinearLayout$LayoutParams;-><init>(IIF)V
++
++    const/high16 p2, 0x41400000    # 12.0f
++
++    invoke-direct {p0, p2}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->dp(F)I
++
++    move-result p2
++
++    invoke-virtual {p1, p2}, Landroid/widget/LinearLayout$LayoutParams;->setMarginStart(I)V
++
++    invoke-virtual {p0, v0, p1}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
++
++    return-void
++.end method
++
++.method private dimen(Ljava/lang/String;)I
++    .locals 2
++
++    invoke-virtual {p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v0
++
++    const-string v1, "dimen"
++
++    invoke-direct {p0, p1, v1}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->id(Ljava/lang/String;Ljava/lang/String;)I
++
++    move-result p0
++
++    invoke-virtual {v0, p0}, Landroid/content/res/Resources;->getDimensionPixelSize(I)I
++
++    move-result p0
++
++    return p0
++.end method
++
++.method private dp(F)I
++    .locals 0
++
++    invoke-virtual {p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->getResources()Landroid/content/res/Resources;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;
++
++    move-result-object p0
++
++    iget p0, p0, Landroid/util/DisplayMetrics;->density:F
++
++    mul-float/2addr p1, p0
++
++    invoke-static {p1}, Ljava/lang/Math;->round(F)I
++
++    move-result p0
++
++    return p0
++.end method
++
++.method private id(Ljava/lang/String;Ljava/lang/String;)I
++    .locals 1
++
++    invoke-virtual {p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->getContext()Landroid/content/Context;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v0
++
++    invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-virtual {v0, p1, p2, p0}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
++
++    move-result p0
++
++    return p0
++.end method
++
++.method private write()V
++    .locals 4
++
++    iget v0, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mPending:I
++
++    if-gez v0, :cond_0
++
++    return-void
++
++    :cond_0
++    invoke-virtual {p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->getContext()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v1, "onigiri_monitor_level"
++
++    iget v2, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mPending:I
++
++    invoke-static {v0, v1, v2}, Landroid/provider/Settings$Global;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
++
++    invoke-virtual {p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->getContext()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v1, "onigiri_monitor_adjust"
++
++    invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
++
++    move-result-wide v2
++
++    invoke-static {v0, v1, v2, v3}, Landroid/provider/Settings$Global;->putLong(Landroid/content/ContentResolver;Ljava/lang/String;J)Z
++
++    const/4 v0, -0x1
++
++    iput v0, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mPending:I
++
++    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
++
++    move-result-wide v0
++
++    iput-wide v0, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mWritten:J
++
++    return-void
++.end method
++
++
++# virtual methods
++.method protected onDetachedFromWindow()V
++    .locals 0
++
++    invoke-virtual {p0, p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->removeCallbacks(Ljava/lang/Runnable;)Z
++
++    invoke-super {p0}, Landroid/widget/LinearLayout;->onDetachedFromWindow()V
++
++    return-void
++.end method
++
++.method public onProgressChanged(Landroid/widget/SeekBar;IZ)V
++    .locals 2
++
++    if-nez p3, :cond_0
++
++    goto :goto_0
++
++    :cond_0
++    iput p2, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mPending:I
++
++    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
++
++    move-result-wide p1
++
++    iget-wide v0, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mWritten:J
++
++    sub-long/2addr p1, v0
++
++    const-wide/16 v0, 0x96
++
++    cmp-long p1, p1, v0
++
++    if-ltz p1, :cond_1
++
++    invoke-direct {p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->write()V
++
++    :cond_1
++    :goto_0
++    return-void
++.end method
++
++.method public onStartTrackingTouch(Landroid/widget/SeekBar;)V
++    .locals 0
++
++    const/4 p1, 0x1
++
++    iput-boolean p1, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mTracking:Z
++
++    return-void
++.end method
++
++.method public onStopTrackingTouch(Landroid/widget/SeekBar;)V
++    .locals 0
++
++    const/4 p1, 0x0
++
++    iput-boolean p1, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mTracking:Z
++
++    invoke-direct {p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->write()V
++
++    return-void
++.end method
++
++.method protected onWindowVisibilityChanged(I)V
++    .locals 0
++
++    invoke-super {p0, p1}, Landroid/widget/LinearLayout;->onWindowVisibilityChanged(I)V
++
++    invoke-virtual {p0, p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->removeCallbacks(Ljava/lang/Runnable;)Z
++
++    if-nez p1, :cond_0
++
++    invoke-virtual {p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->run()V
++
++    :cond_0
++    return-void
++.end method
++
++.method public run()V
++    .locals 9
++
++    const-string v0, "sys.onigiri.monitor.level"
++
++    const-string v1, ""
++
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v0
++
++    const-string v1, "\\d+"
++
++    invoke-virtual {v0, v1}, Ljava/lang/String;->matches(Ljava/lang/String;)Z
++
++    move-result v1
++
++    if-nez v1, :cond_1
++
++    const-string v2, "ready"
++
++    invoke-virtual {v0, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v2
++
++    if-eqz v2, :cond_0
++
++    goto :goto_0
++
++    :cond_0
++    const/16 v2, 0x8
++
++    goto :goto_1
++
++    :cond_1
++    :goto_0
++    const/4 v2, 0x0
++
++    :goto_1
++    invoke-virtual {p0, v2}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->setVisibility(I)V
++
++    iget-boolean v2, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mTracking:Z
++
++    const-wide/16 v3, 0x3e8
++
++    if-nez v2, :cond_3
++
++    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
++
++    move-result-wide v5
++
++    iget-wide v7, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mWritten:J
++
++    sub-long/2addr v5, v7
++
++    cmp-long v2, v5, v3
++
++    if-lez v2, :cond_3
++
++    iget-object v2, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mSlider:Landroid/widget/SeekBar;
++
++    if-eqz v1, :cond_2
++
++    invoke-static {v0}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
++
++    move-result v0
++
++    goto :goto_2
++
++    :cond_2
++    invoke-virtual {p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->getContext()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v1, "onigiri_monitor_level"
++
++    const/16 v5, 0x32
++
++    invoke-static {v0, v1, v5}, Landroid/provider/Settings$Global;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
++
++    move-result v0
++
++    :goto_2
++    invoke-virtual {v2, v0}, Landroid/widget/SeekBar;->setProgress(I)V
++
++    :cond_3
++    invoke-virtual {p0, p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->removeCallbacks(Ljava/lang/Runnable;)Z
++
++    invoke-virtual {p0, p0, v3, v4}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->postDelayed(Ljava/lang/Runnable;J)Z
++
++    return-void
++.end method

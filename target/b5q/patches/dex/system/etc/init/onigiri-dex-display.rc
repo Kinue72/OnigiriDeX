@@ -2,6 +2,8 @@
 # started yet (class hal starts on boot), so a monitor connected at boot gets these too.
 on early-boot
     write /sys/module/msm_drm/parameters/secdp_high_refresh 1
+    # Monitor brightness: system_server's MonitorBrightness writes the level the monitor gets.
+    chown system system /sys/module/msm_drm/parameters/secdp_ddc_brightness
 
 on early-boot && property:persist.sys.onigiri.dex_high_refresh=true
     write /sys/module/msm_drm/parameters/secdp_prefer_high_refresh 1

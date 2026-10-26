@@ -1,0 +1,64 @@
+From: Onigiri
+Subject: [PATCH] Set the wired monitor's brightness over DDC/CI
+
+diff --git a/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c b/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c
+--- a/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c
++++ b/vendor/qcom/opensource/display-drivers/msm/dp/dp_display.c
+@@ -434,6 +434,57 @@
+ 	return atomic_read(&dp->sec.hpd.val);
+ }
+ 
++/*
++ * Onigiri's monitor brightness service writes 0-100 here to set the wired monitor's brightness
++ * over DDC/CI (MCCS VCP 0x10). The write fails with -ENODEV without a monitor and with the AUX
++ * error when the monitor doesn't answer DDC/CI. The level is not read back: monitors and DP to
++ * HDMI adapters answer reads with "busy" for up to a second after a write.
++ */
++static int secdp_ddc_brightness = -1;
++
++static int secdp_ddc_brightness_set(const char *val, const struct kernel_param *kp)
++{
++	struct dp_display_private *dp = g_secdp_priv;
++	/* Set VCP Feature: source address, length, opcode, VCP code, value high, low, checksum */
++	u8 buf[7] = { 0x51, 0x84, 0x03, 0x10, 0x00 }, end;
++	struct i2c_msg msg = { .addr = 0x37, .len = sizeof(buf), .buf = buf };
++	struct i2c_msg stop = { .addr = 0x37, .flags = I2C_M_RD, .len = 1, .buf = &end };
++	int i, ret, level;
++
++	ret = kstrtoint(val, 10, &level);
++	if (ret || level < 0 || level > 100)
++		return -EINVAL;
++	/* AUX transfers report success once the cable or HPD is gone. */
++	if (!dp || !secdp_get_cable_status() || !secdp_get_hpd_status())
++		return -ENODEV;
++
++	/* ponytail: assumes the monitor's maximum is 100, as MCCS monitors report */
++	buf[5] = level;
++	buf[6] = 0x6e; /* the checksum starts with the monitor's write address */
++	for (i = 0; i < 6; i++)
++		buf[6] ^= buf[i];
++
++	ret = i2c_transfer(&dp->aux->drm_aux->ddc, &msg, 1);
++	if (ret != 1)
++		return ret < 0 ? ret : -EIO;
++	/*
++	 * This AUX controller ends I2C writes without a STOP, so the monitor took the next commands
++	 * as more of this one and, a few writes later, stopped listening until a read. A 1-byte read
++	 * ends the transaction; its byte means nothing.
++	 */
++	i2c_transfer(&dp->aux->drm_aux->ddc, &stop, 1);
++
++	secdp_ddc_brightness = level;
++	return 0;
++}
++
++static const struct kernel_param_ops secdp_ddc_brightness_ops = {
++	.set = secdp_ddc_brightness_set,
++	.get = param_get_int,
++};
++module_param_cb(secdp_ddc_brightness, &secdp_ddc_brightness_ops, &secdp_ddc_brightness, 0644);
++MODULE_PARM_DESC(secdp_ddc_brightness, "Wired monitor brightness 0-100 over DDC/CI; last value set");
++
+ bool secdp_get_poor_connection_status(void)
+ {
+ 	struct dp_display_private *dp;
