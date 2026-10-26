@@ -7,7 +7,6 @@ sys.onigiri.monitor.level holds a level or "ready" (a monitor is on and hasn't r
 writes onigiri_monitor_level, then onigiri_monitor_adjust so an unchanged level still counts:
 services.jar's MonitorBrightness sets that level, and with Auto on learns it for the light of the
 moment.
-
 diff --git a/res/drawable/onigiri_monitor_sun.xml b/res/drawable/onigiri_monitor_sun.xml
 new file mode 100644
 --- /dev/null
@@ -35,7 +34,7 @@ diff --git a/smali/moe/foss/onigiri/dex/MonitorBrightnessRow.smali b/smali/moe/f
 new file mode 100644
 --- /dev/null
 +++ b/smali/moe/foss/onigiri/dex/MonitorBrightnessRow.smali
-@@ -0,0 +1,481 @@
+@@ -0,0 +1,497 @@
 +.class public Lmoe/foss/onigiri/dex/MonitorBrightnessRow;
 +.super Landroid/widget/LinearLayout;
 +.source "MonitorBrightnessRow.java"
@@ -72,6 +71,10 @@ new file mode 100644
 +    const/4 p2, -0x1
 +
 +    iput p2, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mPending:I
++
++    const-wide/16 v0, -0x3e8
++
++    iput-wide v0, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mWritten:J
 +
 +    const/4 p2, 0x0
 +
@@ -434,7 +437,7 @@ new file mode 100644
 +.end method
 +
 +.method public run()V
-+    .locals 4
++    .locals 9
 +
 +    const-string v0, "sys.onigiri.monitor.level"
 +
@@ -476,7 +479,21 @@ new file mode 100644
 +
 +    iget-boolean v2, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mTracking:Z
 +
++    const-wide/16 v3, 0x3e8
++
 +    if-nez v2, :cond_3
++
++    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
++
++    move-result-wide v5
++
++    iget-wide v7, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mWritten:J
++
++    sub-long/2addr v5, v7
++
++    cmp-long v2, v5, v3
++
++    if-lez v2, :cond_3
 +
 +    iget-object v2, p0, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->mSlider:Landroid/widget/SeekBar;
 +
@@ -499,9 +516,9 @@ new file mode 100644
 +
 +    const-string v1, "onigiri_monitor_level"
 +
-+    const/16 v3, 0x32
++    const/16 v5, 0x32
 +
-+    invoke-static {v0, v1, v3}, Landroid/provider/Settings$Global;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
++    invoke-static {v0, v1, v5}, Landroid/provider/Settings$Global;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
 +
 +    move-result v0
 +
@@ -511,9 +528,7 @@ new file mode 100644
 +    :cond_3
 +    invoke-virtual {p0, p0}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->removeCallbacks(Ljava/lang/Runnable;)Z
 +
-+    const-wide/16 v0, 0x3e8
-+
-+    invoke-virtual {p0, p0, v0, v1}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->postDelayed(Ljava/lang/Runnable;J)Z
++    invoke-virtual {p0, p0, v3, v4}, Lmoe/foss/onigiri/dex/MonitorBrightnessRow;->postDelayed(Ljava/lang/Runnable;J)Z
 +
 +    return-void
 +.end method
