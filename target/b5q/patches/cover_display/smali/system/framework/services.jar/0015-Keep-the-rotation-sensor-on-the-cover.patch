@@ -1,0 +1,51 @@
+From: Onigiri
+Subject: [PATCH] Keep the rotation sensor on the cover
+
+The sensor hub reads rotation, and reports the accelerometer apps get, for
+the screen it is told is active (SensorManager.setActiveScreenParameter: 1 the
+cover, 0 the inner screen). Samsung switches it to the inner screen from
+HALF_OPENED. The accelerometer sits in the cover's half, so the cover's frame
+is right at every hinge angle, and the inner one turned the open phone's cover
+upside down in both portrait poses. The hub also drops a switch sent while its
+rotation sensor is off, so folding with the screen off left the folded cover
+upside down the same way. Always pick the cover, and send it again each time
+the rotation sensor turns on.
+
+diff --git a/smali_classes2/com/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15.smali b/smali_classes2/com/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15.smali
+--- a/smali_classes2/com/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15.smali
++++ b/smali_classes2/com/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15.smali
+@@ -32,12 +32,16 @@
+ 
+     iget-object v0, p0, Lcom/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15;->f$0:Lcom/android/server/policy/PhoneWindowManagerExt;
+ 
+-    iget-boolean p0, p0, Lcom/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15;->f$1:Z
+-
+     iget-object v0, v0, Lcom/android/server/policy/PhoneWindowManagerExt;->mSensorManager:Landroid/hardware/SensorManager;
+ 
+     if-eqz v0, :cond_0
+ 
++    # Onigiri: the sensor hub reads rotation and the accelerometer for the screen set here
++    # (1 the cover, 0 the inner screen). Samsung picks the inner screen from HALF_OPENED, but the
++    # accelerometer sits in the cover's half, so the cover's frame stays right at every hinge
++    # angle and the inner one turns the cover upside down. Always pick the cover.
++    const/4 p0, 0x1
++
+     invoke-virtual {v0, p0}, Landroid/hardware/SensorManager;->setActiveScreenParameter(I)V
+ 
+     :cond_0
+diff --git a/smali_classes2/com/android/server/wm/WindowOrientationListener.smali b/smali_classes2/com/android/server/wm/WindowOrientationListener.smali
+--- a/smali_classes2/com/android/server/wm/WindowOrientationListener.smali
++++ b/smali_classes2/com/android/server/wm/WindowOrientationListener.smali
+@@ -306,6 +306,12 @@
+ 
+     invoke-virtual {v1, v3, v4, v5, v6}, Landroid/hardware/SensorManager;->registerListener(Landroid/hardware/SensorEventListener;Landroid/hardware/Sensor;ILandroid/os/Handler;)Z
+ 
++    # Onigiri: keep the hub on the cover (see PhoneWindowManagerExt$$ExternalSyntheticLambda15).
++    # It drops a switch sent while this sensor is off, so send it again each time it turns on.
++    const/4 v3, 0x1
++
++    invoke-virtual {v1, v3}, Landroid/hardware/SensorManager;->setActiveScreenParameter(I)V
++
+     :goto_0
+     iput-boolean v2, p0, Lcom/android/server/wm/WindowOrientationListener;->mEnabled:Z
+ 
