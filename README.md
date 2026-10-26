@@ -200,8 +200,10 @@ columns, a grid, or a priority grid.
   learns from the slider: move it in the dark and nights stay that way, move
   it in sunlight and days do, without changing the rest. It brightens within
   about 2 seconds and dims over about 8, so a tunnel or a shadow doesn't make
-  it flicker; Auto's changes fade over a second and a half, while the slider
-  changes the monitor within about half a second. The page shows
+  it flicker, and it waits for the light to change by 10% brighter or 20%
+  darker, so steady light holds a steady level. Auto's changes fade over a
+  second and a half, while the slider changes the monitor within about half a
+  second and teaches Auto where it stops. The page shows
   the light and the monitor's level live. The monitor needs DDC/CI turned on
   in its own menu; some USB-C to HDMI adapters don't pass it through, and then
   the row says the monitor isn't supported.
