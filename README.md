@@ -16,6 +16,9 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on 
 - Bluetooth headphones, speakers and cars no longer start your music by
   themselves when they connect. Start it on the phone; after that, their play
   and pause buttons work as usual.
+- Media stays on a connected Bluetooth device when a monitor connects, instead
+  of switching to the monitor. You can still pick another output in Media
+  output.
 - Comes with root access (KernelSU + susFS) and
   [built-in app privacy components](#built-in-components).
 
