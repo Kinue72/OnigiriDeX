@@ -194,6 +194,11 @@ columns, a grid, or a priority grid.
 
 ![DeX monitor settings](docs/images/onigiri-settings-display.png)
 
+When the phone restarts on a powered dock (like Samsung's DeX Pad), some docks
+keep the monitor dark until the cable is plugged in again. If the monitor
+hasn't come on about 15 seconds after the phone starts, Onigiri reconnects the
+USB-C port by itself. USB devices and charging drop out for a moment.
+
 - **External display mode**: pick the resolution and refresh rate for your
   monitor. The list shows what your monitor supports. Unplug and plug the
   cable back in after changing it. **Automatic** uses the monitor's default,
