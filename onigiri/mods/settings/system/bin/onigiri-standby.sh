@@ -284,30 +284,57 @@ if [ -f $CC_LOCK ]; then
     restore_cc
 fi
 
-# Started on power with something on USB-C (autoboot in the car), with car standby on or zone
-# apps set: a powered monitor stays USB host after the boot, ignores data role swaps and DeX
-# never starts (nor do its zone apps), so replug it. Once per boot (sys.* props reset on
-# reboot), not when the switch is toggled or the service restarts; booting on a computer's USB
-# costs two short disconnects. With neither set the flag stays unset, so switching car standby
-# on later in the boot still checks. The data role is settled long before boot completes.
-if [ "$(getprop sys.onigiri.docked_boot)" != 1 ] && powered && [ -e $TYPEC-partner ] &&
-    { [ "$(getprop persist.sys.onigiri.car_standby)" = true ] || [ -n "$(zone_apps)" ]; }; then
-    setprop sys.onigiri.docked_boot 1
+# dp_connected SECONDS: whether the monitor's DisplayPort link comes up within SECONDS.
+DP_STATUS=/sys/class/drm/card0-DP-1/status
+dp_connected() {
+    for i in $(seq $1); do
+        [ "$(cat $DP_STATUS 2>/dev/null)" = connected ] && return 0
+        sleep 1
+    done
+    return 1
+}
+
+# Started on power with something on USB-C (autoboot in the car), once per boot (sys.* props
+# reset on reboot), not when a switch is toggled or the service restarts. The data role is
+# settled long before boot completes.
+# - Docked as a USB device, with car standby on or zone apps set: a powered monitor stays USB
+#   host after the boot, ignores data role swaps and DeX never starts (nor do its zone apps), so
+#   replug it. Booting on a computer's USB costs two short disconnects, so with neither set the
+#   flag stays unset and switching car standby on later in the boot still checks.
+# - Docked as the USB host (a powered dock or monitor): the PD chip keeps the cable attached
+#   through a reboot, and a dock that saw the phone go down (Samsung's DeX Pad, 04e8:a020) answers
+#   DisplayPort with HPD low until it is replugged, so the monitor stays dark. Replug when
+#   DisplayPort hasn't come up 15 s after boot; a working dock links within a few seconds of
+#   DisplayPort starting, well before boot completes, and a replugged one about 12 s later.
+if [ "$(getprop sys.onigiri.docked_boot)" != 1 ] && powered && [ -e $TYPEC-partner ]; then
     case "$(cat $TYPEC/data_role)" in
         *"[device]"*)
-            log "docked as a USB device after boot: replugging"
-            # The chip now and then ignores the CC command: replug again if it stays a device.
-            for try in 1 2; do
-                replug_usb
-                for i in 1 2 3 4 5 6 7 8 9 10; do
-                    sleep 1
-                    case "$(cat $TYPEC/data_role)" in *"[host]"*) break 2 ;; esac
+            if [ "$(getprop persist.sys.onigiri.car_standby)" = true ] || [ -n "$(zone_apps)" ]; then
+                setprop sys.onigiri.docked_boot 1
+                log "docked as a USB device after boot: replugging"
+                # The chip now and then ignores the CC command: replug again if it stays a device.
+                for try in 1 2; do
+                    replug_usb
+                    for i in 1 2 3 4 5 6 7 8 9 10; do
+                        sleep 1
+                        case "$(cat $TYPEC/data_role)" in *"[host]"*) break 2 ;; esac
+                    done
                 done
-            done
-            for i in 1 2 3 4 5 6 7 8 9 10; do
-                powered && break
-                sleep 1
-            done
+                for i in 1 2 3 4 5 6 7 8 9 10; do
+                    powered && break
+                    sleep 1
+                done
+            fi
+            ;;
+        *"[host]"*)
+            setprop sys.onigiri.docked_boot 1
+            if [ -e $DP_STATUS ] && ! dp_connected 15; then
+                log "docked with DisplayPort down after boot: replugging"
+                for try in 1 2; do
+                    replug_usb
+                    dp_connected 25 && break
+                done
+            fi
             ;;
     esac
 fi

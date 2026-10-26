@@ -19,6 +19,10 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on 
 - Media stays on a connected Bluetooth device when a monitor connects, instead
   of switching to the monitor. You can still pick another output in Media
   output.
+- Skips the **unlocked bootloader warning** when it starts, so it boots about
+  9 seconds sooner and also starts while the power key is held down (for a
+  build without a battery that uses a power-on board). The warning still
+  shows when updating and on the first start after an update.
 - Comes with root access (KernelSU + susFS) and
   [built-in app privacy components](#built-in-components).
 
@@ -174,7 +178,9 @@ columns, a grid, or a priority grid.
 ![Sleep when folded, power on and standby switches, and the standby shutdown time](docs/images/onigiri-settings-car.png)
 
 - **Power on when power connected**: when the phone is off and gets power, it
-  turns on by itself once the battery reaches 5%.
+  turns on by itself once the battery reaches 5%. With this off, a phone that
+  is off and gets plugged in starts for about 15 seconds before it shows the
+  charging screen.
 - **Standby when unplugged**: when the car turns off, the screen turns off
   right away. The phone waits a minute and then goes into a deep sleep to save
   battery. It turns on airplane mode, turns off Wi-Fi, Bluetooth and location,
@@ -187,6 +193,11 @@ columns, a grid, or a priority grid.
 ### Monitor settings
 
 ![DeX monitor settings](docs/images/onigiri-settings-display.png)
+
+When the phone restarts on a powered dock (like Samsung's DeX Pad), some docks
+keep the monitor dark until the cable is plugged in again. If the monitor
+hasn't come on about 15 seconds after the phone starts, Onigiri reconnects the
+USB-C port by itself. USB devices and charging drop out for a moment.
 
 - **External display mode**: pick the resolution and refresh rate for your
   monitor. The list shows what your monitor supports. Unplug and plug the
