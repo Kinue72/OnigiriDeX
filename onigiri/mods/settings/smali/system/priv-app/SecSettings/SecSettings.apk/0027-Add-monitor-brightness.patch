@@ -1,13 +1,13 @@
 From: Onigiri
 Subject: [PATCH] Add Monitor brightness to Onigiri settings
 
-Display settings gets a Monitor brightness row (shown when the kernel has secdp_ddc_brightness)
-that opens its page through RootModSettingsFragment: an Auto switch, the live light and monitor
-level, and a Brightness slider drawn like Display > Brightness's (progressBarMode expand) with its
-level on the title line. Like the DeX panel's slider, it sets the level with Auto off and teaches
-Auto with it on. MonitorBrightnessPreferenceController stores onigiri_monitor_auto and _level in
-Settings.Global for services.jar's MonitorBrightness and reads its sys.onigiri.monitor.level and
-.lux back.
+Display settings gets a Monitor brightness row (shown when the kernel has secdp_ddc_brightness) that
+opens its page through RootModSettingsFragment: an Auto switch, the live light and monitor level,
+and a Brightness slider drawn like Display > Brightness's (progressBarMode expand) with its level on
+the title line. Like the DeX panel's slider, it sets the level with Auto off and teaches Auto with
+it on. MonitorBrightnessPreferenceController stores onigiri_monitor_auto, _level and _adjust (the
+time, so an unchanged level still counts) in Settings.Global for services.jar's MonitorBrightness
+and reads its sys.onigiri.monitor.level and .lux back.
 
 diff --git a/res/layout/onigiri_monitor_readout.xml b/res/layout/onigiri_monitor_readout.xml
 new file mode 100644
@@ -116,7 +116,7 @@ diff --git a/smali_classes4/moe/foss/onigiri/settings/MonitorBrightnessPreferenc
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes4/moe/foss/onigiri/settings/MonitorBrightnessPreferenceController.smali
-@@ -0,0 +1,740 @@
+@@ -0,0 +1,754 @@
 +.class public Lmoe/foss/onigiri/settings/MonitorBrightnessPreferenceController;
 +.super Lcom/android/settings/core/SliderPreferenceController;
 +.source "MonitorBrightnessPreferenceController.java"
@@ -128,6 +128,8 @@ new file mode 100644
 +
 +
 +# static fields
++.field private static final ADJUST:Ljava/lang/String; = "onigiri_monitor_adjust"
++
 +.field private static final AUTO:Ljava/lang/String; = "onigiri_monitor_auto"
 +
 +.field private static final LEVEL:Ljava/lang/String; = "onigiri_monitor_level"
@@ -721,15 +723,27 @@ new file mode 100644
 +.end method
 +
 +.method public setSliderPosition(I)Z
-+    .locals 1
++    .locals 2
++
++    invoke-direct {p0}, Lmoe/foss/onigiri/settings/MonitorBrightnessPreferenceController;->resolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v1, "onigiri_monitor_level"
++
++    invoke-static {v0, v1, p1}, Landroid/provider/Settings$Global;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
 +
 +    invoke-direct {p0}, Lmoe/foss/onigiri/settings/MonitorBrightnessPreferenceController;->resolver()Landroid/content/ContentResolver;
 +
 +    move-result-object p0
 +
-+    const-string v0, "onigiri_monitor_level"
++    const-string p1, "onigiri_monitor_adjust"
 +
-+    invoke-static {p0, v0, p1}, Landroid/provider/Settings$Global;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
++    invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
++
++    move-result-wide v0
++
++    invoke-static {p0, p1, v0, v1}, Landroid/provider/Settings$Global;->putLong(Landroid/content/ContentResolver;Ljava/lang/String;J)Z
 +
 +    move-result p0
 +
