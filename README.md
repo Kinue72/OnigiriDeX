@@ -13,6 +13,9 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on 
   settings to go back to a picture there.
 - Can split the DeX desktop into **zones** and open your favourite apps in them.
 - Can work as a **car screen**: it turns on with the car and sleeps when the car turns off.
+- Bluetooth headphones, speakers and cars no longer start your music by
+  themselves when they connect. Start it on the phone; after that, their play
+  and pause buttons work as usual.
 - Comes with root access (KernelSU + susFS) and
   [built-in app privacy components](#built-in-components).
 

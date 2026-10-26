@@ -1,0 +1,191 @@
+From: Onigiri
+Subject: [PATCH] Ignore Bluetooth autoplay on connect
+
+diff --git a/smali/com/android/server/media/MediaSessionService$SessionManagerImpl.smali b/smali/com/android/server/media/MediaSessionService$SessionManagerImpl.smali
+index 18fbadc..e6e14cf 100644
+--- a/smali/com/android/server/media/MediaSessionService$SessionManagerImpl.smali
++++ b/smali/com/android/server/media/MediaSessionService$SessionManagerImpl.smali
+@@ -1488,6 +1488,16 @@
+ 
+     move-result v15
+ 
++    # Onigiri: ignore the play and pause keys a Bluetooth device sends by itself after it connects.
++    invoke-static {v15, v11}, Lcom/android/server/media/OnigiriBtAutoplayGuard;->blocks(ILandroid/view/KeyEvent;)Z
++
++    move-result v4
++
++    if-eqz v4, :onigiri_dispatch
++
++    return-void
++
++    :onigiri_dispatch
+     invoke-static {}, Landroid/os/Binder;->clearCallingIdentity()J
+ 
+     move-result-wide v16
+diff --git a/smali/com/android/server/media/MediaSessionService.smali b/smali/com/android/server/media/MediaSessionService.smali
+index 13fe1c5..5c9676f 100644
+--- a/smali/com/android/server/media/MediaSessionService.smali
++++ b/smali/com/android/server/media/MediaSessionService.smali
+@@ -2271,6 +2271,8 @@
+ .method public final onSessionPlaybackStateChanged(Lcom/android/server/media/MediaSessionRecordImpl;ZLandroid/media/session/PlaybackState;)V
+     .locals 5
+ 
++    invoke-static {p3}, Lcom/android/server/media/OnigiriBtAutoplayGuard;->onPlaybackState(Landroid/media/session/PlaybackState;)V
++
+     const-string/jumbo v0, "onSessionPlaybackStateChanged: record="
+ 
+     iget-object v1, p0, Lcom/android/server/media/MediaSessionService;->mLock:Ljava/lang/Object;
+@@ -2578,6 +2580,8 @@
+ 
+     invoke-virtual {v1, v2, v0}, Landroid/content/Context;->registerReceiver(Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;)Landroid/content/Intent;
+ 
++    invoke-static {v1}, Lcom/android/server/media/OnigiriBtAutoplayGuard;->register(Landroid/content/Context;)V
++
+     const-class v0, Landroid/app/ActivityManagerInternal;
+ 
+     invoke-static {v0}, Lcom/android/server/LocalServices;->getService(Ljava/lang/Class;)Ljava/lang/Object;
+diff --git a/smali/com/android/server/media/OnigiriBtAutoplayGuard.smali b/smali/com/android/server/media/OnigiriBtAutoplayGuard.smali
+new file mode 100644
+index 0000000..7ea3885
+--- /dev/null
++++ b/smali/com/android/server/media/OnigiriBtAutoplayGuard.smali
+@@ -0,0 +1,139 @@
++# Onigiri: headphones, speakers and car kits often send AVRCP PLAY by themselves after they
++# connect, which starts the last media app. Samsung's stack even replays one sent before A2DP is
++# up, and a car receiver (DSP audio5.0) kept sending PLAY and PAUSE every 3 s until music played.
++# After an A2DP connection with nothing playing, ignore Bluetooth PLAY and PAUSE until a media
++# session starts playing; from then on the device's keys work as usual.
++.class public final Lcom/android/server/media/OnigiriBtAutoplayGuard;
++.super Landroid/content/BroadcastReceiver;
++
++
++# static fields
++.field private static volatile sBlocked:Z
++
++
++# direct methods
++.method public constructor <init>()V
++    .locals 0
++
++    invoke-direct {p0}, Landroid/content/BroadcastReceiver;-><init>()V
++
++    return-void
++.end method
++
++.method static blocks(ILandroid/view/KeyEvent;)Z
++    .locals 1
++
++    invoke-virtual {p1}, Landroid/view/KeyEvent;->getKeyCode()I
++
++    move-result p1
++
++    sget-boolean v0, Lcom/android/server/media/OnigiriBtAutoplayGuard;->sBlocked:Z
++
++    if-eqz v0, :cond_1
++
++    const/16 v0, 0x3ea
++
++    if-ne p0, v0, :cond_1
++
++    const/16 p0, 0x7e
++
++    if-eq p1, p0, :cond_0
++
++    const/16 p0, 0x7f
++
++    if-ne p1, p0, :cond_1
++
++    :cond_0
++    const/4 p0, 0x1
++
++    return p0
++
++    :cond_1
++    const/4 p0, 0x0
++
++    return p0
++.end method
++
++.method static onPlaybackState(Landroid/media/session/PlaybackState;)V
++    .locals 1
++
++    if-eqz p0, :cond_0
++
++    invoke-virtual {p0}, Landroid/media/session/PlaybackState;->getState()I
++
++    move-result p0
++
++    const/4 v0, 0x3
++
++    if-ne p0, v0, :cond_0
++
++    const/4 p0, 0x0
++
++    sput-boolean p0, Lcom/android/server/media/OnigiriBtAutoplayGuard;->sBlocked:Z
++
++    :cond_0
++    return-void
++.end method
++
++.method static register(Landroid/content/Context;)V
++    .locals 3
++
++    new-instance v0, Lcom/android/server/media/OnigiriBtAutoplayGuard;
++
++    invoke-direct {v0}, Lcom/android/server/media/OnigiriBtAutoplayGuard;-><init>()V
++
++    new-instance v1, Landroid/content/IntentFilter;
++
++    const-string v2, "android.bluetooth.a2dp.profile.action.CONNECTION_STATE_CHANGED"
++
++    invoke-direct {v1, v2}, Landroid/content/IntentFilter;-><init>(Ljava/lang/String;)V
++
++    invoke-virtual {p0, v0, v1}, Landroid/content/Context;->registerReceiver(Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;)Landroid/content/Intent;
++
++    return-void
++.end method
++
++
++# virtual methods
++.method public onReceive(Landroid/content/Context;Landroid/content/Intent;)V
++    .locals 1
++
++    const-string p0, "android.bluetooth.profile.extra.STATE"
++
++    const/4 v0, 0x0
++
++    invoke-virtual {p2, p0, v0}, Landroid/content/Intent;->getIntExtra(Ljava/lang/String;I)I
++
++    move-result p0
++
++    const/4 p2, 0x2
++
++    if-ne p0, p2, :cond_0
++
++    const-class p0, Landroid/media/AudioManager;
++
++    invoke-virtual {p1, p0}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++
++    move-result-object p0
++
++    check-cast p0, Landroid/media/AudioManager;
++
++    invoke-virtual {p0}, Landroid/media/AudioManager;->isMusicActive()Z
++
++    move-result p0
++
++    if-nez p0, :cond_0
++
++    const/4 p0, 0x1
++
++    sput-boolean p0, Lcom/android/server/media/OnigiriBtAutoplayGuard;->sBlocked:Z
++
++    const-string p0, "MediaSessionService"
++
++    const-string p1, "Onigiri: ignoring Bluetooth play and pause until media plays"
++
++    invoke-static {p0, p1}, Landroid/util/Slog;->i(Ljava/lang/String;Ljava/lang/String;)I
++
++    :cond_0
++    return-void
++.end method
