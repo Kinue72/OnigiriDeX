@@ -420,7 +420,7 @@ diff --git a/smali_classes2/moe/foss/onigiri/MonitorBrightness.smali b/smali_cla
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes2/moe/foss/onigiri/MonitorBrightness.smali
-@@ -0,0 +1,1866 @@
+@@ -0,0 +1,1872 @@
 +.class public final Lmoe/foss/onigiri/MonitorBrightness;
 +.super Ljava/lang/Object;
 +.source "MonitorBrightness.java"
@@ -2084,6 +2084,12 @@ new file mode 100644
 +    iget-object v0, p0, Lmoe/foss/onigiri/MonitorBrightness;->mHandler:Landroid/os/Handler;
 +
 +    iget-object v5, p0, Lmoe/foss/onigiri/MonitorBrightness;->mPublish:Ljava/lang/Runnable;
++
++    invoke-virtual {v0, v5}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
++
++    iget-object v0, p0, Lmoe/foss/onigiri/MonitorBrightness;->mHandler:Landroid/os/Handler;
++
++    iget-object v5, p0, Lmoe/foss/onigiri/MonitorBrightness;->mLearn:Ljava/lang/Runnable;
 +
 +    invoke-virtual {v0, v5}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 +
