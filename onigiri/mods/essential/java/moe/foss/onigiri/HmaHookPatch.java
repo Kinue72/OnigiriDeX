@@ -6,8 +6,8 @@ import java.util.Arrays;
 import java.util.zip.Adler32;
 
 /**
- * Adapter 2: prepare oss-173's original-call trampoline before publishing its hook, and drop the
- * forced GC from its boot-time preset scan.
+ * Adapter 3: prepare oss-173's original-call trampoline before publishing its hook (adapter 2),
+ * and drop the forced GC from its boot-time preset scan.
  */
 final class HmaHookPatch {
     private static byte[] hex(String text) {
@@ -28,8 +28,8 @@ final class HmaHookPatch {
         System.arraycopy(calls, 0, dex, 0x655ae, calls.length);
         dex[0x655ae + 32] = 0x32; // Pair.second boxes v2/v3 instead of p0/p1.
         // AppPresets.readManifest runs System.gc() and drops its manifest cache whenever
-        // freeMemory() < 2 MB, which its own churn hits every manifest. The blocking GCs stretch the
-        // scan from seconds to minutes on a busy boot, past the loader's deadline. 0 never matches.
+        // freeMemory() < 2 MB, which its own allocation churn keeps setting off. On a busy boot the
+        // repeated blocking GCs can keep the scan running past the loader's deadline. 0 never matches.
         Arrays.fill(dex, 0x7a77c, 0x7a780, (byte) 0); // const-wide/32 v3, 0x1f4000
         MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
         sha1.update(dex, 32, dex.length - 32);

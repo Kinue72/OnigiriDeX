@@ -28,12 +28,13 @@ SELinux remains enforcing, and upstream crash status (work mode 4) stays unavail
 HMA's pinned AndroidVMTools revision publishes a hook before preparing its
 original-call trampoline. A concurrent Binder call can recursively re-enter the
 hook and crash system_server. Adapter 2 reverses those two operations during
-extraction. Its boot-time preset scan also calls `System.gc()` and clears its
-manifest cache whenever `freeMemory()` drops below 2 MB, which its own allocations
-cause on nearly every manifest. On a busy boot those blocking GCs stretched the
-scan past the loader's deadline, and the guard then turned HMA off. Adapter 2
+extraction. HMA's boot-time preset scan also calls `System.gc()` and clears its
+manifest cache whenever `freeMemory()` drops below 2 MB, and its own allocation
+churn keeps setting that off. On a busy boot, the repeated blocking GCs and
+evictions can keep the scan running past the loader's deadline. That is the
+likely cause of a stalled Flip5 boot whose guard then turned HMA off. Adapter 3
 sets that threshold to 0, which cut a from-scratch scan on the Flip5 from 12.7 s
-to 4.3 s with identical presets. `HmaHookPatch` checks the complete input and
+with 15 forced GCs to 4.3 s with none, and the presets came out identical. `HmaHookPatch` checks the complete input and
 output dex SHA-256, changes only the two calls, the result registers and that
 constant, and repairs the dex header checksums. The archive and signed manager stay unchanged. Both bundled builds
 and downloaded updates use this same extractor. Unknown backend dex versions
@@ -102,7 +103,7 @@ A ROM carrying a newer release or different adapter supersedes an older override
 
 The feed's `adapter` is a compatibility contract, not an upstream version:
 
-- HMA adapter 2 requires the reviewed oss-173 backend dex, its hook-order fix and GC patch,
+- HMA adapter 3 requires the reviewed oss-173 backend dex, its hook-order fix and GC patch,
   no-argument `ZygoteEntry.main()`, manager signing identity, config schema 93,
   and current status.json semantics.
 - TEE adapter 1 requires the v3.2 entry point, current-directory injector
