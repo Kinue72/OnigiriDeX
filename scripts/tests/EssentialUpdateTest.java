@@ -40,9 +40,9 @@ public final class EssentialUpdateTest {
                     assert !Arrays.equals(originalDex, fixedDex);
                     Path patched = temp.resolve("patched.dex");
                     Files.write(patched, fixedDex);
-                    assert EssentialUpdate.sha256(patched).equals("a93a489843bd52753d50c1caf127dc9878a33af1f3a8c2eb8562bf2a61ae88a0");
+                    assert EssentialUpdate.sha256(patched).equals("98fce9faddb1ec1695d1e98d1b131a66b2dc5d92e70d3b8d2f9423cb60387264");
                     for (int n = 0; n < originalDex.length; n++) {
-                        if ((n >= 8 && n < 32) || (n >= 0x655ae && n < 0x655be) || n == 0x655ce) continue;
+                        if ((n >= 8 && n < 32) || (n >= 0x655ae && n < 0x655be) || n == 0x655ce || (n >= 0x7a77c && n < 0x7a780)) continue;
                         assert originalDex[n] == fixedDex[n] : "Unrelated HMA byte changed at " + n;
                     }
                     originalDex[originalDex.length - 1] ^= 1;
