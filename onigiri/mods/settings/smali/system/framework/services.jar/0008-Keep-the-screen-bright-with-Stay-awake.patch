@@ -1,0 +1,54 @@
+From: Onigiri
+Subject: [PATCH] Keep the screen bright while Stay awake holds it on
+
+Developer options > Stay awake only kept the screen from turning off while charging: at the screen
+timeout it still dimmed, and stayed dim. The screen policy now treats Stay awake like a brightness
+boost, so a charging phone keeps its normal brightness. The power button still turns it off.
+
+diff --git a/smali_classes2/com/android/server/power/PowerManagerService.smali b/smali_classes2/com/android/server/power/PowerManagerService.smali
+--- a/smali_classes2/com/android/server/power/PowerManagerService.smali
++++ b/smali_classes2/com/android/server/power/PowerManagerService.smali
+@@ -12607,6 +12607,21 @@
+     return-object p0
+ .end method
+ 
++# Stay awake (stay_on_while_plugged_in) only kept the screen from turning off: it still dimmed at
++# the screen timeout. While it holds the screen on, ask for full brightness like a brightness boost.
++.method public final onigiriBrightBoostLocked()Z
++    .locals 1
++
++    iget-boolean v0, p0, Lcom/android/server/power/PowerManagerService;->mScreenBrightnessBoostInProgress:Z
++
++    if-nez v0, :onigiri_bright
++
++    iget-boolean v0, p0, Lcom/android/server/power/PowerManagerService;->mStayOn:Z
++
++    :onigiri_bright
++    return v0
++.end method
++
+ .method public getDesiredScreenPolicyLocked(I)I
+     .locals 8
+ 
+@@ -12626,7 +12641,9 @@
+ 
+     iget-boolean v3, p0, Lcom/android/server/power/PowerManagerService;->mBootCompleted:Z
+ 
+-    iget-boolean v4, p0, Lcom/android/server/power/PowerManagerService;->mScreenBrightnessBoostInProgress:Z
++    invoke-virtual {p0}, Lcom/android/server/power/PowerManagerService;->onigiriBrightBoostLocked()Z
++
++    move-result v4
+ 
+     iget-boolean v5, p0, Lcom/android/server/power/PowerManagerService;->mBrightWhenDozingConfig:Z
+ 
+@@ -19501,7 +19518,9 @@
+ 
+     move/from16 v17, v10
+ 
+-    iget-boolean v10, v0, Lcom/android/server/power/PowerManagerService;->mScreenBrightnessBoostInProgress:Z
++    invoke-virtual {v0}, Lcom/android/server/power/PowerManagerService;->onigiriBrightBoostLocked()Z
++
++    move-result v10
+ 
+     move/from16 v18, v2
+ 
