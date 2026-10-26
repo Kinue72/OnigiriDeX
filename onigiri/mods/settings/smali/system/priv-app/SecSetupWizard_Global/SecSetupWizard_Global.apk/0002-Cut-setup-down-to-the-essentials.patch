@@ -2,16 +2,16 @@ From: Onigiri
 Subject: [PATCH] Cut setup down to welcome, Wi-Fi, date and time, screen lock and done
 
 diff --git a/res/raw/custom_wizard_script.xml b/res/raw/custom_wizard_script.xml
-index cdd8752..1f0a859 100644
+index cdd8752..b0c54f8 100644
 --- a/res/raw/custom_wizard_script.xml
 +++ b/res/raw/custom_wizard_script.xml
-@@ -1,470 +1,43 @@
+@@ -1,470 +1,76 @@
  <?xml version="1.0" encoding="utf-8"?>
 +<!--
 +    Onigiri: a short, GrapheneOS-style setup for the phone's owner. The Samsung and Google terms,
 +    account, restore and consent pages don't fit the cover screen; accounts and restore can be set
 +    up later from Settings. Enterprise enrollment (QR, NFC, zero-touch, KME) is left out.
-+    No action has results, so each one simply goes on to the next.
++    Only the factory reset protection steps branch; every other action goes on to the next.
 +-->
  <WizardScript xmlns:wizard="http://schemas.android.com/apk/res/com.google.android.setupwizard"
      wizard:version="2">
@@ -244,8 +244,7 @@ index cdd8752..1f0a859 100644
 -            wizard:resultCode="401"/>
 -        <result wizard:action="sec_esim_post_setup" />
 -    </WizardAction>
-+        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.SECWIFISETUP;end" />
- 
+-
 -    <WizardAction id="sec_esim_post_setup"
 -        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.POST_ESIM_SETUP;end" >
 -        <result
@@ -321,9 +320,7 @@ index cdd8752..1f0a859 100644
 -            wizard:action="nfc_provision_flow" />
 -        <result wizard:action="factory_reset" />
 -    </WizardAction>
-+    <WizardAction id="date_time"
-+        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.android.setupwizard.DATE_TIME;end" />
- 
+-
 -    <WizardAction id="nfc_provision_flow"
 -        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_nfc_provision_flow">
 -        <result wizard:action="oem_post_setup" />
@@ -334,7 +331,15 @@ index cdd8752..1f0a859 100644
 -        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.FACTORY_RESET;end" />
 -
 -    <!-- Wait to check factory reset protection status [RECOMMENDED] -->
--    <WizardAction id="check_frp"
++        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.SECWIFISETUP;end" />
++
++    <!--
++        A phone reset outside Settings (Odin, recovery) keeps factory reset protection until the
++        previous Google account signs in. Wi-Fi then can't be skipped, and Samsung's lock screen
++        step refuses to open and sends setup back to Wi-Fi, so ask for that account here.
++        Same steps as Google's own resolve-FRP flows.
++    -->
+     <WizardAction id="check_frp"
 -        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.CHECK_FRP;end" />
 -
 -    <!-- Network selection and packages update [REQUIRED, CUSTOMIZABLE] -->
@@ -421,14 +426,21 @@ index cdd8752..1f0a859 100644
 -            wizard:resultCode="1"
 -            wizard:action="no_account_flow" />
 -        <result wizard:action="add_personal_account_after_work_profile" />
--    </WizardAction>
--
++        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.CHECK_FRP;end">
++        <result wizard:name="resolve_frp"
++            wizard:resultCode="101"
++            wizard:action="gms_checkin" />
++        <result wizard:action="date_time" />
+     </WizardAction>
+ 
 -    <!-- Add personal account after work profile provisioning [REQUIRED] -->
 -    <WizardAction id="add_personal_account_after_work_profile"
 -        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_account_flow" >
 -        <result wizard:action="sec_operator_setup" />
 -    </WizardAction>
--
++    <WizardAction id="gms_checkin"
++        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.GMS_CHECKIN;end" />
+ 
 -    <!-- Setup as new [REQUIRED] -->
 -    <WizardAction id="setup_as_new_flow" wizard:flow="SetupAsNewFlow"
 -        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_account_flow" >
@@ -440,7 +452,9 @@ index cdd8752..1f0a859 100644
 -        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_no_account_flow">
 -        <result wizard:action="sec_operator_setup" />
 -    </WizardAction>
--
++    <WizardAction id="load_account_intent_frp"
++        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.LOAD_ADD_ACCOUNT_INTENT;B.showTapAndGo=false;B.resolveFrpOnly=true;end" />
+ 
 -    <WizardAction id="sec_operator_setup"
 -        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.SEC_OPERATOR_SETUP;end" >
 -        <result wizard:action="oem_post_setup" />
@@ -450,17 +464,28 @@ index cdd8752..1f0a859 100644
 -    <WizardAction id="post_dpm_user_flow"
 -        wizard:script="android.resource://com.google.android.setupwizard/xml/wizard_script_post_dpm_user_flow">
 -        <result wizard:action="oem_post_setup" />
--    </WizardAction>
--
++    <WizardAction id="resolve_frp"
++        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.google.android.setupwizard.ACCOUNT_SETUP;B.finishWhenDone=true;end">
++        <result wizard:name="unintentional_cancel"
++            wizard:resultCode="102"
++            wizard:action="rollback_auth_early_update" />
++        <result wizard:action="date_time" />
+     </WizardAction>
+ 
 -    <WizardAction id="ae_provision_flow"
 -        wizard:uri="intent:#Intent;action=com.samsung.android.knox.PROVISION_TSS;end">
 -        <result wizard:action="oem_post_setup" />
--    </WizardAction>
--
++    <WizardAction id="rollback_auth_early_update"
++        wizard:script="android.resource://com.google.android.setupwizard/xml/wizard_script_rollback_auth_early_update_flow">
++        <result wizard:action="load_account_intent_frp" />
+     </WizardAction>
+ 
 -    <!-- Set up language for TSS model, before QR provision flow -->
 -    <WizardAction id="qr_provision_flow_language_selection"
 -        wizard:uri="intent:#Intent;package=com.sec.android.app.SecSetupWizard;action=com.sec.android.app.secsetupwizard.LANGUAGE_SELECTION;end" />
--
++    <WizardAction id="date_time"
++        wizard:uri="intent:#Intent;package=com.google.android.setupwizard;action=com.android.setupwizard.DATE_TIME;end" />
+ 
 -    <!-- QR provision flow (for enterprise) [RECOMMENDED] -->
 -    <WizardAction id="qr_provision_flow"
 -        wizard:script="android.resource://com.sec.android.app.SecSetupWizard/raw/custom_wizard_script_qr_provision_flow">
