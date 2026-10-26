@@ -18,7 +18,6 @@ level is sent again a second later, as monitors can drop a write. The page and t
 sys.onigiri.monitor.level (the level the monitor is set or fading to, published at once so a
 slider's thumb stays put, "ready" before the first, "unsupported" after three failed writes in a
 row, empty without a monitor) and sys.onigiri.monitor.lux.
-
 diff --git a/smali/com/android/server/display/DisplayManagerService.smali b/smali/com/android/server/display/DisplayManagerService.smali
 --- a/smali/com/android/server/display/DisplayManagerService.smali
 +++ b/smali/com/android/server/display/DisplayManagerService.smali
@@ -75,7 +74,7 @@ diff --git a/smali_classes2/moe/foss/onigiri/MonitorBrightness$1.smali b/smali_c
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes2/moe/foss/onigiri/MonitorBrightness$1.smali
-@@ -0,0 +1,115 @@
+@@ -0,0 +1,139 @@
 +.class Lmoe/foss/onigiri/MonitorBrightness$1;
 +.super Landroid/database/ContentObserver;
 +.source "MonitorBrightness.java"
@@ -97,17 +96,21 @@ new file mode 100644
 +
 +.field final synthetic val$adjust:Landroid/net/Uri;
 +
++.field final synthetic val$level:Landroid/net/Uri;
++
 +
 +# direct methods
-+.method constructor <init>(Lmoe/foss/onigiri/MonitorBrightness;Landroid/os/Handler;Landroid/net/Uri;)V
++.method constructor <init>(Lmoe/foss/onigiri/MonitorBrightness;Landroid/os/Handler;Landroid/net/Uri;Landroid/net/Uri;)V
 +    .locals 0
 +    .annotation system Ldalvik/annotation/MethodParameters;
 +        accessFlags = {
 +            0x8010,
 +            0x0,
++            0x1010,
 +            0x1010
 +        }
 +        names = {
++            null,
 +            null,
 +            null,
 +            null
@@ -116,7 +119,9 @@ new file mode 100644
 +
 +    iput-object p1, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->this$0:Lmoe/foss/onigiri/MonitorBrightness;
 +
-+    iput-object p3, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->val$adjust:Landroid/net/Uri;
++    iput-object p3, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->val$level:Landroid/net/Uri;
++
++    iput-object p4, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->val$adjust:Landroid/net/Uri;
 +
 +    invoke-direct {p0, p2}, Landroid/database/ContentObserver;-><init>(Landroid/os/Handler;)V
 +
@@ -128,14 +133,23 @@ new file mode 100644
 +.method public onChange(ZLandroid/net/Uri;)V
 +    .locals 2
 +
++    iget-object p1, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->val$level:Landroid/net/Uri;
++
++    invoke-virtual {p1, p2}, Landroid/net/Uri;->equals(Ljava/lang/Object;)Z
++
++    move-result p1
++
++    if-nez p1, :cond_0
++
 +    iget-object p1, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->val$adjust:Landroid/net/Uri;
 +
 +    invoke-virtual {p1, p2}, Landroid/net/Uri;->equals(Ljava/lang/Object;)Z
 +
 +    move-result p1
 +
-+    if-eqz p1, :cond_0
++    if-eqz p1, :cond_1
 +
++    :cond_0
 +    iget-object p1, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->this$0:Lmoe/foss/onigiri/MonitorBrightness;
 +
 +    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
@@ -145,6 +159,15 @@ new file mode 100644
 +    # setter for: Lmoe/foss/onigiri/MonitorBrightness;->mUserTime:J
 +    invoke-static {p1, v0, v1}, Lmoe/foss/onigiri/MonitorBrightness;->access$002(Lmoe/foss/onigiri/MonitorBrightness;J)J
 +
++    :cond_1
++    iget-object p1, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->val$adjust:Landroid/net/Uri;
++
++    invoke-virtual {p1, p2}, Landroid/net/Uri;->equals(Ljava/lang/Object;)Z
++
++    move-result p1
++
++    if-eqz p1, :cond_2
++
 +    iget-object p1, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->this$0:Lmoe/foss/onigiri/MonitorBrightness;
 +
 +    # getter for: Lmoe/foss/onigiri/MonitorBrightness;->mLight:Landroid/hardware/Sensor;
@@ -152,7 +175,7 @@ new file mode 100644
 +
 +    move-result-object p1
 +
-+    if-eqz p1, :cond_0
++    if-eqz p1, :cond_2
 +
 +    iget-object p1, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->this$0:Lmoe/foss/onigiri/MonitorBrightness;
 +
@@ -165,7 +188,7 @@ new file mode 100644
 +
 +    cmpl-double p1, p1, v0
 +
-+    if-ltz p1, :cond_0
++    if-ltz p1, :cond_2
 +
 +    iget-object p1, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->this$0:Lmoe/foss/onigiri/MonitorBrightness;
 +
@@ -181,7 +204,7 @@ new file mode 100644
 +    # invokes: Lmoe/foss/onigiri/MonitorBrightness;->learn(I)V
 +    invoke-static {p1, p2}, Lmoe/foss/onigiri/MonitorBrightness;->access$400(Lmoe/foss/onigiri/MonitorBrightness;I)V
 +
-+    :cond_0
++    :cond_2
 +    iget-object p0, p0, Lmoe/foss/onigiri/MonitorBrightness$1;->this$0:Lmoe/foss/onigiri/MonitorBrightness;
 +
 +    const/4 p1, 0x1
@@ -351,7 +374,7 @@ diff --git a/smali_classes2/moe/foss/onigiri/MonitorBrightness.smali b/smali_cla
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes2/moe/foss/onigiri/MonitorBrightness.smali
-@@ -0,0 +1,1854 @@
+@@ -0,0 +1,1858 @@
 +.class public final Lmoe/foss/onigiri/MonitorBrightness;
 +.super Ljava/lang/Object;
 +.source "MonitorBrightness.java"
@@ -1575,17 +1598,23 @@ new file mode 100644
 +.method private start()V
 +    .locals 6
 +
-+    const-string v0, "onigiri_monitor_adjust"
++    const-string v0, "onigiri_monitor_level"
 +
 +    invoke-static {v0}, Landroid/provider/Settings$Global;->getUriFor(Ljava/lang/String;)Landroid/net/Uri;
 +
 +    move-result-object v1
 +
-+    new-instance v2, Lmoe/foss/onigiri/MonitorBrightness$1;
++    const-string v2, "onigiri_monitor_adjust"
 +
-+    iget-object v3, p0, Lmoe/foss/onigiri/MonitorBrightness;->mHandler:Landroid/os/Handler;
++    invoke-static {v2}, Landroid/provider/Settings$Global;->getUriFor(Ljava/lang/String;)Landroid/net/Uri;
 +
-+    invoke-direct {v2, p0, v3, v1}, Lmoe/foss/onigiri/MonitorBrightness$1;-><init>(Lmoe/foss/onigiri/MonitorBrightness;Landroid/os/Handler;Landroid/net/Uri;)V
++    move-result-object v3
++
++    new-instance v4, Lmoe/foss/onigiri/MonitorBrightness$1;
++
++    iget-object v5, p0, Lmoe/foss/onigiri/MonitorBrightness;->mHandler:Landroid/os/Handler;
++
++    invoke-direct {v4, p0, v5, v1, v3}, Lmoe/foss/onigiri/MonitorBrightness$1;-><init>(Lmoe/foss/onigiri/MonitorBrightness;Landroid/os/Handler;Landroid/net/Uri;Landroid/net/Uri;)V
 +
 +    iget-object v1, p0, Lmoe/foss/onigiri/MonitorBrightness;->mContext:Landroid/content/Context;
 +
@@ -1593,34 +1622,32 @@ new file mode 100644
 +
 +    move-result-object v1
 +
-+    const-string v3, "onigiri_monitor_level"
++    const-string v3, "onigiri_monitor_auto"
 +
-+    const-string v4, "onigiri_monitor_curve"
++    const-string v5, "onigiri_monitor_curve"
 +
-+    const-string v5, "onigiri_monitor_auto"
-+
-+    filled-new-array {v5, v3, v0, v4}, [Ljava/lang/String;
++    filled-new-array {v3, v0, v2, v5}, [Ljava/lang/String;
 +
 +    move-result-object v0
 +
-+    const/4 v3, 0x0
++    const/4 v2, 0x0
 +
-+    move v4, v3
++    move v3, v2
 +
 +    :goto_0
 +    const/4 v5, 0x4
 +
-+    if-ge v4, v5, :cond_0
++    if-ge v3, v5, :cond_0
 +
-+    aget-object v5, v0, v4
++    aget-object v5, v0, v3
 +
 +    invoke-static {v5}, Landroid/provider/Settings$Global;->getUriFor(Ljava/lang/String;)Landroid/net/Uri;
 +
 +    move-result-object v5
 +
-+    invoke-virtual {v1, v5, v3, v2}, Landroid/content/ContentResolver;->registerContentObserver(Landroid/net/Uri;ZLandroid/database/ContentObserver;)V
++    invoke-virtual {v1, v5, v2, v4}, Landroid/content/ContentResolver;->registerContentObserver(Landroid/net/Uri;ZLandroid/database/ContentObserver;)V
 +
-+    add-int/lit8 v4, v4, 0x1
++    add-int/lit8 v3, v3, 0x1
 +
 +    goto :goto_0
 +
@@ -1631,7 +1658,7 @@ new file mode 100644
 +
 +    invoke-virtual {v0, p0, v1}, Landroid/hardware/display/DisplayManager;->registerDisplayListener(Landroid/hardware/display/DisplayManager$DisplayListener;Landroid/os/Handler;)V
 +
-+    invoke-direct {p0, v3}, Lmoe/foss/onigiri/MonitorBrightness;->update(Z)V
++    invoke-direct {p0, v2}, Lmoe/foss/onigiri/MonitorBrightness;->update(Z)V
 +
 +    return-void
 +.end method
