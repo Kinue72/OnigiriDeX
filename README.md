@@ -182,6 +182,8 @@ columns, a grid, or a priority grid.
   phone works like a stock Flip5. Opening it shows the inside screen and turns
   the outside one off, and closing it goes back to the outside screen. It
   takes effect the next time you open the phone.
+
+  ![Use inner screen when open, at the top of Display settings](docs/images/onigiri-settings-inner-screen.png)
 - **Power on when power connected**: when the phone is off and gets power, it
   turns on by itself once the battery reaches 5%. With this off, a phone that
   is off and gets plugged in starts for about 15 seconds before it shows the
