@@ -6,7 +6,8 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on 
 
 - Runs the whole phone on the **small outside screen** because this uses the software from the **Galaxy Z Fold5**, so the outside screen works like a full phone screen.
   With auto-rotate on, it also turns upside down, so you can hold the phone
-  hinge down with the cameras on top.
+  hinge down with the cameras on top. The inside screen stays off unless you
+  turn on **Use inner screen when open**.
 - Lets you plug the phone into a monitor and use **Samsung DeX** (a desktop mode, like a small computer).
   A live wallpaper you set for the home screen, like one from Wallpaper
   Engine, shows on the DeX desktop too. Pick a wallpaper in DeX's own
@@ -177,6 +178,10 @@ columns, a grid, or a priority grid.
 
 ![Sleep when folded, power on and standby switches, and the standby shutdown time](docs/images/onigiri-settings-car.png)
 
+- **Use inner screen when open** (off by default, under Display settings): the
+  phone works like a stock Flip5. Opening it shows the inside screen and turns
+  the outside one off, and closing it goes back to the outside screen. It
+  takes effect the next time you open the phone.
 - **Power on when power connected**: when the phone is off and gets power, it
   turns on by itself once the battery reaches 5%. With this off, a phone that
   is off and gets plugged in starts for about 15 seconds before it shows the

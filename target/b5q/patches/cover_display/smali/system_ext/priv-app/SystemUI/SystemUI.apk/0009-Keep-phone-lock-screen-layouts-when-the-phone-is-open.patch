@@ -1,0 +1,109 @@
+From: Onigiri
+Subject: [PATCH] Keep phone lock screen layouts when the phone is open
+
+Samsung lays the bouncer out for the Fold5's near-square inner screen
+whenever the hinge is open or the main screen shows: the dual display key
+sizes, a column of 58% of the width, and arrows to move it aside for one
+hand. On the Flip5 an open phone shows the cover, which got the arrows and
+the inner screen's key sizes, or with "Use inner screen" the tall inner
+panel, which cut the keypad's outer columns off. Neither is shaped like that, so keep the phone
+layouts: no dual display policy, the full width, and no arrows.
+
+diff --git a/smali/com/android/keyguard/KeyguardArrowViewController.smali b/smali/com/android/keyguard/KeyguardArrowViewController.smali
+--- a/smali/com/android/keyguard/KeyguardArrowViewController.smali
++++ b/smali/com/android/keyguard/KeyguardArrowViewController.smali
+@@ -446,9 +446,9 @@
+     goto :goto_0
+ 
+     :cond_0
+-    iget-boolean v0, p0, Lcom/android/keyguard/KeyguardArrowViewController;->mIsFolderOpened:Z
+-
+-    if-eqz v0, :cond_2
++    # Onigiri: the arrows move the bouncer aside for one hand on the Fold5's wide inner screen,
++    # whenever the hinge is open. Neither Flip5 screen is that wide.
++    goto :cond_2
+ 
+     iget-object p0, p0, Lcom/android/keyguard/KeyguardArrowViewController;->mKeyguardArrowViewCallback:Lcom/android/keyguard/KeyguardArrowViewCallback;
+ 
+diff --git a/smali/com/android/keyguard/KeyguardSecSecurityContainerController.smali b/smali/com/android/keyguard/KeyguardSecSecurityContainerController.smali
+--- a/smali/com/android/keyguard/KeyguardSecSecurityContainerController.smali
++++ b/smali/com/android/keyguard/KeyguardSecSecurityContainerController.smali
+@@ -615,25 +615,9 @@
+ 
+     if-nez v0, :cond_0
+ 
+-    sget-boolean v0, Lcom/android/systemui/LsRune;->SECURITY_SUB_DISPLAY_LOCK:Z
+-
+-    if-eqz v0, :cond_1
+-
+-    invoke-virtual {p0}, Lcom/android/systemui/util/ViewController;->getContext()Landroid/content/Context;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v0
+-
+-    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+-
+-    move-result-object v0
+-
+-    iget v0, v0, Landroid/content/res/Configuration;->semDisplayDeviceType:I
+-
+-    if-nez v0, :cond_1
++    # Onigiri: Samsung puts the bouncer in a one-handed column (arrow mode) on the main screen,
++    # the Fold5's near-square inner one. The Flip5's inner panel is phone-shaped, so only tablets.
++    goto :cond_1
+ 
+     :cond_0
+     const/4 v0, 0x3
+@@ -3230,9 +3214,9 @@
+     goto :goto_3
+ 
+     :cond_1
+-    sget-boolean v1, Lcom/android/systemui/LsRune;->SECURITY_SUB_DISPLAY_LOCK:Z
+-
+-    if-eqz v1, :cond_5
++    # Onigiri: Samsung narrows the bouncer to a column on the main screen, the Fold5's near-square
++    # inner one. The Flip5's inner panel is phone-shaped, so keep the full width as on the cover.
++    goto :cond_5
+ 
+     invoke-static {}, Lcom/android/systemui/util/DeviceState;->isSmartViewFitToActiveDisplay()Z
+ 
+diff --git a/smali/com/android/keyguard/KeyguardSecUpdateMonitorImpl.smali b/smali/com/android/keyguard/KeyguardSecUpdateMonitorImpl.smali
+--- a/smali/com/android/keyguard/KeyguardSecUpdateMonitorImpl.smali
++++ b/smali/com/android/keyguard/KeyguardSecUpdateMonitorImpl.smali
+@@ -10231,30 +10231,11 @@
+ .method public final isDualDisplayPolicyAllowed()Z
+     .locals 1
+ 
+-    sget-boolean v0, Lcom/android/systemui/LsRune;->SECURITY_SUB_DISPLAY_LOCK:Z
+-
+-    if-eqz v0, :cond_0
+-
+-    iget-object p0, p0, Lcom/android/keyguard/KeyguardSecUpdateMonitorImpl;->mDisplayLifecycle:Lcom/android/systemui/keyguard/DisplayLifecycle;
+-
+-    iget-boolean p0, p0, Lcom/android/systemui/keyguard/DisplayLifecycle;->mIsFolderOpened:Z
+-
+-    if-eqz p0, :cond_0
+-
+-    invoke-static {}, Lcom/android/systemui/util/DeviceState;->isSmartViewFitToActiveDisplay()Z
+-
+-    move-result p0
+-
+-    if-nez p0, :cond_0
+-
+-    const/4 p0, 0x1
+-
+-    goto :goto_0
+-
+-    :cond_0
++    # Onigiri: Samsung lays the lock screen out for the Fold5's near-square inner screen whenever
++    # the hinge is open. Here an open phone shows the cover, or the tall inner panel with "Use inner
++    # screen" on, and neither is shaped like that, so keep the phone layouts.
+     const/4 p0, 0x0
+ 
+-    :goto_0
+     return p0
+ .end method
+ 

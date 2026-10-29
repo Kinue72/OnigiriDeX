@@ -1,0 +1,219 @@
+From: Onigiri
+Subject: [PATCH] Show the inner screen while the phone is open
+
+"Use inner screen" (persist.sys.onigiri.inner_screen, off by default) makes
+the Flip5 work like a stock Flip: half-open and open (device states 2 and 3)
+show the inner panel as the default display with the cover off, the 0x105
+layout from 0011, and closing goes back to the cover.
+
+DeviceStateManagerService latches the switch as it commits a state, before
+any listener hears of it, and only when leaving a state that isn't open. The
+display layout, the rotation sensor's screen and the camera's fold state all
+read the latch, so they always agree. A transition looks up the layout of the
+state it leaves again, so a live read would make folding after the switch
+went off look cover-to-cover and leave the inner panel powered (as 0011
+found for state 5); latched, the switch takes effect the next time the phone
+opens.
+
+While the inner panel shows, the sensor hub reads rotation for the inner
+screen (0015 keeps the cover otherwise), and the camera hears the stock
+unfolded state, so the front camera is the inner screen's own (0007 keeps
+the folded state otherwise).
+
+diff --git a/smali/com/android/server/devicestate/DeviceStateManagerService$$ExternalSyntheticLambda6.smali b/smali/com/android/server/devicestate/DeviceStateManagerService$$ExternalSyntheticLambda6.smali
+--- a/smali/com/android/server/devicestate/DeviceStateManagerService$$ExternalSyntheticLambda6.smali
++++ b/smali/com/android/server/devicestate/DeviceStateManagerService$$ExternalSyntheticLambda6.smali
+@@ -158,6 +158,48 @@
+ 
+     invoke-interface {v3, v0}, Lcom/android/server/devicestate/DeviceStateManagerService$SystemPropertySetter;->setDebugTracingDeviceStateProperty(Ljava/lang/String;)V
+ 
++    # Onigiri: latch "Use inner screen" (persist.sys.onigiri.inner_screen) for the open states 2
++    # and 3, before any listener hears of the new state, so the display layout, the rotation
++    # sensor's screen and the camera's fold state agree. Only when leaving a state that isn't
++    # open: turning the switch off while the inner panel shows still powers it off on folding.
++    iget-object v3, p0, Lcom/android/server/devicestate/DeviceStateManagerService;->mCommittedState:Ljava/util/Optional;
++
++    invoke-virtual {v3}, Ljava/util/Optional;->isPresent()Z
++
++    move-result v4
++
++    if-eqz v4, :onigiri_latch
++
++    invoke-virtual {v3}, Ljava/util/Optional;->get()Ljava/lang/Object;
++
++    move-result-object v3
++
++    check-cast v3, Landroid/hardware/devicestate/DeviceState;
++
++    invoke-virtual {v3}, Landroid/hardware/devicestate/DeviceState;->getIdentifier()I
++
++    move-result v3
++
++    const/4 v4, 0x2
++
++    if-eq v3, v4, :onigiri_latched
++
++    const/4 v4, 0x3
++
++    if-eq v3, v4, :onigiri_latched
++
++    :onigiri_latch
++    const-string v3, "persist.sys.onigiri.inner_screen"
++
++    const/4 v4, 0x0
++
++    invoke-static {v3, v4}, Landroid/os/SystemProperties;->getBoolean(Ljava/lang/String;Z)Z
++
++    move-result v3
++
++    sput-boolean v3, Lcom/android/server/display/DeviceStateToLayoutMap;->sOnigiriInnerScreen:Z
++
++    :onigiri_latched
+     invoke-static {v2}, Ljava/util/Optional;->of(Ljava/lang/Object;)Ljava/util/Optional;
+ 
+     move-result-object v0
+diff --git a/smali/com/android/server/display/DeviceStateToLayoutMap.smali b/smali/com/android/server/display/DeviceStateToLayoutMap.smali
+--- a/smali/com/android/server/display/DeviceStateToLayoutMap.smali
++++ b/smali/com/android/server/display/DeviceStateToLayoutMap.smali
+@@ -3,6 +3,11 @@
+ .source "qb/100694809 c3fa2f8f931e841d5d4ae6056d256e51e7b706f34dffca606bd5742d4f68a72b"
+ 
+ 
++# static fields
++# Onigiri: "Use inner screen", latched for the open states by DeviceStateManagerService's commit.
++.field public static volatile sOnigiriInnerScreen:Z
++
++
+ # instance fields
+ .field public final mIdProducer:Lcom/android/server/display/LogicalDisplayMapper$$ExternalSyntheticLambda2;
+ 
+@@ -127,9 +132,29 @@
+ .method public final get(I)Lcom/android/server/display/layout/Layout;
+     .locals 2
+ 
+-    # Onigiri: while sys.onigiri.inner_layout is set, state 5 (CONCURRENT_OUTER_DEFAULT, unused on
+-    # the cover-only Flip5) shows the inner panel: layout 0x105. onigiri-mirror sets it before it
+-    # requests state 5 and clears it once the cover is back, so both ends of a transition agree.
++    # Onigiri: layout 0x105 shows the inner panel. "Use inner screen" hands it out for the
++    # half-open and open states (2 and 3), as on a stock Flip. It reads the switch as latched when
++    # the state was committed, never live: a transition looks up the layout of the state it
++    # leaves again, which has to be the one it applied.
++    const/4 v0, 0x2
++
++    if-eq p1, v0, :onigiri_open
++
++    const/4 v0, 0x3
++
++    if-ne p1, v0, :onigiri_mirror
++
++    :onigiri_open
++    sget-boolean v0, Lcom/android/server/display/DeviceStateToLayoutMap;->sOnigiriInnerScreen:Z
++
++    if-eqz v0, :onigiri_layout_key
++
++    goto :onigiri_inner
++
++    # While sys.onigiri.inner_layout is set, state 5 (CONCURRENT_OUTER_DEFAULT, unused here) shows
++    # it too. onigiri-mirror sets it before it requests state 5 and clears it once the cover is
++    # back, so both ends of a transition agree.
++    :onigiri_mirror
+     const/4 v0, 0x5
+ 
+     if-ne p1, v0, :onigiri_layout_key
+@@ -144,6 +169,7 @@
+ 
+     if-eqz v0, :onigiri_layout_key
+ 
++    :onigiri_inner
+     const/16 p1, 0x105
+ 
+     :onigiri_layout_key
+diff --git a/smali_classes2/com/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15.smali b/smali_classes2/com/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15.smali
+--- a/smali_classes2/com/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15.smali
++++ b/smali_classes2/com/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15.smali
+@@ -28,19 +28,32 @@
+ 
+ # virtual methods
+ .method public final run()V
+-    .locals 1
++    .locals 2
+ 
+     iget-object v0, p0, Lcom/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15;->f$0:Lcom/android/server/policy/PhoneWindowManagerExt;
+ 
+-    iget-object v0, v0, Lcom/android/server/policy/PhoneWindowManagerExt;->mSensorManager:Landroid/hardware/SensorManager;
++    iget-boolean p0, p0, Lcom/android/server/policy/PhoneWindowManagerExt$$ExternalSyntheticLambda15;->f$1:Z
+ 
+-    if-eqz v0, :cond_0
++    iget-object v0, v0, Lcom/android/server/policy/PhoneWindowManagerExt;->mSensorManager:Landroid/hardware/SensorManager;
+ 
+     # Onigiri: the sensor hub reads rotation and the accelerometer for the screen set here
+     # (1 the cover, 0 the inner screen). Samsung picks the inner screen from HALF_OPENED, but the
+     # accelerometer sits in the cover's half, so the cover's frame stays right at every hinge
+-    # angle and the inner one turns the cover upside down. Always pick the cover.
+-    const/4 p0, 0x1
++    # angle and the inner one turns the cover upside down. Pick the inner screen only while it
++    # shows, with "Use inner screen" on and the phone open, and keep the choice for
++    # WindowOrientationListener to send again.
++    const/4 v1, 0x0
++
++    if-nez p0, :onigiri_screen
++
++    sget-boolean v1, Lcom/android/server/display/DeviceStateToLayoutMap;->sOnigiriInnerScreen:Z
++
++    :onigiri_screen
++    sput-boolean v1, Lcom/android/server/wm/WindowOrientationListener;->sOnigiriInnerScreen:Z
++
++    if-eqz v0, :cond_0
++
++    xor-int/lit8 p0, v1, 0x1
+ 
+     invoke-virtual {v0, p0}, Landroid/hardware/SensorManager;->setActiveScreenParameter(I)V
+ 
+diff --git a/smali_classes2/com/android/server/wm/WindowOrientationListener.smali b/smali_classes2/com/android/server/wm/WindowOrientationListener.smali
+--- a/smali_classes2/com/android/server/wm/WindowOrientationListener.smali
++++ b/smali_classes2/com/android/server/wm/WindowOrientationListener.smali
+@@ -6,6 +6,9 @@
+ # static fields
+ .field public static final LOG:Z
+ 
++# Onigiri: whether the rotation sensor reads the inner screen (see PhoneWindowManagerExt$$ExternalSyntheticLambda15).
++.field public static volatile sOnigiriInnerScreen:Z
++
+ 
+ # instance fields
+ .field public final mContext:Landroid/content/Context;
+@@ -306,9 +309,11 @@
+ 
+     invoke-virtual {v1, v3, v4, v5, v6}, Landroid/hardware/SensorManager;->registerListener(Landroid/hardware/SensorEventListener;Landroid/hardware/Sensor;ILandroid/os/Handler;)Z
+ 
+-    # Onigiri: keep the hub on the cover (see PhoneWindowManagerExt$$ExternalSyntheticLambda15).
++    # Onigiri: keep the hub on the screen that shows (see PhoneWindowManagerExt$$ExternalSyntheticLambda15).
+     # It drops a switch sent while this sensor is off, so send it again each time it turns on.
+-    const/4 v3, 0x1
++    sget-boolean v3, Lcom/android/server/wm/WindowOrientationListener;->sOnigiriInnerScreen:Z
++
++    xor-int/lit8 v3, v3, 0x1
+ 
+     invoke-virtual {v1, v3}, Landroid/hardware/SensorManager;->setActiveScreenParameter(I)V
+ 
+diff --git a/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali b/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali
+--- a/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali
++++ b/smali_classes2/com/samsung/android/camera/CameraServiceWorker$DeviceStateListener.smali
+@@ -178,8 +178,17 @@
+ 
+     :cond_4
+     :goto_2
++    # Onigiri: half-open and open report the folded state too (the user faces the cover and the
++    # rear lenses), unless "Use inner screen" shows the inner panel: then unfolded, as stock.
+     const-wide/16 v0, 0x6
+ 
++    sget-boolean p1, Lcom/android/server/display/DeviceStateToLayoutMap;->sOnigiriInnerScreen:Z
++
++    if-eqz p1, :onigiri_camera_state
++
++    const-wide/16 v0, 0x0
++
++    :onigiri_camera_state
+     iget-object p0, p0, Lcom/samsung/android/camera/CameraServiceWorker$DeviceStateListener;->this$0:Lcom/samsung/android/camera/CameraServiceWorker;
+ 
+     invoke-virtual {p0, v0, v1}, Lcom/samsung/android/camera/CameraServiceWorker;->notifyDeviceChange(J)V

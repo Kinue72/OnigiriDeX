@@ -49,8 +49,8 @@ static int connection(void *sf, U64 id) {
 /* hal::PowerMode::OFF is 0. */
 static int on(void *display) { return read32(display, 0xa4) != 0; }
 
-/* The Flip5's inner panel: port 131, the low byte of its physical display id. It only turns on
- * for "Mirroring high refresh rate"; every other layout keeps it off. */
+/* The Flip5's inner panel: port 131, the low byte of its physical display id. It turns on for
+ * "Mirroring high refresh rate", and while open with "Use inner screen"; else it stays off. */
 static int inner(void *display) { return (native_display_id(display) & 0xff) == 0x83; }
 
 static void *external_on(void *sf) {

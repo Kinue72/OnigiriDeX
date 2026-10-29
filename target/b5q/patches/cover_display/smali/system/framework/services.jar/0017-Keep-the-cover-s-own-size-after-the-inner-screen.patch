@@ -1,0 +1,58 @@
+From: Onigiri
+Subject: [PATCH] Keep the cover's own size after the inner screen
+
+When the default display moves to the cover while folded, the Fold5 framework
+sizes it through FoldDisplayController.getExtraBuiltInDisplaySize(): at least
+840 px and 320 dp wide, scaled up from the panel. The Flip5 cover is 748 px,
+so closing the phone after "Use inner screen" left it at 960x924 (2x the inner
+panel's 480 dpi), and leaving a mirroring fit left 840x808. Return the panel's
+own size, so the cover always comes back at 748x720.
+
+diff --git a/smali_classes2/com/android/server/wm/FoldDisplayController.smali b/smali_classes2/com/android/server/wm/FoldDisplayController.smali
+--- a/smali_classes2/com/android/server/wm/FoldDisplayController.smali
++++ b/smali_classes2/com/android/server/wm/FoldDisplayController.smali
+@@ -118,40 +118,12 @@
+ .method public static getExtraBuiltInDisplaySize(Landroid/graphics/Point;ILandroid/view/DisplayInfo;)V
+     .locals 1
+ 
+-    mul-int/lit16 p1, p1, 0x140
+-
+-    int-to-float p1, p1
+-
+-    const v0, 0x3bcccccd    # 0.00625f
+-
+-    mul-float/2addr p1, v0
+-
+-    float-to-int p1, p1
+-
+-    const/16 v0, 0x348
+-
+-    if-ge p1, v0, :cond_0
+-
+-    move p1, v0
+-
+-    :cond_0
++    # Onigiri: the Fold5 lays its cover out at least 840 px and 320 dp wide, scaling it up when
++    # the panel is narrower. The Flip5 cover is 748 px, so each switch back from the inner panel
++    # gave it a stray size override: 960x924 after the 480 dpi inner panel, 840x808 after a
++    # mirroring fit. Keep the panel's own size.
+     iget v0, p2, Landroid/view/DisplayInfo;->logicalWidth:I
+ 
+-    if-ge v0, p1, :cond_1
+-
+-    iput p1, p0, Landroid/graphics/Point;->x:I
+-
+-    iget p2, p2, Landroid/view/DisplayInfo;->logicalHeight:I
+-
+-    mul-int/2addr p1, p2
+-
+-    div-int/2addr p1, v0
+-
+-    iput p1, p0, Landroid/graphics/Point;->y:I
+-
+-    goto :goto_0
+-
+-    :cond_1
+     iput v0, p0, Landroid/graphics/Point;->x:I
+ 
+     iget p1, p2, Landroid/view/DisplayInfo;->logicalHeight:I

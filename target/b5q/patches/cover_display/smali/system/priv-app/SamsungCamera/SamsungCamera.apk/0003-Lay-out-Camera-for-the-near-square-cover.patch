@@ -161,8 +161,8 @@ diff --git a/smali_classes4/com/sec/android/app/camera/util/FoldUtil.smali b/sma
 -    move-result v0
 -
 -    xor-int/lit8 v0, v0, 0x1
-+    # Onigiri: the inner panel never shows apps here, so the camera is on the cover in every
-+    # hinge state. Without this a half-open hinge switched it to the Fold5 Flex layout.
++    # Onigiri: the camera is on the cover in every hinge state unless "Use inner screen" is on.
++    # Without this a half-open hinge switched it to the Fold5 Flex layout, on either panel.
 +    const/4 v0, 0x0
  
      return v0
