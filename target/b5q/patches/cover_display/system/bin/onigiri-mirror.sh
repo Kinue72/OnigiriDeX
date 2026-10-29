@@ -4,9 +4,10 @@
 # square in the middle. The cover goes back to its own size and density as soon as the monitor
 # goes away or DeX starts. With "Mirroring high refresh rate" on, opening the phone while it
 # mirrors shows the 120 Hz inner panel instead (device state 5), fitted the same way, so the
-# mirror is no longer held to the cover's 60 Hz. Each time DeX starts, it also opens the zone apps (Settings > Onigiri
-# Software > Zones). It also keeps power saving, which holds every screen to 60 Hz, off while
-# the phone charges. Started by onigiri-mirror.rc.
+# mirror is no longer held to the cover's 60 Hz. With "Use inner screen" on, the open phone shows
+# the inner panel by itself, and the fit follows whichever panel shows. Each time DeX starts, it
+# also opens the zone apps (Settings > Onigiri Software > Zones). It also keeps power saving,
+# which holds every screen to 60 Hz, off while the phone charges. Started by onigiri-mirror.rc.
 
 DP=/sys/class/drm/card0-DP-1/status
 DPI=240
@@ -14,13 +15,14 @@ MAX_WIDTH=2560  # a wider monitor gets the same shape, rendered smaller and scal
 STEADY=5        # polls (2 s apart) mirroring must hold before resizing
 INNER=5         # device state that shows the inner panel while LAYOUT is set (DeviceStateToLayoutMap)
 LAYOUT=sys.onigiri.inner_layout  # set before requesting INNER, cleared once the cover is back
+COVER=748x720   # the cover's physical size: display 0 shows the cover
 DATA=/data/misc/onigiri-mirror
-# The cover's size and density from before; present while ours apply, so a restart or reboot
-# in between still puts them back.
+# Display 0's size and density from before, and the physical size of the panel they belong to;
+# present while ours apply, so a restart or reboot in between still puts them back.
 SAVED=$DATA/saved
-# The cover's own size and density while the inner panel shows: switching panels leaves a stray
-# size override on the cover (840x808, 1080x2244 seen), so they are put back afterwards (or
-# handed back to SAVED when a cover fit follows).
+# The cover's own size and density while the inner panel shows: switching panels left a stray
+# size override on the cover (840x808, which services.jar 0017 removes, and 1080x2244 seen), so
+# they are put back afterwards (or handed back to SAVED when a cover fit follows).
 OWN=$DATA/own
 # min_refresh_rate from before the inner panel showed ("null" if unset; Force peak refresh rate
 # sets it). Held at 120 meanwhile: the adaptive policy otherwise idles the panel at 60.
@@ -83,21 +85,25 @@ shape() {
     fi
 }
 
-# Give the cover the monitor's shape $1. The cover's own values are saved first (through a temp
-# file, so a crash never leaves a half-written one), and not resized unless they could be.
+# Give display 0 the monitor's shape $1. Its own values are saved first (through a temp file, so
+# a crash never leaves a half-written one), and not resized unless they could be.
 fit() {
     if [ ! -e $SAVED ]; then
         own="$(current size override) $(current density override)"
-        valid "$own" && echo "$own" > $SAVED.tmp && mv $SAVED.tmp $SAVED || return 1
+        valid "$own" && echo "$own $(current size)" > $SAVED.tmp && mv $SAVED.tmp $SAVED ||
+            return 1
     fi
     fitted=$(shape $1) && wm size $fitted -d 0 && wm density $DPI -d 0
 }
 
-# Put the saved values back, or the physical ones if the saved file is unusable. The file is
-# kept until both are set, so a failure is retried.
+# Put the saved values back, or the physical ones if the saved file is unusable or belongs to
+# the other panel (the phone opened or closed with "Use inner screen" on). The file is kept until
+# both are set, so a failure is retried.
 restore() {
     [ -e $SAVED ] || return 0
-    read own < $SAVED
+    read size density panel < $SAVED
+    own="$size $density"
+    [ -n "$panel" ] && [ "$panel" != "$(current size)" ] && own=
     valid "$own" || own="$(current size) $(current density)"
     valid "$own" || return 1
     set -- $own
@@ -110,9 +116,10 @@ state() {
 }
 
 # Whether the inner panel should show the mirror: the switch is on and the hinge is half or fully
-# open (base states 2 and 3).
+# open (base states 2 and 3). Not with "Use inner screen" on: the inner panel then shows by itself.
 inner_wanted() {
     [ "$(getprop persist.sys.onigiri.mirror_high_refresh)" = true ] || return 1
+    [ "$(getprop persist.sys.onigiri.inner_screen)" = true ] && return 1
     case $(dumpsys device_state | sed -n 's/.*mBaseState=.*identifier=\([0-9]*\).*/\1/p' |
         head -n 1) in
         2 | 3) return 0 ;;
@@ -173,6 +180,7 @@ open_zone_apps() {
 
 mkdir -p $DATA
 applied=
+fit_panel=  # display 0's physical size when the fit was applied: refit on the other panel
 [ -e $SAVED ] && applied=unknown  # left applied by an earlier run: recheck at once
 seen=
 count=0
@@ -253,7 +261,9 @@ while :; do
     elif { [ -e $OWN ] || [ -e $MIN_RATE ] || [ -n "$(getprop $LAYOUT)" ]; } &&
             [ "$(state)" != $INNER ]; then
         setprop $LAYOUT ""
-        if [ -e $OWN ] && [ -n "$want" ] && [ ! -e $SAVED ]; then
+        if [ -e $OWN ] && [ "$(current size)" != $COVER ]; then
+            :  # "Use inner screen" went on meanwhile and keeps the inner panel: wait for the cover
+        elif [ -e $OWN ] && [ -n "$want" ] && [ ! -e $SAVED ]; then
             mv $OWN $SAVED  # the cover fit below applies directly; it puts these back when it ends
         elif [ -e $OWN ]; then
             read own < $OWN
@@ -273,9 +283,11 @@ while :; do
     # saved file means the cover may be off its own size (even after a half-done fit), so it is
     # put back whenever no fit is wanted.
     if [ -n "$want" ]; then
-        [ "$want" != "$applied" ] && fit $want && applied=$want && log "cover fit to the monitor: $want"
+        panel=$(current size)
+        { [ "$want" != "$applied" ] || [ "$panel" != "$fit_panel" ]; } && fit $want &&
+            applied=$want && fit_panel=$panel && log "fit to the monitor: $want on $panel"
     elif [ -e $SAVED ]; then
-        restore && applied= && log "cover restored"
+        restore && applied= && log "display 0 restored"
     fi
     sleep 2
 done

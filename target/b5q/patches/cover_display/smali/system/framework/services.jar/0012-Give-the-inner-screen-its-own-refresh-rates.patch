@@ -25,8 +25,8 @@ diff --git a/smali/com/android/server/display/mode/RefreshRateController.smali b
      iput-object p1, p0, Lcom/android/server/display/mode/RefreshRateController;->mConfig:Lcom/samsung/android/hardware/display/RefreshRateConfig;
  
 +    # Onigiri: RefreshRateConfig only knows the cover's 60 Hz here, and both panels count as sub
-+    # screens. The inner panel (port 131), shown only for "Mirroring high refresh rate", gets the
-+    # Flip5's own 120 Hz table.
++    # screens. The inner panel (port 131), shown for "Mirroring high refresh rate" and "Use inner
++    # screen", gets the Flip5's own 120 Hz table.
 +    invoke-static {}, Landroid/view/SurfaceControl;->getPhysicalDisplayIds()[J
 +
 +    move-result-object v0

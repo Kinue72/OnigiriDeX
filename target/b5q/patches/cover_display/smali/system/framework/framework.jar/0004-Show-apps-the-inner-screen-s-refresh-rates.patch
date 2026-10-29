@@ -14,8 +14,8 @@ diff --git a/smali_classes4/android/view/Display.smali b/smali_classes4/android/
      return-object v0
  
      :cond_0
-+    # Onigiri: RefreshRateConfig only knows the cover's 60 Hz. The inner panel (port 131) only
-+    # shows for "Mirroring high refresh rate", so apps see all of its modes, up to 120 Hz.
++    # Onigiri: RefreshRateConfig only knows the cover's 60 Hz. The inner panel (port 131) shows
++    # for "Mirroring high refresh rate" and "Use inner screen", so apps see all of its modes.
 +    iget-object v0, p0, Landroid/view/Display;->mDisplayInfo:Landroid/view/DisplayInfo;
 +
 +    iget-object v0, v0, Landroid/view/DisplayInfo;->address:Landroid/view/DisplayAddress;
