@@ -1,0 +1,107 @@
+From: Onigiri
+Subject: [PATCH] Ignore USB-C water detection
+
+diff --git a/build.sh b/build.sh
+--- a/build.sh
++++ b/build.sh
+@@ -181,6 +181,7 @@ apply_susfs_patches
+ import_nomount
+ apply_common_feature_patches
+ apply_kernel_release_patch
++apply_usb_water_patch
+ "${SCRIPTS_DIR}/prepare_toolchain.sh"
+ 
+ "${SCRIPTS_DIR}/build_kernel.sh"
+diff --git a/patches/0002-Onigiri-ignore-usb-c-water.patch b/patches/0002-Onigiri-ignore-usb-c-water.patch
+new file mode 100644
+index 0000000000000000000000000000000000000000..7bf2eb9332c2835dfc79c149b5bb103a286956a6
+--- /dev/null
++++ b/patches/0002-Onigiri-ignore-usb-c-water.patch
+@@ -0,0 +1,52 @@
++diff --git a/msm-kernel/drivers/usb/typec/maxim/max77705_cc.c b/msm-kernel/drivers/usb/typec/maxim/max77705_cc.c
++--- a/msm-kernel/drivers/usb/typec/maxim/max77705_cc.c
+++++ b/msm-kernel/drivers/usb/typec/maxim/max77705_cc.c
++@@ -380,19 +380,11 @@ static irqreturn_t max77705_vconnsc_irq(int irq, void *data)
++ 		break;
++ 
++ 	case WATER:
++-		msg_maxim("== WATER DETECT ==");
++-
++-		if (usbc_data->current_connstat != WATER) {
++-			usbc_data->prev_connstat = usbc_data->current_connstat;
++-			usbc_data->current_connstat = WATER;
++-			if(!usbc_data->max77705->blocking_waterevent)
++-				max77705_ccic_event_work(usbc_data,
++-					PDIC_NOTIFY_DEV_BATT,
++-					PDIC_NOTIFY_ID_WATER,
++-					1/*attach*/,
++-					0,
++-					0);
++-		}
+++		/*
+++		 * Onigiri: a dock reads as water at startup. Water would pause charging, block USB
+++		 * and DisplayPort attach and warn the user, so the port always counts as dry.
+++		 */
+++		msg_maxim("== WATER DETECT (ignored) ==");
++ 		break;
++ 	default:
++ 		break;
++@@ -857,19 +849,10 @@ int max77705_cc_init(struct max77705_usbc_platform_data *usbc_data)
++ 	/* check CC Pin state for cable attach booting scenario */
++ 	max77705_ccstat_irq_handler(usbc_data, CCIC_IRQ_INIT_DETECT);
++ 	max77705_read_reg(usbc_data->muic, REG_CC_STATUS1, &cc_data->cc_status1);
++-	usbc_data->current_connstat = (cc_data->cc_status1 & BIT_ConnStat)
++-				>> FFS(BIT_ConnStat);
++-	pr_info("%s: water state : %s\n", __func__, usbc_data->current_connstat ? "WATER" : "DRY");
++-
++-	if (usbc_data->current_connstat) {
++-		if(!usbc_data->max77705->blocking_waterevent)
++-			max77705_ccic_event_work(usbc_data,
++-				PDIC_NOTIFY_DEV_BATT,
++-				PDIC_NOTIFY_ID_WATER,
++-				1/*attach*/,
++-				0,
++-				0);
++-	}
+++	/* Onigiri: always dry, see max77705_vconnsc_irq(). */
+++	usbc_data->current_connstat = DRY;
+++	pr_info("%s: water state : %s (ignored)\n", __func__,
+++		(cc_data->cc_status1 & BIT_ConnStat) ? "WATER" : "DRY");
++ 	msg_maxim("OUT");
++ 
++ 	return 0;
+diff --git a/scripts/source_preparation.sh b/scripts/source_preparation.sh
+--- a/scripts/source_preparation.sh
++++ b/scripts/source_preparation.sh
+@@ -56,6 +56,7 @@ SUSFS_PROFILE_PATCH_APPLIED=0
+ SUSFS_KERNEL_PATCH_APPLIED=0
+ COMMON_FEATURE_PATCHES_APPLIED=0
+ KERNEL_RELEASE_PATCH_APPLIED=0
++USB_WATER_PATCH_APPLIED=0
+ 
+ die() {
+     echo "error: $*" >&2
+@@ -242,6 +243,11 @@ apply_kernel_release_patch() {
+     KERNEL_RELEASE_PATCH_APPLIED=1
+ }
+ 
++apply_usb_water_patch() {
++    apply_one_patch "${KERNEL_PLATFORM}" "${SOURCE_DIR}/patches/0002-Onigiri-ignore-usb-c-water.patch" 0 "USB-C water"
++    USB_WATER_PATCH_APPLIED=1
++}
++
+ restore_msm_state() {
+     local msm_dir="${KERNEL_PLATFORM}/msm-kernel"
+     local wlan_link="${msm_dir}/.wlan-qcacld"
+@@ -392,6 +398,11 @@ cleanup_sources() {
+     local build_status=$?
+     local cleanup_status=0
+     trap - EXIT
++    if (( USB_WATER_PATCH_APPLIED == 1 )); then
++        (cd "${KERNEL_PLATFORM}" && patch --batch --fuzz=0 --no-backup-if-mismatch -R -p1 \
++            <"${SOURCE_DIR}/patches/0002-Onigiri-ignore-usb-c-water.patch") || cleanup_status=1
++        USB_WATER_PATCH_APPLIED=0
++    fi
+     if (( KERNEL_RELEASE_PATCH_APPLIED == 1 )); then
+         (cd "${KERNEL_PLATFORM}" && patch --batch --fuzz=0 --no-backup-if-mismatch -R -p1 \
+             <"${SOURCE_DIR}/patches/0001-Onigiri-kernel-release.patch") || cleanup_status=1

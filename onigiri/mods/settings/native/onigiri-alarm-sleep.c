@@ -2,6 +2,8 @@
 // that wakes the phone from suspend, or until one of the input devices (e.g. the power key)
 // reports an event, or until external power comes back (ac, usb, wireless or pogo online, as the
 // standby script's powered()), or with -p until something is on USB-C (at once if it already is).
+// Meanwhile it cuts VBUS whenever the phone starts powering USB-C: a dead monitor that re-attaches
+// as a sink takes it (~575 mA on a DeX Pad) until the next wake otherwise.
 // The caller may hold the "onigiri-standby" wakelock: it is released only once the alarm is
 // armed, so the phone can't suspend before it, and held again on wake so the caller can act before
 // the phone sleeps (release it with: echo onigiri-standby > /sys/power/wake_unlock).
@@ -46,6 +48,23 @@ static int powered(void) {
 
 static int plugged(void) { return access("/sys/class/typec/port0-partner", F_OK) == 0; }
 
+static void cut_vbus(void) {
+    static const char otg[] = "/sys/class/power_supply/otg/online";
+    char online[4] = "";
+    int fd = open(otg, O_RDONLY | O_CLOEXEC);
+    if (fd < 0)
+        return;
+    read(fd, online, sizeof(online) - 1);
+    close(fd);
+    if (strcmp(online, "1\n"))
+        return;
+    fd = open(otg, O_WRONLY | O_CLOEXEC);
+    if (fd >= 0) {
+        write(fd, "0", 1);
+        close(fd);
+    }
+}
+
 int main(int argc, char **argv) {
     int wait_plug = argc > 1 && !strcmp(argv[1], "-p");
     argc -= wait_plug;
@@ -77,8 +96,9 @@ int main(int argc, char **argv) {
         epoll_ctl(poll, EPOLL_CTL_ADD, uevent, &event))
         perror("onigiri-alarm-sleep: uevents");  // still sleep on the alarm
     wakelock("/sys/power/wake_unlock");  // fails harmlessly when the caller held none
-    // Checked once the socket is open, so power that came back before it isn't missed.
-    while (!powered() && !(wait_plug && plugged())) {
+    // Checked once the socket is open, so power that came back before it isn't missed. VBUS turning
+    // on sends a uevent too.
+    while (cut_vbus(), !powered() && !(wait_plug && plugged())) {
         if (epoll_wait(poll, &event, 1, -1) < 0) {
             if (errno == EINTR)
                 continue;

@@ -153,8 +153,12 @@ zone_apps() {
 # either side look again. Writing port_type swaps the CC terminations and both sides
 # re-detect: a powered monitor then charges the phone. Alternate writes land on both roles.
 # A dead monitor re-attaches as a sink and takes VBUS about a second later: one cut settles it.
+# VBUS still on from a late re-attach would take that one cut and leave the swap's re-attach
+# powered through the next sleep (~575 mA on a DeX Pad, every recheck after), so cut it first.
 recheck_usb() {
     [ -e $TYPEC-partner ] || return 1
+    read on < $OTG
+    [ "$on" = 1 ] && echo 0 > $OTG
     case "$(cat $TYPEC/port_type)" in *"[source]"*) role=sink ;; *) role=source ;; esac
     echo $role > $TYPEC/port_type &
     hold_power_off 4 once
@@ -398,7 +402,8 @@ while :; do
     fi
     # onigiri-alarm-sleep releases this wakelock once its alarm is armed, wakes the phone from
     # suspend and holds the wakelock again until here. It returns early when power comes back
-    # and, once the cable was out, when anything is plugged in (check_cable sorts it out).
+    # and, once the cable was out, when anything is plugged in (check_cable sorts it out), and
+    # cuts VBUS whenever a re-attach turns it on meanwhile.
     plug=-p
     [ -n "$dead_monitor" ] && plug=
     if [ -z "$since" ]; then
