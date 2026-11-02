@@ -5,7 +5,9 @@
 # goes away or DeX starts. With "Mirroring high refresh rate" on, opening the phone while it
 # mirrors shows the 120 Hz inner panel instead (device state 5), fitted the same way, so the
 # mirror is no longer held to the cover's 60 Hz. With "Use inner screen" on, the open phone shows
-# the inner panel by itself, and the fit follows whichever panel shows. Each time DeX starts, it
+# the inner panel by itself, and the fit follows whichever panel shows; while a monitor runs
+# with the matching high refresh switch on, that panel is then held at 120 Hz too, since it leads
+# the monitor's pace. Each time DeX starts, it
 # also opens the zone apps (Settings > Onigiri Software > Zones). It also keeps power saving,
 # which holds every screen to 60 Hz, off while the phone charges. Started by onigiri-mirror.rc.
 
@@ -24,8 +26,9 @@ SAVED=$DATA/saved
 # size override on the cover (840x808, which services.jar 0017 removes, and 1080x2244 seen), so
 # they are put back afterwards (or handed back to SAVED when a cover fit follows).
 OWN=$DATA/own
-# min_refresh_rate from before the inner panel showed ("null" if unset; Force peak refresh rate
-# sets it). Held at 120 meanwhile: the adaptive policy otherwise idles the panel at 60.
+# min_refresh_rate from before the inner panel showed a monitor ("null" if unset; Force peak
+# refresh rate sets it). Held at 120 meanwhile: the adaptive policy otherwise idles the panel at
+# 60, and the monitor follows its pace (the DeX pacer lets the inner panel lead while it is on).
 MIN_RATE=$DATA/min-refresh-rate
 # Power saving was on when charging started; it goes back on once charging stops.
 SAVER=$DATA/power-saving
@@ -127,6 +130,18 @@ inner_wanted() {
     return 1
 }
 
+# Whether "Use inner screen" shows the inner panel by itself (the phone is open) while the monitor
+# $1 (mirror_size) runs with its high refresh switch on: hold the panel at 120, as state 5 does.
+inner_hold_wanted() {
+    case $1 in
+        '' | hold) return 1 ;;
+        dex*) switch=dex_high_refresh ;;
+        *) switch=mirror_high_refresh ;;
+    esac
+    [ "$(getprop persist.sys.onigiri.$switch)" = true ] && [ "$(state)" != $INNER ] &&
+        [ "$(current size)" != $COVER ]
+}
+
 charging() {
     for supply in ac usb wireless pogo; do
         read online 2>/dev/null < /sys/class/power_supply/$supply/online && [ "$online" = 1 ] &&
@@ -192,6 +207,12 @@ while :; do
     power_saving
     now=$(mirror_size)
     [ "$now" = hold ] && { sleep 2; continue; }
+    hold=
+    if inner_hold_wanted "$now"; then
+        hold=1
+        [ -e $MIN_RATE ] || { settings get system min_refresh_rate > $MIN_RATE &&
+            settings put system min_refresh_rate 120 && log "inner screen held at 120 Hz"; }
+    fi
     if [ "$now" = "$seen" ]; then
         count=$((count + 1))
     else
@@ -270,7 +291,7 @@ while :; do
             set -- $own
             wm size $1 -d 0 && wm density $2 -d 0 && rm -f $OWN
         fi
-        if [ -e $MIN_RATE ]; then
+        if [ -e $MIN_RATE ] && [ -z "$hold" ]; then
             read rate < $MIN_RATE
             if [ "$rate" = null ]; then
                 settings delete system min_refresh_rate >/dev/null

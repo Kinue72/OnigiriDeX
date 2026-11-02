@@ -185,7 +185,9 @@ columns, a grid, or a priority grid.
 - **Use inner screen when open** (off by default, under Display settings): the
   phone works like a stock Flip5. Opening it shows the inside screen and turns
   the outside one off, and closing it goes back to the outside screen. It
-  takes effect the next time you open the phone.
+  takes effect the next time you open the phone. While it's open, a monitor
+  runs at most 120 frames per second, the inside screen's rate, in DeX too.
+  Close the phone for DeX's full rate.
 - **Power on when power connected**: when the phone is off and gets power, it
   turns on by itself once the battery reaches 5%. With this off, a phone that
   is off and gets plugged in starts for about 15 seconds before it shows the
