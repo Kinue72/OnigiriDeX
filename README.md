@@ -20,6 +20,9 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on 
 - Media stays on a connected Bluetooth device when a monitor connects, instead
   of switching to the monitor. You can still pick another output in Media
   output.
+- No full-screen **moisture warning** with a repeating alarm when the USB-C
+  port reads as wet, which a dock can cause at startup. Charging still pauses
+  while it reads wet, and a notification still shows.
 - Skips the **unlocked bootloader warning** when it starts, so it boots about
   9 seconds sooner and also starts while the power key is held down (for a
   build without a battery that uses a power-on board). The warning still

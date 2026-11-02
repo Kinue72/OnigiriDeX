@@ -1,0 +1,160 @@
+From: Onigiri
+Subject: [PATCH] Drop the USB port moisture alert dialog
+
+diff --git a/smali_classes2/com/android/systemui/power/SecPowerNotificationWarnings.smali b/smali_classes2/com/android/systemui/power/SecPowerNotificationWarnings.smali
+index 1d9fd5f..6d64798 100644
+--- a/smali_classes2/com/android/systemui/power/SecPowerNotificationWarnings.smali
++++ b/smali_classes2/com/android/systemui/power/SecPowerNotificationWarnings.smali
+@@ -2401,151 +2401,7 @@
+ .end method
+ 
+ .method public final showWaterProtectionAlertDialog(Z)V
+-    .locals 4
+-
+-    const-string/jumbo v0, "show WaterProtectionAlertDialog - isWaterDetected = "
+-
+-    const-string v1, " mIsWaterDetected = "
+-
+-    invoke-static {v0, v1, p1}, Landroidx/slice/widget/RowView$$ExternalSyntheticOutline0;->m(Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/StringBuilder;
+-
+-    move-result-object v0
+-
+-    iget-boolean v1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mIsWaterDetected:Z
+-
+-    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
+-
+-    const-string v1, " mIsHiccupState = "
+-
+-    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    iget-boolean v1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mIsHiccupState:Z
+-
+-    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
+-
+-    const-string v1, "mWaterProtectionAlertDialog : "
+-
+-    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    iget-object v1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionAlertDialog:Landroidx/appcompat/app/AlertDialog;
+-
+-    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+-
+-    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    move-result-object v0
+-
+-    const-string v1, "PowerUI.Notification"
+-
+-    invoke-static {v1, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    iput-boolean p1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mIsWaterDetected:Z
+-
+-    iget-object v0, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mHandler:Landroid/os/Handler;
+-
+-    iget-object v2, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionAlertTask:Lcom/android/systemui/power/SecPowerNotificationWarnings$18;
+-
+-    invoke-virtual {v0, v2}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
+-
+-    iget-object v2, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionPartialWakeLock:Landroid/os/PowerManager$WakeLock;
+-
+-    if-nez v2, :cond_0
+-
+-    iget-object v2, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mPowerManager:Landroid/os/PowerManager;
+-
+-    const/4 v3, 0x1
+-
+-    invoke-virtual {v2, v3, v1}, Landroid/os/PowerManager;->newWakeLock(ILjava/lang/String;)Landroid/os/PowerManager$WakeLock;
+-
+-    move-result-object v2
+-
+-    iput-object v2, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionPartialWakeLock:Landroid/os/PowerManager$WakeLock;
+-
+-    invoke-virtual {v2}, Landroid/os/PowerManager$WakeLock;->acquire()V
+-
+-    :cond_0
+-    iget-object v2, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionAlertDialog:Landroidx/appcompat/app/AlertDialog;
+-
+-    if-nez v2, :cond_5
+-
+-    if-nez p1, :cond_2
+-
+-    iget-boolean p1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mIsHiccupState:Z
+-
+-    if-nez p1, :cond_2
+-
+-    const-string p1, "Wrong executed, so return"
+-
+-    invoke-static {v1, p1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    iget-object p1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionPartialWakeLock:Landroid/os/PowerManager$WakeLock;
+-
+-    if-eqz p1, :cond_1
+-
+-    invoke-virtual {p1}, Landroid/os/PowerManager$WakeLock;->release()V
+-
+-    const/4 p1, 0x0
+-
+-    iput-object p1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionPartialWakeLock:Landroid/os/PowerManager$WakeLock;
+-
+-    :cond_1
+-    return-void
+-
+-    :cond_2
+-    const/16 p1, 0xc
+-
+-    invoke-virtual {p0, p1}, Lcom/android/systemui/power/SecPowerNotificationWarnings;->getPopupDialog(I)Landroidx/appcompat/app/AlertDialog;
+-
+-    move-result-object p1
+-
+-    iput-object p1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionAlertDialog:Landroidx/appcompat/app/AlertDialog;
+-
+-    if-nez p1, :cond_3
+-
+-    return-void
+-
+-    :cond_3
+-    new-instance v1, Lcom/android/systemui/power/SecPowerNotificationWarnings$16;
+-
+-    invoke-direct {v1, p0}, Lcom/android/systemui/power/SecPowerNotificationWarnings$16;-><init>(Lcom/android/systemui/power/SecPowerNotificationWarnings;)V
+-
+-    invoke-virtual {p1, v1}, Landroid/app/Dialog;->setOnDismissListener(Landroid/content/DialogInterface$OnDismissListener;)V
+-
+-    iget-object p1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionAlertDialog:Landroidx/appcompat/app/AlertDialog;
+-
+-    invoke-virtual {p1}, Landroid/app/Dialog;->show()V
+-
+-    iget-boolean p1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mIsHiccupState:Z
+-
+-    if-eqz p1, :cond_4
+-
+-    iget-object p1, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionAlertDialog:Landroidx/appcompat/app/AlertDialog;
+-
+-    const/4 v1, -0x1
+-
+-    invoke-virtual {p1, v1}, Landroidx/appcompat/app/AlertDialog;->getButton(I)Landroid/widget/Button;
+-
+-    move-result-object p1
+-
+-    new-instance v1, Lcom/android/systemui/power/SecPowerNotificationWarnings$17;
+-
+-    invoke-direct {v1, p0}, Lcom/android/systemui/power/SecPowerNotificationWarnings$17;-><init>(Lcom/android/systemui/power/SecPowerNotificationWarnings;)V
+-
+-    invoke-virtual {p1, v1}, Landroid/widget/Button;->setOnClickListener(Landroid/view/View$OnClickListener;)V
+-
+-    :cond_4
+-    invoke-virtual {p0}, Lcom/android/systemui/power/SecPowerNotificationWarnings;->turnOnScreen()V
+-
+-    :cond_5
+-    const/4 p1, 0x6
+-
+-    invoke-virtual {p0, p1}, Lcom/android/systemui/power/SecPowerNotificationWarnings;->playPowerSound(I)V
+-
+-    iget-object p0, p0, Lcom/android/systemui/power/SecPowerNotificationWarnings;->mWaterProtectionAlertTask:Lcom/android/systemui/power/SecPowerNotificationWarnings$18;
+-
+-    const-wide/16 v1, 0x640
+-
+-    invoke-virtual {v0, p0, v1, v2}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
++    .locals 0
+ 
+     return-void
+ .end method
