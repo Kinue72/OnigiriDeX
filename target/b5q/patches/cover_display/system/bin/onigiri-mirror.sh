@@ -1,8 +1,9 @@
 #!/system/bin/sh
 # Mirroring fit, like the SecondScreen app: while a wired monitor mirrors the phone (DeX off),
 # give the cover the monitor's shape at 240 dpi, so the mirror fills the monitor instead of a
-# square in the middle. The cover goes back to its own size and density as soon as the monitor
-# goes away or DeX starts. With "Mirroring high refresh rate" on, opening the phone while it
+# square in the middle. Display 0 is held in landscape meanwhile, so the portrait inner panel
+# turns. The cover goes back to its own size and density as soon as the monitor goes away or DeX
+# starts. With "Mirroring high refresh rate" on, opening the phone while it
 # mirrors shows the 120 Hz inner panel instead (device state 5), fitted the same way, so the
 # mirror is no longer held to the cover's 60 Hz. With "Use inner screen" on, the open phone shows
 # the inner panel by itself, and the fit follows whichever panel shows; while a monitor runs
@@ -17,6 +18,11 @@ MAX_WIDTH=2560  # a wider monitor gets the same shape, rendered smaller and scal
 STEADY=5        # polls (2 s apart) mirroring must hold before resizing
 INNER=5         # device state that shows the inner panel while LAYOUT is set (DeviceStateToLayoutMap)
 LAYOUT=sys.onigiri.inner_layout  # set before requesting INNER, cleared once the cover is back
+# Set while display 0 is (to be) fitted or the inner panel shows the mirror: services.jar 0018 then
+# keeps display 0 in landscape, whatever apps ask for. Set before a fit and cleared before the
+# restore, so the size change that follows also turns the panel; kept until state 5 is left, so the
+# cover comes back at rotation 0 rather than at the inner panel's.
+FIT=sys.onigiri.mirror_fit
 COVER=748x720   # the cover's physical size: display 0 shows the cover
 DATA=/data/misc/onigiri-mirror
 # Display 0's size and density from before, and the physical size of the panel they belong to;
@@ -75,14 +81,17 @@ valid() {
 
 # The shape $1 as display 0's panel can take it: the window manager caps a forced size at 3x the
 # panel's longer side (2244 on the cover) by cutting that side alone, which squashed a 2560x1600
-# monitor, so a larger shape is scaled down whole instead. Fails if the panel size is unknown.
+# monitor, so a larger shape is scaled down whole instead. A forced size is in the panel's own
+# orientation, so a portrait panel (the inner one) gets it turned upright: in landscape (FIT) it
+# then has the monitor's shape. Fails if the panel size is unknown.
 shape() {
     set -- ${1%x*} ${1#*x} $(current size | tr x ' ')
     [ -n "$4" ] || return 1
     max=$((3 * ($3 > $4 ? $3 : $4)))
     big=$(($1 > $2 ? $1 : $2))
-    if [ $big -gt $max ]; then
-        echo $(($1 * max / big))x$(($2 * max / big))
+    [ $big -gt $max ] && set -- $(($1 * max / big)) $(($2 * max / big)) $3 $4
+    if [ $3 -lt $4 ]; then
+        echo ${2}x$1
     else
         echo ${1}x$2
     fi
@@ -238,6 +247,9 @@ while :; do
     elif [ -n "$had_dex" ] || [ $count -ge $STEADY ]; then
         want=$now
     fi
+    fitting=
+    { [ -n "$want" ] || [ -n "$inner" ]; } && fitting=1
+    [ "$(getprop $FIT)" = "$fitting" ] || setprop $FIT "$fitting"
     # The inner panel takes over display 0, and with it display 0's size and density overrides:
     # the cover's own values go to OWN (moved from SAVED while a cover fit is on; kept if already
     # there, as display 0 may hold a fit by now) rather than being restored first, and the inner
