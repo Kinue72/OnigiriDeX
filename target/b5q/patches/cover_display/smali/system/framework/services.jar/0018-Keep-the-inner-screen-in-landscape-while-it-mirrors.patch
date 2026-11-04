@@ -7,30 +7,28 @@ landscape size at rotation 0, the window manager took the panel for a
 landscape one and squeezed the mirror into a strip across the middle, and
 SystemUI laid out for the wrong shape and got cut off. onigiri-mirror now
 gives a portrait panel the monitor's shape turned upright and sets
-sys.onigiri.mirror_fit; while it is set, the default display on a portrait
-panel reports a landscape orientation, so it turns to landscape whatever
-apps or the lock screen ask for, and portrait-only apps are letterboxed.
+sys.onigiri.mirror_fit; while it is set, the default display reports a
+landscape orientation, so the inner panel turns to landscape whatever apps
+or the lock screen ask for. The cover, landscape already, stays at
+rotation 0: without this it kept the inner panel's rotation when the phone
+closed, as the sensor proposes none while the phone lies flat.
 
 diff --git a/smali_classes2/com/android/server/wm/DisplayContent.smali b/smali_classes2/com/android/server/wm/DisplayContent.smali
 --- a/smali_classes2/com/android/server/wm/DisplayContent.smali
 +++ b/smali_classes2/com/android/server/wm/DisplayContent.smali
-@@ -12531,6 +12531,31 @@
+@@ -12531,6 +12531,27 @@
      return v3
  
      :cond_1
 +    # Onigiri: while onigiri-mirror fits the default display to a monitor, it sets
 +    # sys.onigiri.mirror_fit and gives a portrait panel (the inner screen) the monitor's shape
-+    # turned upright. Keep that panel in landscape, whatever apps or the lock screen ask for, so
-+    # it shows the mirror the way the monitor does. The landscape cover keeps its own rotation.
++    # turned upright. Keep the default display in landscape meanwhile, whatever apps or the lock
++    # screen ask for, so it shows the mirror the way the monitor does: the inner panel turns, and
++    # the landscape cover stays at rotation 0 instead of keeping the inner panel's rotation when
++    # the phone closes (the sensor proposes none while the phone lies flat).
 +    iget v1, v0, Lcom/android/server/wm/DisplayContent;->mDisplayId:I
 +
 +    if-nez v1, :onigiri_mirror_fit_done
-+
-+    iget v1, v0, Lcom/android/server/wm/DisplayContent;->mInitialDisplayWidth:I
-+
-+    iget v4, v0, Lcom/android/server/wm/DisplayContent;->mInitialDisplayHeight:I
-+
-+    if-ge v1, v4, :onigiri_mirror_fit_done
 +
 +    const-string v1, "sys.onigiri.mirror_fit"
 +
