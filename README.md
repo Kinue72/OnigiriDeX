@@ -187,7 +187,8 @@ columns, a grid, or a priority grid.
   the outside one off, and closing it goes back to the outside screen. It
   takes effect the next time you open the phone. While it's open, a monitor
   runs at most 120 frames per second, the inside screen's rate, in DeX too.
-  Close the phone for DeX's full rate.
+  Close the phone for DeX's full rate. While it mirrors a monitor, the inside
+  screen stays in landscape.
 - **Power on when power connected**: when the phone is off and gets power, it
   turns on by itself once the battery reaches 5%. With this off, a phone that
   is off and gets plugged in starts for about 15 seconds before it shows the
@@ -246,9 +247,9 @@ USB-C port by itself. USB devices and charging drop out for a moment.
 - **Mirroring high refresh rate** (experimental, off by default): the outside
   screen only runs at 60 Hz, which holds a mirrored monitor to 60 frames per
   second too. With this on, opening the phone while it mirrors a monitor (DeX
-  off) shows the 120 Hz inside screen instead, shaped to fill the monitor, and
-  turns the outside one off. Plug the cable back in after turning it on, so
-  the monitor switches to its fastest refresh rate.
+  off) shows the 120 Hz inside screen instead, turned to landscape and shaped
+  to fill the monitor, and turns the outside one off. Plug the cable back in
+  after turning it on, so the monitor switches to its fastest refresh rate.
   Closing the phone goes back to the outside screen. In testing, scrolling
   reached about 118 frames per second on a 144 Hz monitor, the most the
   inside screen can show. Web browsers still run at 60 there.
