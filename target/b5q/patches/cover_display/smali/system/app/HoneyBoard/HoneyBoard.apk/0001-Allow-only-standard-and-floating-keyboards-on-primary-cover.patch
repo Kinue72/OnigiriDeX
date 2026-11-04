@@ -1,0 +1,77 @@
+Subject: [PATCH] Allow only the standard and floating keyboards on the primary cover
+
+The donor's cover policy defaults to the split keyboard in landscape, which the
+promoted cover cannot fit. Fall back to the standard keyboard there unless the user
+chose Floating for the current cover orientation (Settings > Modes, or the toolbar).
+
+diff --git a/smali_classes2/ck/l.smali b/smali_classes2/ck/l.smali
+--- a/smali_classes2/ck/l.smali
++++ b/smali_classes2/ck/l.smali
+@@ -9144,8 +9144,66 @@
+ .end method
+ 
+ .method public final T1()Z
+-    .locals 1
++    .locals 2
++
++    # Onigiri: the promoted cover cannot fit the donor's split keyboard (its default in
++    # landscape). Show the standard keyboard there unless the user chose Floating for the
++    # current orientation.
++    invoke-direct {p0}, Lck/l;->o()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/Context;->getDisplayId()I
++
++    move-result v1
++
++    if-nez v1, :native_cover_policy
++
++    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
++
++    move-result-object v1
++
++    iget v1, v1, Landroid/content/res/Configuration;->semDisplayDeviceType:I
++
++    const/4 v0, 0x5
++
++    if-ne v1, v0, :native_cover_policy
++
++    invoke-direct {p0}, Lck/l;->o()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-static {v0}, Lol/e0;->q(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :cover_portrait
++
++    invoke-virtual {p0}, Lck/l;->y()Lkg/a;
++
++    move-result-object v0
++
++    goto :cover_view_type
++
++    :cover_portrait
++    invoke-virtual {p0}, Lck/l;->x()Lkg/a;
++
++    move-result-object v0
++
++    :cover_view_type
++    invoke-virtual {v0}, Lkg/a;->c()Z
++
++    move-result v0
++
++    xor-int/lit8 v0, v0, 0x1
++
++    return v0
+ 
++    :native_cover_policy
+     sget-boolean v0, Lvj/a;->h6:Z
+ 
+     if-eqz v0, :cond_0
