@@ -1,0 +1,44 @@
+Subject: [PATCH] Skip the fullscreen editor on the primary cover
+
+The donor opens the fullscreen extract editor when its cover is in landscape, which
+suits the tall Fold5 cover. The near-square promoted cover is barely wider in
+landscape, and the editor hides the whole app behind a text box and a Done button.
+Never use it on the primary cover.
+
+diff --git a/smali_classes3/com/samsung/android/honeyboard/service/HoneyBoardService.smali b/smali_classes3/com/samsung/android/honeyboard/service/HoneyBoardService.smali
+--- a/smali_classes3/com/samsung/android/honeyboard/service/HoneyBoardService.smali
++++ b/smali_classes3/com/samsung/android/honeyboard/service/HoneyBoardService.smali
+@@ -5310,7 +5310,32 @@
+ 
+     move-result v0
+ 
+-    if-eqz v0, :cond_3
++    if-eqz v0, :onigiri_cover_check
++
++    return v1
++
++    # Onigiri: the near-square promoted cover is barely wider in landscape, so the
++    # donor's fullscreen editor would only hide the app.
++    :onigiri_cover_check
++    invoke-virtual {p0}, Landroid/content/Context;->getDisplayId()I
++
++    move-result v0
++
++    if-nez v0, :cond_3
++
++    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
++
++    move-result-object v0
++
++    iget v0, v0, Landroid/content/res/Configuration;->semDisplayDeviceType:I
++
++    const/4 v3, 0x5
++
++    if-ne v0, v3, :cond_3
+ 
+     return v1
+ 
