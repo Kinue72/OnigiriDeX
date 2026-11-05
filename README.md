@@ -18,8 +18,10 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on 
   themselves when they connect. Start it on the phone; after that, their play
   and pause buttons work as usual.
 - Media stays on a connected Bluetooth device when a monitor connects, instead
-  of switching to the monitor. You can still pick another output in Media
-  output.
+  of switching to the monitor. Without Bluetooth, the monitor gets whatever you
+  last picked in Media output while a monitor was connected: pick **Phone
+  speaker** once and later monitors leave media on the phone; pick the monitor
+  to switch back.
 - The USB-C port never counts as **wet**: a dock can read as water at startup,
   which paused charging, blocked USB and sounded a moisture alarm.
   Real water no longer stops charging either, so dry the port before plugging

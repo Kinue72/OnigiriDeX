@@ -1,0 +1,205 @@
+From: Onigiri
+Subject: [PATCH] Keep the media output when a monitor connects
+
+diff --git a/smali/com/android/server/audio/AudioService.smali b/smali/com/android/server/audio/AudioService.smali
+index 1cddff7..b275ced 100644
+--- a/smali/com/android/server/audio/AudioService.smali
++++ b/smali/com/android/server/audio/AudioService.smali
+@@ -43736,6 +43736,9 @@
+ 
+     invoke-virtual {p0}, Lcom/android/server/audio/AudioService;->checkModifyPhoneStateOrRoutingPermission()V
+ 
++    # Onigiri: remember whether Media output put media on the phone or on the monitor.
++    invoke-static {p1}, Lcom/android/server/media/OnigiriMediaOutput;->remember(I)V
++
+     iget-object p0, p0, Lcom/android/server/audio/AudioService;->mDeviceBroker:Lcom/android/server/audio/AudioDeviceBroker;
+ 
+     iget-object v0, p0, Lcom/android/server/audio/AudioDeviceBroker;->mDeviceStateLock:Ljava/lang/Object;
+diff --git a/smali/com/android/server/media/AudioManagerRouteController$AudioDeviceCallbackImpl.smali b/smali/com/android/server/media/AudioManagerRouteController$AudioDeviceCallbackImpl.smali
+index 729bab0..dbd5b92 100644
+--- a/smali/com/android/server/media/AudioManagerRouteController$AudioDeviceCallbackImpl.smali
++++ b/smali/com/android/server/media/AudioManagerRouteController$AudioDeviceCallbackImpl.smali
+@@ -44,13 +44,14 @@
+ 
+     if-eqz v2, :cond_0
+ 
+-    iget-object p1, p0, Lcom/android/server/media/AudioManagerRouteController$AudioDeviceCallbackImpl;->this$0:Lcom/android/server/media/AudioManagerRouteController;
++    iget-object v2, p0, Lcom/android/server/media/AudioManagerRouteController$AudioDeviceCallbackImpl;->this$0:Lcom/android/server/media/AudioManagerRouteController;
+ 
+-    iget-object v0, p1, Lcom/android/server/media/AudioManagerRouteController;->mAudioManager:Landroid/media/AudioManager;
++    iget-object v0, v2, Lcom/android/server/media/AudioManagerRouteController;->mAudioManager:Landroid/media/AudioManager;
+ 
+-    iget-object p1, p1, Lcom/android/server/media/AudioManagerRouteController;->mStrategyForMedia:Landroid/media/audiopolicy/AudioProductStrategy;
++    iget-object v2, v2, Lcom/android/server/media/AudioManagerRouteController;->mStrategyForMedia:Landroid/media/audiopolicy/AudioProductStrategy;
+ 
+-    invoke-virtual {v0, p1}, Landroid/media/AudioManager;->removePreferredDeviceForStrategy(Landroid/media/audiopolicy/AudioProductStrategy;)Z
++    # Onigiri: keep media on Bluetooth, or on the phone if picked, instead of the newest output.
++    invoke-static {v0, v2, p1}, Lcom/android/server/media/OnigiriMediaOutput;->route(Landroid/media/AudioManager;Landroid/media/audiopolicy/AudioProductStrategy;[Landroid/media/AudioDeviceInfo;)V
+ 
+     iget-object p0, p0, Lcom/android/server/media/AudioManagerRouteController$AudioDeviceCallbackImpl;->this$0:Lcom/android/server/media/AudioManagerRouteController;
+ 
+diff --git a/smali/com/android/server/media/OnigiriMediaOutput.smali b/smali/com/android/server/media/OnigiriMediaOutput.smali
+new file mode 100644
+index 0000000..9f6ef3e
+--- /dev/null
++++ b/smali/com/android/server/media/OnigiriMediaOutput.smali
+@@ -0,0 +1,159 @@
++# Onigiri: whenever an output appears, MediaRouter clears the media output choice and the audio
++# policy then plays on the newest device, so a monitor that connects or reconnects (HDMI over
++# DisplayPort) takes media away from the car, the headphones or the phone. Prefer a connected
++# Bluetooth output instead. Without one, a monitor that connects gets what Media output last picked
++# while a monitor was connected: the phone speaker or the monitor (the default).
++.class public final Lcom/android/server/media/OnigiriMediaOutput;
++.super Ljava/lang/Object;
++
++
++# direct methods
++.method constructor <init>()V
++    .locals 0
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    return-void
++.end method
++
++# Called by AudioService.setDeviceToForceByUser, which Media output uses for the phone speaker
++# (0x2) and the monitor (0x400, AUDIO_DEVICE_OUT_AUX_DIGITAL). Only picks made while a monitor is
++# connected count, so choosing the phone over headphones elsewhere changes nothing.
++.method public static remember(I)V
++    .locals 3
++
++    const/16 v0, 0x400
++
++    const-string v1, ""
++
++    invoke-static {v0, v1}, Landroid/media/AudioSystem;->getDeviceConnectionState(ILjava/lang/String;)I
++
++    move-result v1
++
++    const/4 v2, 0x1
++
++    if-ne v1, v2, :cond_2
++
++    const/4 v1, 0x2
++
++    if-ne p0, v1, :cond_0
++
++    const-string v0, "true"
++
++    goto :goto_0
++
++    :cond_0
++    if-ne p0, v0, :cond_2
++
++    const-string v0, "false"
++
++    :goto_0
++    const-string v1, "persist.sys.onigiri.media_on_phone"
++
++    invoke-static {v1, v0}, Landroid/os/SystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++
++    :cond_2
++    return-void
++.end method
++
++# Replaces removePreferredDeviceForStrategy in the device callback; p2 holds the outputs that
++# just appeared.
++.method static route(Landroid/media/AudioManager;Landroid/media/audiopolicy/AudioProductStrategy;[Landroid/media/AudioDeviceInfo;)V
++    .locals 6
++
++    const/4 v0, 0x2
++
++    invoke-virtual {p0, v0}, Landroid/media/AudioManager;->getDevices(I)[Landroid/media/AudioDeviceInfo;
++
++    move-result-object v0
++
++    array-length v1, v0
++
++    const/4 v2, 0x0
++
++    :goto_0
++    if-ge v2, v1, :cond_2
++
++    aget-object v3, v0, v2
++
++    invoke-virtual {v3}, Landroid/media/AudioDeviceInfo;->getType()I
++
++    move-result v4
++
++    # TYPE_BLUETOOTH_A2DP, TYPE_BLE_HEADSET, TYPE_BLE_SPEAKER
++    const/16 v5, 0x8
++
++    if-eq v4, v5, :cond_1
++
++    const/16 v5, 0x1a
++
++    if-eq v4, v5, :cond_1
++
++    const/16 v5, 0x1b
++
++    if-ne v4, v5, :cond_0
++
++    goto :goto_1
++
++    :cond_0
++    add-int/lit8 v2, v2, 0x1
++
++    goto :goto_0
++
++    :cond_1
++    :goto_1
++    new-instance v0, Landroid/media/AudioDeviceAttributes;
++
++    invoke-direct {v0, v3}, Landroid/media/AudioDeviceAttributes;-><init>(Landroid/media/AudioDeviceInfo;)V
++
++    invoke-virtual {p0, p1, v0}, Landroid/media/AudioManager;->setPreferredDeviceForStrategy(Landroid/media/audiopolicy/AudioProductStrategy;Landroid/media/AudioDeviceAttributes;)Z
++
++    return-void
++
++    :cond_2
++    invoke-virtual {p0, p1}, Landroid/media/AudioManager;->removePreferredDeviceForStrategy(Landroid/media/audiopolicy/AudioProductStrategy;)Z
++
++    const-string v0, "persist.sys.onigiri.media_on_phone"
++
++    const/4 v1, 0x0
++
++    invoke-static {v0, v1}, Landroid/os/SystemProperties;->getBoolean(Ljava/lang/String;Z)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_5
++
++    array-length v0, p2
++
++    const/4 v1, 0x0
++
++    :goto_2
++    if-ge v1, v0, :cond_5
++
++    aget-object v2, p2, v1
++
++    invoke-virtual {v2}, Landroid/media/AudioDeviceInfo;->getType()I
++
++    move-result v2
++
++    # TYPE_HDMI: the monitor just connected. Pick the phone speaker as Media output does.
++    const/16 v3, 0x9
++
++    if-ne v2, v3, :cond_4
++
++    const/4 v0, 0x2
++
++    const-string v1, ""
++
++    invoke-virtual {p0, v0, v1}, Landroid/media/AudioManager;->semSetDeviceForced(ILjava/lang/String;)I
++
++    return-void
++
++    :cond_4
++    add-int/lit8 v1, v1, 0x1
++
++    goto :goto_2
++
++    :cond_5
++    return-void
++.end method
