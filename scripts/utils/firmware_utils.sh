@@ -92,7 +92,7 @@ GET_REQUIRED_FIRMWARE()
     python3 -c '
 import json, sys
 specs = json.load(open(sys.argv[1]))
-for spec in specs.values():
+for spec in (*specs["targets"].values(), specs["donor"]):
     if (spec["model"], spec["csc"]) == (sys.argv[2], sys.argv[3]):
         print(spec["version"])
         break
@@ -103,8 +103,8 @@ else:
 
 PARSE_FIRMWARE_STRING()
 {
-    if ! [[ "${1:-}" =~ ^(SM-F731B|SM-F946B)/XXV$ ]]; then
-        LOGE "Use SM-F731B/XXV or the SM-F946B/XXV donor."
+    if ! [[ "${1:-}" =~ ^SM-[A-Z0-9]+/[A-Z0-9]{3}$ ]]; then
+        LOGE "Use a MODEL/CSC pinned in onigiri/configs/firmware.json, like SM-F731B/XXV."
         return 1
     fi
 

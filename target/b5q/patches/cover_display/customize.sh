@@ -13,3 +13,9 @@ sed -i '/name="SUPPORT_QUICK_SHOT"/s/value="true"/value="false"/' \
 
 python3 "$MODPATH/native/patch_camera_hal.py" \
     "$WORK_DIR/vendor/lib64/hw/camera.qcom.so" || ABORT "Cannot patch the camera HAL orientation"
+
+# The cover's resource overlay is named after the model's product (b5qxxx, b5qksx).
+for PATCH in "$MODPATH"/product_overlay/*.patch; do
+    APPLY_PATCH "product" "overlay/framework-res__${TARGET_PRODUCT_NAME}__auto_generated_rro_product.apk" "$PATCH" || \
+        ABORT "Cannot patch the cover resource overlay"
+done

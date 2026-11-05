@@ -6,6 +6,8 @@ SRC_DIR="${SRC_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)}"
 BIN="$SRC_DIR/out/tools/bin"
 KERNEL_DIR="$SRC_DIR/external/kernel"
 BUILD="$KERNEL_DIR/out/oneui/b5q/msm-kalama-kalama-gki-ksu"
+# Every Flip5 model shares this kernel; it is repacked from the B's stock images (the N's base
+# device trees and boot config are the same).
 STOCK="$SRC_DIR/out/fw/SM-F731B_XXV/kernel"
 OUTPUT="$SRC_DIR/out/target/b5q/kernel"
 

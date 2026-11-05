@@ -9,13 +9,14 @@ set -o allexport
 source "$OUT_DIR/config.sh"
 set +o allexport
 
-[[ "$TARGET_CODENAME" = b5q && "$TARGET_ASSERT_MODEL" = SM-F731B ]]
+[[ "$TARGET_CODENAME" = b5q && "$TARGET_ASSERT_MODEL" = "$TARGET_MODEL" ]]
 [ "$TARGET_OS_FILE_SYSTEM" = erofs ]
 [ "$TARGET_SUPER_PARTITION_SIZE" = 12664700928 ]
 [ "$TARGET_SUPER_GROUP_SIZE" = 12660506624 ]
 [ -f "$WORK_DIR/.completed" ]
 
-OUTPUT="$OUT_DIR/Onigiri_AP_SM-F731B_F731BXXS5EYI1_${ROM_VERSION}_$(date +%Y%m%d).tar.md5"
+# release.sh and make_ota.sh read the model from this name.
+OUTPUT="$OUT_DIR/Onigiri_AP_${TARGET_MODEL}_${TARGET_FIRMWARE_VERSION%%/*}_${ROM_VERSION}_$(date +%Y%m%d).tar.md5"
 if [ -e "$OUTPUT" ]; then
     LOGE "Output already exists: $OUTPUT"
     exit 1

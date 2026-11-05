@@ -2,8 +2,8 @@
 
 set -e
 
-if [ "$#" -ne 1 ] || [[ "$1" != "b5q" ]]; then
-    echo "Onigiri supports only SM-F731B (b5q)." >&2
+if [ "$#" -ne 1 ] || [[ "$1" != "b5q" ]] || [ -z "${TARGET_MODEL:-}" ]; then
+    echo "Usage: TARGET_MODEL=<model> gen_config_file.sh b5q (buildenv.sh sets it)" >&2
     exit 1
 fi
 
@@ -14,15 +14,18 @@ FIRMWARE_CONFIG="$(python3 -c '
 import json, sys
 specs = json.load(open(sys.argv[1]))
 values = []
-for role in ("target", "donor"):
-    spec = specs[role]
+for spec in (specs["targets"][sys.argv[2]], specs["donor"]):
     values.extend((spec["model"] + "/" + spec["csc"], spec["version"]))
 print(*values)
-' "$SRC_DIR/onigiri/configs/firmware.json")"
+' "$SRC_DIR/onigiri/configs/firmware.json" "$TARGET_MODEL")"
 read -r TARGET_FIRMWARE TARGET_FIRMWARE_VERSION SOURCE_FIRMWARE SOURCE_FIRMWARE_VERSION <<< "$FIRMWARE_CONFIG"
 source "$SRC_DIR/onigiri/configs/$TARGET_SINGLE_SYSTEM_IMAGE.sh"
 
-TARGET_ASSERT_MODEL="${TARGET_ASSERT_MODEL[*]}"
+TARGET_ASSERT_MODEL="$TARGET_MODEL"
+FIRMWARE_FOLDER="$FW_DIR/${TARGET_FIRMWARE/\//_}"
+# Samsung's product name for this model (b5qxxx, b5qksx), once its firmware is extracted.
+TARGET_PRODUCT_NAME="$(sed -n 's/^ro.product.vendor.name=//p' "$FIRMWARE_FOLDER/vendor/build.prop" 2> /dev/null || true)"
+TARGET_PRODUCT_NAME="${TARGET_PRODUCT_NAME:-none}"
 TARGET_EXTRA_FIRMWARES=""
 SOURCE_EXTRA_FIRMWARES=""
 ROM_BUILD_TIMESTAMP="$(date +%s)"
@@ -31,7 +34,7 @@ TARGET_SUPER_PARTITION_SIZE="none"
 TARGET_SUPER_GROUP_NAME="none"
 TARGET_SUPER_GROUP_SIZE="none"
 
-METADATA="$FW_DIR/SM-F731B_XXV/os_partitions_metadata.txt"
+METADATA="$FIRMWARE_FOLDER/os_partitions_metadata.txt"
 if [ -f "$METADATA" ]; then
     TARGET_SUPER_PARTITION_SIZE="$(sed -n 's/^super_partition_size=//p' "$METADATA")"
     TARGET_SUPER_GROUP_NAME="$(sed -n 's/^super_partition_group=//p' "$METADATA")"
@@ -57,7 +60,7 @@ fi
 
 for PARTITION in BOOT DTBO INIT_BOOT VENDOR_BOOT; do
     SIZE="none"
-    METADATA="$FW_DIR/SM-F731B_XXV/${PARTITION,,}.img_metadata.txt"
+    METADATA="$FIRMWARE_FOLDER/${PARTITION,,}.img_metadata.txt"
     if [ -f "$METADATA" ]; then
         SIZE="$(sed -n 's/^partition_size=//p' "$METADATA")"
         if ! [[ "$SIZE" =~ ^[0-9]+$ ]]; then
@@ -77,7 +80,7 @@ for VARIABLE in \
     SOURCE_FIRMWARE SOURCE_FIRMWARE_VERSION SOURCE_EXTRA_FIRMWARES \
     SOURCE_API_LEVEL SOURCE_PRODUCT_FIRST_API_LEVEL SOURCE_VENDOR_API_LEVEL \
     SOURCE_HAS_SYSTEM_EXT \
-    TARGET_NAME TARGET_CODENAME TARGET_ASSERT_MODEL TARGET_FIRMWARE \
+    TARGET_NAME TARGET_CODENAME TARGET_MODEL TARGET_ASSERT_MODEL TARGET_PRODUCT_NAME TARGET_FIRMWARE \
     TARGET_FIRMWARE_VERSION TARGET_EXTRA_FIRMWARES TARGET_API_LEVEL \
     TARGET_PRODUCT_FIRST_API_LEVEL TARGET_VENDOR_API_LEVEL \
     TARGET_SINGLE_SYSTEM_IMAGE TARGET_OS_FILE_SYSTEM TARGET_HAS_SYSTEM_EXT \

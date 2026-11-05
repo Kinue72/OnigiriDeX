@@ -1,6 +1,6 @@
 # OnigiriDeX
 
-Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on Android 15 / One UI 7 and based on [UN1CA](https://github.com/salvogiangri/UN1CA/tree/fifteen).
+Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B and SM-F731N)**. It's built on Android 15 / One UI 7 and based on [UN1CA](https://github.com/salvogiangri/UN1CA/tree/fifteen).
 
 ## What it does
 
@@ -49,18 +49,23 @@ Installing it can wipe your phone or stop it from starting up. Before you try:
 
 **You need:**
 
-- A Galaxy Z Flip5 **SM-F731B**. Other Flip5 models haven't been tested.
+- A Galaxy Z Flip5 **SM-F731B** or **SM-F731N** (Korea). Each has its own
+  Onigiri file. The SM-F731N build is new and less tested. Other Flip5 models
+  aren't supported: US and Japanese models can't unlock their bootloader.
 - An **unlocked bootloader**. You can only unlock it on Android 15 / One UI 7
   or older; some early Android 16 / One UI 8 builds can still be downgraded
   first.
-- The original Samsung software [F731BXXS5EYI1](https://samfw.com/firmware/SM-F731B/XXV/F731BXXS5EYI1) for the SM-F731B. You only need its BL, CP and CSC files.
+- The original Samsung software for your model. You only need its BL, CP and
+  CSC files, and they must be your model's, never another one's:
+  - SM-F731B: [F731BXXS5EYI1](https://samfw.com/firmware/SM-F731B/XXV/F731BXXS5EYI1)
+  - SM-F731N: [F731NKSS5EYGB](https://samfw.com/firmware/SM-F731N/KOO/F731NKSS5EYGB)
 - Something to flash with, one of:
   - a computer: **Odin3** on Windows, **odin4** on Linux and macOS, or
     [brokkr](https://github.com/Gabriel2392/brokkr-flash) on any of them;
   - another Android phone with brokkr and a USB-C cable or OTG adapter between the two phones.
 
 **1. Download Onigiri.** From the [latest release](https://github.com/Kinue72/OnigiriDeX/releases/latest),
-download every `Onigiri_AP_….tar.md5.0`, `.1`, `.2`… part. GitHub can't hold
+download every `Onigiri_AP_<your model>_….tar.md5.0`, `.1`, `.2`… part. GitHub can't hold
 the whole 8 GB file in one piece, so join the parts
 back into one file with the same name, minus the number at the end. The
 release notes show the exact command for Windows, macOS and Linux; on an
@@ -74,7 +79,7 @@ On Windows, compare `certutil -hashfile <file> SHA256` with the number in the
 
 **3. Flash it.** Turn the Flip5 off, hold both volume keys while you plug in
 USB, then press Volume Up to enter Download Mode. Put the Onigiri file in
-**AP** and the Samsung BL, CP and CSC files in their slots.
+**AP** and your model's Samsung BL, CP and CSC files in their slots.
 
 - **Odin3 (Windows):** press Start.
 - **odin4 (Linux, macOS):** follow [docs/flashing.md](docs/flashing.md). It
@@ -106,7 +111,7 @@ You need a Linux computer with Bash, Python 3 and Java 17.
 git clone --recurse-submodules https://github.com/Kinue72/OnigiriDeX.git
 cd OnigiriDeX
 bash
-source ./buildenv.sh SM-F731B
+source ./buildenv.sh SM-F731B   # or SM-F731N
 onigiri build_dependencies
 ```
 
@@ -114,7 +119,9 @@ onigiri build_dependencies
 
 Put these full firmware ZIP files in the `firmware/` folder:
 
-- Flip5: SM-F731B / XXV / F731BXXS5EYI1
+- Flip5: SM-F731B / XXV / F731BXXS5EYI1. It's needed for an SM-F731N build too,
+  because the kernel is built from it.
+- Flip5 Korea, for an SM-F731N build: SM-F731N / KOO / F731NKSS5EYGB
 - Fold5: SM-F946B / XXV / F946BXXS5EYI1
 - Galaxy S24 (only used for screen colours): SM-S921B / S921BXXS9BYH1
 
@@ -123,7 +130,7 @@ Put these full firmware ZIP files in the `firmware/` folder:
 Change the file names below to match the files you downloaded:
 
 ```sh
-python3 scripts/import_fw.py target firmware/flip5.zip
+python3 scripts/import_fw.py SM-F731B firmware/flip5.zip
 python3 scripts/import_fw.py donor firmware/fold5.zip
 onigiri extract_fw
 onigiri extract_fw --ignore-source --ignore-target SM-F946B/XXV
@@ -131,6 +138,15 @@ python3 scripts/extract_adaptive_display.py firmware/s24.zip
 source ./buildenv.sh SM-F731B
 onigiri build_kernel
 onigiri make_rom
+onigiri build_odin
+```
+
+For an SM-F731N build, add its firmware and build again (the kernel is shared):
+
+```sh
+python3 scripts/import_fw.py SM-F731N firmware/flip5-n.zip
+onigiri extract_fw --ignore-source --ignore-target SM-F731N/KOO
+source ./buildenv.sh SM-F731N
 onigiri build_odin
 ```
 

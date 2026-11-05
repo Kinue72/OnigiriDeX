@@ -65,7 +65,7 @@ def verify_firmware(folder, spec):
 
 def main():
     entries = json.loads((ROOT / "onigiri/configs/firmware.json").read_text())
-    specs = {f"{spec['model']}/{spec['csc']}": spec for spec in entries.values()}
+    specs = {f"{spec['model']}/{spec['csc']}": spec for spec in (*entries["targets"].values(), entries["donor"])}
     parser = argparse.ArgumentParser(description="Verify original firmware identity and partition metadata")
     parser.add_argument("firmware", choices=specs)
     parser.add_argument("folder", type=Path)

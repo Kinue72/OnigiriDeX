@@ -1,11 +1,21 @@
 {
-  "target": {
-    "model": "SM-F731B",
-    "csc": "XXV",
-    "version": "F731BXXS5EYI1/F731BOXM5EYD9/F731BXXS5EYI1",
-    "md5": "e3ef1e549d42be28552c4ec057da5e4f",
-    "device": "b5q",
-    "sdk": 35
+  "targets": {
+    "SM-F731B": {
+      "model": "SM-F731B",
+      "csc": "XXV",
+      "version": "F731BXXS5EYI1/F731BOXM5EYD9/F731BXXS5EYI1",
+      "md5": "e3ef1e549d42be28552c4ec057da5e4f",
+      "device": "b5q",
+      "sdk": 35
+    },
+    "SM-F731N": {
+      "model": "SM-F731N",
+      "csc": "KOO",
+      "version": "F731NKSS5EYGB/F731NOKR5EYGB/F731NKSU5EYCA",
+      "md5": "6bb1d9625f5e1235480d7c63676b3d53",
+      "device": "b5q",
+      "sdk": 35
+    }
   },
   "donor": {
     "model": "SM-F946B",

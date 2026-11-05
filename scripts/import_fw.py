@@ -47,12 +47,14 @@ def import_firmware(archive_path, spec, output):
         raise ValueError(f"ZIP checksum mismatch for {spec['model']} {spec['version']}")
 
     pda, csc, modem = spec["version"].split("/")
+    # The CSC version carries the multi-CSC group after the model code: F731B OXM 5EYD9.
+    group = csc[len(spec["model"]) - 3:][:3]
     prefixes = {
         "AP": f"AP_{pda}_",
         "BL": f"BL_{pda}_",
         "CP": f"CP_{modem}_",
-        "CSC": f"CSC_OXM_{csc}_",
-        "HOME_CSC": f"HOME_CSC_OXM_{csc}_",
+        "CSC": f"CSC_{group}_{csc}_",
+        "HOME_CSC": f"HOME_CSC_{group}_{csc}_",
     }
 
     with zipfile.ZipFile(archive_path) as archive:
@@ -105,12 +107,17 @@ def import_firmware(archive_path, spec, output):
 
 
 def main():
-    specs = json.loads((ROOT / "onigiri/configs/firmware.json").read_text())
+    entries = json.loads((ROOT / "onigiri/configs/firmware.json").read_text())
+    specs = {**entries["targets"], "donor": entries["donor"]}
+    # "target" is the model buildenv.sh was sourced for.
+    specs["target"] = specs.get(os.environ.get("TARGET_MODEL", "SM-F731B"))
     parser = argparse.ArgumentParser(description="Verify and import pinned Onigiri firmware")
-    parser.add_argument("role", choices=specs)
+    parser.add_argument("role", choices=specs, help="a model from firmware.json, target or donor")
     parser.add_argument("archive", type=Path)
     args = parser.parse_args()
     spec = specs[args.role]
+    if spec is None:
+        parser.exit(1, f"No firmware pinned for {os.environ['TARGET_MODEL']}\n")
     output = ROOT / "out/odin" / f"{spec['model']}_{spec['csc']}"
     try:
         import_firmware(args.archive, spec, output)

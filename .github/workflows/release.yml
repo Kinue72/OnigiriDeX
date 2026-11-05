@@ -1,6 +1,7 @@
-# Builds and publishes a release for every pushed tag: the checks in check.yml first, then the
-# AP on GitHub's runners and scripts/release.sh (the AP, an OTA from the previous release and
-# version.txt). Setup (firmware draft release, signing key secret) is in docs/releasing.md.
+# Builds and publishes a release for every pushed tag: the checks in check.yml first, then one
+# AP per Flip5 model in onigiri/configs/firmware.json on GitHub's runners and scripts/release.sh
+# (the APs, per model an OTA from the previous release, and version.txt). Setup (firmware draft
+# release, signing key secret) is in docs/releasing.md.
 name: Release
 
 on:
@@ -76,15 +77,20 @@ jobs:
         run: echo "$KEYS" | base64 -d | tar -xz -C security
 
       # Samsung's servers won't serve the pinned firmware any more, so it comes pre-extracted from
-      # a draft release, which only people with push access can see.
+      # a draft release, which only people with push access can see: one split archive per
+      # upload (onigiri-fw.tar.zst.NN, onigiri-fw-SM-F731N.tar.zst.NN, ...).
       - name: Firmware
         run: |
           mkdir -p out
-          gh release view firmware --json assets --jq '.assets[].name' | sort | while read -r PART; do
-            gh release download firmware --pattern "$PART" --output -
-          done | zstd -dc | tar -x -C out
-          python3 scripts/verify_fw.py SM-F731B/XXV out/fw/SM-F731B_XXV
-          python3 scripts/verify_fw.py SM-F946B/XXV out/fw/SM-F946B_XXV
+          gh release view firmware --json assets --jq '.assets[].name' | sort > "$RUNNER_TEMP/parts"
+          sed 's/\.[0-9]*$//' "$RUNNER_TEMP/parts" | sort -u | while read -r ARCHIVE; do
+            grep -F "$ARCHIVE." "$RUNNER_TEMP/parts" | while read -r PART; do
+              gh release download firmware --pattern "$PART" --output -
+            done | zstd -dc | tar -x -C out
+          done
+          jq -r '(.targets[], .donor) | .model + "/" + .csc' onigiri/configs/firmware.json | while read -r FIRMWARE; do
+            python3 scripts/verify_fw.py "$FIRMWARE" "out/fw/${FIRMWARE/\//_}"
+          done
 
       # The build tools and the kernel only change with their own sources, so they are kept in the
       # private "build-cache" draft release under a hash of those sources and reused by every release.
@@ -93,9 +99,9 @@ jobs:
         id: versions
         run: |
           source ./buildenv.sh SM-F731B > /dev/null
-          # The cached boot images are also repacked from the stock ones by these scripts.
-          KERNEL="$(cat scripts/build_kernel.sh scripts/package_kernel.sh scripts/utils/source_patches.sh \
-            onigiri/configs/firmware.json | sha256sum | cut -c1-12)"
+          # The cached boot images are also repacked from the SM-F731B's stock ones by these scripts.
+          KERNEL="$({ cat scripts/build_kernel.sh scripts/package_kernel.sh scripts/utils/source_patches.sh
+            jq -c '.targets["SM-F731B"]' onigiri/configs/firmware.json; } | sha256sum | cut -c1-12)"
           echo "kernel=kernel-$KERNEL_RELEASE-$KERNEL.tar.zst" >> "$GITHUB_OUTPUT"
           TOOLS="$({ git ls-tree HEAD external/android-tools external/apktool external/erofs-utils \
             external/samloader external/signapk; git ls-files -s scripts/build_dependencies.sh external/make.sh \
@@ -140,15 +146,21 @@ jobs:
             gh release upload build-cache "$CACHE" --clobber && rm "$CACHE"
           fi
 
+      # One model at a time, and once its AP is built its work dir and firmware (but its OTA tools)
+      # go: the disk doesn't hold two of each.
       - name: Build ROM
         run: |
-          $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_odin'
+          jq -r '.targets[] | .model + " " + .csc' onigiri/configs/firmware.json | while read -r MODEL CSC; do
+            $DEBIAN "source ./buildenv.sh $MODEL > /dev/null && onigiri build_odin" < /dev/null
+            rm -rf "out/target/b5q/$MODEL"
+            find "out/fw/${MODEL}_$CSC" -mindepth 1 -maxdepth 1 ! -name fota -exec rm -rf {} +
+            df -h /
+          done
           ls -l out/Onigiri_AP_*
 
-      # Room for the OTA: only the OTA tools are still needed from the firmware.
+      # Room for the OTAs: only the OTA tools are still needed from the firmware.
       - name: Free build space
         run: |
-          rm -rf out/target/b5q/work_dir out/target/b5q/apktool
           git submodule deinit --force --quiet external/kernel || true
           find out/fw -mindepth 2 -maxdepth 2 ! -name fota -exec rm -rf {} +
           df -h /

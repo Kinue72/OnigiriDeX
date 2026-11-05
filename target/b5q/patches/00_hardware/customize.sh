@@ -39,7 +39,7 @@ for FILE in public.libraries-camera.samsung.txt public.libraries-arcsoft.txt; do
 done
 
 DELETE_FROM_WORK_DIR product overlay/framework-res__q5qxxx__auto_generated_rro_product.apk
-ADD_TO_WORK_DIR "$TARGET_FIRMWARE" product overlay/framework-res__b5qxxx__auto_generated_rro_product.apk
+ADD_TO_WORK_DIR "$TARGET_FIRMWARE" product "overlay/framework-res__${TARGET_PRODUCT_NAME}__auto_generated_rro_product.apk"
 
 FEATURES="$(python3 - "$TARGET_PATH" "$WORK_DIR" <<'PY'
 import sys
