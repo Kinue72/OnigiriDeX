@@ -111,7 +111,7 @@ You need a Linux computer with Bash, Python 3 and Java 17.
 git clone --recurse-submodules https://github.com/Kinue72/OnigiriDeX.git
 cd OnigiriDeX
 bash
-source ./buildenv.sh SM-F731B   # or SM-F731N
+source ./buildenv.sh SM-F731B
 onigiri build_dependencies
 ```
 
@@ -145,8 +145,8 @@ For an SM-F731N build, add its firmware and build again (the kernel is shared):
 
 ```sh
 python3 scripts/import_fw.py SM-F731N firmware/flip5-n.zip
-onigiri extract_fw --ignore-source --ignore-target SM-F731N/KOO
-source ./buildenv.sh SM-F731N
+source ./buildenv.sh SM-F731N   # before extracting: it also extracts the N's OTA tools
+onigiri extract_fw
 onigiri build_odin
 ```
 
