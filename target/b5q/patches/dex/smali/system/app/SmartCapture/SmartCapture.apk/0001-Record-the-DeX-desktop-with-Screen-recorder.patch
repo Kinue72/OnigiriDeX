@@ -1,0 +1,235 @@
+Subject: [PATCH] Record the DeX desktop with Screen recorder
+
+In DeX the recorder showed its start dialog on the cover and recorded the cover.
+While DeX runs, put its dialog and controls on the DeX desktop instead. Samsung's
+MediaProjection then mirrors the DeX display, and the video takes the desktop's
+aspect ratio with the short side at the chosen quality.
+
+diff --git a/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/ScreenRecorderController.smali b/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/ScreenRecorderController.smali
+index 9e04aab4..e8e874f3 100644
+--- a/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/ScreenRecorderController.smali
++++ b/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/ScreenRecorderController.smali
+@@ -303,6 +303,31 @@
+ 
+     iput-object p1, p0, Lcom/samsung/android/app/smartcapture/screenrecorder/ScreenRecorderController;->mScreenRecorderService:Lcom/samsung/android/app/smartcapture/screenrecorder/ScreenRecorderService;
+ 
++    # Onigiri: in DeX, show the recorder's dialogs and controls on the desktop. Samsung's
++    # MediaProjection then records the display of this context, so DeX is recorded.
++    invoke-virtual {p1}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
++
++    move-result-object v3
++
++    const/16 v4, 0x7f6
++
++    invoke-static {v3, v4}, Lcom/samsung/android/app/smartcapture/screenrecorder/util/ContextUtil;->getDexWindowContext(Landroid/content/Context;I)Landroid/content/Context;
++
++    move-result-object v3
++
++    if-eqz v3, :onigiri_no_dex
++
++    new-instance v4, Landroid/view/ContextThemeWrapper;
++
++    sget p1, Lcom/samsung/android/app/smartcapture/screenrecorder/R$style;->AppTheme:I
++
++    invoke-direct {v4, v3, p1}, Landroid/view/ContextThemeWrapper;-><init>(Landroid/content/Context;I)V
++
++    iput-object v4, p0, Lcom/samsung/android/app/smartcapture/screenrecorder/ScreenRecorderController;->mContext:Landroid/content/Context;
++
++    goto :goto_0
++
++    :onigiri_no_dex
+     invoke-static {p1}, Lcom/samsung/android/app/smartcapture/baseutil/device/DeviceUtils;->isSubDisplayOn(Landroid/content/Context;)Z
+ 
+     move-result v3
+@@ -4496,6 +4521,11 @@
+ 
+     move-result-object v3
+ 
++    # Onigiri: ask on the DeX desktop, which is what gets recorded.
++    invoke-static {v3}, Lcom/samsung/android/app/smartcapture/screenrecorder/util/ContextUtil;->getDexDisplayContext(Landroid/content/Context;)Landroid/content/Context;
++
++    move-result-object v3
++
+     sget v4, Lcom/samsung/android/app/smartcapture/screenrecorder/R$style;->DialogAlertTheme:I
+ 
+     invoke-direct {v1, v3, v4}, Landroid/app/AlertDialog$Builder;-><init>(Landroid/content/Context;I)V
+diff --git a/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/recorder/ScreenRecorder.smali b/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/recorder/ScreenRecorder.smali
+index c1ada7ee..195e37bd 100644
+--- a/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/recorder/ScreenRecorder.smali
++++ b/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/recorder/ScreenRecorder.smali
+@@ -499,6 +499,26 @@
+ 
+     invoke-static {v0, v1}, Lcom/samsung/android/app/smartcapture/screenrecorder/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+ 
++    # Onigiri: in DeX, record the desktop at its own aspect ratio.
++    iget-object v1, p0, Lcom/samsung/android/app/smartcapture/screenrecorder/recorder/ScreenRecorder;->mContext:Landroid/content/Context;
++
++    invoke-static {v1, p1}, Lcom/samsung/android/app/smartcapture/screenrecorder/util/ContextUtil;->getDexRecordSize(Landroid/content/Context;Landroid/graphics/Point;)Landroid/graphics/Point;
++
++    move-result-object v1
++
++    if-eqz v1, :onigiri_no_dex
++
++    iget v2, v1, Landroid/graphics/Point;->x:I
++
++    iput v2, p0, Lcom/samsung/android/app/smartcapture/screenrecorder/recorder/ScreenRecorder;->mRecordWidth:I
++
++    iget v1, v1, Landroid/graphics/Point;->y:I
++
++    iput v1, p0, Lcom/samsung/android/app/smartcapture/screenrecorder/recorder/ScreenRecorder;->mRecordHeight:I
++
++    goto :goto_0
++
++    :onigiri_no_dex
+     iget-object v1, p0, Lcom/samsung/android/app/smartcapture/screenrecorder/recorder/ScreenRecorder;->mContext:Landroid/content/Context;
+ 
+     invoke-static {v1}, Lcom/samsung/android/app/smartcapture/baseutil/device/DeviceUtils;->isSubDisplayOn(Landroid/content/Context;)Z
+diff --git a/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/util/ContextUtil.smali b/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/util/ContextUtil.smali
+index d43d016d..0640f354 100644
+--- a/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/util/ContextUtil.smali
++++ b/smali_classes3/com/samsung/android/app/smartcapture/screenrecorder/util/ContextUtil.smali
+@@ -12,6 +12,144 @@
+     return-void
+ .end method
+ 
++.method public static getDexDisplay(Landroid/content/Context;)Landroid/view/Display;
++    .locals 1
++
++    # Onigiri: the DeX desktop's display while DeX runs, else null.
++    invoke-static {p0}, Lcom/samsung/android/app/smartcapture/baseutil/device/DexUtils;->isDesktopModeEnabled(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :no_dex
++
++    invoke-static {p0}, Lcom/samsung/android/app/smartcapture/baseutil/device/DexUtils;->getDexDualViewDisplay(Landroid/content/Context;)Landroid/view/Display;
++
++    move-result-object p0
++
++    return-object p0
++
++    :no_dex
++    const/4 p0, 0x0
++
++    return-object p0
++.end method
++
++.method public static getDexDisplayContext(Landroid/content/Context;)Landroid/content/Context;
++    .locals 1
++
++    # Onigiri: the given context moved to the DeX desktop while DeX runs, else unchanged.
++    invoke-static {p0}, Lcom/samsung/android/app/smartcapture/screenrecorder/util/ContextUtil;->getDexDisplay(Landroid/content/Context;)Landroid/view/Display;
++
++    move-result-object v0
++
++    if-eqz v0, :no_dex
++
++    invoke-virtual {p0, v0}, Landroid/content/Context;->createDisplayContext(Landroid/view/Display;)Landroid/content/Context;
++
++    move-result-object p0
++
++    :no_dex
++    return-object p0
++.end method
++
++.method public static getDexRecordSize(Landroid/content/Context;Landroid/graphics/Point;)Landroid/graphics/Point;
++    .locals 5
++
++    # Onigiri: in DeX, the recording size at the desktop's aspect ratio. The short side is the
++    # quality setting's, or the desktop's if that is smaller. Null outside DeX.
++    invoke-static {p0}, Lcom/samsung/android/app/smartcapture/screenrecorder/util/ContextUtil;->getDexDisplay(Landroid/content/Context;)Landroid/view/Display;
++
++    move-result-object v0
++
++    if-eqz v0, :no_dex
++
++    new-instance v1, Landroid/graphics/Point;
++
++    invoke-direct {v1}, Landroid/graphics/Point;-><init>()V
++
++    invoke-virtual {v0, v1}, Landroid/view/Display;->getRealSize(Landroid/graphics/Point;)V
++
++    iget v2, v1, Landroid/graphics/Point;->y:I
++
++    iget v1, v1, Landroid/graphics/Point;->x:I
++
++    iget v3, p1, Landroid/graphics/Point;->x:I
++
++    iget v4, p1, Landroid/graphics/Point;->y:I
++
++    invoke-static {v3, v4}, Ljava/lang/Math;->min(II)I
++
++    move-result v3
++
++    invoke-static {v1, v2}, Ljava/lang/Math;->min(II)I
++
++    move-result v4
++
++    invoke-static {v3, v4}, Ljava/lang/Math;->min(II)I
++
++    move-result v3
++
++    invoke-static {v1, v2}, Ljava/lang/Math;->max(II)I
++
++    move-result p0
++
++    mul-int/2addr p0, v3
++
++    div-int/2addr p0, v4
++
++    add-int/lit8 p0, p0, 0x1
++
++    and-int/lit8 p0, p0, -0x2
++
++    if-lt v1, v2, :portrait
++
++    new-instance p1, Landroid/graphics/Point;
++
++    invoke-direct {p1, p0, v3}, Landroid/graphics/Point;-><init>(II)V
++
++    return-object p1
++
++    :portrait
++    new-instance p1, Landroid/graphics/Point;
++
++    invoke-direct {p1, v3, p0}, Landroid/graphics/Point;-><init>(II)V
++
++    return-object p1
++
++    :no_dex
++    const/4 p1, 0x0
++
++    return-object p1
++.end method
++
++.method public static getDexWindowContext(Landroid/content/Context;I)Landroid/content/Context;
++    .locals 2
++
++    # Onigiri: a window context on the DeX desktop while DeX runs, else null.
++    invoke-static {p0}, Lcom/samsung/android/app/smartcapture/screenrecorder/util/ContextUtil;->getDexDisplay(Landroid/content/Context;)Landroid/view/Display;
++
++    move-result-object v0
++
++    if-eqz v0, :no_dex
++
++    invoke-virtual {p0, v0}, Landroid/content/Context;->createDisplayContext(Landroid/view/Display;)Landroid/content/Context;
++
++    move-result-object p0
++
++    const/4 v1, 0x0
++
++    invoke-static {p0, p1, v1}, Lcom/samsung/android/app/smartcapture/baseutil/sep/SepWrapper$Context;->createWindowContext(Landroid/content/Context;ILandroid/os/Bundle;)Landroid/content/Context;
++
++    move-result-object p0
++
++    return-object p0
++
++    :no_dex
++    const/4 p0, 0x0
++
++    return-object p0
++.end method
++
+ .method public static getDisplayContext(Landroid/content/Context;)Landroid/content/Context;
+     .locals 6
+ 

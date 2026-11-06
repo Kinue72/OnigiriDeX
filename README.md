@@ -13,6 +13,8 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B)**. It's built on 
   Engine, shows on the DeX desktop too. Pick a wallpaper in DeX's own
   settings to go back to a picture there.
 - Can split the DeX desktop into **zones** and open your favourite apps in them.
+- **Screen recorder** records the DeX desktop while DeX is on. Start it from
+  the quick panel as usual; its options and controls show on the monitor.
 - Can work as a **car screen**: it turns on with the car and sleeps when the car turns off.
 - Bluetooth headphones, speakers and cars no longer start your music by
   themselves when they connect. Start it on the phone; after that, their play
