@@ -13,22 +13,28 @@ if [[ "${1:-}" == "--debug" ]]; then
 fi
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
-    echo "Usage: source buildenv.sh [--debug] [SM-F731B|b5q]"
+    echo "Usage: source buildenv.sh [--debug] [SM-F731B|SM-F731N|b5q]"
     return 0
 fi
 
-if [ "$#" -gt 1 ] || [[ "${1:-b5q}" != "b5q" && "${1:-b5q}" != "SM-F731B" ]]; then
-    echo "Onigiri supports only SM-F731B (b5q)." >&2
+# One build per Flip5 model: each takes vendor, odm, dtbo and recovery from its own stock
+# firmware (onigiri/configs/firmware.json); b5q means the SM-F731B.
+TARGET_MODEL="${1:-SM-F731B}"
+[ "$TARGET_MODEL" = b5q ] && TARGET_MODEL=SM-F731B
+if [ "$#" -gt 1 ] || ! python3 -c 'import json, sys; sys.exit(sys.argv[2] not in json.load(open(sys.argv[1]))["targets"])' \
+        "$SRC_DIR/onigiri/configs/firmware.json" "$TARGET_MODEL"; then
+    echo "Onigiri supports SM-F731B and SM-F731N (b5q)." >&2
     return 1
 fi
+export TARGET_MODEL
 
 export OUT_DIR="$SRC_DIR/out"
 export TMP_DIR="$OUT_DIR/tmp"
 export ODIN_DIR="$OUT_DIR/odin"
 export FW_DIR="$OUT_DIR/fw"
 export TOOLS_DIR="$OUT_DIR/tools"
-export APKTOOL_DIR="$OUT_DIR/target/b5q/apktool"
-export WORK_DIR="$OUT_DIR/target/b5q/work_dir"
+export APKTOOL_DIR="$OUT_DIR/target/b5q/$TARGET_MODEL/apktool"
+export WORK_DIR="$OUT_DIR/target/b5q/$TARGET_MODEL/work_dir"
 
 if [[ ":$PATH:" != *":$TOOLS_DIR/bin:"* ]]; then
     export PATH="$TOOLS_DIR/bin:$PATH"

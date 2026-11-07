@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Usage: make_ota <installed AP .tar.md5> <new AP .tar.md5> <output .zip>
 #
-# Builds a signed incremental OTA between two Onigiri Odin packages with the generator Samsung
-# ships in the target firmware (extract_fw puts it in out/fw/SM-F731B_XXV/fota). Phones only
-# fetch the package named for their own build; recovery also checks every block the package reads
-# against that build before it writes anything (blocks it doesn't read go unchecked). Needs
-# ~60 GB free under out/tmp.
+# Builds a signed incremental OTA between two Onigiri Odin packages of one Flip5 model with the
+# generator Samsung ships in that model's firmware (extract_fw puts it in out/fw/<model>_<csc>/fota).
+# The model comes from the new AP's name (Onigiri_AP_<model>_...) and both APs' vendor must be that
+# model's. Phones only fetch the package named for their own build; recovery also checks every
+# block the package reads against that build before it writes anything (blocks it doesn't read go
+# unchecked). Needs ~60 GB free under out/tmp.
 
 set -eo pipefail
 
@@ -13,7 +14,13 @@ set -eo pipefail
 SOURCE="$(realpath "$1")"
 TARGET="$(realpath "$2")"
 OUTPUT="$(realpath "$3")"
-FOTA="$FW_DIR/SM-F731B_XXV/fota"
+MODEL="$(basename "$TARGET" | sed -n 's/^Onigiri_AP_\(SM-[A-Z0-9]*\)_.*/\1/p')"
+CSC="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["targets"][sys.argv[2]]["csc"])' \
+    "$SRC_DIR/onigiri/configs/firmware.json" "$MODEL")" || {
+    echo "$(basename "$TARGET") isn't named Onigiri_AP_<model>_... for a model in firmware.json" >&2
+    exit 1
+}
+FOTA="$FW_DIR/${MODEL}_$CSC/fota"
 if [ ! -x "$FOTA/OTA/tools/ota_from_target_files" ]; then
     echo "Samsung's OTA tools are missing: re-extract the target firmware with \"extract_fw --force\"" >&2
     exit 1
@@ -58,6 +65,10 @@ echo "- Unpacking $(basename "$SOURCE")"
 TARGET_FILES "$SOURCE" "$WORK/source"
 echo "- Unpacking $(basename "$TARGET")"
 TARGET_FILES "$TARGET" "$WORK/target"
+for TF in source target; do
+    FOUND="$(sed -n 's/^ro.product.vendor.model=//p' "$WORK/$TF/VENDOR/build.prop")"
+    [ "$FOUND" = "$MODEL" ] || { echo "The $TF AP is a $FOUND build, not $MODEL" >&2; exit 1; }
+done
 
 # Without block maps the generator diffs each image block by block at the same offsets, so data
 # that only moved (behind a new or grown file) would ship again in full. The maps name the

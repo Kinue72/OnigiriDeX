@@ -2,7 +2,9 @@
 
 set -eo pipefail
 
-[[ "$TARGET_CODENAME" = b5q && "$TARGET_ASSERT_MODEL" = SM-F731B ]]
+[[ "$TARGET_CODENAME" = b5q && "$TARGET_PRODUCT_NAME" =~ ^b5q[a-z]+$ ]]
+# One kernel for every Flip5 model: their base device trees match and it builds every model's
+# modules (the N's mstdrv and sx9360 too); dtbo comes from each model's stock firmware.
 KERNEL_DIR="$OUT_DIR/target/b5q/kernel"
 
 python3 - "$KERNEL_DIR" "$SRC_DIR/external/kernel/custom_defconfigs/susfs_defconfig" "$KERNEL_RELEASE" <<'PY'
@@ -46,7 +48,7 @@ for PARTITION in vendor_dlkm system_dlkm; do
     mv "$STAGE/$PARTITION" "$WORK_DIR/$PARTITION"
     mv "$STAGE/fs_config-$PARTITION" "$WORK_DIR/configs/fs_config-$PARTITION"
     mv "$STAGE/file_context-$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION"
-    SET_PROP "$PARTITION" "ro.product.$PARTITION.name" b5qxxx
+    SET_PROP "$PARTITION" "ro.product.$PARTITION.name" "$TARGET_PRODUCT_NAME"
     SET_PROP "$PARTITION" "ro.product.$PARTITION.device" b5q
 done
 

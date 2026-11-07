@@ -5,8 +5,14 @@ from pathlib import Path
 import struct
 import sys
 
-STOCK_SHA = '5dc150aa45902ddd0bacf088958f7d9c7b0828bd2eeeb3042a402b344eda12bc'
-PATCHED_SHA = '23f8d81beb3a5e6a85f30e55e1cf65f89cc7f1273828c04fadc272fcb7e2fe28'
+# Stock HAL -> patched HAL. The SM-F731N's differs from the B's only in read-only data, so the
+# code below sits at the same offsets in both.
+PATCHED_SHA = {
+    '5dc150aa45902ddd0bacf088958f7d9c7b0828bd2eeeb3042a402b344eda12bc':  # F731BXXS5EYI1
+        '23f8d81beb3a5e6a85f30e55e1cf65f89cc7f1273828c04fadc272fcb7e2fe28',
+    '3f1e9edb1cf837f603d73784183363b77eafead4e6dc9ca8727d1d472a0e3878':  # F731NKSS5EYGB
+        '86ced429b572388f12703951f2b247cb840ce56ca70c82995f8504ca45687961',
+}
 
 # The rear lenses sit in the top half, which is turned over when the Flip folds. Stock firmware
 # only corrects that through its folded-camera path (front ID swapped to the rear sensor), so on
@@ -20,9 +26,9 @@ ORIENTATION_SITES = (0x16867f8, 0x1686840)  # ChiContext::InitializeStaticMetada
 def patch(binary):
     stock = binary.read_bytes()
     digest = hashlib.sha256(stock).hexdigest()
-    if digest == PATCHED_SHA:
+    if digest in PATCHED_SHA.values():
         return
-    if digest != STOCK_SHA:
+    if digest not in PATCHED_SHA:
         raise SystemExit(f'Unsupported camera HAL: {digest}')
     patched = bytearray(stock)
     # bti c; adr x2, .+12; ret; nop; .word 270
@@ -31,7 +37,7 @@ def patch(binary):
         if stock[site:site + 4].hex() != '621240f9':  # ldr x2, [x19, #0x20] (&sensor orientation)
             raise SystemExit('Camera HAL hook mismatch')
         struct.pack_into('<I', patched, site, 0x94000000 | (((CAVE - site) >> 2) & 0x3ffffff))  # bl CAVE
-    if hashlib.sha256(patched).hexdigest() != PATCHED_SHA:
+    if hashlib.sha256(patched).hexdigest() != PATCHED_SHA[digest]:
         raise SystemExit('Unexpected camera HAL patch result')
     binary.write_bytes(patched)
 

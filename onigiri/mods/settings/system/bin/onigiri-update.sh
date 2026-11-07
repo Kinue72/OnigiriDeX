@@ -8,14 +8,19 @@
 #
 # Progress goes to sys.onigiri.update.status (91 bytes at most, and Vietnamese letters take 2-3
 # each), which Settings shows in the phone's language: English, or Vietnamese. Each
-# release carries version.txt ("<ro.onigiri.version> <tag>") and
-# Onigiri_OTA_<from ro.onigiri.version>.zip, an incremental package that recovery only accepts
-# when it is signed with the Onigiri OTA key and the phone holds exactly the build it was made
-# from. Anything else needs the full package.
+# release carries version.txt ("<ro.onigiri.version> <tag>", one commit for every model) and
+# per model Onigiri_OTA_<from ro.onigiri.version>.zip (SM-F731B, the name older builds look for)
+# or Onigiri_OTA_<model>_<from ro.onigiri.version>.zip (other models), an incremental package
+# that recovery only accepts when it is signed with the Onigiri OTA key and the phone holds
+# exactly the build it was made from. Anything else needs the full package.
 # ONIGIRI_UPDATE_RELEASES points it elsewhere by hand (testing).
 
 RELEASES="${ONIGIRI_UPDATE_RELEASES:-https://github.com/Kinue72/OnigiriDeX/releases}"
 CURRENT="$(getprop ro.onigiri.version)"
+# The installed build's model (its vendor), not the bootloader's.
+MODEL="$(getprop ro.product.vendor.model)"
+OTA="Onigiri_OTA_$CURRENT.zip"
+[ "$MODEL" = SM-F731B ] || OTA="Onigiri_OTA_${MODEL}_$CURRENT.zip"
 PACKAGE=/cache/update.zip
 
 LOCALE="$(getprop persist.sys.locale)"
@@ -44,7 +49,7 @@ check)
     set -- $LATEST
     if [ "$1" = "$CURRENT" ]; then
         status "Onigiri is up to date ($2)" "Onigiri đã là bản mới nhất ($2)"
-    elif SIZE="$(fetch --max-time 60 -I -o /dev/null -w '%header{content-length}' "$RELEASES/download/$2/Onigiri_OTA_$CURRENT.zip")"; then
+    elif SIZE="$(fetch --max-time 60 -I -o /dev/null -w '%header{content-length}' "$RELEASES/download/$2/$OTA")"; then
         MB=$((${SIZE:-0} / 1048576 + 1))
         # Offer the install only once it shows: a status too long to set would leave "Checking…"
         # on screen with a tap that installs.
@@ -62,7 +67,7 @@ install)
     status "Downloading Onigiri $TAG…" "Đang tải Onigiri $TAG…"
     rm -f "$PACKAGE"
     # From the release the check found, even if a newer one came out since.
-    fetch --max-time 3600 -o "$PACKAGE" "$RELEASES/download/$TAG/Onigiri_OTA_$CURRENT.zip" || {
+    fetch --max-time 3600 -o "$PACKAGE" "$RELEASES/download/$TAG/$OTA" || {
         rm -f "$PACKAGE"
         setprop sys.onigiri.update.ready ""
         status "Download failed. Tap to check again." \

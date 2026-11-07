@@ -14,9 +14,10 @@ fi
 
 SPEC="$(python3 -c '
 import json, sys
-spec = json.load(open(sys.argv[1]))[sys.argv[2]]
+specs = json.load(open(sys.argv[1]))
+spec = specs["donor"] if sys.argv[2] == "donor" else specs["targets"][sys.argv[3]]
 print(spec["model"], spec["csc"], spec["version"])
-' "$SRC_DIR/onigiri/configs/firmware.json" "$ROLE")"
+' "$SRC_DIR/onigiri/configs/firmware.json" "$ROLE" "${TARGET_MODEL:-SM-F731B}")"
 read -r MODEL CSC VERSION <<< "$SPEC"
 DESTINATION="$OUT_DIR/odin/${MODEL}_${CSC}"
 

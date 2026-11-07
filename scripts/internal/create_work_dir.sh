@@ -3,8 +3,8 @@
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 CHECK_BUILD_DEPENDENCIES || exit 1
 
-python3 "$SRC_DIR/scripts/verify_fw.py" "$SOURCE_FIRMWARE" "$FW_DIR/SM-F946B_XXV" || exit 1
-python3 "$SRC_DIR/scripts/verify_fw.py" "$TARGET_FIRMWARE" "$FW_DIR/SM-F731B_XXV" || exit 1
+python3 "$SRC_DIR/scripts/verify_fw.py" "$SOURCE_FIRMWARE" "$FW_DIR/${SOURCE_FIRMWARE/\//_}" || exit 1
+python3 "$SRC_DIR/scripts/verify_fw.py" "$TARGET_FIRMWARE" "$FW_DIR/${TARGET_FIRMWARE/\//_}" || exit 1
 
 SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$SOURCE_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$SOURCE_FIRMWARE")"
 TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
