@@ -1,12 +1,32 @@
 # Releases and OTA updates
 
-Phones on a released build update from **Settings > Onigiri Software > Software update**. It
-reads `version.txt` from the latest GitHub release and, when that release carries the update
-from its build, downloads it to `/cache` and reboots to recovery, which installs it. The update
+Phones on a released build update from **Settings > Onigiri Software > Software update**. Its
+page reads `update.json` from the latest GitHub release (twice a day in the background too, with
+one notification per release), shows what's new, and when that release carries the update from
+its build, asks, downloads it to `/cache`, checks its sha256 and reboots to recovery, which
+installs it. Settings (`moe.foss.onigiri.update` in the SecSettings patch 0029) does the checks
+and the page; `onigiri-update.sh` downloads and installs as root. **Install from storage** takes a
+package file instead: Settings copies it into its own files and hands the path over; recovery
+installs it only if it fits the installed build (a wrong one aborts before writing and the phone
+starts again unchanged, in about 80 s). Builds from before 0029 read
+`version.txt` instead and still update the same way. The update
 is `Onigiri_OTA_<installed ro.onigiri.version>.zip` on the SM-F731B (the name older builds look
 for) and `Onigiri_OTA_<model>_<installed ro.onigiri.version>.zip` on other models; the model is
 `ro.product.vendor.model`, the installed build's. An update that only changes the ROM was 3 MB in testing, one with a
-new kernel 40 MB, instead of the 8 GB AP. Phones on any other build need the full AP.
+new kernel 40 MB, instead of the 8 GB AP.
+
+A release also carries, per model, the previous release's OTAs with its own chained after them
+(`scripts/ota_chain.py`), under the names of the builds they start from, so a phone several
+releases behind updates with one download and one restart too. Each hop in a chained package
+still checks the blocks it reads before it writes; after each hop the package records it in
+misc's stage field, so an install cut short starts again after the hops already done. A chain
+ends at a release without an OTA (an AP-only release) or when it would pass 400 MB. Phones on any
+other build need the full AP.
+
+`update.json` lists, per model, each build a release updates and its package (size, sha256), and
+what's new in the last 20 releases: the titles of the pull requests GitHub's generated notes list,
+`feat` ones as new and `fix`/`perf` ones as fixed (`scripts/ota_manifest.py`). Write pull request
+titles for the people using the phone.
 
 The AP ships Samsung's stock recovery with one change: `otacerts.zip` holds only the Onigiri OTA
 certificate, so recovery installs packages signed with `security/onigiri_ota.pk8` and nothing
@@ -32,13 +52,14 @@ for every model, one after the other, and runs `scripts/release.sh`, which for e
 1. makes its OTA from the previous release's AP of that model with `scripts/make_ota.sh`
    (Samsung's `ota_from_target_files`, from that model's firmware), when the previous release
    has one: a model's first release is AP only;
-2. uploads the AP split into parts under GitHub's 2 GiB asset limit, its `.sha256` and the OTA,
-   plus one `version.txt` for all.
+2. chains it after each of the previous release's OTAs of that model and signs those;
+3. uploads the AP split into parts under GitHub's 2 GiB asset limit, its `.sha256` and the OTAs,
+   plus one `version.txt` and `update.json` for all.
 
 Only tags build. The kernel (~70 minutes on GitHub's runners) and the build tools are kept in
 the private `build-cache` draft release under a hash of their sources and rebuilt only when those
-change, so a release that only changes the ROM takes about an hour. Only an update from the
-previous release is made; someone two releases behind flashes the AP.
+change, so a release that only changes the ROM takes about an hour. Only the OTA from the
+previous release is diffed; older builds get chained packages, which take seconds to make.
 
 Without GitHub, the same works on the build machine from a clean git checkout:
 `onigiri build_odin` after `source buildenv.sh <model>` for each model, then
