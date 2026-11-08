@@ -96,11 +96,14 @@ Use **CSC** the first time: it wipes the phone, which a phone coming from
 Samsung's own software needs. Never flash Fold5 files. The first start takes a
 few minutes.
 
-**Updating.** Open **Settings → Onigiri Software → Software update** and tap
-it. When a new version is out, tap again: the phone downloads only what
+**Updating.** The phone tells you when a new version is out. Open the
+notification, or **Settings → Onigiri Software → Software update**, to see
+what's new, then tap **Download and install**: the phone downloads only what
 changed, restarts, installs it in about a minute and starts again. Your data
-stays. If it says the new version needs a full flash, flash just the new AP
-(no BL, CP or CSC), which keeps your data too.
+stays, and it works from any recent version, not just the one before. If your
+version is too old for that, flash just the new AP (no BL, CP or CSC), which
+keeps your data too. An update package (`Onigiri_OTA_….zip`) you downloaded
+yourself installs from **Install from storage** on the same page.
 
 <details>
 <summary><b>Building it yourself</b></summary>

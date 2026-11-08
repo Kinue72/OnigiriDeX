@@ -1,6 +1,6 @@
-# Software update in Settings > Onigiri Software sets sys.onigiri.update to check or install;
-# the script clears it when done. It runs in KernelSU's ksu domain like onigiri-standby: it
-# needs the network, /cache and a reboot to recovery.
+# Software update in Settings > Onigiri Software sets sys.onigiri.update to install; the script
+# clears it when done. It runs in KernelSU's ksu domain like onigiri-standby: it needs the network,
+# /cache, misc and a reboot to recovery.
 service onigiri-update /system/bin/sh /system/bin/onigiri-update.sh
     user root
     group root
@@ -8,11 +8,15 @@ service onigiri-update /system/bin/sh /system/bin/onigiri-update.sh
     disabled
     oneshot
 
-on property:sys.onigiri.update=check
-    start onigiri-update
-
 on property:sys.onigiri.update=install
     start onigiri-update
+
+# Cancel in Software update; stopping the service also kills its curl.
+on property:sys.onigiri.update=cancel
+    stop onigiri-update
+    rm /cache/update.zip
+    setprop sys.onigiri.update.state ""
+    setprop sys.onigiri.update ""
 
 # Recovery leaves the installed package behind.
 on property:sys.boot_completed=1
