@@ -1,0 +1,156 @@
+From: Onigiri
+Subject: [PATCH] Show the DeX taskbar by pushing past the bottom edge, not by resting there
+
+In a fullscreen DeX app, Samsung reveals the hidden taskbar once a mouse or touchpad cursor stays
+in the bottom 22 px for 500 ms, so games that keep the cursor low keep popping it up. Pointer
+events from a mouse or touchpad now count only downward movement (AXIS_RELATIVE_Y, which keeps
+counting while the cursor is pinned to the edge) inside that strip, and the taskbar shows once it
+adds up to 300 px within 500 ms of the first downward move there: a short flick down. Touch swipes
+from the bottom edge go through detectSwipe and still show it at once.
+
+diff --git a/smali_classes2/com/android/server/wm/SystemGesturesPointerEventListener.smali b/smali_classes2/com/android/server/wm/SystemGesturesPointerEventListener.smali
+index 5627883..fbc5882 100644
+--- a/smali_classes2/com/android/server/wm/SystemGesturesPointerEventListener.smali
++++ b/smali_classes2/com/android/server/wm/SystemGesturesPointerEventListener.smali
+@@ -41,6 +41,10 @@
+ 
+ .field public mMouseHoveringAtTop:Z
+ 
++.field public mOnigiriPush:F
++
++.field public mOnigiriPushStart:J
++
+ .field public mMultiWindowEdgeDetector:Lcom/samsung/android/multiwindow/MultiWindowEdgeDetector;
+ 
+ .field public mSwipeDistanceThreshold:I
+@@ -384,6 +388,20 @@
+     goto :goto_0
+ 
+     :cond_1
++    # A mouse or touchpad shows the taskbar by pushing past the bottom edge, not by resting there.
++    const/16 v0, 0x2002
++
++    invoke-virtual {p1, v0}, Landroid/view/MotionEvent;->isFromSource(I)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_onigiri_0
++
++    invoke-virtual {p0, p1}, Lcom/android/server/wm/SystemGesturesPointerEventListener;->onigiriPushPastBottom(Landroid/view/MotionEvent;)V
++
++    return-void
++
++    :cond_onigiri_0
+     iget-boolean v0, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mMouseHoveringAtBottom:Z
+ 
+     if-nez v0, :cond_2
+@@ -446,6 +464,109 @@
+     return-void
+ .end method
+ 
++# Onigiri: in DeX the bottom 22 px reveal the taskbar once the pointer moves 300 px further down
++# (AXIS_RELATIVE_Y, which keeps counting while the cursor is pinned to the edge) within 500 ms of
++# its first downward move there. Games can keep the cursor at the bottom without the taskbar
++# popping up. Touch swipes from the edge take detectSwipe and are unchanged.
++.method public final onigiriPushPastBottom(Landroid/view/MotionEvent;)V
++    .locals 8
++
++    invoke-virtual {p1}, Landroid/view/MotionEvent;->getY()F
++
++    move-result v0
++
++    iget v1, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->screenHeight:I
++
++    add-int/lit8 v1, v1, -0x16
++
++    int-to-float v1, v1
++
++    cmpg-float v0, v0, v1
++
++    if-gez v0, :cond_0
++
++    const/4 v0, 0x0
++
++    iput-boolean v0, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mMouseHoveringAtBottom:Z
++
++    return-void
++
++    :cond_0
++    iget-boolean v0, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mMouseHoveringAtBottom:Z
++
++    if-nez v0, :cond_1
++
++    const/4 v0, 0x1
++
++    iput-boolean v0, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mMouseHoveringAtBottom:Z
++
++    const-wide/16 v0, 0x0
++
++    iput-wide v0, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mOnigiriPushStart:J
++
++    :cond_1
++    const/16 v0, 0x1c
++
++    invoke-virtual {p1, v0}, Landroid/view/MotionEvent;->getAxisValue(I)F
++
++    move-result v0
++
++    const/4 v1, 0x0
++
++    cmpl-float v1, v0, v1
++
++    if-gtz v1, :cond_2
++
++    return-void
++
++    :cond_2
++    invoke-virtual {p1}, Landroid/view/MotionEvent;->getEventTime()J
++
++    move-result-wide v2
++
++    iget-wide v4, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mOnigiriPushStart:J
++
++    sub-long v4, v2, v4
++
++    const-wide/16 v6, 0x1f4
++
++    cmp-long v1, v4, v6
++
++    if-lez v1, :cond_3
++
++    iput-wide v2, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mOnigiriPushStart:J
++
++    const/4 v1, 0x0
++
++    iput v1, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mOnigiriPush:F
++
++    :cond_3
++    iget v1, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mOnigiriPush:F
++
++    add-float/2addr v1, v0
++
++    iput v1, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mOnigiriPush:F
++
++    const/high16 v0, 0x43960000    # 300.0f
++
++    cmpl-float v0, v1, v0
++
++    if-gez v0, :cond_4
++
++    return-void
++
++    :cond_4
++    const/4 v0, 0x0
++
++    iput-boolean v0, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mMouseHoveringAtBottom:Z
++
++    iget-object v0, p0, Lcom/android/server/wm/SystemGesturesPointerEventListener;->mCallbacks:Lcom/android/server/wm/DisplayPolicy$1;
++
++    invoke-virtual {v0}, Lcom/android/server/wm/DisplayPolicy$1;->onSwipeFromBottom()V
++
++    return-void
++.end method
++
+ .method public final findIndex(I)I
+     .locals 3
+ 

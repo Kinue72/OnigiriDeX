@@ -15,6 +15,9 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B and SM-F731N)**. I
   A live wallpaper you set for the home screen, like one from Wallpaper
   Engine, shows on the DeX desktop too. Pick a wallpaper in DeX's own
   settings to go back to a picture there.
+- In a fullscreen DeX app, like a game, the taskbar no longer pops up when the
+  mouse rests at the bottom of the screen. Push the mouse down past the edge
+  to show it. A swipe up from the bottom of a touch screen still shows it.
 - Can split the DeX desktop into **zones** and open your favourite apps in them.
 - **Screen recorder** records the DeX desktop while DeX is on. Start it from
   the DeX quick panel; its options and controls show on the monitor.
