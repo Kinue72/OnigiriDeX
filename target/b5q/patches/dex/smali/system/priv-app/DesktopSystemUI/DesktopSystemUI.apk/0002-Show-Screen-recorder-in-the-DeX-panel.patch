@@ -1,0 +1,25 @@
+Subject: [PATCH] Show Screen recorder in the DeX panel
+
+The DeX panel adds Screen recorder only when DeX reports standalone. It doesn't
+here, so the tile never showed even though Screen recorder records DeX. Offer it
+whenever the panel shows.
+
+diff --git a/smali/f5/i.smali b/smali/f5/i.smali
+index b2f737b..cc1c1ef 100644
+--- a/smali/f5/i.smali
++++ b/smali/f5/i.smali
+@@ -560,12 +560,8 @@
+ 
+     if-eqz v4, :cond_1
+ 
+-    invoke-static {v6}, Lp3/c;->e(Landroid/content/Context;)Z
+-
+-    move-result v4
+-
+-    if-eqz v4, :cond_1
+-
++    # Onigiri: offer Screen recorder whenever the DeX panel shows. Samsung also requires DeX
++    # to report standalone, which it doesn't here (Airplane and Flashlight hide the same way).
+     goto :goto_3
+ 
+     :cond_7
