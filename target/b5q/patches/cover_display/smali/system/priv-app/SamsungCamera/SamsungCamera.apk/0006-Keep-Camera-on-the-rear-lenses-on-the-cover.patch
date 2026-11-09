@@ -1,0 +1,125 @@
+From: Onigiri
+Subject: [PATCH] Keep Camera on the rear lenses on the cover
+
+On the cover the services report the folded camera state, so the HAL serves
+the front camera ID from the rear sensor. That is meant for video calls:
+Camera's own photo pipeline asks for the front sensor and the camera provider
+crashed on the shutter ("Camera failed"). Offer the front camera only while
+"Use inner screen" shows the inner panel, as the stock Flip cover camera only
+uses the rear lenses: no switch button or gesture, and saved or requested
+selfie launches open the rear lenses.
+
+diff --git a/smali_classes4/com/sec/android/app/camera/shootingmode/ShootingModeProviderImpl.smali b/smali_classes4/com/sec/android/app/camera/shootingmode/ShootingModeProviderImpl.smali
+--- a/smali_classes4/com/sec/android/app/camera/shootingmode/ShootingModeProviderImpl.smali
++++ b/smali_classes4/com/sec/android/app/camera/shootingmode/ShootingModeProviderImpl.smali
+@@ -2633,6 +2633,25 @@
+ 
+     invoke-direct {p0, p1}, Lcom/sec/android/app/camera/shootingmode/ShootingModeProviderImpl;->updateInitialSettingsForFoldableDevices(Landroid/content/Intent;)V
+ 
++    # Onigiri: a saved selfie facing, a voice selfie or a front-camera intent opens the rear
++    # lenses on the cover (see FoldUtil.isInnerPanelShown).
++    iget p1, p0, Lcom/sec/android/app/camera/shootingmode/ShootingModeProviderImpl;->mInitialFacing:I
++
++    const/4 p2, 0x1
++
++    if-ne p1, p2, :onigiri_initial_facing
++
++    invoke-static {}, Lcom/sec/android/app/camera/util/FoldUtil;->isInnerPanelShown()Z
++
++    move-result p1
++
++    if-nez p1, :onigiri_initial_facing
++
++    const/4 p1, 0x0
++
++    iput p1, p0, Lcom/sec/android/app/camera/shootingmode/ShootingModeProviderImpl;->mInitialFacing:I
++
++    :onigiri_initial_facing
+     iget p1, p0, Lcom/sec/android/app/camera/shootingmode/ShootingModeProviderImpl;->mInitialShootingModeId:I
+ 
+     iget p2, p0, Lcom/sec/android/app/camera/shootingmode/ShootingModeProviderImpl;->mInitialFacing:I
+diff --git a/smali_classes4/com/sec/android/app/camera/util/CameraShootingMode$ShortcutInfo.smali b/smali_classes4/com/sec/android/app/camera/util/CameraShootingMode$ShortcutInfo.smali
+--- a/smali_classes4/com/sec/android/app/camera/util/CameraShootingMode$ShortcutInfo.smali
++++ b/smali_classes4/com/sec/android/app/camera/util/CameraShootingMode$ShortcutInfo.smali
+@@ -374,6 +374,20 @@
+ .method public isFrontFacingSupported()Z
+     .locals 4
+ 
++    # Onigiri: no mode offers the front camera on the cover, like the stock Flip cover camera
++    # (rear lenses only). This hides the switch button and refuses the switch gesture.
++    invoke-static {}, Lcom/sec/android/app/camera/util/FoldUtil;->isInnerPanelShown()Z
++
++    move-result v0
++
++    if-nez v0, :onigiri_front_camera_shown
++
++    const/4 v0, 0x0
++
++    return v0
++
++    :onigiri_front_camera_shown
++
+     invoke-static {}, Lcom/sec/android/app/camera/util/CameraShootingMode;->d()Ljava/lang/Object;
+ 
+     move-result-object v0
+diff --git a/smali_classes4/com/sec/android/app/camera/util/FoldUtil.smali b/smali_classes4/com/sec/android/app/camera/util/FoldUtil.smali
+--- a/smali_classes4/com/sec/android/app/camera/util/FoldUtil.smali
++++ b/smali_classes4/com/sec/android/app/camera/util/FoldUtil.smali
+@@ -840,6 +840,57 @@
+     .end packed-switch
+ .end method
+ 
++.method public static isInnerPanelShown()Z
++    .locals 3
++
++    # Onigiri: the HAL serves the front camera from the real inner lens only while "Use inner
++    # screen" shows the inner panel. Otherwise the services report the folded camera state and
++    # the front ID is the rear sensor, which Camera's own capture pipeline cannot shoot with.
++    # Display 0 is the inner panel when its mode is tall (1080x2640); the cover is 748x720.
++    const-string v0, "persist.sys.onigiri.inner_screen"
++
++    const/4 v1, 0x0
++
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->getBoolean(Ljava/lang/String;Z)Z
++
++    move-result v0
++
++    if-eqz v0, :onigiri_cover_shown
++
++    invoke-static {}, Landroid/hardware/display/DisplayManagerGlobal;->getInstance()Landroid/hardware/display/DisplayManagerGlobal;
++
++    move-result-object v0
++
++    invoke-virtual {v0, v1}, Landroid/hardware/display/DisplayManagerGlobal;->getRealDisplay(I)Landroid/view/Display;
++
++    move-result-object v0
++
++    if-eqz v0, :onigiri_cover_shown
++
++    invoke-virtual {v0}, Landroid/view/Display;->getMode()Landroid/view/Display$Mode;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/view/Display$Mode;->getPhysicalHeight()I
++
++    move-result v2
++
++    invoke-virtual {v0}, Landroid/view/Display$Mode;->getPhysicalWidth()I
++
++    move-result v0
++
++    shl-int/lit8 v0, v0, 0x1
++
++    if-le v2, v0, :onigiri_cover_shown
++
++    const/4 v0, 0x1
++
++    return v0
++
++    :onigiri_cover_shown
++    return v1
++.end method
++
+ .method public static isMainScreen()Z
+     .locals 1
+ 
