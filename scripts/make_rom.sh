@@ -91,7 +91,7 @@ trap 'echo' INT
 trap 'exit 143' TERM
 
 if $BUILD_ROM; then
-    [ -d "$APKTOOL_DIR" ] && rm -rf "$APKTOOL_DIR"
+    rm -rf "$APKTOOL_DIR" "$APKTOOL_DIR-tmp"
     [ -f "$WORK_DIR/.completed" ] && rm -f "$WORK_DIR/.completed"
 
     if [ ! -f "$FW_DIR/$SOURCE_FIRMWARE_PATH/.extracted" ] || [ ! -f "$FW_DIR/$TARGET_FIRMWARE_PATH/.extracted" ]; then
@@ -119,7 +119,7 @@ if $BUILD_ROM; then
     # a quarter of the build. The ones their smali folders name are known up front: decode those
     # together. DECODE_APK redoes any whose file a module has replaced by the time it gets there.
     LOG_STEP_IN true "Decoding APKs/JARs"
-    DECODE_PIDS=()
+    DECODE=()
     while IFS= read -r f; do
         PARTITION="${f%%/*}"
         [[ "$PARTITION" == "system" ]] || f="${f#*/}"
@@ -127,19 +127,17 @@ if $BUILD_ROM; then
         DECODED="$APKTOOL_DIR/$PARTITION/${f//system\//}"
         mkdir -p "$(dirname "$DECODED")"
         sha256sum "$WORK_DIR/$PARTITION/$f" > "$DECODED.predecoded"
-        "$SRC_DIR/scripts/apktool.sh" d "$PARTITION" "$f" &
-        DECODE_PIDS+=("$!")
-        # The first one also installs apktool's framework when it is missing: let it finish alone.
-        [ "${#DECODE_PIDS[@]}" != 1 ] || wait "$!" || exit 1
+        DECODE+=("$PARTITION $f")
     done < <(for MODULE in "$SRC_DIR/onigiri/patches"/* "$SRC_DIR/target/$TARGET_CODENAME/patches"/* "$SRC_DIR/onigiri/mods"/*; do
         [ -d "$MODULE/smali" ] && [ ! -f "$MODULE/disable" ] || continue
         find "$MODULE/smali" -type d \( -name "*.apk" -o -name "*.jar" \) -printf '%P\n'
     done | sort -u)
-    DECODE_STATUS=0
-    for PID in "${DECODE_PIDS[@]:1}"; do
-        wait "$PID" || DECODE_STATUS=1
-    done
-    [ "$DECODE_STATUS" = 0 ] || exit 1
+    # The first one also installs apktool's framework when it is missing: it goes alone. The
+    # rest go one per core: each is a JVM of up to 1 GB, and all of them at once is more than a
+    # 16 GB machine has.
+    # shellcheck disable=SC2086
+    "$SRC_DIR/scripts/apktool.sh" d ${DECODE[0]} || exit 1
+    printf '%s\n' "${DECODE[@]:1}" | xargs -P "$(nproc)" -L 1 "$SRC_DIR/scripts/apktool.sh" d || exit 1
     LOG_STEP_OUT
 
     LOG_STEP_IN true "Applying ROM patches"
@@ -157,26 +155,13 @@ if $BUILD_ROM; then
         rm -rf "${f%.predecoded}" "$f"
     done < <(find "$APKTOOL_DIR" -type f -name "*.predecoded")
 
+    # One per core, like the decoding above. A line is "<partition> <file>", with /system files
+    # under system/ as apktool.sh expects.
     LOG_STEP_IN true "Building APKs/JARs"
-    APK_BUILD_PIDS=()
-
-    while IFS= read -r f; do
-        f="${f/$APKTOOL_DIR\//}"
-        PARTITION="$(cut -d "/" -f 1 -s <<< "$f")"
-        if [[ "$PARTITION" == "system" ]]; then
-            "$SRC_DIR/scripts/apktool.sh" b "system" "$f" &
-        else
-            "$SRC_DIR/scripts/apktool.sh" b "$PARTITION" "$(cut -d "/" -f 2- -s <<< "$f")" &
-        fi
-        APK_BUILD_PIDS+=("$!")
-    done < <(find "$APKTOOL_DIR" -type d \( -name "*.apk" -o -name "*.jar" \))
-
-    APK_BUILD_STATUS=0
-    for PID in "${APK_BUILD_PIDS[@]}"; do
-        wait "$PID" || APK_BUILD_STATUS=1
-    done
-    [ "$APK_BUILD_STATUS" = 0 ] || exit 1
-
+    find "$APKTOOL_DIR" -type d \( -name "*.apk" -o -name "*.jar" \) -printf '%P\n' |
+        sed 's|^system/|system system/|; t; s|/| |' |
+        xargs -P "$(nproc)" -L 1 "$SRC_DIR/scripts/apktool.sh" b || exit 1
+    rm -rf "$APKTOOL_DIR-tmp"
     LOG_STEP_OUT
 
     echo -n "$(GET_WORK_DIR_HASH)" > "$WORK_DIR/.completed"

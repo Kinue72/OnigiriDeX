@@ -5,6 +5,11 @@ CHECK_BUILD_DEPENDENCIES || exit 1
 
 FRAMEWORK_DIR="$TOOLS_DIR/apktool/framework"
 FRAMEWORK_TAG="$(GET_PROP "system" "ro.build.version.incremental")"
+# apktool keeps its temporary files in Java's temp folder, whatever TMPDIR says, and leaves
+# them there: 2.6 GB over a day of builds, in a /tmp that is often RAM. They go next to the
+# decoded files instead, where make_rom.sh removes them.
+APKTOOL_TMP="$APKTOOL_DIR-tmp"
+mkdir -p "$APKTOOL_TMP"
 
 FORCE=false
 PARTITION=""
@@ -25,7 +30,7 @@ BUILD()
     mkdir -p "$OUTPUT_PATH/build/apk"
     cp -a "$OUTPUT_PATH/original/META-INF" "$OUTPUT_PATH/build/apk/META-INF"
 
-    EVAL "apktool b -j \"$(nproc)\" -p \"$FRAMEWORK_DIR\" -srp \"$OUTPUT_PATH\"" || exit 1
+    EVAL "apktool \"-JDjava.io.tmpdir=$APKTOOL_TMP\" b -j \"$(nproc)\" -p \"$FRAMEWORK_DIR\" -srp \"$OUTPUT_PATH\"" || exit 1
 
     local FILE_NAME
     FILE_NAME="$(basename "$INPUT_FILE")"
@@ -97,7 +102,7 @@ DECODE()
 
     LOG "- Decoding ${INPUT_FILE//$WORK_DIR/}"
 
-    EVAL "apktool d --no-debug-info -j \"$(nproc)\" -o \"$OUTPUT_PATH\" -p \"$FRAMEWORK_DIR\" -t \"$FRAMEWORK_TAG\" \"$INPUT_FILE\"" || exit 1
+    EVAL "apktool \"-JDjava.io.tmpdir=$APKTOOL_TMP\" d --no-debug-info -j \"$(nproc)\" -o \"$OUTPUT_PATH\" -p \"$FRAMEWORK_DIR\" -t \"$FRAMEWORK_TAG\" \"$INPUT_FILE\"" || exit 1
 
     if [[ "$INPUT_FILE" == *"framework.jar" ]]; then
         if unzip -l "$INPUT_FILE" | grep -q "debian.mime.types"; then
@@ -167,7 +172,7 @@ if [ ! "$FRAMEWORK_TAG" ]; then
     exit 1
 elif [ ! -f "$FRAMEWORK_DIR/1-$FRAMEWORK_TAG.apk" ]; then
     LOGW "framework-res.apk for \"$FRAMEWORK_TAG\" not found, installing"
-    EVAL "apktool if -p \"$FRAMEWORK_DIR\" -t \"$FRAMEWORK_TAG\" \"$WORK_DIR/system/system/framework/framework-res.apk\"" || exit 1
+    EVAL "apktool \"-JDjava.io.tmpdir=$APKTOOL_TMP\" if -p \"$FRAMEWORK_DIR\" -t \"$FRAMEWORK_TAG\" \"$WORK_DIR/system/system/framework/framework-res.apk\"" || exit 1
 fi
 
 case "$ACTION" in
