@@ -31,20 +31,26 @@ BUILD()
     FILE_NAME="$(basename "$INPUT_FILE")"
 
     if [[ "$INPUT_FILE" == *".apk" ]]; then
-        local CERT_PREFIX="onigiri"
-
         LOG "- Signing ${INPUT_FILE//$WORK_DIR/}"
-        EVAL "signapk \"$SRC_DIR/security/${CERT_PREFIX}_platform.x509.pem\" \"$SRC_DIR/security/${CERT_PREFIX}_platform.pk8\" \"$OUTPUT_PATH/dist/$FILE_NAME\" \"$OUTPUT_PATH/dist/temp.apk\"" || exit 1
+        EVAL "signapk \"$SRC_DIR/security/onigiri_platform.x509.pem\" \"$SRC_DIR/security/onigiri_platform.pk8\" \"$OUTPUT_PATH/dist/$FILE_NAME\" \"$OUTPUT_PATH/dist/temp.apk\"" || exit 1
         mv -f "$OUTPUT_PATH/dist/temp.apk" "$OUTPUT_PATH/dist/$FILE_NAME"
     else
-        # apktool stamps every entry with the build time (signapk resets it for APKs). A fixed
-        # time keeps an unchanged jar byte-identical across builds, and so out of OTAs.
+        # apktool stamps every entry with the build time and adds the dex files in the order its
+        # parallel assemblers finish (signapk resets the time and sorts the entries of APKs). A
+        # fixed time and dex order keep an unchanged jar byte-identical across builds, and so out
+        # of OTAs.
         python3 - "$OUTPUT_PATH/dist/$FILE_NAME" "$OUTPUT_PATH/dist/fixed" << 'PY' || exit 1
+import re
 import sys
 import zipfile
 
 with zipfile.ZipFile(sys.argv[1]) as source, zipfile.ZipFile(sys.argv[2], "w") as output:
-    for entry in source.infolist():
+    entries = source.infolist()
+    dex = [entry for entry in entries if re.fullmatch(r"classes\d*\.dex", entry.filename)]
+    ordered = iter(sorted(dex, key=lambda entry: int(entry.filename[7:-4] or 1)))
+    for entry in entries:
+        if entry in dex:
+            entry = next(ordered)
         data = source.read(entry)
         entry.date_time = (2008, 1, 1, 0, 0, 0)
         output.writestr(entry, data)
@@ -142,22 +148,7 @@ PREPARE_SCRIPT()
         FILE="${FILE:1}"
     done
 
-    local FILE_PATH="$WORK_DIR"
-    case "$PARTITION" in
-        "system_ext")
-            if $TARGET_HAS_SYSTEM_EXT; then
-                FILE_PATH+="/system_ext"
-            else
-                FILE_PATH+="/system/system/system_ext"
-            fi
-            ;;
-        *)
-            FILE_PATH+="/$PARTITION"
-            ;;
-    esac
-    FILE_PATH+="/$FILE"
-
-    INPUT_FILE="$FILE_PATH"
+    INPUT_FILE="$WORK_DIR/$PARTITION/$FILE"
     OUTPUT_PATH="$APKTOOL_DIR/$PARTITION/${FILE//system\//}"
 }
 

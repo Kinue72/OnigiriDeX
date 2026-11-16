@@ -5,15 +5,9 @@ fi
 
 SRC_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)" || return 1
 export SRC_DIR
-export DEBUG=false
-
-if [[ "${1:-}" == "--debug" ]]; then
-    export DEBUG=true
-    shift
-fi
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
-    echo "Usage: source buildenv.sh [--debug] [SM-F731B|SM-F731N|b5q]"
+    echo "Usage: source buildenv.sh [SM-F731B|SM-F731N|b5q]"
     return 0
 fi
 
@@ -41,7 +35,7 @@ if [[ ":$PATH:" != *":$TOOLS_DIR/bin:"* ]]; then
 fi
 
 mkdir -p "$OUT_DIR/target/b5q"
-"$SRC_DIR/scripts/internal/gen_config_file.sh" b5q || return 1
+"$SRC_DIR/scripts/internal/gen_config_file.sh" || return 1
 set -o allexport
 source "$OUT_DIR/config.sh"
 set +o allexport
@@ -62,7 +56,7 @@ run_cmd()
             "$SRC_DIR/scripts/$CMD.sh" "$@" |& tee "$OUT_DIR/target/b5q/$CMD-$(date +%Y%m%d_%H%M%S).log"
         )
     else
-        echo "Commands: download_fw, extract_fw, build_dependencies, build_kernel, make_rom, build_odin, make_ota, release, apktool, cleanup" >&2
+        echo "Commands: extract_fw, build_dependencies, build_kernel, make_rom, build_odin, make_ota, release, apktool, cleanup" >&2
         return 1
     fi
 }

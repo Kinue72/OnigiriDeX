@@ -10,7 +10,9 @@ fi
 mkdir -p "$TMP_DIR"
 STAGE="$(mktemp -d "$TMP_DIR/recovery.XXXXXX")"
 cp "$SRC_DIR/security/onigiri_ota.x509.pem" "$STAGE/"
-EVAL "cd \"$STAGE\" && magiskboot unpack \"$RECOVERY\" && zip -q -X otacerts.zip onigiri_ota.x509.pem && \
+# zip records the file's time: a fixed one keeps an unchanged recovery byte-identical across builds.
+TZ=UTC touch -d "2022-01-01 00:00:00" "$STAGE/onigiri_ota.x509.pem"
+EVAL "cd \"$STAGE\" && magiskboot unpack \"$RECOVERY\" && TZ=UTC zip -q -X otacerts.zip onigiri_ota.x509.pem && \
     magiskboot cpio ramdisk.cpio \"add 0644 system/etc/security/otacerts.zip otacerts.zip\" \
         \"add 0644 system/etc/init/onigiri-csc-wipe.rc $MODPATH/recovery/onigiri-csc-wipe.rc\" \
         \"add 0755 system/bin/onigiri-csc-wipe.sh $MODPATH/recovery/onigiri-csc-wipe.sh\" && \

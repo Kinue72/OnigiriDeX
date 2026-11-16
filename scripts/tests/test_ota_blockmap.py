@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Checks for ota_blockmap.py: python3 scripts/test_ota_blockmap.py"""
+"""Checks for ota_blockmap.py: python3 scripts/tests/test_ota_blockmap.py"""
 import os
 import sys
 import tempfile
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ota_blockmap import BLOCK, main
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ota_blockmap import BLOCK, main  # noqa: E402
 
 
 def image(path, blocks):

@@ -74,7 +74,7 @@ jobs:
       - name: Signing keys
         env:
           KEYS: ${{ secrets.ONIGIRI_SIGNING_KEYS }}
-        run: echo "$KEYS" | base64 -d | tar -xz -C security
+        run: mkdir -p security && echo "$KEYS" | base64 -d | tar -xz -C security
 
       # Samsung's servers won't serve the pinned firmware any more, so it comes pre-extracted from
       # a draft release, which only people with push access can see: one split archive per
@@ -104,8 +104,8 @@ jobs:
             jq -c '.targets["SM-F731B"]' onigiri/configs/firmware.json; } | sha256sum | cut -c1-12)"
           echo "kernel=kernel-$KERNEL_RELEASE-$KERNEL.tar.zst" >> "$GITHUB_OUTPUT"
           TOOLS="$({ git ls-tree HEAD external/android-tools external/apktool external/erofs-utils \
-            external/samloader external/signapk; git ls-files -s scripts/build_dependencies.sh external/make.sh \
-            external/patches external/ext4_utils external/f2fs_utils; } | sha256sum | cut -c1-16)"
+            external/signapk; git ls-files -s scripts/build_dependencies.sh scripts/utils/source_patches.sh \
+            external/patches/android-tools external/patches/apktool; } | sha256sum | cut -c1-16)"
           echo "tools=tools-$TOOLS.tar.zst" >> "$GITHUB_OUTPUT"
           gh release view build-cache > /dev/null 2>&1 || gh release create build-cache --draft \
             --title "Build cache for CI (never publish)" --notes "Built tools and kernels, reused by release.yml."
@@ -117,7 +117,7 @@ jobs:
           mkdir -p out
           if ! gh release download build-cache --pattern "$CACHE" --output - | zstd -dc | tar -x -C out; then
             git submodule update --init --recursive --depth 1 external/android-tools external/apktool \
-              external/erofs-utils external/samloader external/signapk
+              external/erofs-utils external/signapk
             $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_dependencies'
             tar -C out -cf - tools | zstd -T0 > "$CACHE"
             gh release upload build-cache "$CACHE" --clobber && rm "$CACHE"

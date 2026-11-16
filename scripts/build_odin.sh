@@ -9,7 +9,7 @@ set -o allexport
 source "$OUT_DIR/config.sh"
 set +o allexport
 
-[[ "$TARGET_CODENAME" = b5q && "$TARGET_ASSERT_MODEL" = "$TARGET_MODEL" ]]
+[ "$TARGET_CODENAME" = b5q ]
 [ "$TARGET_OS_FILE_SYSTEM" = erofs ]
 [ "$TARGET_SUPER_PARTITION_SIZE" = 12664700928 ]
 [ "$TARGET_SUPER_GROUP_SIZE" = 12660506624 ]
@@ -34,10 +34,16 @@ OCCUPIED=0
 
 for PARTITION in system product system_ext vendor odm vendor_dlkm system_dlkm; do
     LOG "- Building Flip5 Odin partition $PARTITION"
-    "$SRC_DIR/scripts/build_fs_image.sh" erofs -o "$STAGE/$PARTITION.img" \
-        "$WORK_DIR/$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION" \
-        "$WORK_DIR/configs/fs_config-$PARTITION"
-    SIZE="$(GET_IMAGE_SIZE "$STAGE/$PARTITION.img")"
+    MOUNT_POINT="$PARTITION"
+    [ "$PARTITION" != system ] || MOUNT_POINT="/"
+    # A fixed time and UUID (a random one would make every build's images differ even when no
+    # file did) keep unchanged partitions byte-identical across builds, and so out of OTAs.
+    EVAL "mkfs.erofs -z \"lz4hc,9\" -b \"4096\" --mount-point \"$MOUNT_POINT\" \
+        --fs-config-file \"$WORK_DIR/configs/fs_config-$PARTITION\" \
+        --file-contexts \"$WORK_DIR/configs/file_context-$PARTITION\" -T \"1640995200\" \
+        -U \"$(python3 -c 'import sys, uuid; print(uuid.uuid5(uuid.NAMESPACE_URL, sys.argv[1]))' "$MOUNT_POINT")\" \
+        \"$STAGE/$PARTITION.img\" \"$WORK_DIR/$PARTITION\""
+    SIZE="$(stat -c '%s' "$STAGE/$PARTITION.img")"
     OCCUPIED=$((OCCUPIED + SIZE))
     SUPER_COMMAND+=(--partition "$PARTITION:readonly:$SIZE:$TARGET_SUPER_GROUP_NAME"
         --image "$PARTITION=$STAGE/$PARTITION.img")
@@ -57,7 +63,7 @@ from pathlib import Path
 
 stage = Path(sys.argv[1])
 sys.path.insert(0, str(Path(sys.argv[2]) / "scripts"))
-from make_odin4_ap import sparse_fixed
+from sparse_image import sparse_fixed
 partitions = ("system", "product", "system_ext", "vendor", "odm", "vendor_dlkm", "system_dlkm")
 expected = {}
 for partition in partitions:

@@ -17,8 +17,8 @@ reset. Later builds do that reset themselves.
 
 ## Linux and macOS: odin4
 
-[odin4](https://github.com/Llucs/odin4) works with three changes, all tested on an Apple
-Silicon Mac flashing an SM-F731B.
+[odin4](https://github.com/Llucs/odin4) works with two fixes, tested on an Apple Silicon Mac
+flashing an SM-F731B.
 
 ### 1. Build odin4 with two fixes
 
@@ -41,31 +41,18 @@ On macOS also remove the Linux-only link flags from `CMakeLists.txt` (`-static-l
 USB modem driver to the Odin interface, and only root can claim it. While the Mac is locked,
 macOS holds new USB accessories until you allow them.
 
-### 2. Packages up to 2026.10.20: repack the AP for odin4
+### 2. Flash
 
-Later packages are already shaped for odin4: skip this step and flash the `.tar.md5` itself. odin4
-unpacks each image to a temporary file first, so keep about 9 GB free there.
-
-```sh
-python3 scripts/make_odin4_ap.py out/Onigiri_AP_*.tar.md5 out/AP_odin4.tar
-```
-
-It needs the `lz4` CLI and about 18 GB free next to the output file. What it changes, and why:
-
-| Problem | Symptom | Fix |
-|---|---|---|
-| odin4's compressed download only takes LZ4 frames of one block, so it unpacks every real image to a temporary file first | an extra ~9 GB write for super | images are stored plain |
-| odin4 lands FILL chunks in the super sparse image corrupted | every step acknowledged, then a boot loop; `/proc/last_kmsg` shows `liblp: invalid geometry magic` | FILL chunks expanded to RAW, as in Samsung's own super images (`build_odin` does this after 2026.10.20) |
-| odin4 pads large images to 512 bytes | the image after super fails with `BOOTLOADER_FAIL code=11` | the largest DONT_CARE chunk is split until the sparse file is a multiple of 512 bytes, and super goes last (also in `build_odin`) |
-
-### 3. Flash
+odin4 unpacks each image to a temporary file first, so keep about 9 GB free there. Packages up
+to 2026.10.20 aren't shaped for odin4 (it lands their super image corrupted, and the phone
+boot loops with `liblp: invalid geometry magic` in `/proc/last_kmsg`): flash a later release.
 
 Boot Download Mode with `adb reboot download` (or hold both volume keys while plugging in
 USB), then:
 
 ```sh
 sudo ./build/odin4 -l                      # the phone must be listed
-sudo ./build/odin4 --reboot -a out/Onigiri_AP_*.tar.md5   # or out/AP_odin4.tar from step 2
+sudo ./build/odin4 --reboot -a out/Onigiri_AP_*.tar.md5
 ```
 
 For a first install add `-b BL_<...>.tar.md5 -c CP_<...>.tar.md5 -s CSC_<...>.tar.md5` from the

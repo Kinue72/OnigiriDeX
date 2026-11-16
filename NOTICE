@@ -6,11 +6,8 @@ Original copyright notices retained below; external dependencies retain their ow
 
 buildenv.sh: Copyright (C) 2025 Salvo Giangreco
 scripts/apktool.sh: Copyright (C) 2025 Salvo Giangreco
-scripts/print_modules_info.sh: Copyright (C) 2023 Salvo Giangreco
 scripts/make_rom.sh: Copyright (C) 2025 Salvo Giangreco
-scripts/unsign_bin.sh: Copyright (C) 2023 Salvo Giangreco
-scripts/download_fw.sh: Copyright (C) 2025 Salvo Giangreco
-scripts/build_fs_image.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/build_odin.sh (the mkfs.erofs call, from build_fs_image.sh): Copyright (C) 2025 Salvo Giangreco
 scripts/extract_fw.sh: Copyright (C) 2025 Salvo Giangreco
 scripts/cleanup.sh: Copyright (C) 2023 Salvo Giangreco
 scripts/utils/build_utils.sh: Copyright (C) 2025 Salvo Giangreco
@@ -18,31 +15,23 @@ scripts/utils/firmware_utils.sh: Copyright (C) 2025 Salvo Giangreco
 scripts/utils/module_utils.sh: Copyright (C) 2025 Salvo Giangreco
 scripts/utils/common_utils.sh: Copyright (C) 2025 Salvo Giangreco
 scripts/utils/log_utils.sh: Copyright (C) 2025 Salvo Giangreco
-scripts/internal/build_flashable_zip.sh: Copyright (C) 2023 Salvo Giangreco
 scripts/internal/apply_modules.sh: Copyright (C) 2023 Salvo Giangreco
 scripts/internal/gen_config_file.sh: Copyright (C) 2025 Salvo Giangreco
 scripts/internal/create_work_dir.sh: Copyright (C) 2025 Salvo Giangreco
-scripts/internal/update_prebuilt_blobs.sh: Copyright (C) 2023 Salvo Giangreco
 onigiri/debloat.sh: Copyright (C) 2025 Salvo Giangreco
 onigiri/configs/version.sh: Copyright (C) 2025 Salvo Giangreco
-onigiri/configs/qssi.sh: Copyright (C) 2025 Salvo Giangreco
-onigiri/configs/essi.sh: Copyright (C) 2025 Salvo Giangreco
-external/make.sh: Copyright (C) 2025 Salvo Giangreco
+scripts/build_dependencies.sh (was external/make.sh): Copyright (C) 2025 Salvo Giangreco
 
 Upstream archives (prebuilts/rootmods, unmodified releases listed with their
 download URLs in prebuilts/rootmods/manifest.json). Each keeps its own license; their source
 code is at the matching release tag:
-NeoZygisk v2.4: GPL-3.0, https://github.com/JingMatrix/NeoZygisk
 HMA-OSS oss-173: AGPL-3.0, https://github.com/frknkrc44/HMA-OSS
 TEESimulator v3.2: GPL-3.0, https://github.com/JingMatrix/TEESimulator
-Tricky Addon Enhanced v5.53.1: GPL-3.0, https://github.com/Enginex0/tricky-addon-enhanced
 BRENE v0.0.72: AGPL-3.0, https://github.com/rrr333nnn333/BRENE
-Hybrid Mount v6.2.5: GPL-3.0, https://github.com/Hybrid-Mount/meta-hybrid_mount
 
 The built-in essential integration extracts HMA-OSS's original dex and signed manager,
 TEESimulator's original dex and arm64 binaries, and BRENE's susfs binary and ROM-name list.
-Their original licenses still apply. The remaining archives are retained as source inputs
-and legacy references, not installed on the phone. Onigiri's adapters and build code are
+Their original licenses still apply. Onigiri's adapters and build code are
 available in onigiri/mods/essential and scripts/build_essential.py.
 
 R8 9.4.24 (build-time Java-to-dex compiler): BSD-3-Clause,

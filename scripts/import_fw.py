@@ -109,15 +109,11 @@ def import_firmware(archive_path, spec, output):
 def main():
     entries = json.loads((ROOT / "onigiri/configs/firmware.json").read_text())
     specs = {**entries["targets"], "donor": entries["donor"]}
-    # "target" is the model buildenv.sh was sourced for.
-    specs["target"] = specs.get(os.environ.get("TARGET_MODEL", "SM-F731B"))
     parser = argparse.ArgumentParser(description="Verify and import pinned Onigiri firmware")
-    parser.add_argument("role", choices=specs, help="a model from firmware.json, target or donor")
+    parser.add_argument("role", choices=specs, help="a model from firmware.json, or donor")
     parser.add_argument("archive", type=Path)
     args = parser.parse_args()
     spec = specs[args.role]
-    if spec is None:
-        parser.exit(1, f"No firmware pinned for {os.environ['TARGET_MODEL']}\n")
     output = ROOT / "out/odin" / f"{spec['model']}_{spec['csc']}"
     try:
         import_firmware(args.archive, spec, output)

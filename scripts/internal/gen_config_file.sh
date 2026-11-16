@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
+# Writes out/config.sh, the values every build script shares: versions, the firmware pins from
+# onigiri/configs/firmware.json and, once the model's firmware is extracted, its product name and
+# super partition layout ("none" until then). buildenv.sh runs it, and make_rom.sh again after
+# extracting.
 
 set -e
 
-if [ "$#" -ne 1 ] || [[ "$1" != "b5q" ]] || [ -z "${TARGET_MODEL:-}" ]; then
-    echo "Usage: TARGET_MODEL=<model> gen_config_file.sh b5q (buildenv.sh sets it)" >&2
+if [ "$#" -ne 0 ] || [ -z "${TARGET_MODEL:-}" ]; then
+    echo "Usage: TARGET_MODEL=<model> gen_config_file.sh (buildenv.sh sets it)" >&2
     exit 1
 fi
 
 source "$SRC_DIR/onigiri/configs/version.sh"
-source "$SRC_DIR/target/b5q/config.sh"
+TARGET_CODENAME="b5q"
 
 FIRMWARE_CONFIG="$(python3 -c '
 import json, sys
@@ -19,15 +23,11 @@ for spec in (specs["targets"][sys.argv[2]], specs["donor"]):
 print(*values)
 ' "$SRC_DIR/onigiri/configs/firmware.json" "$TARGET_MODEL")"
 read -r TARGET_FIRMWARE TARGET_FIRMWARE_VERSION SOURCE_FIRMWARE SOURCE_FIRMWARE_VERSION <<< "$FIRMWARE_CONFIG"
-source "$SRC_DIR/onigiri/configs/$TARGET_SINGLE_SYSTEM_IMAGE.sh"
 
-TARGET_ASSERT_MODEL="$TARGET_MODEL"
 FIRMWARE_FOLDER="$FW_DIR/${TARGET_FIRMWARE/\//_}"
 # Samsung's product name for this model (b5qxxx, b5qksx), once its firmware is extracted.
 TARGET_PRODUCT_NAME="$(sed -n 's/^ro.product.vendor.name=//p' "$FIRMWARE_FOLDER/vendor/build.prop" 2> /dev/null || true)"
 TARGET_PRODUCT_NAME="${TARGET_PRODUCT_NAME:-none}"
-TARGET_EXTRA_FIRMWARES=""
-SOURCE_EXTRA_FIRMWARES=""
 ROM_BUILD_TIMESTAMP="$(date +%s)"
 TARGET_OS_FILE_SYSTEM="none"
 TARGET_SUPER_PARTITION_SIZE="none"
@@ -58,37 +58,15 @@ if [ -f "$METADATA" ]; then
     esac
 fi
 
-for PARTITION in BOOT DTBO INIT_BOOT VENDOR_BOOT; do
-    SIZE="none"
-    METADATA="$FIRMWARE_FOLDER/${PARTITION,,}.img_metadata.txt"
-    if [ -f "$METADATA" ]; then
-        SIZE="$(sed -n 's/^partition_size=//p' "$METADATA")"
-        if ! [[ "$SIZE" =~ ^[0-9]+$ ]]; then
-            echo "Invalid $PARTITION partition size." >&2
-            exit 1
-        fi
-    fi
-    printf -v "TARGET_${PARTITION}_PARTITION_SIZE" '%s' "$SIZE"
-done
-
 mkdir -p "$OUT_DIR"
 CONFIG="$(mktemp "$OUT_DIR/.config.XXXXXX")"
 trap 'rm -f "$CONFIG"' EXIT
 
 for VARIABLE in \
-    ROM_VERSION ROM_CODENAME ROM_IS_OFFICIAL ROM_BUILD_TIMESTAMP KERNEL_RELEASE \
-    SOURCE_FIRMWARE SOURCE_FIRMWARE_VERSION SOURCE_EXTRA_FIRMWARES \
-    SOURCE_API_LEVEL SOURCE_PRODUCT_FIRST_API_LEVEL SOURCE_VENDOR_API_LEVEL \
-    SOURCE_HAS_SYSTEM_EXT \
-    TARGET_NAME TARGET_CODENAME TARGET_MODEL TARGET_ASSERT_MODEL TARGET_PRODUCT_NAME TARGET_FIRMWARE \
-    TARGET_FIRMWARE_VERSION TARGET_EXTRA_FIRMWARES TARGET_API_LEVEL \
-    TARGET_PRODUCT_FIRST_API_LEVEL TARGET_VENDOR_API_LEVEL \
-    TARGET_SINGLE_SYSTEM_IMAGE TARGET_OS_FILE_SYSTEM TARGET_HAS_SYSTEM_EXT \
-    TARGET_BOOT_DEVICE_PATH TARGET_KEEP_ORIGINAL_SIGN TARGET_DISABLE_AVB_SIGNING \
-    TARGET_INCLUDE_PATCHED_VBMETA TARGET_BOOT_PARTITION_SIZE TARGET_DTBO_PARTITION_SIZE \
-    TARGET_INIT_BOOT_PARTITION_SIZE TARGET_VENDOR_BOOT_PARTITION_SIZE \
-    TARGET_SUPER_PARTITION_SIZE TARGET_SUPER_GROUP_NAME TARGET_SUPER_GROUP_SIZE \
-    $(compgen -A variable | sort | sed -n "/^SOURCE_/p; /^TARGET_/p"); do
+    ROM_VERSION ROM_CODENAME ROM_BUILD_TIMESTAMP KERNEL_RELEASE \
+    SOURCE_FIRMWARE SOURCE_FIRMWARE_VERSION \
+    TARGET_CODENAME TARGET_MODEL TARGET_PRODUCT_NAME TARGET_FIRMWARE TARGET_FIRMWARE_VERSION \
+    TARGET_OS_FILE_SYSTEM TARGET_SUPER_PARTITION_SIZE TARGET_SUPER_GROUP_NAME TARGET_SUPER_GROUP_SIZE; do
     printf '%s=%q\n' "$VARIABLE" "${!VARIABLE}"
 done > "$CONFIG"
 

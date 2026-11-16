@@ -1,6 +1,8 @@
 SOURCE_FIRMWARE_PATH="$FW_DIR/${SOURCE_FIRMWARE//\//_}"
 TARGET_FIRMWARE_PATH="$FW_DIR/${TARGET_FIRMWARE//\//_}"
 
+ADD_TO_WORK_DIR "$TARGET_FIRMWARE_PATH" "system" "system/etc/libnfc-nci.conf" 0 0 644 "u:object_r:system_file:s0"
+
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE_PATH" "system" "system/bin/lpm" \
     0 2000 755 "u:object_r:lpm_exec:s0"
 

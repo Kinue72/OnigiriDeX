@@ -65,7 +65,7 @@ public final class PayloadPackager {
                 entry = zipfile.ZipInfo(path.name, (2008, 1, 1, 0, 0, 0))
                 entry.compress_type = zipfile.ZIP_DEFLATED
                 output.writestr(entry, path.read_bytes())
-    hma_config = src / 'onigiri/mods/rootmods/hma-oss.json'
+    hma_config = module / 'hma-oss.json'
     if json.loads(hma_config.read_text())['configVersion'] != 93:
         raise ValueError('HMA configuration is incompatible with adapter 3')
     shutil.copyfile(hma_config, dest / 'hma-oss.json')

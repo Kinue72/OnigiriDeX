@@ -7,9 +7,6 @@
 [submodule "external/erofs-utils"]
 	path = external/erofs-utils
 	url = https://github.com/sekaiacg/erofs-utils.git
-[submodule "external/samloader"]
-	path = external/samloader
-	url = https://github.com/ananjaser1211/samloader.git
 [submodule "external/signapk"]
 	path = external/signapk
 	url = https://github.com/salvogiangri/signapk.git

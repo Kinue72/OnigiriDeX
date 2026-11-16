@@ -5,10 +5,6 @@ security/onigiri_platform.pk8
 security/onigiri_ota.x509.pem
 security/onigiri_ota.pk8
 
-!.gitattributes
-!.gitignore
-!.gitmodules
-
 firmware/
 __pycache__/
 *.pyc
