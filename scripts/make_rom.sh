@@ -115,6 +115,33 @@ if $BUILD_ROM; then
 
     "$SRC_DIR/scripts/prepare_kernel.sh" || exit 1
 
+    # Modules decode an APK or JAR the first time they patch it, one after another, which took
+    # a quarter of the build. The ones their smali folders name are known up front: decode those
+    # together. DECODE_APK redoes any whose file a module has replaced by the time it gets there.
+    LOG_STEP_IN true "Decoding APKs/JARs"
+    DECODE_PIDS=()
+    while IFS= read -r f; do
+        PARTITION="${f%%/*}"
+        [[ "$PARTITION" == "system" ]] || f="${f#*/}"
+        [ -f "$WORK_DIR/$PARTITION/$f" ] || continue
+        DECODED="$APKTOOL_DIR/$PARTITION/${f//system\//}"
+        mkdir -p "$(dirname "$DECODED")"
+        sha256sum "$WORK_DIR/$PARTITION/$f" > "$DECODED.predecoded"
+        "$SRC_DIR/scripts/apktool.sh" d "$PARTITION" "$f" &
+        DECODE_PIDS+=("$!")
+        # The first one also installs apktool's framework when it is missing: let it finish alone.
+        [ "${#DECODE_PIDS[@]}" != 1 ] || wait "$!" || exit 1
+    done < <(for MODULE in "$SRC_DIR/onigiri/patches"/* "$SRC_DIR/target/$TARGET_CODENAME/patches"/* "$SRC_DIR/onigiri/mods"/*; do
+        [ -d "$MODULE/smali" ] && [ ! -f "$MODULE/disable" ] || continue
+        find "$MODULE/smali" -type d \( -name "*.apk" -o -name "*.jar" \) -printf '%P\n'
+    done | sort -u)
+    DECODE_STATUS=0
+    for PID in "${DECODE_PIDS[@]:1}"; do
+        wait "$PID" || DECODE_STATUS=1
+    done
+    [ "$DECODE_STATUS" = 0 ] || exit 1
+    LOG_STEP_OUT
+
     LOG_STEP_IN true "Applying ROM patches"
     "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/onigiri/patches" || exit 1
     LOG_STEP_OUT
@@ -124,6 +151,11 @@ if $BUILD_ROM; then
     LOG_STEP_IN true "Applying ROM mods"
     "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/onigiri/mods" || exit 1
     LOG_STEP_OUT
+
+    # Decoded ahead but never patched: leave the original file as it is instead of rebuilding it.
+    while IFS= read -r f; do
+        rm -rf "${f%.predecoded}" "$f"
+    done < <(find "$APKTOOL_DIR" -type f -name "*.predecoded")
 
     LOG_STEP_IN true "Building APKs/JARs"
     APK_BUILD_PIDS=()

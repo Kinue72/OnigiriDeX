@@ -66,7 +66,15 @@ DECODE_APK()
     _CHECK_NON_EMPTY_PARAM "PARTITION" "$1" || return 1
     _CHECK_NON_EMPTY_PARAM "FILE" "$2" || return 1
 
-    if [ ! -d "$APKTOOL_DIR/$1/${2//system\/}" ]; then
+    local DECODED="$APKTOOL_DIR/$1/${2//system\/}"
+
+    # make_rom.sh decoded this one ahead of the modules: only good if none changed the file since.
+    if [ -f "$DECODED.predecoded" ]; then
+        sha256sum --status -c "$DECODED.predecoded" || rm -rf "$DECODED"
+        rm -f "$DECODED.predecoded"
+    fi
+
+    if [ ! -d "$DECODED" ]; then
         "$SRC_DIR/scripts/apktool.sh" d "$1" "$2"
         return $?
     fi

@@ -46,7 +46,7 @@ CHECK_BUILD_DEPENDENCIES()
         "cp" "curl" "cut" "dd" "debugfs" "dirname" "du"
         "file" "fmt" "git" "grep" "head" "java" "ln"
         "lz4" "make" "md5sum" "mkdir" "mv" "pcre2test"
-        "perl" "protoc" "python3" "rm" "rsync" "sed" "sha1sum" "sort"
+        "perl" "protoc" "python3" "rm" "sed" "sha1sum" "sort"
         "stat" "tail" "tar" "touch" "tr" "truncate"
         "unzip" "wc" "xargs" "xxd" "zip" "zstd"
     )
