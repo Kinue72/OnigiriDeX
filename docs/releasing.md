@@ -64,8 +64,9 @@ Push a tag, for example `git tag 2026.10.21 && git push origin 2026.10.21`.
 
 Only tags publish. The kernel (30 to 50 minutes on GitHub's runners), the build tools and the few
 files the ROM build reads from the kernel tree are kept in the private `build-cache` draft release
-under a hash of their sources and rebuilt only when those change. Only the OTA from the previous
-release is diffed; older builds get chained packages, which take seconds to make.
+under a hash of their sources and rebuilt only when those change. With all three cached, a
+release of two models takes about half an hour. Only the OTA from the previous release is diffed;
+older builds get chained packages, which take seconds to make.
 
 **Dry run.** To try a change to the build or the workflow without releasing, run the workflow by
 hand: Actions > Release > Run workflow, on any branch (or `gh workflow run release.yml --ref
