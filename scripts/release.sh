@@ -91,7 +91,9 @@ PREVIOUS_RELEASE()
     if [ -n "$PREVIOUS_TAG" ]; then
         gh release view "$PREVIOUS_TAG" --repo "$REPO" --json assets --jq '.assets[].name' > "$WORK/assets"
         if grep -qx version.txt "$WORK/assets"; then
-            PREVIOUS="$(RETRY gh release download "$PREVIOUS_TAG" --repo "$REPO" --pattern version.txt --output - | cut -d " " -f 1)"
+            # To a file: on stdout, what a failed attempt printed would run into the next one's.
+            RETRY gh release download "$PREVIOUS_TAG" --repo "$REPO" --pattern version.txt --clobber --output "$WORK/previous.txt"
+            PREVIOUS="$(cut -d " " -f 1 "$WORK/previous.txt")"
             [[ "$PREVIOUS" =~ ^[0-9a-f]{7,40}$ ]] || { echo "Unexpected version.txt in $PREVIOUS_TAG: $PREVIOUS" >&2; exit 1; }
         fi
         if grep -qx update.json "$WORK/assets"; then
