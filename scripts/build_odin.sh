@@ -71,8 +71,6 @@ for partition in partitions:
     with image.open("rb") as stream:
         expected[partition] = (image.stat().st_size, hashlib.file_digest(stream, "sha256").digest())
 subprocess.run(sys.argv[3:], check=True)
-for partition in partitions:
-    (stage / (partition + ".img")).unlink()
 # Shape super like Samsung's own (RAW and DONT_CARE chunks only, a multiple of 512 bytes, flashed
 # last) so odin4 takes the package as is: it lands FILL chunks corrupted ("liblp: invalid geometry
 # magic" at boot) and pads big images to 512 bytes, which breaks the next one. The unpack check
@@ -153,5 +151,16 @@ with output.open("rb") as stream:
     checksum = hashlib.file_digest(stream, "sha256").hexdigest()
 output.with_name(output.name + ".sha256").write_text(f"{checksum}  {output.name}\n")
 PY
+
+# The super in the package was just checked against these images, so make_ota.sh can take them
+# for this AP (matched by the checksum at its end) instead of unpacking 9 GB again. Only the
+# model's last build keeps them.
+rm -rf "$OUT_DIR/images/Onigiri_AP_${TARGET_MODEL}_"*
+IMAGES="$OUT_DIR/images/$(basename "$OUTPUT")"
+mkdir -p "$IMAGES"
+for PARTITION in system product system_ext vendor odm vendor_dlkm system_dlkm; do
+    mv "$STAGE/$PARTITION.img" "$IMAGES/"
+done
+tail -c 4096 "$OUTPUT" | tr -d '\0' | tail -n 1 > "$IMAGES/package.md5"
 
 LOG "- Odin AP package created: $OUTPUT"
