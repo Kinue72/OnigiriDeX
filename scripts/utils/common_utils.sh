@@ -105,11 +105,7 @@ _GET_SELINUX_LABEL()
             FC_FILE="$WORK_DIR/vendor/etc/selinux/vendor_file_contexts"
             ;;
         "system_ext")
-            if $TARGET_HAS_SYSTEM_EXT; then
-                FC_FILE="$WORK_DIR/system_ext/etc/selinux/system_ext_file_contexts"
-            else
-                FC_FILE="$WORK_DIR/system/system/system_ext/etc/selinux/system_ext_file_contexts"
-            fi
+            FC_FILE="$WORK_DIR/system_ext/etc/selinux/system_ext_file_contexts"
             ;;
         *)
             FC_FILE="$WORK_DIR/system/system/etc/selinux/plat_file_contexts"
@@ -189,23 +185,7 @@ ADD_TO_WORK_DIR()
 
     local SOURCE_FILE="$SOURCE"
     local TARGET_FILE="$WORK_DIR"
-    if [[ "$PARTITION" == "system_ext" ]]; then
-        if [ -d "$SOURCE/system_ext" ]; then
-            SOURCE_FILE+="/system_ext/$FILE"
-        elif [ -d "$SOURCE/system/system/system_ext" ]; then
-            SOURCE_FILE+="/system/system/system_ext/$FILE"
-        else
-            SOURCE_FILE+="/system/system_ext/$FILE"
-        fi
-
-        if $TARGET_HAS_SYSTEM_EXT; then
-            TARGET_FILE+="/system_ext/$FILE"
-        else
-            PARTITION="system"
-            FILE="system/system_ext/$FILE"
-            TARGET_FILE+="/system/$FILE"
-        fi
-    elif [[ "$PARTITION" == "system" ]]; then
+    if [[ "$PARTITION" == "system" ]]; then
         if [ -d "$SOURCE/system/system" ]; then
             SOURCE_FILE+="/system/$FILE"
             TARGET_FILE+="/system/$FILE"
@@ -280,7 +260,6 @@ ADD_TO_WORK_DIR()
         FILES="$(find "${SOURCE_FILE%/.}")"
         FILES="${FILES//$SOURCE\//}"
         [[ "$PARTITION" == "system" ]] && FILES="${FILES//system\/system\//system/}"
-        $TARGET_HAS_SYSTEM_EXT || FILES="${FILES//system_ext\//system/system_ext/}"
 
         while IFS= read -r f; do
             IS_VALID_PARTITION_NAME "$f" && continue
@@ -374,25 +353,7 @@ DELETE_FROM_WORK_DIR()
         FILE="${FILE:1}"
     done
 
-    if ! $TARGET_HAS_SYSTEM_EXT && [[ "$PARTITION" == "system_ext" ]]; then
-        PARTITION="system"
-        FILE="system/system_ext/$FILE"
-    fi
-
-    local FILE_PATH="$WORK_DIR"
-    case "$PARTITION" in
-        "system_ext")
-            if $TARGET_HAS_SYSTEM_EXT; then
-                FILE_PATH+="/system_ext"
-            else
-                FILE_PATH+="/system/system/system_ext"
-            fi
-            ;;
-        *)
-            FILE_PATH+="/$PARTITION"
-            ;;
-    esac
-    FILE_PATH+="/$FILE"
+    local FILE_PATH="$WORK_DIR/$PARTITION/$FILE"
 
     if [ ! -e "$FILE_PATH" ] && [ ! -L "$FILE_PATH" ]; then
         LOGW "File not found: ${FILE_PATH//$WORK_DIR/}"

@@ -38,6 +38,11 @@ for FILE in public.libraries-camera.samsung.txt public.libraries-arcsoft.txt; do
     ADD_TO_WORK_DIR "$TARGET_FIRMWARE" system "system/etc/$FILE"
 done
 
+# The Fold5's thermal (SIOP) policy name is compiled into its framework: use the Flip5's.
+DECODE_APK "system" "system/framework/ssrm.jar"
+sed -i "s/siop_q5q_sm8550/siop_b5q_sm8550/g" \
+    "$APKTOOL_DIR/system/framework/ssrm.jar/smali/com/android/server/ssrm/Feature.smali"
+
 DELETE_FROM_WORK_DIR product overlay/framework-res__q5qxxx__auto_generated_rro_product.apk
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" product "overlay/framework-res__${TARGET_PRODUCT_NAME}__auto_generated_rro_product.apk"
 

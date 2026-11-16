@@ -26,6 +26,8 @@ for name, expected in manifest.items():
 required = {"boot.img", "vendor_boot.img", "vendor_dlkm.img", "system_dlkm.img", "gki.config", "kernel.release"}
 assert required <= manifest.keys(), "Incomplete Onigiri kernel artifacts"
 config = (root / "gki.config").read_text()
+if "CONFIG_SECURITY_PROCA=y" in config.splitlines():
+    raise SystemExit("The Onigiri kernel must disable PROCA at build time.")
 for option in ("CONFIG_KSU=y", "CONFIG_KSU_SUSFS=y", "CONFIG_MODVERSIONS=y", *Path(sys.argv[2]).read_text().splitlines()):
     if option.startswith("CONFIG_") and option + "\n" not in config:
         raise SystemExit("Required kernel configuration missing: " + option)

@@ -9,7 +9,7 @@ import tempfile
 import zipfile
 
 apex, output = map(Path, sys.argv[1:])
-with tempfile.TemporaryDirectory(prefix='onigiri-bt-', dir='/tmp') as directory:
+with tempfile.TemporaryDirectory(prefix='onigiri-bt-') as directory:
     payload = Path(directory) / 'payload.img'
     library = Path(directory) / 'libbluetooth_jni.so'
     with zipfile.ZipFile(apex) as archive:

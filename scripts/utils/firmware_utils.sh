@@ -58,16 +58,11 @@ EXTRACT_FILE_FROM_TAR()
     fi
 
     [ -f "$FW_DIR/${MODEL}_${CSC}/$FILE" ] && rm -rf "$FW_DIR/${MODEL}_${CSC}/$FILE"
-    [ -f "$FW_DIR/${MODEL}_${CSC}/$FILE.ext4" ] && rm -rf "$FW_DIR/${MODEL}_${CSC}/$FILE.ext4"
     [ -f "$FW_DIR/${MODEL}_${CSC}/$FILE.lz4" ] && rm -rf "$FW_DIR/${MODEL}_${CSC}/$FILE.lz4"
 
     if FILE_EXISTS_IN_TAR "$TAR" "$FILE"; then
         LOG "- Extracting $FILE..."
         EVAL "tar xf \"$TAR\" -C \"$FW_DIR/${MODEL}_${CSC}\" \"$FILE\"" || return 1
-    elif FILE_EXISTS_IN_TAR "$TAR" "$FILE.ext4"; then
-        LOG "- Extracting $FILE.ext4..."
-        EVAL "tar xf \"$TAR\" -C \"$FW_DIR/${MODEL}_${CSC}\" \"$FILE.ext4\"" || return 1
-        EVAL "mv -f \"$FW_DIR/${MODEL}_${CSC}/$FILE.ext4\" \"$FW_DIR/${MODEL}_${CSC}/$FILE\"" || return 1
     elif FILE_EXISTS_IN_TAR "$TAR" "$FILE.lz4"; then
         LOG "- Extracting $FILE.lz4..."
         EVAL "tar xf \"$TAR\" -C \"$FW_DIR/${MODEL}_${CSC}\" \"$FILE.lz4\"" || return 1
@@ -85,31 +80,6 @@ FILE_EXISTS_IN_TAR()
 
     tar tf "$1" "$2" &> /dev/null
     return $?
-}
-
-GET_REQUIRED_FIRMWARE()
-{
-    python3 -c '
-import json, sys
-specs = json.load(open(sys.argv[1]))
-for spec in (*specs["targets"].values(), specs["donor"]):
-    if (spec["model"], spec["csc"]) == (sys.argv[2], sys.argv[3]):
-        print(spec["version"])
-        break
-else:
-    sys.exit("Unsupported firmware model/CSC")
-' "$SRC_DIR/onigiri/configs/firmware.json" "$1" "$2"
-}
-
-PARSE_FIRMWARE_STRING()
-{
-    if ! [[ "${1:-}" =~ ^SM-[A-Z0-9]+/[A-Z0-9]{3}$ ]]; then
-        LOGE "Use a MODEL/CSC pinned in onigiri/configs/firmware.json, like SM-F731B/XXV."
-        return 1
-    fi
-
-    IFS=/ read -r MODEL CSC <<< "$1"
-    GET_REQUIRED_FIRMWARE "$MODEL" "$CSC" > /dev/null
 }
 
 UNSPARSE_IMAGE()

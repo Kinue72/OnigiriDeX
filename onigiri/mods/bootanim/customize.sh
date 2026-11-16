@@ -1,5 +1,3 @@
-[ "$TARGET_CODENAME" = b5q ] || return 1
-
 ANIMATION_DIR="$SRC_DIR/onigiri/mods/bootanim/2340x1080"
 python3 - "$ANIMATION_DIR" <<'PYQMG' || return 1
 import struct

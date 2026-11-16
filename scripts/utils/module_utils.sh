@@ -66,104 +66,18 @@ DECODE_APK()
     _CHECK_NON_EMPTY_PARAM "PARTITION" "$1" || return 1
     _CHECK_NON_EMPTY_PARAM "FILE" "$2" || return 1
 
-    if [ ! -d "$APKTOOL_DIR/$1/${2//system\/}" ]; then
+    local DECODED="$APKTOOL_DIR/$1/${2//system\/}"
+
+    # make_rom.sh decoded this one ahead of the modules: only good if none changed the file since.
+    if [ -f "$DECODED.predecoded" ]; then
+        sha256sum --status -c "$DECODED.predecoded" || rm -rf "$DECODED"
+        rm -f "$DECODED.predecoded"
+    fi
+
+    if [ ! -d "$DECODED" ]; then
         "$SRC_DIR/scripts/apktool.sh" d "$1" "$2"
         return $?
     fi
-
-    return 0
-}
-
-DOWNLOAD_FILE()
-{
-    _CHECK_NON_EMPTY_PARAM "URL" "$1" || return 1
-    _CHECK_NON_EMPTY_PARAM "OUTPUT" "$2" || return 1
-
-    local URL="$1"
-    local OUTPUT="$2"
-
-    mkdir -p "$(dirname "$OUTPUT")"
-    curl -L -# -o "$OUTPUT" "$URL"
-    return $?
-}
-
-GET_GALAXY_STORE_DOWNLOAD_URL()
-{
-    _CHECK_NON_EMPTY_PARAM "PACKAGE" "$1" || return 1
-
-    local PACKAGE="$1"
-    local DEVICES
-    local OS
-    local OUT
-
-    DEVICES+=("deviceId=SM-S918B&mcc=262&mnc=01&csc=EUX")
-    DEVICES+=("deviceId=SM-S9180&mcc=460&mnc=00&csc=CHC")
-
-    OS="sdkVer="
-    OS+="$(GET_PROP "system" "ro.build.version.sdk")"
-    OS+="&oneUiVersion="
-    OS+="$(GET_PROP "system" "ro.build.version.oneui")"
-
-    for i in "${DEVICES[@]}"; do
-        OUT="$(curl -L -s "https://vas.samsungapps.com/stub/stubDownload.as?appId=$PACKAGE&$i&$OS&extuk=0191d6627f38685f&pd=0")"
-        if grep -q "Download URI Available" <<< "$OUT"; then
-            grep "downloadURI" <<< "$OUT" | cut -d ">" -f 2 | sed -e 's/<!\[CDATA\[//g; s/\]\]//g'
-            return $?
-        fi
-    done
-
-    LOGE "No download URI found for app \"$PACKAGE\""
-    return 1
-}
-
-GET_FLOATING_FEATURE_CONFIG()
-{
-    local FILE
-    if [ "$2" ]; then
-        FILE="$1"
-        shift
-    else
-        FILE="$WORK_DIR/system/system/etc/floating_feature.xml"
-    fi
-
-    _CHECK_NON_EMPTY_PARAM "CONFIG" "$1" || return 1
-
-    local CONFIG="$1"
-
-    if [ ! -f "$FILE" ]; then
-        LOGE "File not found: ${FILE//$WORK_DIR/}"
-        return 1
-    fi
-
-    grep -o -P "(?<=<$CONFIG>)[^<]+" "$FILE" 2> /dev/null || true
-}
-
-HEX_PATCH()
-{
-    _CHECK_NON_EMPTY_PARAM "FILE" "$1" || return 1
-    _CHECK_NON_EMPTY_PARAM "FROM" "$2" || return 1
-    _CHECK_NON_EMPTY_PARAM "TO" "$3" || return 1
-
-    local FILE="$1"
-    local FROM="$2"
-    local TO="$3"
-
-    if [ ! -f "$FILE" ]; then
-        LOGE "File not found: ${FILE//$WORK_DIR/}"
-        return 1
-    fi
-
-    FROM="$(tr "[:upper:]" "[:lower:]" <<< "$FROM")"
-    TO="$(tr "[:upper:]" "[:lower:]" <<< "$TO")"
-
-    if ! xxd -p "$FILE" | tr -d "\n" | tr -d " " | grep -q "$FROM"; then
-        LOGE "No \"$FROM\" match in ${FILE//$WORK_DIR/}"
-        return 1
-    fi
-
-    LOG "- Patching \"$FROM\" to \"$TO\" in ${FILE//$WORK_DIR/}"
-    xxd -p "$FILE" | tr -d "\n" | tr -d " " | sed "s/$FROM/$TO/" | xxd -r -p > "$FILE.tmp"
-    mv "$FILE.tmp" "$FILE"
 
     return 0
 }
@@ -240,11 +154,7 @@ SET_PROP()
                 FILE="$WORK_DIR/system/system/build.prop"
                 ;;
             "system_ext")
-                if $TARGET_HAS_SYSTEM_EXT; then
-                    FILE="$WORK_DIR/system_ext/etc/build.prop"
-                else
-                    FILE="$WORK_DIR/system/system/system_ext/etc/build.prop"
-                fi
+                FILE="$WORK_DIR/system_ext/etc/build.prop"
                 ;;
             "system_dlkm")
                 FILE="$WORK_DIR/system_dlkm/etc/build.prop"
@@ -276,24 +186,4 @@ SET_PROP()
     fi
 
     return 0
-}
-
-SET_PROP_IF_DIFF()
-{
-    _CHECK_NON_EMPTY_PARAM "PARTITION" "$1" || return 1
-    _CHECK_NON_EMPTY_PARAM "PROP" "$2" || return 1
-    _CHECK_NON_EMPTY_PARAM "EXPECTED" "$3" || return 1
-
-    local PARTITION="$1"
-    local PROP="$2"
-    local EXPECTED="$3"
-
-    if ! IS_VALID_PARTITION_NAME "$PARTITION"; then
-        LOGE "\"$PARTITION\" is not a valid partition name"
-        return 1
-    fi
-
-    local CURRENT
-    CURRENT="$(GET_PROP "$PARTITION" "$PROP")"
-    [ -z "$CURRENT" ] || [ "$CURRENT" = "$EXPECTED" ] || SET_PROP "$PARTITION" "$PROP" "$EXPECTED"
 }

@@ -1,30 +1,47 @@
-# Builds and publishes a release for every pushed tag: the checks in check.yml first, then one
-# AP per Flip5 model in onigiri/configs/firmware.json on GitHub's runners and scripts/release.sh
-# (the APs, per model an OTA from the previous release, and version.txt). Setup (firmware draft
-# release, signing key secret) is in docs/releasing.md.
+# Builds and publishes a release for every pushed tag: the checks in check.yml, then one AP per
+# Flip5 model in onigiri/configs/firmware.json, each on its own runner, which also makes that
+# model's OTAs and uploads everything to a draft release (scripts/release.sh --model). The last
+# job adds update.json and version.txt and makes the draft public. Setup (firmware draft release,
+# signing key secret) is in docs/releasing.md.
+#
+# Run it by hand (Actions > Release > Run workflow, on any branch) for a dry run: the same jobs
+# and uploads, into a draft named dry-run-<run id> that is deleted at the end instead of published.
 name: Release
 
 on:
   push:
     tags: ["*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: release
+  group: ${{ github.event_name == 'push' && 'release' || format('release-dry-run-{0}', github.ref) }}
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  ONIGIRI_REPO: ${{ github.repository }}
+  ONIGIRI_DRY_RUN: ${{ github.event_name != 'push' }}
+  RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || format('dry-run-{0}', github.run_id) }}
 
 jobs:
   check:
     uses: ./.github/workflows/check.yml
 
-  build:
-    needs: check
+  # Everything the model jobs share: the names of the cached build tools, kernel and ROM build
+  # dependencies (built here when their sources changed) and the draft release they upload to.
+  # The caches live in the private "build-cache" draft release under a hash of their sources and
+  # are reused by every release. (Actions caches are scoped to one tag, so they wouldn't carry
+  # over to the next release.)
+  setup:
     runs-on: ubuntu-24.04
     timeout-minutes: 355
-    env:
-      GH_TOKEN: ${{ github.token }}
-      ONIGIRI_REPO: ${{ github.repository }}
+    outputs:
+      models: ${{ steps.versions.outputs.models }}
+      tools: ${{ steps.versions.outputs.tools }}
+      kernel: ${{ steps.versions.outputs.kernel }}
+      romdeps: ${{ steps.versions.outputs.romdeps }}
     steps:
       # Everything a release needs, checked before hours of building.
       - name: Preflight
@@ -34,67 +51,13 @@ jobs:
           [ -n "$KEYS" ] || { echo "::error::Set the ONIGIRI_SIGNING_KEYS secret (docs/releasing.md)."; exit 1; }
           PARTS="$(gh release view firmware --repo "$ONIGIRI_REPO" --json assets --jq '[.assets[] | select(.name | startswith("onigiri-fw.tar.zst."))] | length')" || PARTS=0
           [ "$PARTS" -gt 0 ] || { echo "::error::The firmware draft release is missing (docs/releasing.md)."; exit 1; }
-          if gh release view "$GITHUB_REF_NAME" --repo "$ONIGIRI_REPO" --json isDraft --jq 'select(.isDraft | not)' | grep -q .; then
-            echo "::error::Release $GITHUB_REF_NAME already exists."
+          if gh release view "$RELEASE_TAG" --repo "$ONIGIRI_REPO" --json isDraft --jq 'select(.isDraft | not)' | grep -q .; then
+            echo "::error::Release $RELEASE_TAG already exists."
             exit 1
           fi
 
-      # The build needs ~100 GB: the runner's 145 GB disk has ~85 GB free, the SDKs below ~35 more.
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
-            /opt/hostedtoolcache/CodeQL /usr/share/swift /usr/local/share/powershell
-          docker image prune --all --force > /dev/null
-          df -h /
-
       - uses: actions/checkout@v7
 
-      # Build in Debian 13 like the build machine (Ubuntu 24.04's libfmt is too old for
-      # android-tools), as the runner's user so the host can still clean up.
-      - name: Build environment
-        run: |
-          docker build --progress=plain -t onigiri-build - << 'EOF'
-          FROM debian:trixie
-          RUN apt-get update && apt-get install -y --no-install-recommends \
-            attr bc bison brotli build-essential ca-certificates clang cmake cpio curl \
-            device-tree-compiler dwarves e2fsprogs file flex gawk gh git golang-go gperf kmod lld llvm \
-            lz4 meson ninja-build openjdk-21-jdk-headless pcre2-utils perl pkg-config protobuf-compiler \
-            python3 python3-dev python3-pip python3-venv python3-protobuf python3-pyelftools \
-            python3-jinja2 rsync secilc swig unzip wget xxd xz-utils zip zstd libbrotli-dev libdw-dev \
-            libelf-dev libfmt-dev libgmock-dev libgtest-dev liblz4-dev libncurses-dev libpcre2-dev \
-            libprotobuf-dev libsepol-dev libssl-dev libudev-dev libunwind-dev libusb-1.0-0-dev \
-            libzstd-dev && rm -rf /var/lib/apt/lists/*
-          RUN useradd -m -u 1001 runner
-          # depmod and debugfs live in sbin; Java needs a UTF-8 locale for non-ASCII file names.
-          ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8
-          EOF
-          echo "DEBIAN=docker run --rm --user $(id -u):$(id -g) -e GH_TOKEN -e ONIGIRI_REPO -e GITHUB_REF_NAME \
-            -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE -w $GITHUB_WORKSPACE onigiri-build bash -ec" >> "$GITHUB_ENV"
-
-      - name: Signing keys
-        env:
-          KEYS: ${{ secrets.ONIGIRI_SIGNING_KEYS }}
-        run: echo "$KEYS" | base64 -d | tar -xz -C security
-
-      # Samsung's servers won't serve the pinned firmware any more, so it comes pre-extracted from
-      # a draft release, which only people with push access can see: one split archive per
-      # upload (onigiri-fw.tar.zst.NN, onigiri-fw-SM-F731N.tar.zst.NN, ...).
-      - name: Firmware
-        run: |
-          mkdir -p out
-          gh release view firmware --json assets --jq '.assets[].name' | sort > "$RUNNER_TEMP/parts"
-          sed 's/\.[0-9]*$//' "$RUNNER_TEMP/parts" | sort -u | while read -r ARCHIVE; do
-            grep -F "$ARCHIVE." "$RUNNER_TEMP/parts" | while read -r PART; do
-              gh release download firmware --pattern "$PART" --output -
-            done | zstd -dc | tar -x -C out
-          done
-          jq -r '(.targets[], .donor) | .model + "/" + .csc' onigiri/configs/firmware.json | while read -r FIRMWARE; do
-            python3 scripts/verify_fw.py "$FIRMWARE" "out/fw/${FIRMWARE/\//_}"
-          done
-
-      # The build tools and the kernel only change with their own sources, so they are kept in the
-      # private "build-cache" draft release under a hash of those sources and reused by every release.
-      # (Actions caches are scoped to one tag, so they wouldn't carry over to the next release.)
       - name: Versions
         id: versions
         run: |
@@ -102,36 +65,73 @@ jobs:
           # The cached boot images are also repacked from the SM-F731B's stock ones by these scripts.
           KERNEL="$({ cat scripts/build_kernel.sh scripts/package_kernel.sh scripts/utils/source_patches.sh
             jq -c '.targets["SM-F731B"]' onigiri/configs/firmware.json; } | sha256sum | cut -c1-12)"
-          echo "kernel=kernel-$KERNEL_RELEASE-$KERNEL.tar.zst" >> "$GITHUB_OUTPUT"
           TOOLS="$({ git ls-tree HEAD external/android-tools external/apktool external/erofs-utils \
-            external/samloader external/signapk; git ls-files -s scripts/build_dependencies.sh external/make.sh \
-            external/patches external/ext4_utils external/f2fs_utils; } | sha256sum | cut -c1-16)"
-          echo "tools=tools-$TOOLS.tar.zst" >> "$GITHUB_OUTPUT"
+            external/signapk; git ls-files -s scripts/build_dependencies.sh scripts/utils/source_patches.sh \
+            external/patches/android-tools external/patches/apktool; } | sha256sum | cut -c1-16)"
           gh release view build-cache > /dev/null 2>&1 || gh release create build-cache --draft \
             --title "Build cache for CI (never publish)" --notes "Built tools and kernels, reused by release.yml."
+          gh release view build-cache --json assets --jq '.assets[].name' > "$RUNNER_TEMP/cached"
+          # KERNEL_RELEASE names the kernel sources: the kernel repository's commit and our patches.
+          for CACHE in "tools=tools-$TOOLS.tar.zst" "kernel=kernel-$KERNEL_RELEASE-$KERNEL.tar.zst" \
+              "romdeps=romdeps-$KERNEL_RELEASE.tar.zst"; do
+            echo "$CACHE" >> "$GITHUB_OUTPUT"
+            grep -qxF "${CACHE#*=}" "$RUNNER_TEMP/cached" && echo "${CACHE%%=*}_cached=true" >> "$GITHUB_OUTPUT"
+          done
+          echo "models=$(jq -c '[.targets[].model]' onigiri/configs/firmware.json)" >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
 
+      - name: Build environment
+        if: steps.versions.outputs.tools_cached != 'true' || steps.versions.outputs.kernel_cached != 'true'
+        run: |
+          docker build --progress=plain -t onigiri-build - < .github/build.Dockerfile
+          echo "DEBIAN=docker run --rm --user $(id -u):$(id -g) -e GH_TOKEN -e ONIGIRI_REPO \
+            -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE -w $GITHUB_WORKSPACE onigiri-build bash -ec" >> "$GITHUB_ENV"
+
+      # Built when their sources changed, fetched when only the kernel build needs them.
       - name: Tools
+        if: steps.versions.outputs.tools_cached != 'true' || steps.versions.outputs.kernel_cached != 'true'
         env:
           CACHE: ${{ steps.versions.outputs.tools }}
+          CACHED: ${{ steps.versions.outputs.tools_cached }}
         run: |
           mkdir -p out
-          if ! gh release download build-cache --pattern "$CACHE" --output - | zstd -dc | tar -x -C out; then
+          if [ "$CACHED" = true ]; then
+            .github/fetch-release-archive.sh build-cache "$CACHE" out
+          else
             git submodule update --init --recursive --depth 1 external/android-tools external/apktool \
-              external/erofs-utils external/samloader external/signapk
+              external/erofs-utils external/signapk
             $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_dependencies'
             tar -C out -cf - tools | zstd -T0 > "$CACHE"
             gh release upload build-cache "$CACHE" --clobber && rm "$CACHE"
           fi
 
       - name: Kernel
+        if: steps.versions.outputs.kernel_cached != 'true'
         env:
           CACHE: ${{ steps.versions.outputs.kernel }}
         run: |
+          # Its boot images are repacked from the SM-F731B's stock ones: all it needs of the firmware.
           mkdir -p out/target/b5q
+          .github/fetch-release-archive.sh firmware onigiri-fw.tar.zst out fw/SM-F731B_XXV/kernel
           git submodule update --init --depth 1 external/kernel
-          if gh release download build-cache --pattern "$CACHE" --output - | zstd -dc | tar -x -C out/target/b5q; then
-            # The ROM build still needs the kernel's pinned clang (DeX compositor patch): fetch it
-            # the way the kernel build does, with the URL and checksum from its patched build.sh.
+          $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_kernel'
+          rm -rf external/kernel/out
+          tar -C out/target/b5q -cf - kernel | zstd -T0 > "$CACHE"
+          gh release upload build-cache "$CACHE" --clobber && rm "$CACHE"
+
+      # What the ROM build reads from the kernel tree: the configuration its kernel is checked
+      # against and the pinned clang's compiler and linker (DeX compositor patch), 100 MB instead
+      # of a kernel checkout and a 4 GB toolchain in every model job.
+      - name: ROM build dependencies
+        if: steps.versions.outputs.romdeps_cached != 'true'
+        env:
+          CACHE: ${{ steps.versions.outputs.romdeps }}
+        run: |
+          git submodule update --init --depth 1 external/kernel
+          CLANG=kernel_platform/prebuilts/clang/host/linux-x86/clang-r614150
+          if [ ! -x "external/kernel/$CLANG/bin/clang" ]; then
+            # The kernel came from the cache: fetch its toolchain the way the kernel build does,
+            # with the URL and checksum from its patched build.sh.
             git -C external/kernel apply --include=build.sh "$PWD"/external/patches/kernel/*.patch
             eval "$(grep -E '^export TOOLCHAIN_(URL|SHA256)=' external/kernel/build.sh)"
             git -C external/kernel checkout -- build.sh
@@ -139,31 +139,148 @@ jobs:
             echo "$TOOLCHAIN_SHA256  $RUNNER_TEMP/clang.tar.xz" | sha256sum -c -
             tar -xf "$RUNNER_TEMP/clang.tar.xz" -C external/kernel/kernel_platform --strip-components=1 toolchain/prebuilts
             rm "$RUNNER_TEMP/clang.tar.xz"
-          else
-            $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_kernel'
-            rm -rf external/kernel/out
-            tar -C out/target/b5q -cf - kernel | zstd -T0 > "$CACHE"
-            gh release upload build-cache "$CACHE" --clobber && rm "$CACHE"
           fi
+          (
+            cd external/kernel
+            tar -chf - custom_defconfigs/susfs_defconfig "$CLANG"/bin/clang "$CLANG"/bin/clang-real \
+              "$CLANG"/bin/ld.lld "$CLANG"/bin/llvm-objcopy "$CLANG"/bin/llvm-nm "$CLANG"/lib/libxml2.so.* \
+              "$CLANG"/lib/clang/*/include
+          ) | zstd -T0 -10 > "$RUNNER_TEMP/$CACHE"
+          gh release upload build-cache "$RUNNER_TEMP/$CACHE" --clobber
 
-      # One model at a time, and once its AP is built its work dir and firmware (but its OTA tools)
-      # go: the disk doesn't hold two of each.
+      # Phones can't see a draft: the model jobs upload to it and the last job publishes it.
+      - name: Draft release
+        run: source ./buildenv.sh SM-F731B > /dev/null && onigiri release --begin "$RELEASE_TAG"
+
+  build:
+    needs: [check, setup]
+    strategy:
+      matrix:
+        model: ${{ fromJSON(needs.setup.outputs.models) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 355
+    env:
+      MODEL: ${{ matrix.model }}
+    steps:
+      # The build needs ~100 GB: the runner's 145 GB disk has ~85 GB free, the SDKs below ~35 more.
+      # They go in the background: the firmware fits without them and takes longer to arrive.
+      - name: Free disk space
+        run: |
+          docker image prune --all --force > /dev/null
+          nohup sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL /usr/share/swift /usr/local/share/powershell \
+            > "$RUNNER_TEMP/free-disk.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/free-disk.pid"
+
+      - uses: actions/checkout@v7
+
+      - name: Signing keys
+        env:
+          KEYS: ${{ secrets.ONIGIRI_SIGNING_KEYS }}
+        run: mkdir -p security && echo "$KEYS" | base64 -d | tar -xz -C security
+
+      # Samsung's servers won't serve the pinned firmware any more, so it comes pre-extracted from
+      # a draft release, which only people with push access can see: one split archive per
+      # upload (onigiri-fw.tar.zst.NN, onigiri-fw-SM-F731N.tar.zst.NN, ...). A job takes the shared
+      # archives and its own model's, without the other models' folders
+      # (.github/fetch-release-archive.sh, which starts over when a download breaks). The build
+      # environment (.github/build.Dockerfile) is made meanwhile.
+      - name: Firmware and build environment
+        run: |
+          docker build --progress=plain -t onigiri-build - < .github/build.Dockerfile > "$RUNNER_TEMP/docker.log" 2>&1 &
+          DOCKER="$!"
+          mkdir -p out
+          gh release view firmware --json assets --jq '.assets[].name' > "$RUNNER_TEMP/parts"
+          OTHERS="$(jq -r --arg model "$MODEL" '.targets[] | select(.model != $model) | .model + "_" + .csc' onigiri/configs/firmware.json)"
+          EXCLUDE=()
+          for OTHER in $OTHERS; do
+            EXCLUDE+=("--exclude=fw/$OTHER")
+          done
+          PIDS=()
+          for ARCHIVE in $(sed 's/\.[0-9]*$//' "$RUNNER_TEMP/parts" | sort -u); do
+            for OTHER in $OTHERS; do
+              [ "$ARCHIVE" != "onigiri-fw-${OTHER%_*}.tar.zst" ] || continue 2
+            done
+            .github/fetch-release-archive.sh firmware "$ARCHIVE" out "${EXCLUDE[@]}" &
+            PIDS+=("$!")
+          done
+          for PID in "${PIDS[@]}"; do
+            wait "$PID"
+          done
+          jq -r --arg model "$MODEL" '(.targets[$model], .donor) | .model + "/" + .csc' onigiri/configs/firmware.json |
+            while read -r FIRMWARE; do
+              python3 scripts/verify_fw.py "$FIRMWARE" "out/fw/${FIRMWARE/\//_}"
+            done
+          wait "$DOCKER" || { cat "$RUNNER_TEMP/docker.log"; exit 1; }
+          echo "DEBIAN=docker run --rm --user $(id -u):$(id -g) -e GH_TOKEN -e ONIGIRI_REPO -e RELEASE_TAG \
+            -e ONIGIRI_DRY_RUN -e MODEL -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE -w $GITHUB_WORKSPACE onigiri-build bash -ec" >> "$GITHUB_ENV"
+
+      - name: Tools, kernel and ROM build dependencies
+        env:
+          TOOLS: ${{ needs.setup.outputs.tools }}
+          KERNEL: ${{ needs.setup.outputs.kernel }}
+          ROMDEPS: ${{ needs.setup.outputs.romdeps }}
+        run: |
+          .github/fetch-release-archive.sh build-cache "$TOOLS" out
+          .github/fetch-release-archive.sh build-cache "$KERNEL" out/target/b5q
+          .github/fetch-release-archive.sh build-cache "$ROMDEPS" external/kernel
+
       - name: Build ROM
         run: |
-          jq -r '.targets[] | .model + " " + .csc' onigiri/configs/firmware.json | while read -r MODEL CSC; do
-            $DEBIAN "source ./buildenv.sh $MODEL > /dev/null && onigiri build_odin" < /dev/null
-            rm -rf "out/target/b5q/$MODEL"
-            find "out/fw/${MODEL}_$CSC" -mindepth 1 -maxdepth 1 ! -name fota -exec rm -rf {} +
-            df -h /
+          # The clean-up started first must be done before the build fills the disk.
+          while [ -e "/proc/$(cat "$RUNNER_TEMP/free-disk.pid")" ]; do
+            sleep 2
           done
+          cat "$RUNNER_TEMP/free-disk.log"
+          df -h /
+          # The OTA is made from the previous release's AP: fetch and unpack it meanwhile.
+          $DEBIAN 'source ./buildenv.sh "$MODEL" > /dev/null && onigiri release --previous "$MODEL"' \
+            < /dev/null > "$RUNNER_TEMP/previous.log" 2>&1 &
+          PREVIOUS="$!"
+          $DEBIAN 'source ./buildenv.sh "$MODEL" > /dev/null && onigiri build_odin' < /dev/null
+          wait "$PREVIOUS" || { cat "$RUNNER_TEMP/previous.log"; exit 1; }
+          cat "$RUNNER_TEMP/previous.log"
           ls -l out/Onigiri_AP_*
 
-      # Room for the OTAs: only the OTA tools are still needed from the firmware.
-      - name: Free build space
+      # Room for the OTA first: of the build only the AP, its partition images and the firmware's
+      # OTA tools are still needed.
+      - name: OTA and upload
         run: |
-          git submodule deinit --force --quiet external/kernel || true
+          rm -rf "out/target/b5q/$MODEL" external/kernel/*
           find out/fw -mindepth 2 -maxdepth 2 ! -name fota -exec rm -rf {} +
           df -h /
+          $DEBIAN 'source ./buildenv.sh "$MODEL" > /dev/null && onigiri release --model "$RELEASE_TAG" out/Onigiri_AP_*.tar.md5'
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.model }}
+          path: out/release/${{ env.RELEASE_TAG }}/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: out/release/${{ env.RELEASE_TAG }}
 
       - name: Publish release
-        run: $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri release "$GITHUB_REF_NAME" out/Onigiri_AP_*.tar.md5'
+        run: source ./buildenv.sh SM-F731B > /dev/null && onigiri release --publish "$RELEASE_TAG"
+
+  # A run that failed or was cancelled leaves its draft behind: remove it, never a published release.
+  cleanup:
+    needs: [check, setup, build, publish]
+    if: ${{ failure() || cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Delete the draft
+        run: |
+          if [ "$(gh release view "$RELEASE_TAG" --repo "$ONIGIRI_REPO" --json isDraft --jq .isDraft 2> /dev/null)" = true ]; then
+            gh release delete "$RELEASE_TAG" --repo "$ONIGIRI_REPO" --yes
+          fi

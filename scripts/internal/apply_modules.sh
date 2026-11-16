@@ -15,10 +15,6 @@ APPLY_MODULE()
         return 1
     fi
 
-    if [ -d "$MODPATH/$TARGET_SINGLE_SYSTEM_IMAGE" ]; then
-        MODPATH="$MODPATH/$TARGET_SINGLE_SYSTEM_IMAGE"
-    fi
-
     if [ ! -f "$MODPATH/module.prop" ]; then
         LOGE "File not found: ${MODPATH//$SRC_DIR\//}/module.prop"
         return 1

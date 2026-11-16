@@ -144,7 +144,6 @@ Change the file names below to match the files you downloaded:
 python3 scripts/import_fw.py SM-F731B firmware/flip5.zip
 python3 scripts/import_fw.py donor firmware/fold5.zip
 onigiri extract_fw
-onigiri extract_fw --ignore-source --ignore-target SM-F946B/XXV
 python3 scripts/extract_adaptive_display.py firmware/s24.zip
 source ./buildenv.sh SM-F731B
 onigiri build_kernel
@@ -354,7 +353,7 @@ their hashes. Updates wait for a restart and keep the previous payload for
 recovery. A release needing a different loader or configuration format
 reports that a ROM update is required; TEESimulator v4 currently needs one.
 
-The old first-boot module installer is disabled. Vector, NeoZygisk, Hybrid
+The old first-boot module installer is gone. Vector, NeoZygisk, Hybrid
 Mount and Tricky Addon are no longer installed by the ROM. Existing modules
 and their data remain untouched, and upgrades default the built-in switches
 to off. A built-in component stays unavailable while its module copy is

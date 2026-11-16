@@ -16,6 +16,5 @@
 # Patches preserve upstream formatting.
 *.patch whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab
 
-prebuilts/bootable/deprecated-ota/updater binary
 prebuilts/*/*/*/** binary
 onigiri/mods/pif/system/bin/rezetprop binary

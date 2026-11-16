@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Checks for make_odin4_ap.py: python3 scripts/test_make_odin4_ap.py"""
-import io
+"""Checks for sparse_image.py: python3 scripts/tests/test_sparse_image.py"""
 import os
 import struct
 import sys
-import tarfile
 import tempfile
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from make_odin4_ap import DONT_CARE, FILL, RAW, SPARSE_MAGIC, main, sparse_fixed
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sparse_image import DONT_CARE, FILL, RAW, SPARSE_MAGIC, sparse_fixed  # noqa: E402
 
 BLK = 4096
 
@@ -52,20 +51,5 @@ with tempfile.TemporaryDirectory() as tmp:
         next(pieces)
     second = struct.unpack("<HHII", next(pieces))
     assert first[0] == second[0] == RAW and first[2] + second[2] == 1 << 20
-
-    # Entries other than plain images are refused before anything is written outside the work dir.
-    package = os.path.join(tmp, "AP.tar")
-    with tarfile.open(package, "w") as tar:
-        info = tarfile.TarInfo("../escape.img")
-        info.size = 4
-        tar.addfile(info, io.BytesIO(b"oops"))
-    sys.argv = ["make_odin4_ap.py", package, os.path.join(tmp, "out.tar")]
-    try:
-        main()
-        raise AssertionError("a path entry was accepted")
-    except SystemExit as e:
-        assert "unexpected entry" in str(e)
-    assert not os.path.exists(os.path.join(os.path.dirname(tmp), "escape.img"))
-    assert sorted(os.listdir(tmp)) == ["AP.tar", "super.img"]
 
 print("ok")

@@ -41,10 +41,11 @@ and downloaded updates use this same extractor. Unknown backend dex versions
 are rejected until reviewed; a changed backend or an upstream fix needs a new
 ROM adapter. Manager-only updates using the supported backend remain possible.
 
-`onigiri/mods/rootmods/disable` prevents the legacy installer and its payloads
-from entering a new image. The original archives remain in the repository for
-source provenance and recovery. NeoZygisk, Vector, Hybrid Mount and Tricky Addon
-are not needed by these adapters and are not installed by the new image.
+The legacy first-boot installer and the archives only it used (NeoZygisk, Tricky
+Addon and Hybrid Mount) are no longer in the repository: these adapters don't
+need them and no image installs them. The three archives the adapters extract
+remain under `prebuilts/rootmods`, with their upstream URLs and checksums in
+`manifest.json`.
 
 ## Boot and migration
 
@@ -87,8 +88,7 @@ Like PIF, the Settings action uses a curated feed:
 
 `https://raw.githubusercontent.com/Kinue72/OnigiriDeX/main/prebuilts/rootmods/updates.properties`
 
-This URL becomes available when this change reaches main. HMA, TEE and BRENE
-have separate init updater services and locks. Downloads use HTTPS with
+HMA, TEE and BRENE have separate init updater services and locks. Downloads use HTTPS with
 bounded sizes, timeouts and a fixed host/source allowlist. Whole-archive size,
 SHA-256, module id and version code must match. Only named payload files are
 extracted; module scripts, WebUIs and arbitrary archive paths are never run.
