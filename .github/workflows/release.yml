@@ -96,7 +96,7 @@ jobs:
         run: |
           mkdir -p out
           if [ "$CACHED" = true ]; then
-            gh release download build-cache --pattern "$CACHE" --output - | zstd -dc | tar -x -C out
+            .github/fetch-release-archive.sh build-cache "$CACHE" out
           else
             git submodule update --init --recursive --depth 1 external/android-tools external/apktool \
               external/erofs-utils external/signapk
@@ -112,10 +112,7 @@ jobs:
         run: |
           # Its boot images are repacked from the SM-F731B's stock ones: all it needs of the firmware.
           mkdir -p out/target/b5q
-          gh release view firmware --json assets --jq '.assets[].name | select(startswith("onigiri-fw.tar.zst."))' | sort |
-            while read -r PART; do
-              gh release download firmware --pattern "$PART" --output -
-            done | zstd -dc | tar -x -C out fw/SM-F731B_XXV/kernel
+          .github/fetch-release-archive.sh firmware onigiri-fw.tar.zst out fw/SM-F731B_XXV/kernel
           git submodule update --init --depth 1 external/kernel
           $DEBIAN 'source ./buildenv.sh SM-F731B > /dev/null && onigiri build_kernel'
           rm -rf external/kernel/out
@@ -185,14 +182,15 @@ jobs:
       # Samsung's servers won't serve the pinned firmware any more, so it comes pre-extracted from
       # a draft release, which only people with push access can see: one split archive per
       # upload (onigiri-fw.tar.zst.NN, onigiri-fw-SM-F731N.tar.zst.NN, ...). A job takes the shared
-      # archives and its own model's, without the other models' folders. The build environment
-      # (.github/build.Dockerfile) is made meanwhile.
+      # archives and its own model's, without the other models' folders
+      # (.github/fetch-release-archive.sh, which starts over when a download breaks). The build
+      # environment (.github/build.Dockerfile) is made meanwhile.
       - name: Firmware and build environment
         run: |
           docker build --progress=plain -t onigiri-build - < .github/build.Dockerfile > "$RUNNER_TEMP/docker.log" 2>&1 &
           DOCKER="$!"
           mkdir -p out
-          gh release view firmware --json assets --jq '.assets[].name' | sort > "$RUNNER_TEMP/parts"
+          gh release view firmware --json assets --jq '.assets[].name' > "$RUNNER_TEMP/parts"
           OTHERS="$(jq -r --arg model "$MODEL" '.targets[] | select(.model != $model) | .model + "_" + .csc' onigiri/configs/firmware.json)"
           EXCLUDE=()
           for OTHER in $OTHERS; do
@@ -203,9 +201,7 @@ jobs:
             for OTHER in $OTHERS; do
               [ "$ARCHIVE" != "onigiri-fw-${OTHER%_*}.tar.zst" ] || continue 2
             done
-            grep -F "$ARCHIVE." "$RUNNER_TEMP/parts" | while read -r PART; do
-              gh release download firmware --pattern "$PART" --output -
-            done | zstd -dc | tar -x -C out "${EXCLUDE[@]}" &
+            .github/fetch-release-archive.sh firmware "$ARCHIVE" out "${EXCLUDE[@]}" &
             PIDS+=("$!")
           done
           for PID in "${PIDS[@]}"; do
@@ -225,10 +221,9 @@ jobs:
           KERNEL: ${{ needs.setup.outputs.kernel }}
           ROMDEPS: ${{ needs.setup.outputs.romdeps }}
         run: |
-          mkdir -p out/target/b5q external/kernel
-          gh release download build-cache --pattern "$TOOLS" --output - | zstd -dc | tar -x -C out
-          gh release download build-cache --pattern "$KERNEL" --output - | zstd -dc | tar -x -C out/target/b5q
-          gh release download build-cache --pattern "$ROMDEPS" --output - | zstd -dc | tar -x -C external/kernel
+          .github/fetch-release-archive.sh build-cache "$TOOLS" out
+          .github/fetch-release-archive.sh build-cache "$KERNEL" out/target/b5q
+          .github/fetch-release-archive.sh build-cache "$ROMDEPS" external/kernel
 
       - name: Build ROM
         run: |
