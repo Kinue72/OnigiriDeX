@@ -1,0 +1,428 @@
+From: Onigiri
+Subject: [PATCH] Mirror the cover camera preview
+
+On the cover Camera shoots with the rear lenses (0006), which face the user
+there, so the preview showed the user unmirrored, unlike a selfie. Mirror it
+the way the stock Flip cover camera (QuickShot) and Fold5 rear cam selfie do,
+through the preview's mirror mode: pictures and videos still save unflipped.
+The flip applies to the camera's buffer, so upright on the cover takes the
+horizontal one and sideways the vertical one; turning between the two while
+the preview runs reconnects the camera to switch. "Mirror cover screen
+preview" under Selfies in Camera settings turns it off. The inner panel and
+DeX stay unmirrored.
+
+diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
+--- a/res/values-vi/strings.xml
++++ b/res/values-vi/strings.xml
+@@ -1476,4 +1476,6 @@ Thích hợp để chụp các đối tượng ngược sáng và cảnh có đ
+     <string name="zoom_rocker">Tốc độ thu/phóng mượt mà</string>
+     <string name="zoom_slider_point_tts">%1$d chấm %2$d</string>
+     <string name="zoom_tts">Thu/Phóng</string>
++    <string name="onigiri_mirror_cover_preview_title">Lật hình xem trước ở màn hình ngoài</string>
++    <string name="onigiri_mirror_cover_preview_summary">Hiện hình của bạn như trong gương khi dùng Camera ở màn hình ngoài. Ảnh và video vẫn lưu không lật.</string>
+ </resources>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -2024,4 +2024,6 @@ Good for backlit subjects and high-contrast scenes."</string>
+     <string name="zoom_rocker_button_content_description">Smooth zoom</string>
+     <string name="zoom_slider_point_tts">%1$d point %2$d</string>
+     <string name="zoom_tts">Zoom</string>
++    <string name="onigiri_mirror_cover_preview_title">Mirror cover screen preview</string>
++    <string name="onigiri_mirror_cover_preview_summary">Show yourself like in a mirror when you use Camera on the cover screen. Pictures and videos save unflipped.</string>
+ </resources>
+diff --git a/res/xml/setting.xml b/res/xml/setting.xml
+--- a/res/xml/setting.xml
++++ b/res/xml/setting.xml
+@@ -16,6 +16,7 @@
+     <PreferenceCategory android:title="@string/Title_selfies" android:key="@string/dep_selfie">
+         <com.sec.android.app.camera.setting.CameraSwitchPreference android:persistent="false" android:title="@string/Title_PicturesAsPreviewed" android:key="@string/key_save_as_flipped" android:summary="@string/pictures_as_previewed_summary" android:dependency="@string/dep_selfie" />
+         <com.sec.android.app.camera.setting.SettingPreference android:title="@string/Title_Cover_Screen_Selfie" android:key="@string/key_quick_shot_ratio" android:dependency="@string/dep_selfie" />
++        <com.sec.android.app.camera.setting.CameraSwitchPreference android:persistent="false" android:title="@string/onigiri_mirror_cover_preview_title" android:key="onigiri_mirror_cover_preview" android:summary="@string/onigiri_mirror_cover_preview_summary" android:dependency="@string/dep_selfie" />
+         <com.sec.android.app.camera.setting.CameraSwitchPreference android:persistent="false" android:title="@string/Title_Swipe_preview_to_switch_camera" android:key="@string/key_swipe_preview_to_switch_camera" android:dependency="@string/dep_selfie" />
+     </PreferenceCategory>
+     <PreferenceCategory android:title="@string/Title_videos" android:key="@string/dep_videos">
+diff --git a/smali_classes3/com/sec/android/app/camera/Camera.smali b/smali_classes3/com/sec/android/app/camera/Camera.smali
+--- a/smali_classes3/com/sec/android/app/camera/Camera.smali
++++ b/smali_classes3/com/sec/android/app/camera/Camera.smali
+@@ -7465,6 +7465,8 @@
+ 
+     invoke-interface {v0, p1}, Lcom/sec/android/app/camera/interfaces/LayoutStateManager;->onConfigurationChanged(Landroid/content/res/Configuration;)V
+ 
++    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->onConfigurationChanged(Lcom/sec/android/app/camera/Camera;)V
++
+     iget-object p0, p0, Lcom/sec/android/app/camera/Camera;->mCameraWindowManager:Lcom/sec/android/app/camera/CameraWindowManager;
+ 
+     invoke-virtual {p0, p1}, Lcom/sec/android/app/camera/CameraWindowManager;->onConfigurationChanged(Landroid/content/res/Configuration;)V
+diff --git a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali
+--- a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali
++++ b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali
+@@ -549,12 +549,24 @@
+ 
+     move-result-object v2
+ 
++    # Onigiri: the rear lenses face the user on the cover too, so mirror the preview there through
++    # the rear cam selfie (vertical) or QuickShot (horizontal) path (see OnigiriCoverMirror).
++    invoke-static {v2}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
++
+     invoke-interface {v2}, Lcom/sec/android/app/camera/interfaces/CameraContext;->isRearSelfie()Z
+ 
+     move-result v2
+ 
++    if-nez v2, :onigiri_vertical_mirror
++
++    invoke-static {}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isVerticalMirror()Z
++
++    move-result v2
++
+     if-eqz v2, :cond_4
+ 
++    :onigiri_vertical_mirror
++
+     iget-object v2, p0, Lcom/sec/android/app/camera/engine/core/request/PrepareMakerRequest;->mCameraSettings:Lcom/sec/android/app/camera/interfaces/CameraSettings;
+ 
+     invoke-interface {v2}, Lcom/sec/android/app/camera/interfaces/CameraSettings;->getCameraFacing()I
+@@ -597,8 +609,16 @@
+ 
+     move-result v2
+ 
++    if-nez v2, :onigiri_horizontal_mirror
++
++    invoke-static {}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isHorizontalMirror()Z
++
++    move-result v2
++
+     if-eqz v2, :cond_6
+ 
++    :onigiri_horizontal_mirror
++
+     iget-object v2, p0, Lcom/sec/android/app/camera/engine/core/request/PrepareMakerRequest;->mCameraSettings:Lcom/sec/android/app/camera/interfaces/CameraSettings;
+ 
+     invoke-interface {v2}, Lcom/sec/android/app/camera/interfaces/CameraSettings;->getCameraFacing()I
+diff --git a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest.smali b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest.smali
+--- a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest.smali
++++ b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest.smali
+@@ -740,12 +740,24 @@
+ 
+     move-result-object v4
+ 
++    # Onigiri: the rear lenses face the user on the cover too, so mirror the preview there through
++    # the rear cam selfie (vertical) or QuickShot (horizontal) path (see OnigiriCoverMirror).
++    invoke-static {v4}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
++
+     invoke-interface {v4}, Lcom/sec/android/app/camera/interfaces/CameraContext;->isRearSelfie()Z
+ 
+     move-result v4
+ 
++    if-nez v4, :onigiri_vertical_mirror
++
++    invoke-static {}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isVerticalMirror()Z
++
++    move-result v4
++
+     if-eqz v4, :cond_3
+ 
++    :onigiri_vertical_mirror
++
+     if-nez v1, :cond_3
+ 
+     sget-object v1, LA1/c;->SUPPORT_MIRROR_MODE_WITH_SENSOR_FLIP:LA1/c;
+@@ -782,8 +794,16 @@
+ 
+     move-result v1
+ 
++    if-nez v1, :onigiri_horizontal_mirror
++
++    invoke-static {}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isHorizontalMirror()Z
++
++    move-result v1
++
+     if-eqz v1, :cond_5
+ 
++    :onigiri_horizontal_mirror
++
+     iget-object v1, p0, Lcom/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest;->mCameraSettings:Lcom/sec/android/app/camera/interfaces/CameraSettings;
+ 
+     invoke-interface {v1}, Lcom/sec/android/app/camera/interfaces/CameraSettings;->getCameraFacing()I
+diff --git a/smali_classes4/com/sec/android/app/camera/setting/PreferenceSettingFragment$1.smali b/smali_classes4/com/sec/android/app/camera/setting/PreferenceSettingFragment$1.smali
+--- a/smali_classes4/com/sec/android/app/camera/setting/PreferenceSettingFragment$1.smali
++++ b/smali_classes4/com/sec/android/app/camera/setting/PreferenceSettingFragment$1.smali
+@@ -37,6 +37,16 @@
+ .method public onPreferenceChange(Landroidx/preference/Preference;Ljava/lang/Object;)Z
+     .locals 4
+ 
++    # Onigiri: the cover mirror switch has no CameraSettings key; it keeps its own preference.
++    invoke-static {p1, p2}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->onPreferenceChange(Landroidx/preference/Preference;Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-eqz v0, :onigiri_camera_setting
++
++    return v0
++
++    :onigiri_camera_setting
+     iget-object v0, p0, Lcom/sec/android/app/camera/setting/PreferenceSettingFragment$1;->this$0:Lcom/sec/android/app/camera/setting/PreferenceSettingFragment;
+ 
+     invoke-static {v0}, Lcom/sec/android/app/camera/setting/PreferenceSettingFragment;->r0(Lcom/sec/android/app/camera/setting/PreferenceSettingFragment;)Lcom/sec/android/app/camera/setting/CameraSettingActivity;
+diff --git a/smali_classes4/com/sec/android/app/camera/setting/PreferenceSettingFragment.smali b/smali_classes4/com/sec/android/app/camera/setting/PreferenceSettingFragment.smali
+--- a/smali_classes4/com/sec/android/app/camera/setting/PreferenceSettingFragment.smali
++++ b/smali_classes4/com/sec/android/app/camera/setting/PreferenceSettingFragment.smali
+@@ -5546,6 +5546,8 @@
+     invoke-direct {p0}, Lcom/sec/android/app/camera/setting/PreferenceSettingFragment;->updateStandardView()V
+ 
+     :cond_4
++    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->bind(Landroidx/preference/PreferenceFragmentCompat;)V
++
+     return-void
+ .end method
+ 
+diff --git a/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.smali b/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.smali
+@@ -0,0 +1,245 @@
++.class public final Lcom/sec/android/app/camera/util/OnigiriCoverMirror;
++.super Ljava/lang/Object;
++.source "OnigiriCoverMirror.java"
++
++
++# Onigiri: on the cover Camera shoots with the rear lenses (0006), which face the user there. The
++# preview mirrors like a selfie unless "Mirror cover screen preview" in Camera settings is off.
++# Upright it takes the stock Flip cover camera's (QuickShot) horizontal flip, sideways the Fold5
++# rear cam selfie's vertical one. Only the preview flips.
++
++# static fields
++# The flip the last camera session took: 0 none, 1 vertical, 2 horizontal.
++.field private static sMirror:I
++
++
++# direct methods
++.method private constructor <init>()V
++    .locals 0
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    return-void
++.end method
++
++.method public static bind(Landroidx/preference/PreferenceFragmentCompat;)V
++    .locals 1
++
++    const-string v0, "onigiri_mirror_cover_preview"
++
++    invoke-virtual {p0, v0}, Landroidx/preference/PreferenceFragmentCompat;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
++
++    move-result-object p0
++
++    instance-of v0, p0, Landroidx/preference/TwoStatePreference;
++
++    if-eqz v0, :cond_0
++
++    check-cast p0, Landroidx/preference/TwoStatePreference;
++
++    invoke-virtual {p0}, Landroidx/preference/Preference;->getContext()Landroid/content/Context;
++
++    move-result-object v0
++
++    invoke-static {v0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isEnabled(Landroid/content/Context;)Z
++
++    move-result v0
++
++    invoke-virtual {p0, v0}, Landroidx/preference/TwoStatePreference;->setChecked(Z)V
++
++    :cond_0
++    return-void
++.end method
++
++.method private static isEnabled(Landroid/content/Context;)Z
++    .locals 2
++
++    const-string v0, "onigiri_mirror_cover_preview"
++
++    const/4 v1, 0x1
++
++    invoke-static {p0, v0, v1}, Lcom/sec/android/app/camera/util/SharedPreferencesHelper;->loadPreferences(Landroid/content/Context;Ljava/lang/String;Z)Z
++
++    move-result p0
++
++    return p0
++.end method
++
++.method private static getMirror(Landroid/app/Activity;)I
++    .locals 3
++
++    # The cover is display 0 unless "Use inner screen" shows the inner panel there. The inner
++    # panel and DeX keep the rear camera unmirrored.
++    const/4 v2, 0x0
++
++    if-eqz p0, :cond_1
++
++    invoke-static {}, Lcom/sec/android/app/camera/util/FoldUtil;->isInnerPanelShown()Z
++
++    move-result v0
++
++    if-nez v0, :cond_1
++
++    invoke-virtual {p0}, Landroid/content/Context;->getDisplay()Landroid/view/Display;
++
++    move-result-object v0
++
++    if-eqz v0, :cond_1
++
++    invoke-virtual {v0}, Landroid/view/Display;->getDisplayId()I
++
++    move-result v1
++
++    if-nez v1, :cond_1
++
++    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isEnabled(Landroid/content/Context;)Z
++
++    move-result v1
++
++    if-eqz v1, :cond_1
++
++    # The flip applies to the camera's buffer, which turns with the cover: held upright (rotation
++    # 1 or 3) a horizontal flip reads left to right; held sideways it takes a vertical one.
++    invoke-virtual {v0}, Landroid/view/Display;->getRotation()I
++
++    move-result v0
++
++    and-int/lit8 v0, v0, 0x1
++
++    if-eqz v0, :cond_0
++
++    const/4 v2, 0x2
++
++    goto :goto_0
++
++    :cond_0
++    const/4 v2, 0x1
++
++    :cond_1
++    :goto_0
++    return v2
++.end method
++
++.method public static isHorizontalMirror()Z
++    .locals 2
++
++    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    const/4 v1, 0x2
++
++    if-ne v0, v1, :cond_0
++
++    const/4 v0, 0x1
++
++    return v0
++
++    :cond_0
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
++.method public static isVerticalMirror()Z
++    .locals 2
++
++    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    const/4 v1, 0x1
++
++    if-ne v0, v1, :cond_0
++
++    return v1
++
++    :cond_0
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
++.method public static onConfigurationChanged(Lcom/sec/android/app/camera/Camera;)V
++    .locals 2
++
++    # Turning the cover between upright and sideways while it mirrors needs the other flip, which
++    # only a new camera session takes. Leave captures and recordings alone.
++    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    if-eqz v0, :cond_0
++
++    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->getMirror(Landroid/app/Activity;)I
++
++    move-result v1
++
++    if-eqz v1, :cond_0
++
++    if-eq v1, v0, :cond_0
++
++    invoke-virtual {p0}, Lcom/sec/android/app/camera/Camera;->isCapturing()Z
++
++    move-result v0
++
++    if-nez v0, :cond_0
++
++    invoke-virtual {p0}, Lcom/sec/android/app/camera/Camera;->isRecording()Z
++
++    move-result v0
++
++    if-nez v0, :cond_0
++
++    invoke-virtual {p0}, Lcom/sec/android/app/camera/Camera;->getEngine()Lcom/sec/android/app/camera/engine/interfaces/Engine;
++
++    move-result-object p0
++
++    if-eqz p0, :cond_0
++
++    invoke-interface {p0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->reconnectMaker()V
++
++    :cond_0
++    return-void
++.end method
++
++.method public static onPreferenceChange(Landroidx/preference/Preference;Ljava/lang/Object;)Z
++    .locals 2
++
++    const-string v0, "onigiri_mirror_cover_preview"
++
++    invoke-virtual {p0}, Landroidx/preference/Preference;->getKey()Ljava/lang/String;
++
++    move-result-object v1
++
++    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v1
++
++    if-eqz v1, :cond_0
++
++    invoke-virtual {p0}, Landroidx/preference/Preference;->getContext()Landroid/content/Context;
++
++    move-result-object p0
++
++    check-cast p1, Ljava/lang/Boolean;
++
++    invoke-virtual {p1}, Ljava/lang/Boolean;->booleanValue()Z
++
++    move-result p1
++
++    invoke-static {p0, v0, p1}, Lcom/sec/android/app/camera/util/SharedPreferencesHelper;->savePreferences(Landroid/content/Context;Ljava/lang/String;Z)V
++
++    :cond_0
++    return v1
++.end method
++
++.method public static updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
++    .locals 0
++
++    invoke-interface {p0}, Lcom/sec/android/app/camera/interfaces/ActivityContext;->getActivity()Landroidx/appcompat/app/AppCompatActivity;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->getMirror(Landroid/app/Activity;)I
++
++    move-result p0
++
++    sput p0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    return-void
++.end method
