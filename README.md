@@ -9,10 +9,10 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B and SM-F731N)**. I
   hinge down with the cameras on top. The inside screen stays off unless you
   turn on **Use inner screen when open**.
   On the outside screen, Camera uses the back cameras only, which already
-  face you, like a stock Flip's cover camera. Its outside-screen preview shows
-  you like a mirror, as a selfie does; pictures and videos still save unflipped. Turn it
-  off with **Mirror cover screen preview** in Camera settings. The front
-  camera switch comes back on the inside screen.
+  face you, like a stock Flip's cover camera. Its outside-screen preview
+  shows you like a mirror, as a selfie does; pictures and videos still save
+  unflipped. Turn it off with **Mirror cover screen preview** in Camera
+  settings. The front camera switch comes back on the inside screen.
 - Lets you plug the phone into a monitor and use **Samsung DeX** (a desktop mode, like a small computer).
   A live wallpaper you set for the home screen, like one from Wallpaper
   Engine, shows on the DeX desktop too. Pick a wallpaper in DeX's own

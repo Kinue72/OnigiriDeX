@@ -132,93 +132,43 @@ diff --git a/smali_classes3/com/sec/android/app/camera/engine/CommonEngine.smali
 diff --git a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali
 --- a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali
 +++ b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali
-@@ -549,12 +549,24 @@
+@@ -674,6 +674,16 @@
  
-     move-result-object v2
- 
-+    # Onigiri: the rear lenses face the user on the cover too, so mirror the preview there through
-+    # the rear cam selfie (vertical) or QuickShot (horizontal) path (see OnigiriCoverMirror).
-+    invoke-static {v2}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
+     :cond_8
+     :goto_3
++    # Onigiri: the rear lenses face the user on the cover, so mirror the preview there like a
++    # selfie (see OnigiriCoverMirror).
++    iget-object v2, p0, Lcom/sec/android/app/camera/engine/core/request/Request;->mEngine:Lcom/sec/android/app/camera/engine/interfaces/InternalEngine;
 +
-     invoke-interface {v2}, Lcom/sec/android/app/camera/interfaces/CameraContext;->isRearSelfie()Z
- 
-     move-result v2
- 
-+    if-nez v2, :onigiri_vertical_mirror
++    invoke-interface {v2}, Lcom/sec/android/app/camera/engine/interfaces/InternalEngine;->getCameraContext()Lcom/sec/android/app/camera/interfaces/CameraContext;
 +
-+    invoke-static {}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isVerticalMirror()Z
++    move-result-object v2
 +
-+    move-result v2
++    invoke-static {v2, v0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->applyPreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo;)V
 +
-     if-eqz v2, :cond_4
+     invoke-direct {p0, v0, v1}, Lcom/sec/android/app/camera/engine/core/request/PrepareMakerRequest;->checkAvailableJpegPictureSize(Lcom/sec/android/app/camera/engine/core/request/MakerConnectionInfo;Lcom/sec/android/app/camera/engine/interfaces/Capability;)V
  
-+    :onigiri_vertical_mirror
-+
-     iget-object v2, p0, Lcom/sec/android/app/camera/engine/core/request/PrepareMakerRequest;->mCameraSettings:Lcom/sec/android/app/camera/interfaces/CameraSettings;
- 
-     invoke-interface {v2}, Lcom/sec/android/app/camera/interfaces/CameraSettings;->getCameraFacing()I
-@@ -597,8 +609,16 @@
- 
-     move-result v2
- 
-+    if-nez v2, :onigiri_horizontal_mirror
-+
-+    invoke-static {}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isHorizontalMirror()Z
-+
-+    move-result v2
-+
-     if-eqz v2, :cond_6
- 
-+    :onigiri_horizontal_mirror
-+
-     iget-object v2, p0, Lcom/sec/android/app/camera/engine/core/request/PrepareMakerRequest;->mCameraSettings:Lcom/sec/android/app/camera/interfaces/CameraSettings;
- 
-     invoke-interface {v2}, Lcom/sec/android/app/camera/interfaces/CameraSettings;->getCameraFacing()I
+     invoke-direct {p0, v0}, Lcom/sec/android/app/camera/engine/core/request/PrepareMakerRequest;->createEffectProcessorIfNecessary(Lcom/sec/android/app/camera/engine/core/request/MakerConnectionInfo;)V
 diff --git a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest.smali b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest.smali
 --- a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest.smali
 +++ b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest.smali
-@@ -740,12 +740,24 @@
+@@ -851,6 +851,16 @@
  
-     move-result-object v4
- 
-+    # Onigiri: the rear lenses face the user on the cover too, so mirror the preview there through
-+    # the rear cam selfie (vertical) or QuickShot (horizontal) path (see OnigiriCoverMirror).
-+    invoke-static {v4}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
+     :cond_7
+     :goto_2
++    # Onigiri: the rear lenses face the user on the cover, so mirror the preview there like a
++    # selfie (see OnigiriCoverMirror).
++    iget-object v1, p0, Lcom/sec/android/app/camera/engine/core/request/Request;->mEngine:Lcom/sec/android/app/camera/engine/interfaces/InternalEngine;
 +
-     invoke-interface {v4}, Lcom/sec/android/app/camera/interfaces/CameraContext;->isRearSelfie()Z
- 
-     move-result v4
- 
-+    if-nez v4, :onigiri_vertical_mirror
++    invoke-interface {v1}, Lcom/sec/android/app/camera/engine/interfaces/InternalEngine;->getCameraContext()Lcom/sec/android/app/camera/interfaces/CameraContext;
 +
-+    invoke-static {}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isVerticalMirror()Z
++    move-result-object v1
 +
-+    move-result v4
++    invoke-static {v1, v0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->applyPreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo;)V
 +
-     if-eqz v4, :cond_3
+     invoke-direct {p0, p1, v0, v3, v2}, Lcom/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest;->setRecorderSurfaces(Lcom/sec/android/app/camera/interfaces/CameraId;Lcom/sec/android/app/camera/engine/core/request/MakerConnectionInfo;Lcom/sec/android/app/camera/interfaces/Resolution;Lcom/sec/android/app/camera/engine/interfaces/Capability;)V
  
-+    :onigiri_vertical_mirror
-+
-     if-nez v1, :cond_3
- 
-     sget-object v1, LA1/c;->SUPPORT_MIRROR_MODE_WITH_SENSOR_FLIP:LA1/c;
-@@ -782,8 +794,16 @@
- 
-     move-result v1
- 
-+    if-nez v1, :onigiri_horizontal_mirror
-+
-+    invoke-static {}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isHorizontalMirror()Z
-+
-+    move-result v1
-+
-     if-eqz v1, :cond_5
- 
-+    :onigiri_horizontal_mirror
-+
-     iget-object v1, p0, Lcom/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest;->mCameraSettings:Lcom/sec/android/app/camera/interfaces/CameraSettings;
- 
-     invoke-interface {v1}, Lcom/sec/android/app/camera/interfaces/CameraSettings;->getCameraFacing()I
+     invoke-direct {p0, p1, v0}, Lcom/sec/android/app/camera/engine/core/request/PrepareVideoMakerRequest;->createEffectProcessorIfNecessary(Lcom/sec/android/app/camera/interfaces/CameraId;Lcom/sec/android/app/camera/engine/core/request/MakerConnectionInfo;)V
 diff --git a/smali_classes4/com/sec/android/app/camera/preview/PreviewManagerImpl.smali b/smali_classes4/com/sec/android/app/camera/preview/PreviewManagerImpl.smali
 --- a/smali_classes4/com/sec/android/app/camera/preview/PreviewManagerImpl.smali
 +++ b/smali_classes4/com/sec/android/app/camera/preview/PreviewManagerImpl.smali
@@ -295,7 +245,7 @@ diff --git a/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.s
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.smali
-@@ -0,0 +1,409 @@
+@@ -0,0 +1,444 @@
 +.class public final Lcom/sec/android/app/camera/util/OnigiriCoverMirror;
 +.super Ljava/lang/Object;
 +.source "OnigiriCoverMirror.java"
@@ -306,9 +256,9 @@ new file mode 100644
 +
 +# Onigiri: on the cover Camera shoots with the rear lenses (0006), which face the user there. The
 +# preview mirrors like a selfie unless "Mirror cover screen preview" in Camera settings is off.
-+# Upright it takes the stock Flip cover camera's (QuickShot) horizontal flip, sideways the Fold5
-+# rear cam selfie's vertical one. Only the preview flips; face boxes, the other overlays and the
-+# touch focus point follow it the way they do for those two.
++# Upright it takes the stock Flip cover camera's (QuickShot) horizontal preview flip, sideways
++# the Fold5 rear cam selfie's vertical one. Only the preview flips; face boxes, the other
++# overlays and the touch focus point follow it the way they do for those two.
 +
 +# static fields
 +# The flip the last camera session took: 0 none, 1 vertical, 2 horizontal. Set on the engine
@@ -479,64 +429,66 @@ new file mode 100644
 +    .locals 2
 +
 +    # Turning the cover between upright and sideways while it mirrors needs the other flip, which
-+    # only a new camera session takes. A busy Camera gets it once its preview is running and idle
-+    # again (see retryPending).
-+    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++    # only a new camera session takes. A busy Camera decides again once its preview runs and is
++    # idle (see retryPending). The retry is marked before the engine state is read, so a preview
++    # that starts in between still gets it.
++    invoke-virtual {p0}, Lcom/sec/android/app/camera/Camera;->isRunning()Z
++
++    move-result v0
 +
 +    if-eqz v0, :cond_0
 +
-+    invoke-virtual {p0}, Lcom/sec/android/app/camera/Camera;->isRunning()Z
-+
-+    move-result v1
-+
-+    if-eqz v1, :cond_0
-+
-+    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->getMirror(Landroid/app/Activity;)I
-+
-+    move-result v1
-+
-+    if-eqz v1, :cond_0
-+
-+    if-eq v1, v0, :cond_0
-+
 +    invoke-virtual {p0}, Lcom/sec/android/app/camera/Camera;->getEngine()Lcom/sec/android/app/camera/engine/interfaces/Engine;
 +
-+    move-result-object p0
++    move-result-object v1
 +
-+    if-eqz p0, :cond_0
++    if-eqz v1, :cond_0
 +
-+    sget-object v0, Lcom/sec/android/app/camera/engine/interfaces/Engine$State;->PREVIEWING:Lcom/sec/android/app/camera/engine/interfaces/Engine$State;
-+
-+    invoke-interface {p0, v0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->isCurrentState(Lcom/sec/android/app/camera/engine/interfaces/Engine$State;)Z
-+
-+    move-result v0
-+
-+    if-eqz v0, :cond_1
-+
-+    invoke-interface {p0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->isConnectMakerRequested()Z
-+
-+    move-result v0
-+
-+    if-nez v0, :cond_1
-+
-+    sget-object v0, Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;->IDLE:Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;
-+
-+    invoke-interface {p0, v0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->isCurrentCaptureState(Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;)Z
-+
-+    move-result v0
-+
-+    if-eqz v0, :cond_1
-+
-+    invoke-interface {p0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->reconnectMaker()V
-+
-+    :cond_0
-+    return-void
-+
-+    :cond_1
 +    const/4 v0, 0x1
 +
 +    sput-boolean v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sPending:Z
 +
++    sget-object v0, Lcom/sec/android/app/camera/engine/interfaces/Engine$State;->PREVIEWING:Lcom/sec/android/app/camera/engine/interfaces/Engine$State;
++
++    invoke-interface {v1, v0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->isCurrentState(Lcom/sec/android/app/camera/engine/interfaces/Engine$State;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_0
++
++    invoke-interface {v1}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->isConnectMakerRequested()Z
++
++    move-result v0
++
++    if-nez v0, :cond_0
++
++    sget-object v0, Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;->IDLE:Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;
++
++    invoke-interface {v1, v0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->isCurrentCaptureState(Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_0
++
++    const/4 v0, 0x0
++
++    sput-boolean v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sPending:Z
++
++    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->getMirror(Landroid/app/Activity;)I
++
++    move-result p0
++
++    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    if-eqz v0, :cond_0
++
++    if-eqz p0, :cond_0
++
++    if-eq p0, v0, :cond_0
++
++    invoke-interface {v1}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->reconnectMaker()V
++
++    :cond_0
 +    return-void
 +.end method
 +
@@ -569,9 +521,42 @@ new file mode 100644
 +
 +    move-result-object p0
 +
++    # Camera clears its main handler in onDestroy while engine requests may still finish.
++    if-eqz p0, :cond_0
++
 +    invoke-virtual {p0, v1}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 +
 +    :cond_0
++    return-void
++.end method
++
++.method public static applyPreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo;)V
++    .locals 2
++
++    # Only the preview's mirror mode: the sensor and saved pictures and videos stay as they are.
++    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
++
++    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    const/4 v1, 0x1
++
++    if-eq v0, v1, :cond_0
++
++    const/4 v1, 0x2
++
++    if-ne v0, v1, :cond_1
++
++    sget-object v0, Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$MirrorOption;->H_FLIP:Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$MirrorOption;
++
++    goto :goto_0
++
++    :cond_0
++    sget-object v0, Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$MirrorOption;->V_FLIP:Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$MirrorOption;
++
++    :goto_0
++    invoke-interface {p1, v0}, Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo;->setMirrorMode(Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$MirrorOption;)V
++
++    :cond_1
 +    return-void
 +.end method
 +
@@ -660,7 +645,7 @@ new file mode 100644
 +    return v1
 +.end method
 +
-+.method public static updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
++.method private static updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
 +    .locals 2
 +
 +    # Clear first: a turn after the rotation is read below must still get its retry.
