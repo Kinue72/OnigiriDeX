@@ -1,0 +1,165 @@
+From: Onigiri
+Subject: [PATCH] Round the cover's corners beside the hidden camera strip
+
+With "Hide camera cutout" on, the cover ends above the camera strip. The panel itself rounds the
+corner beside the camera housing, but the strip's far end left a square corner. Show
+ScreenDecorations' rounded corners on the strip side (the natural bottom) while the cover is
+masked, sized like the panel's corner, and set them up again whenever the switch changes the
+display. Rounded corners are off everywhere else on this device, so that drawable shows only here.
+
+diff --git a/smali/com/android/systemui/ScreenDecorations.smali b/smali/com/android/systemui/ScreenDecorations.smali
+--- a/smali/com/android/systemui/ScreenDecorations.smali
++++ b/smali/com/android/systemui/ScreenDecorations.smali
+@@ -2384,6 +2384,105 @@
+     return-void
+ .end method
+ 
++# Onigiri: with "Hide camera cutout" on, display 0 ends above the cover's camera strip. The panel
++# rounds the corner beside the camera housing itself, but the strip's far end leaves a square
++# corner, so show the rounded corners on the strip side (the natural bottom) while the cover is
++# masked: port 0x84, as wide as its panel and shorter. Returns whether that changed.
++.method public static onigiriStripCorners(Lcom/android/systemui/ScreenDecorations;)Z
++    .locals 5
++
++    iget-object v0, p0, Lcom/android/systemui/ScreenDecorations;->mRoundedCornerResDelegate:Lcom/android/systemui/decor/RoundedCornerResDelegate;
++
++    instance-of v1, v0, Lcom/android/systemui/decor/RoundedCornerResDelegateImpl;
++
++    if-eqz v1, :onigiri_strip_same
++
++    check-cast v0, Lcom/android/systemui/decor/RoundedCornerResDelegateImpl;
++
++    iget-boolean v4, v0, Lcom/android/systemui/decor/RoundedCornerResDelegateImpl;->hasTop:Z
++
++    if-nez v4, :onigiri_strip_want
++
++    iget-object v1, p0, Lcom/android/systemui/ScreenDecorations;->mContext:Landroid/content/Context;
++
++    invoke-virtual {v1}, Landroid/content/Context;->getDisplay()Landroid/view/Display;
++
++    move-result-object v1
++
++    new-instance v2, Landroid/view/DisplayInfo;
++
++    invoke-direct {v2}, Landroid/view/DisplayInfo;-><init>()V
++
++    invoke-virtual {v1, v2}, Landroid/view/Display;->getDisplayInfo(Landroid/view/DisplayInfo;)Z
++
++    iget-object v3, v2, Landroid/view/DisplayInfo;->address:Landroid/view/DisplayAddress;
++
++    instance-of v4, v3, Landroid/view/DisplayAddress$Physical;
++
++    if-eqz v4, :onigiri_strip_want
++
++    check-cast v3, Landroid/view/DisplayAddress$Physical;
++
++    invoke-virtual {v3}, Landroid/view/DisplayAddress$Physical;->getPort()I
++
++    move-result v3
++
++    const/16 v4, 0x84
++
++    if-ne v3, v4, :onigiri_strip_no
++
++    invoke-virtual {v1}, Landroid/view/Display;->getSupportedModes()[Landroid/view/Display$Mode;
++
++    move-result-object v1
++
++    const/4 v3, 0x0
++
++    aget-object v1, v1, v3
++
++    invoke-virtual {v2}, Landroid/view/DisplayInfo;->getNaturalWidth()I
++
++    move-result v3
++
++    invoke-virtual {v1}, Landroid/view/Display$Mode;->getPhysicalWidth()I
++
++    move-result v4
++
++    if-ne v3, v4, :onigiri_strip_no
++
++    invoke-virtual {v2}, Landroid/view/DisplayInfo;->getNaturalHeight()I
++
++    move-result v3
++
++    invoke-virtual {v1}, Landroid/view/Display$Mode;->getPhysicalHeight()I
++
++    move-result v4
++
++    if-ge v3, v4, :onigiri_strip_no
++
++    const/4 v4, 0x1
++
++    goto :onigiri_strip_want
++
++    :onigiri_strip_no
++    const/4 v4, 0x0
++
++    :onigiri_strip_want
++    iget-boolean v1, v0, Lcom/android/systemui/decor/RoundedCornerResDelegateImpl;->hasBottom:Z
++
++    if-eq v1, v4, :onigiri_strip_same
++
++    iput-boolean v4, v0, Lcom/android/systemui/decor/RoundedCornerResDelegateImpl;->hasBottom:Z
++
++    const/4 v0, 0x1
++
++    return v0
++
++    :onigiri_strip_same
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
+ .method public final setupDecorations()V
+     .locals 15
+ 
+@@ -2391,6 +2490,9 @@
+ 
+     invoke-static {v0}, Landroid/os/Trace;->beginSection(Ljava/lang/String;)V
+ 
++    # Onigiri: round the strip side of a masked cover (see onigiriStripCorners).
++    invoke-static {p0}, Lcom/android/systemui/ScreenDecorations;->onigiriStripCorners(Lcom/android/systemui/ScreenDecorations;)Z
++
+     invoke-virtual {p0}, Lcom/android/systemui/ScreenDecorations;->hasRoundedCorners()Z
+ 
+     move-result v0
+diff --git a/smali/com/android/systemui/ScreenDecorations$4.smali b/smali/com/android/systemui/ScreenDecorations$4.smali
+--- a/smali/com/android/systemui/ScreenDecorations$4.smali
++++ b/smali/com/android/systemui/ScreenDecorations$4.smali
+@@ -313,6 +313,20 @@
+ 
+     :cond_d
+     :goto_4
++    # Onigiri: "Hide camera cutout" switched, so the strip side's rounded corners come or go.
++    invoke-static {v7}, Lcom/android/systemui/ScreenDecorations;->onigiriStripCorners(Lcom/android/systemui/ScreenDecorations;)Z
++
++    move-result p0
++
++    if-eqz p0, :onigiri_strip_kept
++
++    invoke-virtual {v7}, Lcom/android/systemui/ScreenDecorations;->removeAllOverlays()V
++
++    invoke-virtual {v7}, Lcom/android/systemui/ScreenDecorations;->setupDecorations()V
++
++    return-void
++
++    :onigiri_strip_kept
+     iget-object p0, v7, Lcom/android/systemui/ScreenDecorations;->mDisplayManager:Landroid/hardware/display/DisplayManager;
+ 
+     invoke-virtual {p0}, Landroid/hardware/display/DisplayManager;->semIsFitToActiveDisplay()Z
+diff --git a/res/drawable/rounded_corner_bottom.xml b/res/drawable/rounded_corner_bottom.xml
+--- a/res/drawable/rounded_corner_bottom.xml
++++ b/res/drawable/rounded_corner_bottom.xml
+@@ -1,3 +1,7 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<inset android:drawable="@drawable/rounded"
+-  xmlns:android="http://schemas.android.com/apk/res/android" />
++<!-- Onigiri: only shown on the cover's strip side with "Hide camera cutout" on (ScreenDecorations
++     onigiriStripCorners); sized like the panel's own corner beside the camera housing. -->
++<vector android:height="16.0dp" android:width="16.0dp" android:viewportWidth="8.0" android:viewportHeight="8.0"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#000000" android:pathData="M8,0H0v8C0,3.6,3.6,0,8,0z" />
++</vector>
