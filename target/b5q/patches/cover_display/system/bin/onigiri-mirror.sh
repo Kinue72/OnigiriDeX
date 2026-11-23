@@ -23,7 +23,6 @@ LAYOUT=sys.onigiri.inner_layout  # set before requesting INNER, cleared once the
 # restore, so the size change that follows also turns the panel; kept until state 5 is left, so the
 # cover comes back at rotation 0 rather than at the inner panel's.
 FIT=sys.onigiri.mirror_fit
-COVER=748x720   # the cover's physical size: display 0 shows the cover
 DATA=/data/misc/onigiri-mirror
 # Display 0's size and density from before, and the physical size of the panel they belong to;
 # present while ours apply, so a restart or reboot in between still puts them back.
@@ -72,6 +71,11 @@ current() {
     value=$(wm $1 -d 0)
     [ "$2" = override ] && echo "$value" | sed -n "s/^Override $1: //p" | grep . ||
         echo "$value" | sed -n "s/^Physical $1: //p"
+}
+
+# Whether display 0 shows the cover: 748 px wide, 720 tall, or 654 with "Hide camera cutout" on.
+on_cover() {
+    case $(current size) in 748x*) ;; *) return 1 ;; esac
 }
 
 # Whether "$1" is a "WxH DENSITY" pair worth handing to wm.
@@ -148,7 +152,7 @@ inner_hold_wanted() {
         *) switch=mirror_high_refresh ;;
     esac
     [ "$(getprop persist.sys.onigiri.$switch)" = true ] && [ "$(state)" != $INNER ] &&
-        [ "$(current size)" != $COVER ]
+        ! on_cover
 }
 
 charging() {
@@ -294,7 +298,7 @@ while :; do
     elif { [ -e $OWN ] || [ -e $MIN_RATE ] || [ -n "$(getprop $LAYOUT)" ]; } &&
             [ "$(state)" != $INNER ]; then
         setprop $LAYOUT ""
-        if [ -e $OWN ] && [ "$(current size)" != $COVER ]; then
+        if [ -e $OWN ] && ! on_cover; then
             :  # "Use inner screen" went on meanwhile and keeps the inner panel: wait for the cover
         elif [ -e $OWN ] && [ -n "$want" ] && [ ! -e $SAVED ]; then
             mv $OWN $SAVED  # the cover fit below applies directly; it puts these back when it ends
