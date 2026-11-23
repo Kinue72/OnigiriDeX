@@ -27,9 +27,10 @@ DATA=/data/misc/onigiri-mirror
 # Display 0's size and density from before, and the physical size of the panel they belong to;
 # present while ours apply, so a restart or reboot in between still puts them back.
 SAVED=$DATA/saved
-# The cover's own size and density while the inner panel shows: switching panels left a stray
-# size override on the cover (840x808, which services.jar 0017 removes, and 1080x2244 seen), so
-# they are put back afterwards (or handed back to SAVED when a cover fit follows).
+# The cover's own size and density while the inner panel shows, and its physical size, as in
+# SAVED: switching panels left a stray size override on the cover (840x808, which services.jar
+# 0017 removes, and 1080x2244 seen), so they are put back afterwards (or handed back to SAVED when
+# a cover fit follows).
 OWN=$DATA/own
 # min_refresh_rate from before the inner panel showed a monitor ("null" if unset; Force peak
 # refresh rate sets it). Held at 120 meanwhile: the adaptive policy otherwise idles the panel at
@@ -112,18 +113,20 @@ fit() {
     fitted=$(shape $1) && wm size $fitted -d 0 && wm density $DPI -d 0
 }
 
-# Put the saved values back, or the physical ones if the saved file is unusable or belongs to
-# the other panel (the phone opened or closed with "Use inner screen" on). The file is kept until
-# both are set, so a failure is retried.
+# Put the values saved in $1 (SAVED by default) back, or the physical ones if the file is
+# unusable or belongs to another panel size (the phone opened or closed with "Use inner screen"
+# on, or "Hide camera cutout" switched meanwhile). The file is kept until both are set, so a
+# failure is retried.
 restore() {
-    [ -e $SAVED ] || return 0
-    read size density panel < $SAVED
+    file=${1:-$SAVED}
+    [ -e $file ] || return 0
+    read size density panel < $file
     own="$size $density"
     [ -n "$panel" ] && [ "$panel" != "$(current size)" ] && own=
     valid "$own" || own="$(current size) $(current density)"
     valid "$own" || return 1
     set -- $own
-    wm size $1 -d 0 && wm density $2 -d 0 && rm -f $SAVED
+    wm size $1 -d 0 && wm density $2 -d 0 && rm -f $file
 }
 
 # The committed device state.
@@ -266,7 +269,7 @@ while :; do
             panel=$(current size)
             { [ -e $OWN ] || { [ -e $SAVED ] && mv $SAVED $OWN; } || {
                 own="$(current size override) $(current density override)"
-                valid "$own" && echo "$own" > $OWN
+                valid "$own" && echo "$own $panel" > $OWN
             }; } && rm -f $SAVED && applied= &&
                 { [ -e $MIN_RATE ] || settings get system min_refresh_rate > $MIN_RATE; } &&
                 settings put system min_refresh_rate 120 && setprop $LAYOUT 1 &&
@@ -303,9 +306,7 @@ while :; do
         elif [ -e $OWN ] && [ -n "$want" ] && [ ! -e $SAVED ]; then
             mv $OWN $SAVED  # the cover fit below applies directly; it puts these back when it ends
         elif [ -e $OWN ]; then
-            read own < $OWN
-            set -- $own
-            wm size $1 -d 0 && wm density $2 -d 0 && rm -f $OWN
+            restore $OWN
         fi
         if [ -e $MIN_RATE ] && [ -z "$hold" ]; then
             read rate < $MIN_RATE
