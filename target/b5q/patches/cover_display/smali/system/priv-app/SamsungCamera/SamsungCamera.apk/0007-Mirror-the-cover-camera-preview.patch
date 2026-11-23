@@ -9,9 +9,9 @@ The flip applies to the camera's buffer, so upright on the cover takes
 QuickShot's horizontal one and sideways rear cam selfie's vertical one, and
 face boxes, the other overlays and touch focus pair with it the way they do
 for those two. Turning between upright and sideways reconnects the camera to
-switch, once any capture or recording ends. "Mirror cover screen preview"
-under Selfies in Camera settings turns it off. The inner panel and DeX stay
-unmirrored.
+switch, once the preview runs and any capture or recording ends. "Mirror
+cover screen preview" under Selfies in Camera settings turns it off. The inner
+panel, DeX and pop-up or split screen windows stay unmirrored.
 
 diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
 --- a/res/values-vi/strings.xml
@@ -94,18 +94,41 @@ diff --git a/smali_classes3/com/sec/android/app/camera/engine/AeAfController.sma
 diff --git a/smali_classes3/com/sec/android/app/camera/engine/CommonEngine.smali b/smali_classes3/com/sec/android/app/camera/engine/CommonEngine.smali
 --- a/smali_classes3/com/sec/android/app/camera/engine/CommonEngine.smali
 +++ b/smali_classes3/com/sec/android/app/camera/engine/CommonEngine.smali
-@@ -1332,6 +1332,11 @@
+@@ -1332,6 +1332,17 @@
  
      iput-object p1, p0, Lcom/sec/android/app/camera/engine/CommonEngine;->mCurrentCaptureState:Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;
  
 +    # Onigiri: retry a cover mirror flip that waited for a capture (see OnigiriCoverMirror).
++    sget-object v0, Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;->IDLE:Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;
++
++    if-ne p1, v0, :onigiri_not_idle
++
 +    iget-object v0, p0, Lcom/sec/android/app/camera/engine/CommonEngine;->mCameraContext:Lcom/sec/android/app/camera/interfaces/CameraContext;
 +
-+    invoke-static {v0, p1}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->onCaptureStateChanged(Lcom/sec/android/app/camera/interfaces/CameraContext;Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;)V
++    invoke-static {v0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->retryPending(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
++
++    :onigiri_not_idle
 +
      iget-object p0, p0, Lcom/sec/android/app/camera/engine/CommonEngine;->mCaptureManager:Lcom/sec/android/app/camera/engine/interfaces/InternalCaptureManager;
  
      invoke-interface {p0, p1}, Lcom/sec/android/app/camera/engine/interfaces/CaptureManager;->notifyCaptureState(Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;)V
+@@ -2005,6 +2016,16 @@
+ 
+     iput-object p1, p0, Lcom/sec/android/app/camera/engine/CommonEngine;->mCurrentState:Lcom/sec/android/app/camera/engine/interfaces/Engine$State;
+ 
++    # Onigiri: retry a cover mirror flip that waited for the preview (see OnigiriCoverMirror).
++    sget-object v0, Lcom/sec/android/app/camera/engine/interfaces/Engine$State;->PREVIEWING:Lcom/sec/android/app/camera/engine/interfaces/Engine$State;
++
++    if-ne p1, v0, :onigiri_not_previewing
++
++    iget-object v0, p0, Lcom/sec/android/app/camera/engine/CommonEngine;->mCameraContext:Lcom/sec/android/app/camera/interfaces/CameraContext;
++
++    invoke-static {v0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->retryPending(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
++
++    :onigiri_not_previewing
+     return-void
+ .end method
+ 
 diff --git a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali
 --- a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali
 +++ b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareMakerRequest.smali
@@ -272,7 +295,7 @@ diff --git a/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.s
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.smali
-@@ -0,0 +1,404 @@
+@@ -0,0 +1,409 @@
 +.class public final Lcom/sec/android/app/camera/util/OnigiriCoverMirror;
 +.super Ljava/lang/Object;
 +.source "OnigiriCoverMirror.java"
@@ -292,7 +315,8 @@ new file mode 100644
 +# thread, read on the main thread.
 +.field private static volatile sMirror:I
 +
-+# The cover turned to the other flip while Camera was capturing or recording.
++# The cover turned to the other flip while Camera was starting its preview, capturing or
++# recording.
 +.field private static volatile sPending:Z
 +
 +
@@ -358,12 +382,19 @@ new file mode 100644
 +    .locals 3
 +
 +    # The cover is display 0 unless "Use inner screen" shows the inner panel there. The inner
-+    # panel and DeX keep the rear camera unmirrored.
++    # panel and DeX keep the rear camera unmirrored, and so do pop-up and split screen windows,
++    # which keep touches and overlays in another frame.
 +    const/4 v2, 0x0
 +
 +    if-eqz p0, :cond_1
 +
 +    invoke-static {}, Lcom/sec/android/app/camera/util/FoldUtil;->isInnerPanelShown()Z
++
++    move-result v0
++
++    if-nez v0, :cond_1
++
++    invoke-virtual {p0}, Landroid/app/Activity;->isInMultiWindowMode()Z
 +
 +    move-result v0
 +
@@ -448,7 +479,8 @@ new file mode 100644
 +    .locals 2
 +
 +    # Turning the cover between upright and sideways while it mirrors needs the other flip, which
-+    # only a new camera session takes. A busy Camera gets it once it is idle again.
++    # only a new camera session takes. A busy Camera gets it once its preview is running and idle
++    # again (see retryPending).
 +    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
 +
 +    if-eqz v0, :cond_0
@@ -473,20 +505,19 @@ new file mode 100644
 +
 +    if-eqz p0, :cond_0
 +
-+    # Only a running preview with no connect already queued; a new one picks the flip itself.
 +    sget-object v0, Lcom/sec/android/app/camera/engine/interfaces/Engine$State;->PREVIEWING:Lcom/sec/android/app/camera/engine/interfaces/Engine$State;
 +
 +    invoke-interface {p0, v0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->isCurrentState(Lcom/sec/android/app/camera/engine/interfaces/Engine$State;)Z
 +
 +    move-result v0
 +
-+    if-eqz v0, :cond_0
++    if-eqz v0, :cond_1
 +
 +    invoke-interface {p0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->isConnectMakerRequested()Z
 +
 +    move-result v0
 +
-+    if-nez v0, :cond_0
++    if-nez v0, :cond_1
 +
 +    sget-object v0, Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;->IDLE:Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;
 +
@@ -494,27 +525,23 @@ new file mode 100644
 +
 +    move-result v0
 +
-+    if-nez v0, :cond_1
++    if-eqz v0, :cond_1
 +
-+    const/4 v0, 0x1
-+
-+    sput-boolean v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sPending:Z
++    invoke-interface {p0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->reconnectMaker()V
 +
 +    :cond_0
 +    return-void
 +
 +    :cond_1
-+    invoke-interface {p0}, Lcom/sec/android/app/camera/engine/interfaces/Engine;->reconnectMaker()V
++    const/4 v0, 0x1
++
++    sput-boolean v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sPending:Z
 +
 +    return-void
 +.end method
 +
-+.method public static onCaptureStateChanged(Lcom/sec/android/app/camera/interfaces/CameraContext;Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;)V
++.method public static retryPending(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
 +    .locals 2
-+
-+    sget-object v0, Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;->IDLE:Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;
-+
-+    if-ne p1, v0, :cond_0
 +
 +    sget-boolean v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sPending:Z
 +
@@ -636,6 +663,11 @@ new file mode 100644
 +.method public static updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
 +    .locals 2
 +
++    # Clear first: a turn after the rotation is read below must still get its retry.
++    const/4 v1, 0x0
++
++    sput-boolean v1, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sPending:Z
++
 +    invoke-interface {p0}, Lcom/sec/android/app/camera/interfaces/ActivityContext;->getActivity()Landroidx/appcompat/app/AppCompatActivity;
 +
 +    move-result-object v0
@@ -658,10 +690,6 @@ new file mode 100644
 +
 +    :cond_0
 +    sput v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
-+
-+    const/4 v1, 0x0
-+
-+    sput-boolean v1, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sPending:Z
 +
 +    return-void
 +.end method
