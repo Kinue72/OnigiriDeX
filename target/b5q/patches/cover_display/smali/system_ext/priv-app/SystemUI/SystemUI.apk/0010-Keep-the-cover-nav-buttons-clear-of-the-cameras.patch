@@ -1,0 +1,250 @@
+From: Onigiri
+Subject: [PATCH] Keep the cover nav buttons clear of the cameras
+
+Without a cutout, the bar at the bottom of the cover's natural rotation runs under the camera
+housing, which hid the home and back buttons and half the gesture handle. Pad the bar past the
+housing in that rotation, and narrow back, home and recents so the three buttons fit beside it.
+The buttons inflate again when they start or stop fitting there; the gesture handle only needs
+the padding. The back gesture edges keep their insets. The bar is left alone when the screen is
+not the whole panel: "Hide camera cutout" ends it above the housing, and a mirror fit resizes it.
+
+diff --git a/smali_classes2/com/android/systemui/navigationbar/NavigationBarInflaterView.smali b/smali_classes2/com/android/systemui/navigationbar/NavigationBarInflaterView.smali
+--- a/smali_classes2/com/android/systemui/navigationbar/NavigationBarInflaterView.smali
++++ b/smali_classes2/com/android/systemui/navigationbar/NavigationBarInflaterView.smali
+@@ -4,6 +4,9 @@
+ 
+ 
+ # instance fields
++# Onigiri: whether the buttons were inflated narrow to fit beside the cover camera housing.
++.field public onigiriNarrowKeys:Z
++
+ .field public mAlternativeOrder:Z
+ 
+ .field mButtonDispatchers:Landroid/util/SparseArray;
+diff --git a/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali b/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali
+--- a/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali
++++ b/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali
+@@ -935,8 +935,85 @@
+     return p0
+ .end method
+ 
++# Onigiri: with the cover's cutout gone, the bar at the bottom of the natural rotation runs under
++# the camera housing, the right 369 px of the screen. Returns how far the bar must keep its
++# buttons and handle from that edge. Only while the screen is the whole panel: with "Hide camera
++# cutout" on, the display already ends above the housing, and a mirror fit draws elsewhere. The
++# panel size comes from the supported modes, as framework.jar 0005 makes getMode() report the
++# largest display that is on (the DeX desktop, say) to SystemUI's app uid.
++.method public static coverCameraInset(Landroid/content/Context;)I
++    .locals 3
++
++    invoke-static {p0}, Lcom/android/systemui/navigationbar/NavigationBarView;->isPrimaryCoverDisplay(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :onigiri_no_camera_inset
++
++    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
++
++    move-result-object v0
++
++    iget-object v0, v0, Landroid/content/res/Configuration;->windowConfiguration:Landroid/app/WindowConfiguration;
++
++    invoke-virtual {v0}, Landroid/app/WindowConfiguration;->getDisplayRotation()I
++
++    move-result v1
++
++    if-nez v1, :onigiri_no_camera_inset
++
++    invoke-virtual {v0}, Landroid/app/WindowConfiguration;->getMaxBounds()Landroid/graphics/Rect;
++
++    move-result-object v0
++
++    invoke-virtual {p0}, Landroid/content/Context;->getDisplay()Landroid/view/Display;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Landroid/view/Display;->getSupportedModes()[Landroid/view/Display$Mode;
++
++    move-result-object v1
++
++    const/4 v2, 0x0
++
++    aget-object v1, v1, v2
++
++    invoke-virtual {v0}, Landroid/graphics/Rect;->width()I
++
++    move-result v2
++
++    invoke-virtual {v1}, Landroid/view/Display$Mode;->getPhysicalWidth()I
++
++    move-result p0
++
++    if-ne v2, p0, :onigiri_no_camera_inset
++
++    invoke-virtual {v0}, Landroid/graphics/Rect;->height()I
++
++    move-result v0
++
++    invoke-virtual {v1}, Landroid/view/Display$Mode;->getPhysicalHeight()I
++
++    move-result v1
++
++    if-ne v0, v1, :onigiri_no_camera_inset
++
++    const/16 v0, 0x171
++
++    return v0
++
++    :onigiri_no_camera_inset
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
+ .method public onApplyWindowInsets(Landroid/view/WindowInsets;)Landroid/view/WindowInsets;
+-    .locals 5
++    .locals 6
+ 
+     iget-object v0, p0, Landroid/widget/FrameLayout;->mContext:Landroid/content/Context;
+ 
+@@ -997,7 +1074,15 @@
+ 
+     move-result v4
+ 
+-    invoke-virtual {p0, v0, v2, v1, v4}, Landroid/widget/FrameLayout;->setPadding(IIII)V
++    iget-object v5, p0, Landroid/widget/FrameLayout;->mContext:Landroid/content/Context;
++
++    invoke-static {v5}, Lcom/android/systemui/navigationbar/NavigationBarView;->coverCameraInset(Landroid/content/Context;)I
++
++    move-result v5
++
++    add-int/2addr v5, v1
++
++    invoke-virtual {p0, v0, v2, v5, v4}, Landroid/widget/FrameLayout;->setPadding(IIII)V
+ 
+     :cond_1
+     iget-object v2, p0, Lcom/android/systemui/navigationbar/NavigationBarView;->mEdgeBackGestureHandler:Lcom/android/systemui/navigationbar/gestural/EdgeBackGestureHandler;
+@@ -1137,6 +1222,41 @@
+ 
+     invoke-super {p0, p1}, Landroid/widget/FrameLayout;->onConfigurationChanged(Landroid/content/res/Configuration;)V
+ 
++    # Onigiri: re-inflate the buttons when they must start or stop fitting beside the camera
++    # housing (swipe gestures only need the padding, and re-inflating them drops the handle),
++    # and refresh the padding that keeps them there.
++    iget v0, p0, Lcom/android/systemui/navigationbar/NavigationBarView;->mNavBarMode:I
++
++    invoke-static {v0}, Lcom/android/systemui/shared/system/QuickStepContract;->isGesturalMode(I)Z
++
++    move-result v0
++
++    if-nez v0, :onigiri_keys_fit
++
++    iget-object v0, p0, Lcom/android/systemui/navigationbar/NavigationBarView;->mNavigationInflaterView:Lcom/android/systemui/navigationbar/NavigationBarInflaterView;
++
++    if-eqz v0, :onigiri_keys_fit
++
++    iget-boolean v0, v0, Lcom/android/systemui/navigationbar/NavigationBarInflaterView;->onigiriNarrowKeys:Z
++
++    iget-object v1, p0, Landroid/widget/FrameLayout;->mContext:Landroid/content/Context;
++
++    invoke-static {v1}, Lcom/android/systemui/navigationbar/NavigationBarView;->coverCameraInset(Landroid/content/Context;)I
++
++    move-result v1
++
++    if-eqz v1, :onigiri_keys_wide
++
++    const/4 v1, 0x1
++
++    :onigiri_keys_wide
++    if-eq v0, v1, :onigiri_keys_fit
++
++    invoke-virtual {p0}, Lcom/android/systemui/navigationbar/NavigationBarView;->reInflateNavBarLayout()V
++
++    :onigiri_keys_fit
++    invoke-virtual {p0}, Landroid/widget/FrameLayout;->requestApplyInsets()V
++
+     iget-object v0, p0, Lcom/android/systemui/navigationbar/NavigationBarView;->mTmpLastConfiguration:Landroid/content/res/Configuration;
+ 
+     iget-object v1, p0, Lcom/android/systemui/navigationbar/NavigationBarView;->mConfiguration:Landroid/content/res/Configuration;
+diff --git a/smali_classes2/com/android/systemui/navigationbar/SamsungNavigationBarInflaterView.smali b/smali_classes2/com/android/systemui/navigationbar/SamsungNavigationBarInflaterView.smali
+--- a/smali_classes2/com/android/systemui/navigationbar/SamsungNavigationBarInflaterView.smali
++++ b/smali_classes2/com/android/systemui/navigationbar/SamsungNavigationBarInflaterView.smali
+@@ -550,7 +550,7 @@
+ .end method
+ 
+ .method public final inflateButton(Ljava/lang/String;Landroid/view/ViewGroup;ZZ)V
+-    .locals 5
++    .locals 7
+ 
+     if-eqz p3, :cond_0
+ 
+@@ -589,6 +589,8 @@
+ 
+     move-result-object p1
+ 
++    move-object v5, p1
++
+     invoke-direct {v2, p1, p3}, Lcom/android/systemui/navigationbar/store/EventTypeFactory$EventType$GetInflateButtonWidth;-><init>(Ljava/lang/String;Z)V
+ 
+     iget p1, p0, Lcom/android/systemui/navigationbar/SamsungNavigationBarInflaterView;->displayId:I
+@@ -623,6 +625,56 @@
+ 
+     move-result p1
+ 
++    # Onigiri: beside the cover camera housing only 379 px are left, too few for three keys of
++    # the usual width. Narrow them so they keep their spacing and stay clear of each other.
++    invoke-virtual {p0}, Landroid/widget/FrameLayout;->getContext()Landroid/content/Context;
++
++    move-result-object v3
++
++    invoke-static {v3}, Lcom/android/systemui/navigationbar/NavigationBarView;->coverCameraInset(Landroid/content/Context;)I
++
++    move-result v3
++
++    const/4 v4, 0x0
++
++    if-eqz v3, :onigiri_key_width
++
++    const/4 v4, 0x1
++
++    const-string v3, "back"
++
++    invoke-virtual {v3, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v3
++
++    if-nez v3, :onigiri_narrow_key
++
++    const-string v3, "home"
++
++    invoke-virtual {v3, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v3
++
++    if-nez v3, :onigiri_narrow_key
++
++    const-string v3, "recent"
++
++    invoke-virtual {v3, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v3
++
++    if-eqz v3, :onigiri_key_width
++
++    :onigiri_narrow_key
++    const/16 v3, 0x5e
++
++    invoke-static {p1, v3}, Ljava/lang/Math;->min(II)I
++
++    move-result p1
++
++    :onigiri_key_width
++    iput-boolean v4, p0, Lcom/android/systemui/navigationbar/NavigationBarInflaterView;->onigiriNarrowKeys:Z
++
+     iput p1, v0, Landroid/view/ViewGroup$LayoutParams;->width:I
+ 
+     if-eqz p2, :cond_2

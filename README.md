@@ -15,6 +15,9 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B and SM-F731N)**. I
   settings. The front camera switch comes back on the inside screen.
   On the outside screen, Phone stays in landscape, with the number and call
   button in the top row and the keys under them.
+  Apps use the whole outside screen, including the strip beside the cameras.
+  To keep them clear of the cameras, turn on **Hide camera cutout** in
+  Onigiri settings: the strip turns black and the screen ends next to it.
 - Lets you plug the phone into a monitor and use **Samsung DeX** (a desktop mode, like a small computer).
   A live wallpaper you set for the home screen, like one from Wallpaper
   Engine, shows on the DeX desktop too. Pick a wallpaper in DeX's own

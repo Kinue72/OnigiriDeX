@@ -1,0 +1,140 @@
+From: Onigiri
+Subject: [PATCH] Add a Hide camera cutout switch for the cover
+
+The switch registers a fabricated overlay with Samsung's cover cutout, which services.jar masks
+so apps end next to the camera strip. Off removes the overlay. It applies at once, shows for the
+owner only (the overlay is system wide), and reuses Samsung's translated "Hide camera cutout"
+title.
+
+diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
+--- a/res/xml/onigiri_settings.xml
++++ b/res/xml/onigiri_settings.xml
+@@ -29,6 +29,7 @@
+     </SecPreferenceCategory>
+     <SecPreferenceCategory android:title="@string/onigiri_display_settings_title">
+         <SecSwitchPreference android:title="@string/onigiri_inner_screen_title" android:key="onigiri_inner_screen" settings:controller="moe.foss.onigiri.settings.InnerScreenPreferenceController" />
++        <SecSwitchPreference android:title="@string/full_screen_apps_hide_camera_title" android:key="onigiri_cover_camera_cutout" settings:controller="moe.foss.onigiri.settings.CoverCameraCutoutPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_max_refresh_rate_title" android:key="onigiri_max_refresh_rate" settings:controller="moe.foss.onigiri.settings.ForceMaxRefreshRatePreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_dex_high_refresh_title" android:key="onigiri_dex_high_refresh" settings:controller="moe.foss.onigiri.settings.DexHighRefreshPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_mirror_high_refresh_title" android:key="onigiri_mirror_high_refresh" settings:controller="moe.foss.onigiri.settings.MirrorHighRefreshPreferenceController" />
+diff --git a/smali_classes5/moe/foss/onigiri/settings/CoverCameraCutoutPreferenceController.smali b/smali_classes5/moe/foss/onigiri/settings/CoverCameraCutoutPreferenceController.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes5/moe/foss/onigiri/settings/CoverCameraCutoutPreferenceController.smali
+@@ -0,0 +1,116 @@
++.class public Lmoe/foss/onigiri/settings/CoverCameraCutoutPreferenceController;
++.super Lcom/android/settings/core/TogglePreferenceController;
++.source "CoverCameraCutoutPreferenceController.java"
++
++# The switch registers a fabricated overlay that gives the cover back Samsung's camera cutout.
++# services.jar masks a cover cutout, so the screen ends above the camera strip. Turning the
++# switch off removes the overlay and apps use the whole cover again. Overlay changes reach the
++# display at once, without a restart.
++
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .locals 0
++    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/TogglePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++    return-void
++.end method
++
++.method private static identifier(Landroid/content/Context;)Landroid/content/om/OverlayIdentifier;
++    .locals 2
++    new-instance v0, Landroid/content/om/OverlayIdentifier;
++    invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
++    move-result-object p0
++    const-string v1, "onigiri_cover_camera_cutout"
++    invoke-direct {v0, p0, v1}, Landroid/content/om/OverlayIdentifier;-><init>(Ljava/lang/String;Ljava/lang/String;)V
++    return-object v0
++.end method
++
++.method public getAvailabilityStatus()I
++    .locals 0
++    # The display follows the owner's overlays, and only the owner may change them.
++    invoke-static {}, Landroid/os/UserHandle;->myUserId()I
++    move-result p0
++    if-nez p0, :other_user
++    return p0
++    :other_user
++    const/4 p0, 0x4
++    return p0
++.end method
++
++.method public getSliceHighlightMenuRes()I
++    .locals 0
++    sget p0, Lcom/android/settings/R$string;->menu_key_onigiri_settings:I
++    return p0
++.end method
++
++.method public isChecked()Z
++    .locals 2
++    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    const-class v0, Landroid/content/om/OverlayManager;
++    invoke-virtual {p0, v0}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Landroid/content/om/OverlayManager;
++    invoke-static {p0}, Lmoe/foss/onigiri/settings/CoverCameraCutoutPreferenceController;->identifier(Landroid/content/Context;)Landroid/content/om/OverlayIdentifier;
++    move-result-object p0
++    sget-object v1, Landroid/os/UserHandle;->SYSTEM:Landroid/os/UserHandle;
++    invoke-virtual {v0, p0, v1}, Landroid/content/om/OverlayManager;->getOverlayInfo(Landroid/content/om/OverlayIdentifier;Landroid/os/UserHandle;)Landroid/content/om/OverlayInfo;
++    move-result-object p0
++    if-eqz p0, :off
++    invoke-virtual {p0}, Landroid/content/om/OverlayInfo;->isEnabled()Z
++    move-result p0
++    return p0
++    :off
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method public setChecked(Z)Z
++    .locals 6
++    iget-object p0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
++    :try_start
++    const-class v0, Landroid/content/om/OverlayManager;
++    invoke-virtual {p0, v0}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Landroid/content/om/OverlayManager;
++    new-instance v1, Landroid/content/om/OverlayManagerTransaction$Builder;
++    invoke-direct {v1}, Landroid/content/om/OverlayManagerTransaction$Builder;-><init>()V
++    if-eqz p1, :remove
++    # Samsung's cover cutout: the camera housing in the bottom right corner of the natural
++    # (landscape) orientation. The rect approximation points at this same string.
++    new-instance v2, Landroid/content/om/FabricatedOverlay;
++    const-string v3, "onigiri_cover_camera_cutout"
++    const-string v4, "android"
++    invoke-direct {v2, v3, v4}, Landroid/content/om/FabricatedOverlay;-><init>(Ljava/lang/String;Ljava/lang/String;)V
++    invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
++    move-result-object v3
++    invoke-virtual {v2, v3}, Landroid/content/om/FabricatedOverlay;->setOwningPackage(Ljava/lang/String;)V
++    const-string v3, "android:string/config_subBuiltInDisplayCutout"
++    const/4 v4, 0x3
++    const-string v5, "@bottom @right M 0,0 H -173.6470588235294 V -31.05882352941176 H 0 V 0 Z @dp"
++    const/4 p0, 0x0
++    invoke-virtual {v2, v3, v4, v5, p0}, Landroid/content/om/FabricatedOverlay;->setResourceValue(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V
++    invoke-virtual {v1, v2}, Landroid/content/om/OverlayManagerTransaction$Builder;->registerFabricatedOverlay(Landroid/content/om/FabricatedOverlay;)Landroid/content/om/OverlayManagerTransaction$Builder;
++    invoke-virtual {v2}, Landroid/content/om/FabricatedOverlay;->getIdentifier()Landroid/content/om/OverlayIdentifier;
++    move-result-object v2
++    const/4 v3, 0x1
++    const/4 v4, 0x0
++    invoke-virtual {v1, v2, v3, v4}, Landroid/content/om/OverlayManagerTransaction$Builder;->setEnabled(Landroid/content/om/OverlayIdentifier;ZI)Landroid/content/om/OverlayManagerTransaction$Builder;
++    goto :commit
++    :remove
++    invoke-static {p0}, Lmoe/foss/onigiri/settings/CoverCameraCutoutPreferenceController;->identifier(Landroid/content/Context;)Landroid/content/om/OverlayIdentifier;
++    move-result-object v2
++    invoke-virtual {v1, v2}, Landroid/content/om/OverlayManagerTransaction$Builder;->unregisterFabricatedOverlay(Landroid/content/om/OverlayIdentifier;)Landroid/content/om/OverlayManagerTransaction$Builder;
++    :commit
++    invoke-virtual {v1}, Landroid/content/om/OverlayManagerTransaction$Builder;->build()Landroid/content/om/OverlayManagerTransaction;
++    move-result-object v1
++    invoke-virtual {v0, v1}, Landroid/content/om/OverlayManager;->commit(Landroid/content/om/OverlayManagerTransaction;)V
++    :try_end
++    .catch Ljava/lang/RuntimeException; {:try_start .. :try_end} :failed
++    const/4 p0, 0x1
++    return p0
++    :failed
++    move-exception p0
++    const-string p1, "Onigiri"
++    const-string v0, "Cannot change the cover camera cutout"
++    invoke-static {p1, v0, p0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++    const/4 p0, 0x0
++    return p0
++.end method

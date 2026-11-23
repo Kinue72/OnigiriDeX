@@ -1,0 +1,76 @@
+From: Onigiri
+Subject: [PATCH] Hide the camera strip when the cover has a cutout
+
+The cover has no cutout by default, so apps use the whole screen and draw beside the cameras.
+Settings' "Hide camera cutout" switch gives it back Samsung's cutout through a fabricated
+overlay. Mask that cutout on the cover's port, so the logical display ends next to the camera
+strip and the strip stays black in every rotation. Samsung's LogicalDisplay sets the mask flag
+from its own mMaskingCutout, which only folding devices turn on, so the check goes there.
+
+diff --git a/smali/com/android/server/display/LogicalDisplay.smali b/smali/com/android/server/display/LogicalDisplay.smali
+--- a/smali/com/android/server/display/LogicalDisplay.smali
++++ b/smali/com/android/server/display/LogicalDisplay.smali
+@@ -210,6 +210,47 @@
+     return-void
+ .end method
+ 
++# Onigiri: the cover has a cutout only while Settings' "Hide camera cutout" overlay is on. Mask it
++# then, so the logical display ends next to the camera strip instead of letting apps draw under it.
++.method private static masksCoverCutout(Lcom/android/server/display/DisplayDeviceInfo;)Z
++    .locals 2
++
++    iget-object v0, p0, Lcom/android/server/display/DisplayDeviceInfo;->displayCutout:Landroid/view/DisplayCutout;
++
++    if-eqz v0, :onigiri_keep_cutout
++
++    invoke-virtual {v0}, Landroid/view/DisplayCutout;->isEmpty()Z
++
++    move-result v0
++
++    if-nez v0, :onigiri_keep_cutout
++
++    iget-object v0, p0, Lcom/android/server/display/DisplayDeviceInfo;->address:Landroid/view/DisplayAddress;
++
++    instance-of v1, v0, Landroid/view/DisplayAddress$Physical;
++
++    if-eqz v1, :onigiri_keep_cutout
++
++    check-cast v0, Landroid/view/DisplayAddress$Physical;
++
++    invoke-virtual {v0}, Landroid/view/DisplayAddress$Physical;->getPort()I
++
++    move-result v0
++
++    const/16 v1, 0x84
++
++    if-ne v0, v1, :onigiri_keep_cutout
++
++    const/4 v0, 0x1
++
++    return v0
++
++    :onigiri_keep_cutout
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
+ .method public static getMaskingInsets(Lcom/android/server/display/DisplayDeviceInfo;)Landroid/graphics/Rect;
+     .locals 1
+ 
+@@ -760,8 +801,15 @@
+ 
+     iget-boolean v6, v0, Lcom/android/server/display/LogicalDisplay;->mMaskingCutout:Z
+ 
++    if-nez v6, :onigiri_mask_cutout
++
++    invoke-static {v2}, Lcom/android/server/display/LogicalDisplay;->masksCoverCutout(Lcom/android/server/display/DisplayDeviceInfo;)Z
++
++    move-result v6
++
+     if-eqz v6, :cond_3
+ 
++    :onigiri_mask_cutout
+     iget v6, v2, Lcom/android/server/display/DisplayDeviceInfo;->flags:I
+ 
+     or-int/lit16 v6, v6, 0x800
