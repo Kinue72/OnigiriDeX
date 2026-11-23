@@ -150,10 +150,10 @@ index 8253a03..08c9187 100644
      check-cast p0, Landroid/content/Context;
 diff --git a/smali/com/samsung/android/dialer/dialpad/OnigiriCoverDialpad.smali b/smali/com/samsung/android/dialer/dialpad/OnigiriCoverDialpad.smali
 new file mode 100644
-index 0000000..2921165
+index 0000000..d517767
 --- /dev/null
 +++ b/smali/com/samsung/android/dialer/dialpad/OnigiriCoverDialpad.smali
-@@ -0,0 +1,792 @@
+@@ -0,0 +1,794 @@
 +# Onigiri: lays out the keypad on the Flip5 cover, a small landscape window on the cover display
 +# (748x720 px, 352x339 dp). Samsung puts the number, the keys and the call buttons side by side,
 +# which left the call button off the screen there. Here the keys take the full width, and the
@@ -396,19 +396,17 @@ index 0000000..2921165
 +
 +    if-eqz p1, :cond_5
 +
-+    const/4 v2, 0x0
++    const/4 v0, 0x0
 +
 +    goto :goto_3
 +
 +    :cond_5
-+    new-instance v2, Lcom/google/android/material/appbar/AppBarLayout$ScrollingViewBehavior;
++    new-instance v0, Lcom/google/android/material/appbar/AppBarLayout$ScrollingViewBehavior;
 +
-+    invoke-direct {v2}, Lcom/google/android/material/appbar/AppBarLayout$ScrollingViewBehavior;-><init>()V
++    invoke-direct {v0}, Lcom/google/android/material/appbar/AppBarLayout$ScrollingViewBehavior;-><init>()V
 +
 +    :goto_3
-+    iput-object v2, v5, Lk0/f;->a:Lk0/c;
-+
-+    invoke-virtual {v1}, Landroid/view/View;->requestLayout()V
++    iput-object v0, v5, Lk0/f;->a:Lk0/c;
 +
 +    if-eqz p1, :cond_6
 +
@@ -422,6 +420,8 @@ index 0000000..2921165
 +
 +    move-result p0
 +
++    neg-int p0, p0
++
 +    int-to-float p0, p0
 +
 +    goto :goto_4
@@ -430,7 +430,9 @@ index 0000000..2921165
 +    const/4 p0, 0x0
 +
 +    :goto_4
-+    invoke-virtual {v0, p0}, Landroid/view/View;->setTranslationZ(F)V
++    invoke-virtual {v1, p0}, Landroid/view/View;->setTranslationZ(F)V
++
++    invoke-virtual {v1}, Landroid/view/View;->requestLayout()V
 +
 +    return v8
 +
