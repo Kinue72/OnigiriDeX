@@ -24,14 +24,16 @@ diff --git a/smali_classes2/com/android/systemui/navigationbar/NavigationBarInfl
 diff --git a/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali b/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali
 --- a/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali
 +++ b/smali_classes2/com/android/systemui/navigationbar/NavigationBarView.smali
-@@ -935,8 +935,79 @@
+@@ -935,8 +935,85 @@
      return p0
  .end method
  
 +# Onigiri: with the cover's cutout gone, the bar at the bottom of the natural rotation runs under
 +# the camera housing, the right 369 px of the screen. Returns how far the bar must keep its
 +# buttons and handle from that edge. Only while the screen is the whole panel: with "Hide camera
-+# cutout" on, the display already ends above the housing, and a mirror fit draws elsewhere.
++# cutout" on, the display already ends above the housing, and a mirror fit draws elsewhere. The
++# panel size comes from the supported modes, as framework.jar 0005 makes getMode() report the
++# largest display that is on (the DeX desktop, say) to SystemUI's app uid.
 +.method public static coverCameraInset(Landroid/content/Context;)I
 +    .locals 3
 +
@@ -65,9 +67,13 @@ diff --git a/smali_classes2/com/android/systemui/navigationbar/NavigationBarView
 +
 +    move-result-object v1
 +
-+    invoke-virtual {v1}, Landroid/view/Display;->getMode()Landroid/view/Display$Mode;
++    invoke-virtual {v1}, Landroid/view/Display;->getSupportedModes()[Landroid/view/Display$Mode;
 +
 +    move-result-object v1
++
++    const/4 v2, 0x0
++
++    aget-object v1, v1, v2
 +
 +    invoke-virtual {v0}, Landroid/graphics/Rect;->width()I
 +
@@ -105,7 +111,7 @@ diff --git a/smali_classes2/com/android/systemui/navigationbar/NavigationBarView
  
      iget-object v0, p0, Landroid/widget/FrameLayout;->mContext:Landroid/content/Context;
  
-@@ -997,7 +1068,15 @@
+@@ -997,7 +1074,15 @@
  
      move-result v4
  
@@ -122,7 +128,7 @@ diff --git a/smali_classes2/com/android/systemui/navigationbar/NavigationBarView
  
      :cond_1
      iget-object v2, p0, Lcom/android/systemui/navigationbar/NavigationBarView;->mEdgeBackGestureHandler:Lcom/android/systemui/navigationbar/gestural/EdgeBackGestureHandler;
-@@ -1137,6 +1216,41 @@
+@@ -1137,6 +1222,41 @@
  
      invoke-super {p0, p1}, Landroid/widget/FrameLayout;->onConfigurationChanged(Landroid/content/res/Configuration;)V
  
