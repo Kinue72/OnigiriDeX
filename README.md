@@ -14,7 +14,9 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B, SM-F731N and SM-F
   unflipped unless **Save selfies as previewed** is on, which saves them as
   the preview shows them (Motion photo clips still save unflipped). Turn the
   mirror off with **Mirror cover screen preview** in Camera settings. The
-  front camera switch comes back on the inside screen.
+  front camera switch comes back on the inside screen. Some apps' camera
+  previews that didn't turn with the screen, like My VNPT's face check, show
+  upright when you hold the phone hinge down too.
   On the outside screen, Phone stays in landscape, with the number and call
   button in the top row and the keys under them.
   On the outside screen, **Home screen grid** takes any size from 3 to 7
