@@ -15,6 +15,9 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B, SM-F731N and SM-F
   settings. The front camera switch comes back on the inside screen.
   On the outside screen, Phone stays in landscape, with the number and call
   button in the top row and the keys under them.
+  On the outside screen, **Home screen grid** takes any size from 3 to 7
+  columns and 3 to 4 rows: tap − and + under the preview for columns and
+  beside it for rows.
   Apps use the whole outside screen, including the strip beside the cameras.
   To keep them clear of the cameras, turn on **Hide camera cutout** in
   Onigiri settings: the strip turns black and the screen ends next to it.
