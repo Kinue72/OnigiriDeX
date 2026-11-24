@@ -7,7 +7,7 @@ SRC_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)" || return 1
 export SRC_DIR
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
-    echo "Usage: source buildenv.sh [SM-F731B|SM-F731N|b5q]"
+    echo "Usage: source buildenv.sh [SM-F731B|SM-F731N|SM-F7310|b5q]"
     return 0
 fi
 
@@ -17,7 +17,7 @@ TARGET_MODEL="${1:-SM-F731B}"
 [ "$TARGET_MODEL" = b5q ] && TARGET_MODEL=SM-F731B
 if [ "$#" -gt 1 ] || ! python3 -c 'import json, sys; sys.exit(sys.argv[2] not in json.load(open(sys.argv[1]))["targets"])' \
         "$SRC_DIR/onigiri/configs/firmware.json" "$TARGET_MODEL"; then
-    echo "Onigiri supports SM-F731B and SM-F731N (b5q)." >&2
+    echo "Onigiri supports SM-F731B, SM-F731N and SM-F7310 (b5q)." >&2
     return 1
 fi
 export TARGET_MODEL
