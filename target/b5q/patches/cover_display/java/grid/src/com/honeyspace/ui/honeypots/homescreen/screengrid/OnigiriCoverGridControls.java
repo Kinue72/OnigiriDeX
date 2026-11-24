@@ -264,7 +264,9 @@ public final class OnigiriCoverGridControls
         if (parts.length != 2) return null;
         boolean swapped = vm.d(); // Arabic digit locales store "YxX"
         try {
-            return new int[] {Integer.parseInt(parts[swapped ? 1 : 0]), Integer.parseInt(parts[swapped ? 0 : 1])};
+            // A saved 5 rows (stock 5x6) already loads as 4, so show and step from that.
+            int rows = Math.min(Integer.parseInt(parts[swapped ? 1 : 0]), MAX_ROWS);
+            return new int[] {rows, Integer.parseInt(parts[swapped ? 0 : 1])};
         } catch (NumberFormatException e) {
             return null;
         }

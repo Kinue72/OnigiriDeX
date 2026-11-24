@@ -4,7 +4,7 @@ diff --git a/smali_classes3/com/honeyspace/ui/honeypots/homescreen/screengrid/On
 new file mode 100644
 --- /dev/null
 +++ b/smali_classes3/com/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls.smali
-@@ -0,0 +1,2082 @@
+@@ -0,0 +1,2089 @@
 +.class public final Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;
 +.super Ljava/lang/Object;
 +.source "OnigiriCoverGridControls.java"
@@ -329,7 +329,7 @@ new file mode 100644
 +
 +    int-to-float p1, p1
 +
-+    .line 353
++    .line 355
 +    iget-object p0, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->panel:Lcom/honeyspace/ui/honeypots/homescreen/screengrid/ScreenGridPanel;
 +
 +    invoke-virtual {p0}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/ScreenGridPanel;->getResources()Landroid/content/res/Resources;
@@ -354,7 +354,7 @@ new file mode 100644
 +.method private static enable(Landroid/view/View;Z)V
 +    .locals 0
 +
-+    .line 295
++    .line 297
 +    invoke-virtual {p0, p1}, Landroid/view/View;->setEnabled(Z)V
 +
 +    if-eqz p1, :cond_0
@@ -366,7 +366,7 @@ new file mode 100644
 +    :cond_0
 +    const p1, 0x3e99999a    # 0.3f
 +
-+    .line 296
++    .line 298
 +    :goto_0
 +    invoke-virtual {p0, p1}, Landroid/view/View;->setAlpha(F)V
 +
@@ -530,7 +530,7 @@ new file mode 100644
 +
 +    move-result p0
 +
-+    .line 267
++    .line 268
 +    :try_start_0
 +    aget-object v2, v0, p0
 +
@@ -538,8 +538,15 @@ new file mode 100644
 +
 +    move-result v2
 +
++    const/4 v3, 0x4
++
++    invoke-static {v2, v3}, Ljava/lang/Math;->min(II)I
++
++    move-result v2
++
 +    xor-int/lit8 p0, p0, 0x1
 +
++    .line 269
 +    aget-object p0, v0, p0
 +
 +    invoke-static {p0}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
@@ -767,22 +774,22 @@ new file mode 100644
 +.method private pill(Landroid/content/Context;I)Landroid/widget/LinearLayout;
 +    .locals 3
 +
-+    .line 318
++    .line 320
 +    new-instance v0, Landroid/widget/LinearLayout;
 +
 +    invoke-direct {v0, p1}, Landroid/widget/LinearLayout;-><init>(Landroid/content/Context;)V
 +
-+    .line 319
++    .line 321
 +    invoke-virtual {v0, p2}, Landroid/widget/LinearLayout;->setOrientation(I)V
 +
 +    const/16 p1, 0x11
 +
-+    .line 320
++    .line 322
 +    invoke-virtual {v0, p1}, Landroid/widget/LinearLayout;->setGravity(I)V
 +
 +    const/4 p1, 0x2
 +
-+    .line 321
++    .line 323
 +    invoke-direct {p0, p1}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->dp(I)I
 +
 +    move-result p2
@@ -801,14 +808,14 @@ new file mode 100644
 +
 +    invoke-virtual {v0, p2, v1, v2, p1}, Landroid/widget/LinearLayout;->setPadding(IIII)V
 +
-+    .line 322
++    .line 324
 +    new-instance p1, Landroid/graphics/drawable/GradientDrawable;
 +
 +    invoke-direct {p1}, Landroid/graphics/drawable/GradientDrawable;-><init>()V
 +
 +    const/16 p2, 0x14
 +
-+    .line 323
++    .line 325
 +    invoke-direct {p0, p2}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->dp(I)I
 +
 +    move-result p0
@@ -817,12 +824,12 @@ new file mode 100644
 +
 +    invoke-virtual {p1, p0}, Landroid/graphics/drawable/GradientDrawable;->setCornerRadius(F)V
 +
-+    .line 324
++    .line 326
 +    invoke-virtual {v0, p1}, Landroid/widget/LinearLayout;->setBackground(Landroid/graphics/drawable/Drawable;)V
 +
 +    const/16 p0, 0x8
 +
-+    .line 325
++    .line 327
 +    invoke-virtual {v0, p0}, Landroid/widget/LinearLayout;->setVisibility(I)V
 +
 +    return-object v0
@@ -1176,7 +1183,7 @@ new file mode 100644
 +.method private recolor(I)V
 +    .locals 12
 +
-+    .line 300
++    .line 302
 +    iput p1, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->color:I
 +
 +    const v0, 0xffffff
@@ -1185,7 +1192,7 @@ new file mode 100644
 +
 +    const/4 v1, 0x2
 +
-+    .line 302
++    .line 304
 +    new-array v2, v1, [Landroid/widget/LinearLayout;
 +
 +    iget-object v3, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->colPill:Landroid/widget/LinearLayout;
@@ -1207,7 +1214,7 @@ new file mode 100644
 +
 +    aget-object v5, v2, p0
 +
-+    .line 303
++    .line 305
 +    invoke-virtual {v5}, Landroid/widget/LinearLayout;->getBackground()Landroid/graphics/drawable/Drawable;
 +
 +    move-result-object v6
@@ -1222,7 +1229,7 @@ new file mode 100644
 +
 +    move v6, v4
 +
-+    .line 304
++    .line 306
 +    :goto_1
 +    invoke-virtual {v5}, Landroid/widget/LinearLayout;->getChildCount()I
 +
@@ -1230,37 +1237,37 @@ new file mode 100644
 +
 +    if-ge v6, v7, :cond_1
 +
-+    .line 305
++    .line 307
 +    invoke-virtual {v5, v6}, Landroid/widget/LinearLayout;->getChildAt(I)Landroid/view/View;
 +
 +    move-result-object v7
 +
 +    check-cast v7, Landroid/widget/TextView;
 +
-+    .line 306
++    .line 308
 +    invoke-virtual {v7, p1}, Landroid/widget/TextView;->setTextColor(I)V
 +
-+    .line 307
++    .line 309
 +    invoke-virtual {v7}, Landroid/widget/TextView;->isClickable()Z
 +
 +    move-result v8
 +
 +    if-eqz v8, :cond_0
 +
-+    .line 308
++    .line 310
 +    new-instance v8, Landroid/graphics/drawable/GradientDrawable;
 +
 +    invoke-direct {v8}, Landroid/graphics/drawable/GradientDrawable;-><init>()V
 +
-+    .line 309
++    .line 311
 +    invoke-virtual {v8, v3}, Landroid/graphics/drawable/GradientDrawable;->setShape(I)V
 +
 +    const/high16 v9, -0x1000000
 +
-+    .line 310
++    .line 312
 +    invoke-virtual {v8, v9}, Landroid/graphics/drawable/GradientDrawable;->setColor(I)V
 +
-+    .line 311
++    .line 313
 +    new-instance v9, Landroid/graphics/drawable/RippleDrawable;
 +
 +    const/high16 v10, 0x40000000    # 2.0f
@@ -1294,7 +1301,7 @@ new file mode 100644
 +.method private refresh()V
 +    .locals 8
 +
-+    .line 274
++    .line 276
 +    iget-object v0, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->panel:Lcom/honeyspace/ui/honeypots/homescreen/screengrid/ScreenGridPanel;
 +
 +    const v1, 0x7f0a049a
@@ -1307,7 +1314,7 @@ new file mode 100644
 +
 +    if-eqz v0, :cond_0
 +
-+    .line 275
++    .line 277
 +    invoke-virtual {v0}, Landroid/widget/TextView;->getCurrentTextColor()I
 +
 +    move-result v0
@@ -1317,7 +1324,7 @@ new file mode 100644
 +    :cond_0
 +    const v0, -0x50501
 +
-+    .line 276
++    .line 278
 +    :goto_0
 +    iget v1, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->color:I
 +
@@ -1325,7 +1332,7 @@ new file mode 100644
 +
 +    invoke-direct {p0, v0}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->recolor(I)V
 +
-+    .line 277
++    .line 279
 +    :cond_1
 +    iget-object v0, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->vm:Lcom/honeyspace/ui/honeypots/homescreen/viewmodel/HomeGridViewModel;
 +
@@ -1345,7 +1352,7 @@ new file mode 100644
 +    :goto_1
 +    if-eqz v0, :cond_9
 +
-+    .line 278
++    .line 280
 +    iget-object v1, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->shown:Ljava/lang/String;
 +
 +    invoke-virtual {v0, v1}, Ljava/lang/Object;->equals(Ljava/lang/Object;)Z
@@ -1356,7 +1363,7 @@ new file mode 100644
 +
 +    goto/16 :goto_5
 +
-+    .line 279
++    .line 281
 +    :cond_3
 +    invoke-virtual {v0}, Ljava/lang/Object;->toString()Ljava/lang/String;
 +
@@ -1364,7 +1371,7 @@ new file mode 100644
 +
 +    iput-object v0, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->shown:Ljava/lang/String;
 +
-+    .line 280
++    .line 282
 +    invoke-direct {p0}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->grid()[I
 +
 +    move-result-object v0
@@ -1376,14 +1383,14 @@ new file mode 100644
 +    :cond_4
 +    const/4 v1, 0x0
 +
-+    .line 282
++    .line 284
 +    aget v2, v0, v1
 +
 +    const/4 v3, 0x1
 +
 +    aget v0, v0, v3
 +
-+    .line 283
++    .line 285
 +    iget-object v4, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->panel:Lcom/honeyspace/ui/honeypots/homescreen/screengrid/ScreenGridPanel;
 +
 +    invoke-virtual {v4}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/ScreenGridPanel;->getResources()Landroid/content/res/Resources;
@@ -1402,7 +1409,7 @@ new file mode 100644
 +
 +    move-result-object v4
 +
-+    .line 284
++    .line 286
 +    iget-object v5, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->colValue:Landroid/widget/TextView;
 +
 +    invoke-static {v0}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -1421,7 +1428,7 @@ new file mode 100644
 +
 +    invoke-virtual {v5, v6}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
 +
-+    .line 285
++    .line 287
 +    iget-object v5, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->rowValue:Landroid/widget/TextView;
 +
 +    invoke-static {v2}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -1438,7 +1445,7 @@ new file mode 100644
 +
 +    invoke-virtual {v5, v4}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
 +
-+    .line 286
++    .line 288
 +    iget-object v4, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->colValue:Landroid/widget/TextView;
 +
 +    new-instance v5, Ljava/lang/StringBuilder;
@@ -1457,7 +1464,7 @@ new file mode 100644
 +
 +    invoke-virtual {v4, v5}, Landroid/widget/TextView;->setContentDescription(Ljava/lang/CharSequence;)V
 +
-+    .line 287
++    .line 289
 +    iget-object v4, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->rowValue:Landroid/widget/TextView;
 +
 +    new-instance v5, Ljava/lang/StringBuilder;
@@ -1476,7 +1483,7 @@ new file mode 100644
 +
 +    invoke-virtual {v4, v5}, Landroid/widget/TextView;->setContentDescription(Ljava/lang/CharSequence;)V
 +
-+    .line 288
++    .line 290
 +    iget-object v4, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->colMinus:Landroid/widget/TextView;
 +
 +    const/4 v5, 0x3
@@ -1493,7 +1500,7 @@ new file mode 100644
 +    :goto_2
 +    invoke-static {v4, v6}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->enable(Landroid/view/View;Z)V
 +
-+    .line 289
++    .line 291
 +    iget-object v4, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->colPlus:Landroid/widget/TextView;
 +
 +    const/4 v6, 0x7
@@ -1510,7 +1517,7 @@ new file mode 100644
 +    :goto_3
 +    invoke-static {v4, v0}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->enable(Landroid/view/View;Z)V
 +
-+    .line 290
++    .line 292
 +    iget-object v0, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->rowMinus:Landroid/widget/TextView;
 +
 +    if-le v2, v5, :cond_7
@@ -1525,7 +1532,7 @@ new file mode 100644
 +    :goto_4
 +    invoke-static {v0, v4}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->enable(Landroid/view/View;Z)V
 +
-+    .line 291
++    .line 293
 +    iget-object p0, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->rowPlus:Landroid/widget/TextView;
 +
 +    const/4 v0, 0x4
@@ -1701,36 +1708,36 @@ new file mode 100644
 +.method private step(Landroid/content/Context;Landroid/widget/LinearLayout;Ljava/lang/String;Ljava/lang/String;)Landroid/widget/TextView;
 +    .locals 1
 +
-+    .line 330
++    .line 332
 +    new-instance v0, Landroid/widget/TextView;
 +
 +    invoke-direct {v0, p1}, Landroid/widget/TextView;-><init>(Landroid/content/Context;)V
 +
-+    .line 331
++    .line 333
 +    invoke-virtual {v0, p3}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
 +
 +    const/high16 p1, 0x41b00000    # 22.0f
 +
 +    const/4 p3, 0x1
 +
-+    .line 332
++    .line 334
 +    invoke-virtual {v0, p3, p1}, Landroid/widget/TextView;->setTextSize(IF)V
 +
 +    const/16 p1, 0x11
 +
-+    .line 333
++    .line 335
 +    invoke-virtual {v0, p1}, Landroid/widget/TextView;->setGravity(I)V
 +
-+    .line 334
++    .line 336
 +    invoke-virtual {v0, p4}, Landroid/widget/TextView;->setContentDescription(Ljava/lang/CharSequence;)V
 +
-+    .line 335
++    .line 337
 +    invoke-virtual {v0, p3}, Landroid/widget/TextView;->setClickable(Z)V
 +
-+    .line 336
++    .line 338
 +    invoke-virtual {v0, p0}, Landroid/widget/TextView;->setOnClickListener(Landroid/view/View$OnClickListener;)V
 +
-+    .line 337
++    .line 339
 +    new-instance p1, Landroid/widget/LinearLayout$LayoutParams;
 +
 +    const/16 p3, 0x24
@@ -1784,7 +1791,7 @@ new file mode 100644
 +.method private value(Landroid/content/Context;Landroid/widget/LinearLayout;Z)Landroid/widget/TextView;
 +    .locals 2
 +
-+    .line 342
++    .line 344
 +    new-instance v0, Landroid/widget/TextView;
 +
 +    invoke-direct {v0, p1}, Landroid/widget/TextView;-><init>(Landroid/content/Context;)V
@@ -1793,10 +1800,10 @@ new file mode 100644
 +
 +    const/4 v1, 0x1
 +
-+    .line 343
++    .line 345
 +    invoke-virtual {v0, v1, p1}, Landroid/widget/TextView;->setTextSize(IF)V
 +
-+    .line 344
++    .line 346
 +    const-string p1, "sec"
 +
 +    invoke-static {p1, v1}, Landroid/graphics/Typeface;->create(Ljava/lang/String;I)Landroid/graphics/Typeface;
@@ -1807,12 +1814,12 @@ new file mode 100644
 +
 +    const/16 p1, 0x11
 +
-+    .line 345
++    .line 347
 +    invoke-virtual {v0, p1}, Landroid/widget/TextView;->setGravity(I)V
 +
 +    const/16 p1, 0x18
 +
-+    .line 346
++    .line 348
 +    invoke-direct {p0, p1}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->dp(I)I
 +
 +    move-result p1
@@ -1823,7 +1830,7 @@ new file mode 100644
 +
 +    if-eqz p3, :cond_0
 +
-+    .line 347
++    .line 349
 +    new-instance p3, Landroid/widget/LinearLayout$LayoutParams;
 +
 +    invoke-direct {p0, p1}, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->dp(I)I
@@ -1840,7 +1847,7 @@ new file mode 100644
 +
 +    goto :goto_0
 +
-+    .line 348
++    .line 350
 +    :cond_0
 +    new-instance p3, Landroid/widget/LinearLayout$LayoutParams;
 +
@@ -1852,7 +1859,7 @@ new file mode 100644
 +
 +    invoke-direct {p3, v1, p0}, Landroid/widget/LinearLayout$LayoutParams;-><init>(II)V
 +
-+    .line 347
++    .line 349
 +    :goto_0
 +    invoke-virtual {p2, v0, p3}, Landroid/widget/LinearLayout;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
 +
@@ -2060,7 +2067,7 @@ new file mode 100644
 +.method public onViewAttachedToWindow(Landroid/view/View;)V
 +    .locals 0
 +
-+    .line 358
++    .line 360
 +    invoke-virtual {p1}, Landroid/view/View;->getViewTreeObserver()Landroid/view/ViewTreeObserver;
 +
 +    move-result-object p1
@@ -2073,7 +2080,7 @@ new file mode 100644
 +.method public onViewDetachedFromWindow(Landroid/view/View;)V
 +    .locals 0
 +
-+    .line 363
++    .line 365
 +    invoke-virtual {p1}, Landroid/view/View;->getViewTreeObserver()Landroid/view/ViewTreeObserver;
 +
 +    move-result-object p1
@@ -2082,7 +2089,7 @@ new file mode 100644
 +
 +    const/4 p1, 0x0
 +
-+    .line 364
++    .line 366
 +    iput-object p1, p0, Lcom/honeyspace/ui/honeypots/homescreen/screengrid/OnigiriCoverGridControls;->pages:Landroid/view/ViewGroup;
 +
 +    return-void
