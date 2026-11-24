@@ -250,6 +250,7 @@ EOF
 
 PUBLISH()
 {
+    local MODEL MODELS
     if ! ls "$STATE"/*.assets > /dev/null 2>&1; then
         echo "No model has been released for $TAG yet (release --model)." >&2
         exit 1
@@ -277,9 +278,11 @@ PUBLISH()
         exit 1
     fi
 
-    # Each model's notes in firmware.json order (a glob would put the SM-F7310 before the B).
-    for MODEL in $(python3 -c 'import json, sys; print(*json.load(open(sys.argv[1]))["targets"])' \
-            "$SRC_DIR/onigiri/configs/firmware.json"); do
+    # Each model's notes in firmware.json order (a glob would put the SM-F7310 before the B). The
+    # list is read first: a failure inside "for ... in $(...)" wouldn't stop the script.
+    MODELS="$(python3 -c 'import json, sys; print(*json.load(open(sys.argv[1]))["targets"])' \
+        "$SRC_DIR/onigiri/configs/firmware.json")"
+    for MODEL in $MODELS; do
         [ ! -f "$STATE/$MODEL.notes.md" ] || cat "$STATE/$MODEL.notes.md"
     done > "$WORK/body.md"
     cat "$WORK/notes.md" >> "$WORK/body.md"
