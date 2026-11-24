@@ -11,8 +11,9 @@ set +o allexport
 
 [ "$TARGET_CODENAME" = b5q ]
 [ "$TARGET_OS_FILE_SYSTEM" = erofs ]
-[ "$TARGET_SUPER_PARTITION_SIZE" = 12664700928 ]
-[ "$TARGET_SUPER_GROUP_SIZE" = 12660506624 ]
+# The super layout is the model's own (the SM-F7310's is 585 MB smaller), checked by
+# gen_config_file.sh when it read it from the stock super.
+[[ "$TARGET_SUPER_PARTITION_SIZE" =~ ^[0-9]+$ && "$TARGET_SUPER_GROUP_SIZE" =~ ^[0-9]+$ ]]
 [ -f "$WORK_DIR/.completed" ]
 
 # release.sh and make_ota.sh read the model from this name.

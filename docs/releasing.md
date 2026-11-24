@@ -37,9 +37,11 @@ differ in those blocks.
 
 Each Flip5 model in `onigiri/configs/firmware.json` gets its own AP: vendor, odm, dtbo, init_boot,
 recovery and vbmeta come from that model's stock firmware, because they differ (the SM-F731N has
-an MST chip and a grip sensor in its dtbo, its own RIL, Wi-Fi board data and camera blobs). The
-system and the kernel are the same for all of them; the kernel builds every model's modules and
-is repacked from the SM-F731B's stock boot images, whose device trees match the N's.
+an MST chip and a grip sensor in its dtbo, its own RIL, Wi-Fi board data and camera blobs; the
+SM-F7310 a smaller super partition and a camera HAL built at other offsets). The system and the
+kernel are the same for all of them; the kernel builds every model's modules (except the SM-F7310's
+second grip sensor, sx9360_sub, whose driver Samsung didn't publish) and is repacked from the
+SM-F731B's stock boot images, whose base device trees match the other models'.
 
 ## Making a release
 

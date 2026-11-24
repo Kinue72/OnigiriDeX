@@ -1,6 +1,6 @@
 # OnigiriDeX
 
-Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B and SM-F731N)**. It's built on Android 15 / One UI 7 and based on [UN1CA](https://github.com/salvogiangri/UN1CA/tree/fifteen).
+Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B, SM-F731N and SM-F7310)**. It's built on Android 15 / One UI 7 and based on [UN1CA](https://github.com/salvogiangri/UN1CA/tree/fifteen).
 
 ## What it does
 
@@ -64,8 +64,10 @@ Installing it can wipe your phone or stop it from starting up. Before you try:
 
 **You need:**
 
-- A Galaxy Z Flip5 **SM-F731B** or **SM-F731N** (Korea). Each has its own
-  Onigiri file. The SM-F731N build is new and less tested. Other Flip5 models
+- A Galaxy Z Flip5 **SM-F731B**, **SM-F731N** (Korea) or **SM-F7310** (Hong
+  Kong, Taiwan). Each has its own Onigiri file. The SM-F731N and SM-F7310
+  builds are new and less tested, and the SM-F7310 one has no driver for its
+  second grip sensor. Other Flip5 models
   aren't supported: US and Japanese models can't unlock their bootloader.
 - An **unlocked bootloader**. You can only unlock it on Android 15 / One UI 7
   or older; some early Android 16 / One UI 8 builds can still be downgraded
@@ -74,6 +76,7 @@ Installing it can wipe your phone or stop it from starting up. Before you try:
   CSC files, and they must be your model's, never another one's:
   - SM-F731B: [F731BXXS5EYI1](https://samfw.com/firmware/SM-F731B/XXV/F731BXXS5EYI1)
   - SM-F731N: [F731NKSS5EYGB](https://samfw.com/firmware/SM-F731N/KOO/F731NKSS5EYGB)
+  - SM-F7310: [F7310ZSS7EYI1](https://samfw.com/firmware/SM-F7310/BRI/F7310ZSS7EYI1)
 - Something to flash with, one of:
   - a computer: **Odin3** on Windows, **odin4** on Linux and macOS, or
     [brokkr](https://github.com/Gabriel2392/brokkr-flash) on any of them;
@@ -137,10 +140,11 @@ onigiri build_dependencies
 
 Put these full firmware ZIP files in the `firmware/` folder:
 
-- Flip5: SM-F731B / XXV / F731BXXS5EYI1. It's needed for an SM-F731N build too,
-  because the kernel is built from it.
+- Flip5: SM-F731B / XXV / F731BXXS5EYI1. It's needed for the other models' builds
+  too, because the kernel is built from it.
 - Flip5 Korea, for an SM-F731N build: SM-F731N / KOO / F731NKSS5EYGB
 - Fold5: SM-F946B / XXV / F946BXXS5EYI1
+- Flip5 Hong Kong / Taiwan, for an SM-F7310 build: SM-F7310 / BRI / F7310ZSS7EYI1
 - Galaxy S24 (only used for screen colours): SM-S921B / S921BXXS9BYH1
 
 **3. Build**
@@ -158,7 +162,8 @@ onigiri make_rom
 onigiri build_odin
 ```
 
-For an SM-F731N build, add its firmware and build again (the kernel is shared):
+For an SM-F731N build, add its firmware and build again (the kernel is shared). An
+SM-F7310 build is the same with `SM-F7310` and its firmware:
 
 ```sh
 python3 scripts/import_fw.py SM-F731N firmware/flip5-n.zip

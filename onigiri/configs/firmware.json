@@ -15,6 +15,14 @@
       "md5": "6bb1d9625f5e1235480d7c63676b3d53",
       "device": "b5q",
       "sdk": 35
+    },
+    "SM-F7310": {
+      "model": "SM-F7310",
+      "csc": "BRI",
+      "version": "F7310ZSS7EYI1/F7310OZS7EYI1/F7310ZCS7EYI1",
+      "md5": "635d939dc64f023b477f836aca231cc4",
+      "device": "b5q",
+      "sdk": 35
     }
   },
   "donor": {
