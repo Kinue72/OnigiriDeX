@@ -277,7 +277,12 @@ PUBLISH()
         exit 1
     fi
 
-    cat "$STATE"/*.notes.md "$WORK/notes.md" > "$WORK/body.md"
+    # Each model's notes in firmware.json order (a glob would put the SM-F7310 before the B).
+    for MODEL in $(python3 -c 'import json, sys; print(*json.load(open(sys.argv[1]))["targets"])' \
+            "$SRC_DIR/onigiri/configs/firmware.json"); do
+        [ ! -f "$STATE/$MODEL.notes.md" ] || cat "$STATE/$MODEL.notes.md"
+    done > "$WORK/body.md"
+    cat "$WORK/notes.md" >> "$WORK/body.md"
     if [ "${ONIGIRI_DRY_RUN:-}" = true ]; then
         echo "- Dry run: $TAG would be published with $(wc -l < "$WORK/uploaded") files and these notes:"
         cat "$WORK/body.md" "$WORK/update.json"

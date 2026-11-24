@@ -143,8 +143,8 @@ Put these full firmware ZIP files in the `firmware/` folder:
 - Flip5: SM-F731B / XXV / F731BXXS5EYI1. It's needed for the other models' builds
   too, because the kernel is built from it.
 - Flip5 Korea, for an SM-F731N build: SM-F731N / KOO / F731NKSS5EYGB
-- Fold5: SM-F946B / XXV / F946BXXS5EYI1
 - Flip5 Hong Kong / Taiwan, for an SM-F7310 build: SM-F7310 / BRI / F7310ZSS7EYI1
+- Fold5: SM-F946B / XXV / F946BXXS5EYI1
 - Galaxy S24 (only used for screen colours): SM-S921B / S921BXXS9BYH1
 
 **3. Build**

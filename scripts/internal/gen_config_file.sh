@@ -25,7 +25,7 @@ print(*values)
 read -r TARGET_FIRMWARE TARGET_FIRMWARE_VERSION SOURCE_FIRMWARE SOURCE_FIRMWARE_VERSION <<< "$FIRMWARE_CONFIG"
 
 FIRMWARE_FOLDER="$FW_DIR/${TARGET_FIRMWARE/\//_}"
-# Samsung's product name for this model (b5qxxx, b5qksx), once its firmware is extracted.
+# Samsung's product name for this model (b5qxxx, b5qksx, b5qzhx), once its firmware is extracted.
 TARGET_PRODUCT_NAME="$(sed -n 's/^ro.product.vendor.name=//p' "$FIRMWARE_FOLDER/vendor/build.prop" 2> /dev/null || true)"
 TARGET_PRODUCT_NAME="${TARGET_PRODUCT_NAME:-none}"
 ROM_BUILD_TIMESTAMP="$(date +%s)"
