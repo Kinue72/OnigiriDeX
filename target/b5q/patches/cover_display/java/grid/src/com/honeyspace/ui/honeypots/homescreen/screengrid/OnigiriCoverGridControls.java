@@ -37,8 +37,9 @@ public final class OnigiriCoverGridControls
         implements View.OnClickListener, ViewTreeObserver.OnPreDrawListener, View.OnAttachStateChangeListener {
 
     // Visual columns and rows. The cover is landscape, so the launcher's portrait grid point is
-    // transposed on screen: x is the row count, y the column count.
-    private static final int MIN_COLS = 3, MAX_COLS = 7, MIN_ROWS = 3, MAX_ROWS = 6;
+    // transposed on screen: x is the row count, y the column count. Rows stop at 4: on restart
+    // GridController reads a saved 5 as 4 rows and leaves 6 or more untransposed.
+    private static final int MIN_COLS = 3, MAX_COLS = 7, MIN_ROWS = 3, MAX_ROWS = 4;
 
     private static final int ID_PANEL = 0x7f0a0498; // R.id.screen_grid_panel, the tag key
     private static final int ID_TITLE_LAYOUT = 0x7f0a049b; // R.id.screen_grid_title_layout
@@ -174,12 +175,6 @@ public final class OnigiriCoverGridControls
     public boolean onPreDraw() {
         if (active && panel.isShown()) {
             refresh();
-            View chips = panel.findViewById(ID_CHIPS);
-            if (chips != null) {
-                float alpha = chips.getAlpha();
-                colPill.setAlpha(alpha);
-                rowPill.setAlpha(alpha);
-            }
             place();
         }
         return true;
