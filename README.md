@@ -10,9 +10,11 @@ Onigiri is a custom system for the **Galaxy Z Flip5 (SM-F731B, SM-F731N and SM-F
   turn on **Use inner screen when open**.
   On the outside screen, Camera uses the back cameras only, which already
   face you, like a stock Flip's cover camera. Its outside-screen preview
-  shows you like a mirror, as a selfie does; pictures and videos still save
-  unflipped. Turn it off with **Mirror cover screen preview** in Camera
-  settings. The front camera switch comes back on the inside screen.
+  shows you like a mirror, as a selfie does. Pictures and videos save
+  unflipped unless **Save selfies as previewed** is on, which saves them as
+  the preview shows them (Motion photo clips still save unflipped). Turn the
+  mirror off with **Mirror cover screen preview** in Camera settings. The
+  front camera switch comes back on the inside screen.
   On the outside screen, Phone stays in landscape, with the number and call
   button in the top row and the keys under them.
   On the outside screen, **Home screen grid** takes any size from 3 to 7

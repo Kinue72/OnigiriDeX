@@ -1,0 +1,330 @@
+From: Onigiri
+Subject: [PATCH] Save cover selfies as previewed
+
+"Save selfies as previewed" did nothing on the cover: Camera shoots with the
+rear lenses there (0006), and only the preview mirrors (0007), so pictures
+and videos still saved unflipped. With the setting on, flip them on the
+preview's axis the way stock QuickShot does: a sensor flip, which the HAL
+keeps off the preview and needs before it honors the pictures' scaler flip,
+and a MediaRecorder flip for videos. Where the flip lands sideways to the
+saved orientation it would read upside down, so turn the picture or video
+half a turn more, as stock does. Motion photo clips still save unflipped
+(stock only flips them for QuickShot and rear cam selfie), so they don't
+take that half turn. The sensor flip is a session key; Camera opens a new
+session when it comes back from its settings, so the switch applies there.
+
+diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
+--- a/res/values-vi/strings.xml
++++ b/res/values-vi/strings.xml
+@@ -1477,5 +1477,5 @@ Thích hợp để chụp các đối tượng ngược sáng và cảnh có đ
+     <string name="zoom_slider_point_tts">%1$d chấm %2$d</string>
+     <string name="zoom_tts">Thu/Phóng</string>
+     <string name="onigiri_mirror_cover_preview_title">Lật hình xem trước ở màn hình ngoài</string>
+-    <string name="onigiri_mirror_cover_preview_summary">Hiện hình của bạn như trong gương khi dùng Máy ảnh ở màn hình ngoài. Ảnh và video vẫn lưu không lật.</string>
++    <string name="onigiri_mirror_cover_preview_summary">Hiện hình của bạn như trong gương khi dùng Máy ảnh ở màn hình ngoài. Ảnh và video lưu không lật, trừ khi bật Lưu ảnh selfie như đã xem trước.</string>
+ </resources>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -2025,5 +2025,5 @@ Good for backlit subjects and high-contrast scenes."</string>
+     <string name="zoom_slider_point_tts">%1$d point %2$d</string>
+     <string name="zoom_tts">Zoom</string>
+     <string name="onigiri_mirror_cover_preview_title">Mirror cover screen preview</string>
+-    <string name="onigiri_mirror_cover_preview_summary">Show yourself like in a mirror when you use Camera on the cover screen. Pictures and videos save unflipped.</string>
++    <string name="onigiri_mirror_cover_preview_summary">Show yourself like in a mirror when you use Camera on the cover screen. Pictures and videos save unflipped unless Save selfies as previewed is on.</string>
+ </resources>
+diff --git a/smali_classes3/com/sec/android/app/camera/engine/OrientationManager.smali b/smali_classes3/com/sec/android/app/camera/engine/OrientationManager.smali
+--- a/smali_classes3/com/sec/android/app/camera/engine/OrientationManager.smali
++++ b/smali_classes3/com/sec/android/app/camera/engine/OrientationManager.smali
+@@ -140,8 +140,16 @@
+     return p0
+ 
+     :cond_0
++    iget-object v0, p0, Lcom/sec/android/app/camera/engine/OrientationManager;->mCameraSettings:Lcom/sec/android/app/camera/interfaces/CameraSettings;
++
+     iget p0, p0, Lcom/sec/android/app/camera/engine/OrientationManager;->mLastOrientationForCapture:I
+ 
++    # Onigiri: Motion photo clips save unflipped on the cover, so take back the
++    # half turn the flipped picture got. A second call undoes the first.
++    invoke-static {v0, p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->adjustSaveOrientation(Lcom/sec/android/app/camera/interfaces/CameraSettings;I)I
++
++    move-result p0
++
+     return p0
+ .end method
+ 
+@@ -443,6 +451,13 @@
+ 
+     rem-int/lit16 v0, v0, 0x168
+ 
++    # Onigiri: keep a cover picture or video saved as previewed upright (see OnigiriCoverMirror).
++    iget-object v1, p0, Lcom/sec/android/app/camera/engine/OrientationManager;->mCameraSettings:Lcom/sec/android/app/camera/interfaces/CameraSettings;
++
++    invoke-static {v1, v0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->adjustSaveOrientation(Lcom/sec/android/app/camera/interfaces/CameraSettings;I)I
++
++    move-result v0
++
+     iput v0, p0, Lcom/sec/android/app/camera/engine/OrientationManager;->mLastOrientationForCapture:I
+ 
+     goto :goto_2
+diff --git a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareStartPreviewRequest.smali b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareStartPreviewRequest.smali
+--- a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareStartPreviewRequest.smali
++++ b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareStartPreviewRequest.smali
+@@ -1038,6 +1038,24 @@
+ 
+     :cond_7
+     :goto_3
++    # Onigiri: "Save selfies as previewed" on the mirrored cover (see OnigiriCoverMirror).
++    iget-object p1, p0, Lcom/sec/android/app/camera/engine/core/request/PrepareStartPreviewRequest;->mCameraSettings:Lcom/sec/android/app/camera/interfaces/CameraSettings;
++
++    sget-object v1, Lcom/sec/android/app/camera/interfaces/CameraSettings$Key;->SAVE_AS_FLIPPED:Lcom/sec/android/app/camera/interfaces/CameraSettings$Key;
++
++    invoke-interface {p1, v1}, Lcom/sec/android/app/camera/interfaces/CameraSettings;->get(Lcom/sec/android/app/camera/interfaces/CameraSettings$Key;)I
++
++    move-result p1
++
++    invoke-static {p1}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->getScalerFlipMode(I)I
++
++    move-result p1
++
++    if-ltz p1, :cond_onigiri_0
++
++    move v2, p1
++
++    :cond_onigiri_0
+     sget-object p1, Lcom/samsung/android/camera/core2/MakerPublicKey;->l0:Landroid/hardware/camera2/CaptureRequest$Key;
+ 
+     invoke-static {v2}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
+@@ -1554,6 +1572,16 @@
+ 
+     :cond_3
+     :goto_1
++    # Onigiri: "Save selfies as previewed" on the mirrored cover (see OnigiriCoverMirror).
++    invoke-static {v0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->getScalerFlipMode(I)I
++
++    move-result v1
++
++    if-ltz v1, :cond_onigiri_0
++
++    move v2, v1
++
++    :cond_onigiri_0
+     iget-object v1, p0, Lcom/sec/android/app/camera/engine/core/request/Request;->mEngine:Lcom/sec/android/app/camera/engine/interfaces/InternalEngine;
+ 
+     invoke-interface {v1}, Lcom/sec/android/app/camera/engine/interfaces/InternalEngine;->getCurrentCaptureState()Lcom/sec/android/app/camera/engine/interfaces/Engine$CaptureState;
+diff --git a/smali_classes3/com/sec/android/app/camera/engine/recording/session/RecordingSession.smali b/smali_classes3/com/sec/android/app/camera/engine/recording/session/RecordingSession.smali
+--- a/smali_classes3/com/sec/android/app/camera/engine/recording/session/RecordingSession.smali
++++ b/smali_classes3/com/sec/android/app/camera/engine/recording/session/RecordingSession.smali
+@@ -2546,6 +2546,28 @@
+ 
+     invoke-virtual {v0, v4}, Landroid/media/MediaRecorder;->setMaxDuration(I)V
+ 
++    # Onigiri: "Save selfies as previewed" on the mirrored cover (see OnigiriCoverMirror).
++    iget-object v0, p0, Lcom/sec/android/app/camera/engine/recording/session/RecordingSession;->mSettingInfo:Lcom/sec/android/app/camera/engine/recording/session/SettingInfo;
++
++    invoke-virtual {v0}, Lcom/sec/android/app/camera/engine/recording/session/SettingInfo;->getSavedAsPreviewed()I
++
++    move-result v0
++
++    invoke-static {v0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->getVideoFlip(I)I
++
++    move-result v0
++
++    if-ltz v0, :cond_onigiri_0
++
++    if-eqz v0, :cond_3
++
++    iget-object v4, p0, Lcom/sec/android/app/camera/engine/recording/session/RecordingSession;->mMediaRecorder:Landroid/media/MediaRecorder;
++
++    invoke-virtual {v4, v0}, Landroid/media/MediaRecorder;->semSetVideoFlip(I)V
++
++    goto :goto_1
++
++    :cond_onigiri_0
+     iget-object v0, p0, Lcom/sec/android/app/camera/engine/recording/session/RecordingSession;->mSettingInfo:Lcom/sec/android/app/camera/engine/recording/session/SettingInfo;
+ 
+     invoke-virtual {v0}, Lcom/sec/android/app/camera/engine/recording/session/SettingInfo;->getFacing()I
+diff --git a/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.smali b/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.smali
+--- a/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.smali
++++ b/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.smali
+@@ -9,8 +9,9 @@
+ # Onigiri: on the cover Camera shoots with the rear lenses (0006), which face the user there. The
+ # preview mirrors like a selfie unless "Mirror cover screen preview" in Camera settings is off.
+ # Upright it takes the stock Flip cover camera's (QuickShot) horizontal preview flip, sideways
+-# the Fold5 rear cam selfie's vertical one. Only the preview flips; face boxes, the other
+-# overlays and the touch focus point follow it the way they do for those two.
++# the Fold5 rear cam selfie's vertical one. Face boxes, the other overlays and the touch focus
++# point follow it the way they do for those two. Pictures and videos save unflipped unless
++# "Save selfies as previewed" is on.
+ 
+ # static fields
+ # The flip the last camera session took: 0 none, 1 vertical, 2 horizontal. Set on the engine
+@@ -281,7 +282,10 @@
+ .method public static applyPreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo;)V
+     .locals 2
+ 
+-    # Only the preview's mirror mode: the sensor and saved pictures and videos stay as they are.
++    # The preview's mirror mode. With "Save selfies as previewed" on, pictures and videos save
++    # mirrored too, the way stock QuickShot does it: a sensor flip on the same axis, which the HAL
++    # keeps off the preview and needs before it honors the pictures' scaler flip
++    # (getScalerFlipMode), plus a MediaRecorder flip for videos (getVideoFlip).
+     invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
+ 
+     sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
+@@ -304,10 +308,156 @@
+     :goto_0
+     invoke-interface {p1, v0}, Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo;->setMirrorMode(Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$MirrorOption;)V
+ 
++    invoke-interface {p0}, Lcom/sec/android/app/camera/interfaces/CameraContext;->getCameraSettings()Lcom/sec/android/app/camera/interfaces/CameraSettings;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isSaveFlipped(Lcom/sec/android/app/camera/interfaces/CameraSettings;)Z
++
++    move-result p0
++
++    if-eqz p0, :cond_1
++
++    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    const/4 v1, 0x1
++
++    if-ne v0, v1, :cond_2
++
++    sget-object v0, Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$SensorFlipMode;->FLIP_MODE_VERTICAL:Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$SensorFlipMode;
++
++    goto :goto_1
++
++    :cond_2
++    sget-object v0, Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$SensorFlipMode;->FLIP_MODE_HORIZONTAL:Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$SensorFlipMode;
++
++    :goto_1
++    invoke-interface {p1, v0}, Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo;->setSensorFlipMode(Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$SensorFlipMode;)V
++
+     :cond_1
+     return-void
+ .end method
+ 
++.method public static getScalerFlipMode(I)I
++    .locals 2
++
++    # The pictures' scaler flip for SAVE_AS_FLIPPED p0 on a mirrored cover: the preview's axis
++    # (1 horizontal, 2 vertical), or 0 when it is off. -1 leaves Camera's own choice.
++    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    if-eqz v0, :cond_1
++
++    const/4 v1, 0x1
++
++    if-ne p0, v1, :cond_0
++
++    rsub-int/lit8 v0, v0, 0x3
++
++    return v0
++
++    :cond_0
++    const/4 v0, 0x0
++
++    return v0
++
++    :cond_1
++    const/4 v0, -0x1
++
++    return v0
++.end method
++
++.method public static getVideoFlip(I)I
++    .locals 2
++
++    # The same for MediaRecorder, which counts the axes like sMirror (stock QuickShot passes 2,
++    # rear cam selfie 1).
++    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    if-eqz v0, :cond_1
++
++    const/4 v1, 0x1
++
++    if-eq p0, v1, :cond_0
++
++    const/4 v0, 0x0
++
++    :cond_0
++    return v0
++
++    :cond_1
++    const/4 v0, -0x1
++
++    return v0
++.end method
++
++.method private static isSaveFlipped(Lcom/sec/android/app/camera/interfaces/CameraSettings;)Z
++    .locals 2
++
++    # A mirrored cover preview with "Save selfies as previewed" on.
++    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    if-eqz v0, :cond_0
++
++    if-eqz p0, :cond_0
++
++    sget-object v0, Lcom/sec/android/app/camera/interfaces/CameraSettings$Key;->SAVE_AS_FLIPPED:Lcom/sec/android/app/camera/interfaces/CameraSettings$Key;
++
++    invoke-interface {p0, v0}, Lcom/sec/android/app/camera/interfaces/CameraSettings;->get(Lcom/sec/android/app/camera/interfaces/CameraSettings$Key;)I
++
++    move-result v0
++
++    const/4 v1, 0x1
++
++    if-ne v0, v1, :cond_0
++
++    return v1
++
++    :cond_0
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
++.method public static adjustSaveOrientation(Lcom/sec/android/app/camera/interfaces/CameraSettings;I)I
++    .locals 2
++
++    # The flip (the sensor's for pictures, MediaRecorder's for videos) lands before a picture or
++    # video is turned upright by p1 degrees. A horizontal flip reads left to right at 0 or 180, a
++    # vertical one at 90 or 270; otherwise it reads top to bottom, and half a turn more makes that
++    # left to right (stock QuickShot and rear cam selfie do the same). Calling it again undoes it.
++    # An unknown orientation (-1) passes through.
++    if-ltz p1, :cond_1
++
++    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isSaveFlipped(Lcom/sec/android/app/camera/interfaces/CameraSettings;)Z
++
++    move-result p0
++
++    if-eqz p0, :cond_1
++
++    rem-int/lit16 v0, p1, 0xb4
++
++    if-nez v0, :cond_0
++
++    const/4 v0, 0x2
++
++    goto :goto_0
++
++    :cond_0
++    const/4 v0, 0x1
++
++    :goto_0
++    sget v1, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    if-eq v0, v1, :cond_1
++
++    add-int/lit16 p1, p1, 0xb4
++
++    rem-int/lit16 p1, p1, 0x168
++
++    :cond_1
++    return p1
++.end method
++
+ .method public static flipTouchPoint(Lcom/sec/android/app/camera/interfaces/CameraContext;Landroid/graphics/Point;)Landroid/graphics/Point;
+     .locals 3
+ 
