@@ -219,6 +219,9 @@ columns, a grid, or a priority grid.
 - **Resize zones**: drag the border or corner of a snapped window. The zone
   line moves with it and the windows next to it follow. Each layout remembers
   its sizes.
+- **Space around zones**: snapped windows keep 8 pixels from each other and
+  from the edges of the screen. Pick anything from 0 to 32 pixels; windows
+  use the new space the next time they are snapped or moved.
 - **Move with the keyboard**: the **Windows key + an arrow** moves the window
   to the zone on that side. Up and Down still maximize and minimize when
   there is no zone that way.

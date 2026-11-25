@@ -31,6 +31,7 @@ public final class OnigiriZoneController implements Consumer<Task> {
     private final ActivityTaskManagerService mAtm;
     private final OnigiriZones mFrom;
     private final OnigiriZones mTo;
+    /** The work area grown by the freeform outline, and the gap between window bounds. */
     private final Rect mFrame;
     private final int mGap;
     private final Task mSkip;
@@ -92,9 +93,11 @@ public final class OnigiriZoneController implements Consumer<Task> {
         if (zones == null) {
             return;
         }
+        int outline = area.getFreeformThickness();
         Rect frame = new Rect();
         area.getStableRect(frame);
-        int gap = area.getFreeformThickness();
+        frame.inset(-outline, -outline);
+        int gap = OnigiriZones.gap(outline);
         for (int i = 0; i < zones.count(); i++) {
             if (activity.packageName.equals(SystemProperties.get("persist.sys.onigiri.dex_zone_app." + i, ""))) {
                 // Undefined: the desktop's freeform, also for an app DeX would reopen maximized.
@@ -138,9 +141,11 @@ public final class OnigiriZoneController implements Consumer<Task> {
         int key = event.getKeyCode();
         int dx = key == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : key == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : 0;
         int dy = key == KeyEvent.KEYCODE_DPAD_UP ? -1 : key == KeyEvent.KEYCODE_DPAD_DOWN ? 1 : 0;
+        int outline = task.getFreeformThickness();
         Rect frame = new Rect();
         task.getDisplayContent().getStableRect(frame);
-        int gap = task.getFreeformThickness();
+        frame.inset(-outline, -outline);
+        int gap = OnigiriZones.gap(outline);
         Rect bounds = task.getBounds();
         int[] span = freeform ? zones.span(frame, gap, bounds) : null;
         if (span == null && dy != 0) {
@@ -202,13 +207,17 @@ public final class OnigiriZoneController implements Consumer<Task> {
             OnigiriZones to = OnigiriZones.named(name);
             if (to != null) {
                 TaskDisplayArea area = display.getDefaultTaskDisplayArea();
-                Rect frame = new Rect();
-                display.getStableRect(frame);
-                int gap = area.getFreeformThickness();
+                int outline = area.getFreeformThickness();
+                Rect shown = new Rect();
+                display.getStableRect(shown);
                 if (from != null) {
-                    area.forAllRootTasks(new OnigiriZoneController(wm.mAtmService, from, to, frame, gap, null));
+                    Rect frame = new Rect(shown);
+                    frame.inset(-outline, -outline);
+                    area.forAllRootTasks(new OnigiriZoneController(wm.mAtmService, from, to, frame,
+                            OnigiriZones.gap(outline), null));
                 }
-                UiThread.getHandler().post(new Flash(wm.mContext, display.mDisplay, to, frame, gap));
+                UiThread.getHandler().post(new Flash(wm.mContext, display.mDisplay, to, shown,
+                        OnigiriZones.space()));
             }
         }
         return true;
@@ -226,9 +235,11 @@ public final class OnigiriZoneController implements Consumer<Task> {
                 || (from = OnigiriZones.current()) == null) {
             return false;
         }
+        int outline = task.getFreeformThickness();
         Rect frame = new Rect();
         task.getDisplayContent().getStableRect(frame);
-        int gap = task.getFreeformThickness();
+        frame.inset(-outline, -outline);
+        int gap = OnigiriZones.gap(outline);
         OnigiriZones to = OnigiriZones.current();
         int min = OnigiriZones.minSize(task.getConfiguration().densityDpi);
         if (to.resize(frame, gap, min, task.getBounds(), new Rect(bounds))) {

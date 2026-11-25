@@ -7,7 +7,12 @@ import android.os.SystemProperties;
  * A DeX zone layout: column and row lines across the work area, and zones that each span the
  * cells between some of them. The layout picked in Settings is in persist.sys.onigiri.dex_zones;
  * dragging the border of a tiled window moves a line, kept per layout in
- * persist.sys.onigiri.dex_zone_lines.<layout>.
+ * persist.sys.onigiri.dex_zone_lines.<layout>. Windows keep a space from each other and from
+ * the edges of the work area, also picked in Settings: persist.sys.onigiri.dex_zone_gap.
+ *
+ * DeX draws a solid outline around the bounds of a freeform window. The methods that take a
+ * frame and a gap work on windows as they show when given the work area and space(), and on
+ * their bounds when given the work area grown by the outline and gap(outline).
  *
  * SystemUI (the drag guide) and system_server (launches, shortcuts, tiled neighbours) each carry
  * a copy of this class: build.sh builds it a second time as com.android.server.wm.
@@ -15,6 +20,7 @@ import android.os.SystemProperties;
 final class OnigiriZones {
     static final String LAYOUT_PROP = "persist.sys.onigiri.dex_zones";
     static final String LINES_PROP = "persist.sys.onigiri.dex_zone_lines.";
+    static final String GAP_PROP = "persist.sys.onigiri.dex_zone_gap";
     /** In shortcut order: Meta+Ctrl+Alt+1 picks NAMES[1]. */
     static final String[] NAMES = {"off", "map_left", "map_right", "columns", "grid", "priority"};
     /** Lines are positions out of UNIT across the work area. */
@@ -54,6 +60,16 @@ final class OnigiriZones {
             zones.load(SystemProperties.get(LINES_PROP + name, ""));
         }
         return zones;
+    }
+
+    /** The space around every tiled window as it shows, in pixels. */
+    static int space() {
+        return Math.max(0, Math.min(64, SystemProperties.getInt(GAP_PROP, 8)));
+    }
+
+    /** The gap between the bounds of tiled windows: the space, and the outline of each. */
+    static int gap(int outline) {
+        return space() + 2 * outline;
     }
 
     /** Zone order is what Settings numbers its zone apps by. */
@@ -139,15 +155,15 @@ final class OnigiriZones {
     }
 
     /**
-     * Pixels of the cells from column line c0 and row line r0 to c1 and r1. Right and bottom
-     * edges on an inner line give up gap like stock DeX halves do: the freeform outline
-     * thickness, so the outlines of neighbours don't overlap.
+     * Pixels of the cells from column line c0 and row line r0 to c1 and r1. The lines run
+     * from gap inside the left and top of frame to its right and bottom, and every right
+     * and bottom edge gives up gap, which leaves gap on all sides of every window.
      */
     void rect(Rect frame, int c0, int r0, int c1, int r1, int gap, Rect out) {
-        out.left = px(frame.left, frame.width(), cols[c0]);
-        out.top = px(frame.top, frame.height(), rows[r0]);
-        out.right = px(frame.left, frame.width(), cols[c1]) - (c1 < cols.length - 1 ? gap : 0);
-        out.bottom = px(frame.top, frame.height(), rows[r1]) - (r1 < rows.length - 1 ? gap : 0);
+        out.left = px(frame.left + gap, frame.width() - gap, cols[c0]);
+        out.top = px(frame.top + gap, frame.height() - gap, rows[r0]);
+        out.right = px(frame.left + gap, frame.width() - gap, cols[c1]) - gap;
+        out.bottom = px(frame.top + gap, frame.height() - gap, rows[r1]) - gap;
     }
 
     void zoneRect(Rect frame, int zone, int gap, Rect out) {
@@ -157,17 +173,16 @@ final class OnigiriZones {
 
     /** The lines a window is tiled between (c0, r0, c1, r1), or null when an edge is on none. */
     int[] span(Rect frame, int gap, Rect bounds) {
-        int c0 = near(cols, frame.left, frame.width(), bounds.left, 0);
-        int r0 = near(rows, frame.top, frame.height(), bounds.top, 0);
-        int c1 = near(cols, frame.left, frame.width(), bounds.right, gap);
-        int r1 = near(rows, frame.top, frame.height(), bounds.bottom, gap);
+        int c0 = near(cols, frame.left + gap, frame.width() - gap, bounds.left);
+        int r0 = near(rows, frame.top + gap, frame.height() - gap, bounds.top);
+        int c1 = near(cols, frame.left + gap, frame.width() - gap, bounds.right + gap);
+        int r1 = near(rows, frame.top + gap, frame.height() - gap, bounds.bottom + gap);
         return c0 < 0 || r0 < 0 || c1 <= c0 || r1 <= r0 ? null : new int[] {c0, r0, c1, r1};
     }
 
-    private static int near(int[] lines, int start, int size, int px, int gap) {
+    private static int near(int[] lines, int start, int size, int px) {
         for (int i = 0; i < lines.length; i++) {
-            int edge = px(start, size, lines[i]) - (i < lines.length - 1 ? gap : 0);
-            if (Math.abs(edge - px) <= NEAR) {
+            if (Math.abs(px(start, size, lines[i]) - px) <= NEAR) {
                 return i;
             }
         }
@@ -185,7 +200,7 @@ final class OnigiriZones {
         return -1;
     }
 
-    /** The zone nearest to a point; the first one wins ties. */
+    /** The zone nearest to a point, the gaps shared out between the zones; the first wins ties. */
     int zoneAt(Rect frame, int x, int y) {
         Rect zone = new Rect();
         int best = 0;
@@ -263,12 +278,14 @@ final class OnigiriZones {
         if (!(left || top || right || bottom)) {
             return false;
         }
-        int width = frame.width();
-        int height = frame.height();
-        to.left = left ? move(cols, span[0], frame.left, width, to.left, 0, min + gap) : from.left;
-        to.top = top ? move(rows, span[1], frame.top, height, to.top, 0, min + gap) : from.top;
-        to.right = right ? move(cols, span[2], frame.left, width, to.right, gap, min + gap) : from.right;
-        to.bottom = bottom ? move(rows, span[3], frame.top, height, to.bottom, gap, min + gap) : from.bottom;
+        int x = frame.left + gap;
+        int y = frame.top + gap;
+        int width = frame.width() - gap;
+        int height = frame.height() - gap;
+        to.left = left ? move(cols, span[0], x, width, to.left, 0, min + gap) : from.left;
+        to.top = top ? move(rows, span[1], y, height, to.top, 0, min + gap) : from.top;
+        to.right = right ? move(cols, span[2], x, width, to.right, gap, min + gap) : from.right;
+        to.bottom = bottom ? move(rows, span[3], y, height, to.bottom, gap, min + gap) : from.bottom;
         return true;
     }
 

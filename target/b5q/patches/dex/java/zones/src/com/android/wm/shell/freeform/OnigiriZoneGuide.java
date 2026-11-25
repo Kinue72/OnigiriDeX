@@ -20,6 +20,7 @@ public final class OnigiriZoneGuide {
 
     // One drag at a time, all on the shell main thread.
     private static OnigiriZones sZones;
+    private static int sSpace;
     private static int sMeta;
     private static int sX;
     private static int sY;
@@ -28,10 +29,11 @@ public final class OnigiriZoneGuide {
     private OnigiriZoneGuide() {
     }
 
-    /** Every touch on a window caption: reads the layout once per drag, and Shift as it goes. */
+    /** Every touch on a window caption: reads the settings once per drag, and Shift as it goes. */
     public static void onTouch(MotionEvent event) {
         if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
             sZones = OnigiriZones.current();
+            sSpace = OnigiriZones.space();
         }
         sMeta = event.getMetaState();
     }
@@ -39,9 +41,9 @@ public final class OnigiriZoneGuide {
     /**
      * First in DexSnappingGuide.show(). With Shift held, a freeform window snaps into the zone
      * under the pointer, or across the zones that meet near it. Returns the snap type, or -1 to
-     * leave this move to the edge guides.
+     * leave this move to the edge guides. outline is the freeform outline thickness.
      */
-    public static int show(DexSnappingGuide guide, float x, float y, TaskInfo task, int gap) {
+    public static int show(DexSnappingGuide guide, float x, float y, TaskInfo task, int outline) {
         sX = Math.round(x);
         sY = Math.round(y);
         OnigiriZones zones = sZones;
@@ -50,64 +52,71 @@ public final class OnigiriZoneGuide {
             // The stock guide for restoring a maximized window draws without the zones behind
             // it. A freeform window that was on a zone either gets guide() next or no guide.
             if (!freeform || guide.mLastSnapType != SNAP_ZONE) {
-                outline(guide, null, 0);
+                outline(guide, null);
             }
             return -1;
         }
         int[] span = zones.spanAt(guide.mVisibleFrame, sX, sY, guide.mBoundaryFinger);
-        zones.rect(guide.mVisibleFrame, span[0], span[1], span[2], span[3], gap, guide.mSnappingBounds);
-        return target(guide, zones, gap);
+        zones.rect(grown(guide.mVisibleFrame, outline), span[0], span[1], span[2], span[3],
+                sSpace + 2 * outline, guide.mSnappingBounds);
+        return target(guide, zones, outline);
     }
 
     /**
      * The pointer is at screen edges (the stock snap type bits): the zone nearest to it instead
      * of the stock half or quarter. The top edge keeps maximize while the layout has two zones.
+     * outline is the freeform outline thickness, which stock halves leave between them.
      */
-    public static int guide(DexSnappingGuide guide, int edges, int gap) {
+    public static int guide(DexSnappingGuide guide, int edges, int outline) {
         OnigiriZones zones = sZones;
         Rect frame = guide.mVisibleFrame;
         if (zones == null || edges == 2 && zones.count() < 3) {
-            outline(guide, null, 0);
-            DexSnappingGuide.calculateGuideSize(edges, gap, frame, guide.mSnappingBounds,
+            outline(guide, null);
+            DexSnappingGuide.calculateGuideSize(edges, outline, frame, guide.mSnappingBounds,
                     guide.mSnappingOtherBounds);
             guide.mView.show(edges, guide.mSnappingBounds);
             return edges;
         }
         int x = (edges & 1) != 0 ? frame.left : (edges & 4) != 0 ? frame.right - 1 : sX;
         int y = (edges & 2) != 0 ? frame.top : (edges & 8) != 0 ? frame.bottom - 1 : sY;
-        zones.zoneRect(frame, zones.zoneAt(frame, x, y), gap, guide.mSnappingBounds);
-        return target(guide, zones, gap);
+        zones.zoneRect(grown(frame, outline), zones.zoneAt(frame, x, y), sSpace + 2 * outline,
+                guide.mSnappingBounds);
+        return target(guide, zones, outline);
     }
 
-    /** Shows mSnappingBounds as the drop target over the outlines of all zones. */
-    private static int target(DexSnappingGuide guide, OnigiriZones zones, int gap) {
+    private static Rect grown(Rect frame, int outline) {
+        Rect grown = new Rect(frame);
+        grown.inset(-outline, -outline);
+        return grown;
+    }
+
+    /** Shows where the window dropped at mSnappingBounds will show, over the outlines of all zones. */
+    private static int target(DexSnappingGuide guide, OnigiriZones zones, int outline) {
         // No docking partner, so no Snap Assist: DeX lays those out for halves only.
         guide.mSnappingOtherBounds.setEmpty();
         // This runs on every pointer move: lay the guide out again only when the target changed.
         if (guide.mLastSnapType != SNAP_ZONE || !guide.mSnappingBounds.equals(sTarget)
                 || guide.mView.getVisibility() != View.VISIBLE) {
             sTarget.set(guide.mSnappingBounds);
-            outline(guide, zones, gap);
-            Rect shown = new Rect(sTarget);
-            shown.inset(guide.mView.mMargin, guide.mView.mMargin);
+            outline(guide, zones);
             // Type 0 makes the guide view use the rect as is; its typed modes assume halves.
-            guide.mView.show(0, shown);
+            guide.mView.show(0, grown(sTarget, outline));
         }
         return SNAP_ZONE;
     }
 
-    private static void outline(DexSnappingGuide guide, OnigiriZones zones, int gap) {
+    private static void outline(DexSnappingGuide guide, OnigiriZones zones) {
         View first = guide.mView.getChildAt(0);
         if (first instanceof OnigiriZoneOverlay) {
             if (zones == null) {
                 first.setVisibility(View.GONE);
             } else {
-                ((OnigiriZoneOverlay) first).show(zones, guide.mVisibleFrame, gap);
+                ((OnigiriZoneOverlay) first).show(zones, guide.mVisibleFrame, sSpace);
             }
         } else if (zones != null) {
             OnigiriZoneOverlay overlay = new OnigiriZoneOverlay(guide.mView.getContext());
             guide.mView.addView(overlay, 0, new FrameLayout.LayoutParams(-1, -1));
-            overlay.show(zones, guide.mVisibleFrame, gap);
+            overlay.show(zones, guide.mVisibleFrame, sSpace);
         }
     }
 
@@ -118,8 +127,9 @@ public final class OnigiriZoneGuide {
      */
     public static void onResize(MultiTaskingTaskPositioner positioner) {
         OnigiriZones zones;
+        int outline = positioner.getFreeformThickness$1();
         if (positioner.mWindowDecoration.mIsDexMode && (zones = OnigiriZones.current()) != null
-                && zones.resize(positioner.mStableBounds, positioner.getFreeformThickness$1(),
+                && zones.resize(grown(positioner.mStableBounds, outline), OnigiriZones.gap(outline),
                         OnigiriZones.minSize(positioner.mWindowDecoration.mTaskInfo.configuration.densityDpi),
                         positioner.mTaskBoundsAtDragStart, positioner.mRepositionTaskBounds)) {
             MultiWindowManager.getInstance().resizeOtherTaskIfNeeded(

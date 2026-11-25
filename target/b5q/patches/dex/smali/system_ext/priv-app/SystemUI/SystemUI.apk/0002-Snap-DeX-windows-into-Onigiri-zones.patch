@@ -54,10 +54,10 @@ index 9840f40..bb9ed32 100644
      :goto_a
 diff --git a/smali_classes3/com/android/wm/shell/freeform/OnigiriZoneGuide.smali b/smali_classes3/com/android/wm/shell/freeform/OnigiriZoneGuide.smali
 new file mode 100644
-index 0000000..422d6e6
+index 0000000..6eb7f3c
 --- /dev/null
 +++ b/smali_classes3/com/android/wm/shell/freeform/OnigiriZoneGuide.smali
-@@ -0,0 +1,519 @@
+@@ -0,0 +1,559 @@
 +.class public final Lcom/android/wm/shell/freeform/OnigiriZoneGuide;
 +.super Ljava/lang/Object;
 +.source "OnigiriZoneGuide.java"
@@ -69,6 +69,8 @@ index 0000000..422d6e6
 +.field private static final WINDOWING_MODE_FREEFORM:I = 0x5
 +
 +.field private static sMeta:I
++
++.field private static sSpace:I
 +
 +.field private static final sTarget:Landroid/graphics/Rect;
 +
@@ -83,7 +85,7 @@ index 0000000..422d6e6
 +.method static constructor <clinit>()V
 +    .locals 1
 +
-+    .line 26
++    .line 27
 +    new-instance v0, Landroid/graphics/Rect;
 +
 +    invoke-direct {v0}, Landroid/graphics/Rect;-><init>()V
@@ -96,19 +98,35 @@ index 0000000..422d6e6
 +.method private constructor <init>()V
 +    .locals 0
 +
-+    .line 28
++    .line 29
 +    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +
 +    return-void
 +.end method
 +
++.method private static grown(Landroid/graphics/Rect;I)Landroid/graphics/Rect;
++    .locals 1
++
++    .line 88
++    new-instance v0, Landroid/graphics/Rect;
++
++    invoke-direct {v0, p0}, Landroid/graphics/Rect;-><init>(Landroid/graphics/Rect;)V
++
++    neg-int p0, p1
++
++    .line 89
++    invoke-virtual {v0, p0, p0}, Landroid/graphics/Rect;->inset(II)V
++
++    return-object v0
++.end method
++
 +.method public static guide(Lcom/android/wm/shell/freeform/DexSnappingGuide;II)I
 +    .locals 4
 +
-+    .line 67
++    .line 71
 +    sget-object v0, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sZones:Lcom/android/wm/shell/freeform/OnigiriZones;
 +
-+    .line 68
++    .line 72
 +    iget-object v1, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mVisibleFrame:Landroid/graphics/Rect;
 +
 +    if-eqz v0, :cond_5
@@ -117,7 +135,7 @@ index 0000000..422d6e6
 +
 +    if-ne p1, v2, :cond_0
 +
-+    .line 69
++    .line 73
 +    invoke-virtual {v0}, Lcom/android/wm/shell/freeform/OnigiriZones;->count()I
 +
 +    move-result v2
@@ -133,7 +151,7 @@ index 0000000..422d6e6
 +
 +    if-eqz v2, :cond_1
 +
-+    .line 76
++    .line 80
 +    iget v2, v1, Landroid/graphics/Rect;->left:I
 +
 +    goto :goto_0
@@ -157,7 +175,7 @@ index 0000000..422d6e6
 +
 +    if-eqz v3, :cond_3
 +
-+    .line 77
++    .line 81
 +    iget p1, v1, Landroid/graphics/Rect;->top:I
 +
 +    goto :goto_1
@@ -176,17 +194,27 @@ index 0000000..422d6e6
 +    :cond_4
 +    sget p1, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sY:I
 +
-+    .line 78
++    .line 82
 +    :goto_1
++    invoke-static {v1, p2}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->grown(Landroid/graphics/Rect;I)Landroid/graphics/Rect;
++
++    move-result-object v3
++
 +    invoke-virtual {v0, v1, v2, p1}, Lcom/android/wm/shell/freeform/OnigiriZones;->zoneAt(Landroid/graphics/Rect;II)I
 +
 +    move-result p1
 +
++    sget v1, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sSpace:I
++
++    mul-int/lit8 v2, p2, 0x2
++
++    add-int/2addr v1, v2
++
 +    iget-object v2, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mSnappingBounds:Landroid/graphics/Rect;
 +
-+    invoke-virtual {v0, v1, p1, p2, v2}, Lcom/android/wm/shell/freeform/OnigiriZones;->zoneRect(Landroid/graphics/Rect;IILandroid/graphics/Rect;)V
++    invoke-virtual {v0, v3, p1, v1, v2}, Lcom/android/wm/shell/freeform/OnigiriZones;->zoneRect(Landroid/graphics/Rect;IILandroid/graphics/Rect;)V
 +
-+    .line 79
++    .line 84
 +    invoke-static {p0, v0, p2}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->target(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;I)I
 +
 +    move-result p0
@@ -197,19 +225,17 @@ index 0000000..422d6e6
 +    :goto_2
 +    const/4 v0, 0x0
 +
-+    const/4 v2, 0x0
++    .line 74
++    invoke-static {p0, v0}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->outline(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;)V
 +
-+    .line 70
-+    invoke-static {p0, v0, v2}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->outline(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;I)V
-+
-+    .line 71
++    .line 75
 +    iget-object v0, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mSnappingBounds:Landroid/graphics/Rect;
 +
 +    iget-object v2, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mSnappingOtherBounds:Landroid/graphics/Rect;
 +
 +    invoke-static {p1, p2, v1, v0, v2}, Lcom/android/wm/shell/freeform/DexSnappingGuide;->calculateGuideSize(IILandroid/graphics/Rect;Landroid/graphics/Rect;Landroid/graphics/Rect;)V
 +
-+    .line 73
++    .line 77
 +    iget-object p2, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mView:Lcom/android/wm/shell/freeform/DexSnappingGuideView;
 +
 +    iget-object p0, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mSnappingBounds:Landroid/graphics/Rect;
@@ -220,27 +246,36 @@ index 0000000..422d6e6
 +.end method
 +
 +.method public static onResize(Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;)V
-+    .locals 7
++    .locals 8
 +
-+    .line 121
-+    iget-object v0, p0, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->mWindowDecoration:Lcom/android/wm/shell/windowdecor/WindowDecoration;
++    .line 130
++    invoke-virtual {p0}, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->getFreeformThickness$1()I
 +
-+    iget-boolean v0, v0, Lcom/android/wm/shell/windowdecor/WindowDecoration;->mIsDexMode:Z
++    move-result v0
 +
-+    if-eqz v0, :cond_0
++    .line 131
++    iget-object v1, p0, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->mWindowDecoration:Lcom/android/wm/shell/windowdecor/WindowDecoration;
 +
-+    invoke-static {}, Lcom/android/wm/shell/freeform/OnigiriZones;->current()Lcom/android/wm/shell/freeform/OnigiriZones;
-+
-+    move-result-object v1
++    iget-boolean v1, v1, Lcom/android/wm/shell/windowdecor/WindowDecoration;->mIsDexMode:Z
 +
 +    if-eqz v1, :cond_0
 +
-+    iget-object v2, p0, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->mStableBounds:Landroid/graphics/Rect;
++    invoke-static {}, Lcom/android/wm/shell/freeform/OnigiriZones;->current()Lcom/android/wm/shell/freeform/OnigiriZones;
 +
-+    .line 122
-+    invoke-virtual {p0}, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->getFreeformThickness$1()I
++    move-result-object v2
 +
-+    move-result v3
++    if-eqz v2, :cond_0
++
++    iget-object v1, p0, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->mStableBounds:Landroid/graphics/Rect;
++
++    .line 132
++    invoke-static {v1, v0}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->grown(Landroid/graphics/Rect;I)Landroid/graphics/Rect;
++
++    move-result-object v3
++
++    invoke-static {v0}, Lcom/android/wm/shell/freeform/OnigiriZones;->gap(I)I
++
++    move-result v4
 +
 +    iget-object v0, p0, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->mWindowDecoration:Lcom/android/wm/shell/windowdecor/WindowDecoration;
 +
@@ -250,23 +285,23 @@ index 0000000..422d6e6
 +
 +    iget v0, v0, Landroid/content/res/Configuration;->densityDpi:I
 +
-+    .line 123
++    .line 133
 +    invoke-static {v0}, Lcom/android/wm/shell/freeform/OnigiriZones;->minSize(I)I
 +
-+    move-result v4
++    move-result v5
 +
-+    iget-object v5, p0, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->mTaskBoundsAtDragStart:Landroid/graphics/Rect;
++    iget-object v6, p0, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->mTaskBoundsAtDragStart:Landroid/graphics/Rect;
 +
-+    iget-object v6, p0, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->mRepositionTaskBounds:Landroid/graphics/Rect;
++    iget-object v7, p0, Lcom/android/wm/shell/windowdecor/MultiTaskingTaskPositioner;->mRepositionTaskBounds:Landroid/graphics/Rect;
 +
-+    .line 122
-+    invoke-virtual/range {v1 .. v6}, Lcom/android/wm/shell/freeform/OnigiriZones;->resize(Landroid/graphics/Rect;IILandroid/graphics/Rect;Landroid/graphics/Rect;)Z
++    .line 132
++    invoke-virtual/range {v2 .. v7}, Lcom/android/wm/shell/freeform/OnigiriZones;->resize(Landroid/graphics/Rect;IILandroid/graphics/Rect;Landroid/graphics/Rect;)Z
 +
 +    move-result v0
 +
 +    if-eqz v0, :cond_0
 +
-+    .line 125
++    .line 135
 +    invoke-static {}, Lcom/samsung/android/multiwindow/MultiWindowManager;->getInstance()Lcom/samsung/android/multiwindow/MultiWindowManager;
 +
 +    move-result-object v0
@@ -288,14 +323,14 @@ index 0000000..422d6e6
 +.method public static onTouch(Landroid/view/MotionEvent;)V
 +    .locals 1
 +
-+    .line 33
++    .line 34
 +    invoke-virtual {p0}, Landroid/view/MotionEvent;->getActionMasked()I
 +
 +    move-result v0
 +
 +    if-nez v0, :cond_0
 +
-+    .line 34
++    .line 35
 +    invoke-static {}, Lcom/android/wm/shell/freeform/OnigiriZones;->current()Lcom/android/wm/shell/freeform/OnigiriZones;
 +
 +    move-result-object v0
@@ -303,6 +338,13 @@ index 0000000..422d6e6
 +    sput-object v0, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sZones:Lcom/android/wm/shell/freeform/OnigiriZones;
 +
 +    .line 36
++    invoke-static {}, Lcom/android/wm/shell/freeform/OnigiriZones;->space()I
++
++    move-result v0
++
++    sput v0, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sSpace:I
++
++    .line 38
 +    :cond_0
 +    invoke-virtual {p0}, Landroid/view/MotionEvent;->getMetaState()I
 +
@@ -313,10 +355,10 @@ index 0000000..422d6e6
 +    return-void
 +.end method
 +
-+.method private static outline(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;I)V
++.method private static outline(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;)V
 +    .locals 5
 +
-+    .line 100
++    .line 109
 +    iget-object v0, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mView:Lcom/android/wm/shell/freeform/DexSnappingGuideView;
 +
 +    const/4 v1, 0x0
@@ -325,7 +367,7 @@ index 0000000..422d6e6
 +
 +    move-result-object v0
 +
-+    .line 101
++    .line 110
 +    instance-of v2, v0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;
 +
 +    if-eqz v2, :cond_1
@@ -334,25 +376,27 @@ index 0000000..422d6e6
 +
 +    const/16 p0, 0x8
 +
-+    .line 103
++    .line 112
 +    invoke-virtual {v0, p0}, Landroid/view/View;->setVisibility(I)V
 +
 +    return-void
 +
-+    .line 105
++    .line 114
 +    :cond_0
 +    check-cast v0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;
 +
 +    iget-object p0, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mVisibleFrame:Landroid/graphics/Rect;
 +
-+    invoke-virtual {v0, p1, p0, p2}, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->show(Lcom/android/wm/shell/freeform/OnigiriZones;Landroid/graphics/Rect;I)V
++    sget v1, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sSpace:I
++
++    invoke-virtual {v0, p1, p0, v1}, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->show(Lcom/android/wm/shell/freeform/OnigiriZones;Landroid/graphics/Rect;I)V
 +
 +    return-void
 +
 +    :cond_1
 +    if-eqz p1, :cond_2
 +
-+    .line 108
++    .line 117
 +    new-instance v0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;
 +
 +    iget-object v2, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mView:Lcom/android/wm/shell/freeform/DexSnappingGuideView;
@@ -363,7 +407,7 @@ index 0000000..422d6e6
 +
 +    invoke-direct {v0, v2}, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;-><init>(Landroid/content/Context;)V
 +
-+    .line 109
++    .line 118
 +    iget-object v2, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mView:Lcom/android/wm/shell/freeform/DexSnappingGuideView;
 +
 +    new-instance v3, Landroid/widget/FrameLayout$LayoutParams;
@@ -374,10 +418,12 @@ index 0000000..422d6e6
 +
 +    invoke-virtual {v2, v0, v1, v3}, Lcom/android/wm/shell/freeform/DexSnappingGuideView;->addView(Landroid/view/View;ILandroid/view/ViewGroup$LayoutParams;)V
 +
-+    .line 110
++    .line 119
 +    iget-object p0, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mVisibleFrame:Landroid/graphics/Rect;
 +
-+    invoke-virtual {v0, p1, p0, p2}, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->show(Lcom/android/wm/shell/freeform/OnigiriZones;Landroid/graphics/Rect;I)V
++    sget v1, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sSpace:I
++
++    invoke-virtual {v0, p1, p0, v1}, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->show(Lcom/android/wm/shell/freeform/OnigiriZones;Landroid/graphics/Rect;I)V
 +
 +    :cond_2
 +    return-void
@@ -386,50 +432,50 @@ index 0000000..422d6e6
 +.method public static show(Lcom/android/wm/shell/freeform/DexSnappingGuide;FFLandroid/app/TaskInfo;I)I
 +    .locals 8
 +
-+    .line 45
++    .line 47
 +    invoke-static {p1}, Ljava/lang/Math;->round(F)I
 +
 +    move-result p1
 +
 +    sput p1, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sX:I
 +
-+    .line 46
++    .line 48
 +    invoke-static {p2}, Ljava/lang/Math;->round(F)I
 +
 +    move-result p1
 +
 +    sput p1, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sY:I
 +
-+    .line 47
++    .line 49
 +    sget-object v0, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sZones:Lcom/android/wm/shell/freeform/OnigiriZones;
 +
-+    .line 48
++    .line 50
 +    invoke-virtual {p3}, Landroid/app/TaskInfo;->getWindowingMode()I
 +
 +    move-result p1
 +
 +    const/4 p2, 0x5
 +
-+    const/4 p3, 0x1
++    const/4 p3, 0x0
 +
-+    const/4 v1, 0x0
++    const/4 v1, 0x1
 +
 +    if-ne p1, p2, :cond_0
 +
-+    move p1, p3
++    move p1, v1
 +
 +    goto :goto_0
 +
 +    :cond_0
-+    move p1, v1
++    move p1, p3
 +
 +    :goto_0
 +    if-eqz v0, :cond_2
 +
-+    .line 49
++    .line 51
 +    sget p2, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sMeta:I
 +
-+    and-int/2addr p2, p3
++    and-int/2addr p2, v1
 +
 +    if-eqz p2, :cond_2
 +
@@ -437,7 +483,7 @@ index 0000000..422d6e6
 +
 +    goto :goto_1
 +
-+    .line 57
++    .line 59
 +    :cond_1
 +    iget-object p1, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mVisibleFrame:Landroid/graphics/Rect;
 +
@@ -451,31 +497,39 @@ index 0000000..422d6e6
 +
 +    move-result-object p1
 +
-+    move p2, v1
++    .line 60
++    iget-object p2, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mVisibleFrame:Landroid/graphics/Rect;
 +
-+    .line 58
-+    iget-object v1, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mVisibleFrame:Landroid/graphics/Rect;
++    invoke-static {p2, p4}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->grown(Landroid/graphics/Rect;I)Landroid/graphics/Rect;
 +
-+    aget v2, p1, p2
++    move-result-object p2
 +
-+    aget v3, p1, p3
++    aget v2, p1, p3
 +
-+    const/4 p2, 0x2
++    aget v3, p1, v1
 +
-+    aget v4, p1, p2
++    const/4 p3, 0x2
 +
-+    const/4 p2, 0x3
++    aget v4, p1, p3
 +
-+    aget v5, p1, p2
++    const/4 p3, 0x3
++
++    aget v5, p1, p3
++
++    sget p1, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sSpace:I
++
++    mul-int/lit8 p3, p4, 0x2
++
++    add-int v6, p1, p3
 +
 +    iget-object v7, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mSnappingBounds:Landroid/graphics/Rect;
 +
-+    move v6, p4
++    move-object v1, p2
 +
 +    invoke-virtual/range {v0 .. v7}, Lcom/android/wm/shell/freeform/OnigiriZones;->rect(Landroid/graphics/Rect;IIIIILandroid/graphics/Rect;)V
 +
-+    .line 59
-+    invoke-static {p0, v0, v6}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->target(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;I)I
++    .line 62
++    invoke-static {p0, v0, p4}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->target(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;I)I
 +
 +    move-result p0
 +
@@ -483,22 +537,20 @@ index 0000000..422d6e6
 +
 +    :cond_2
 +    :goto_1
-+    move p2, v1
-+
 +    if-eqz p1, :cond_3
 +
-+    .line 52
++    .line 54
 +    iget p1, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mLastSnapType:I
 +
-+    const/16 p3, 0x10
++    const/16 p2, 0x10
 +
-+    if-eq p1, p3, :cond_4
++    if-eq p1, p2, :cond_4
 +
 +    :cond_3
 +    const/4 p1, 0x0
 +
-+    .line 53
-+    invoke-static {p0, p1, p2}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->outline(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;I)V
++    .line 55
++    invoke-static {p0, p1}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->outline(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;)V
 +
 +    :cond_4
 +    const/4 p0, -0x1
@@ -509,12 +561,12 @@ index 0000000..422d6e6
 +.method private static target(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;I)I
 +    .locals 3
 +
-+    .line 85
++    .line 96
 +    iget-object v0, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mSnappingOtherBounds:Landroid/graphics/Rect;
 +
 +    invoke-virtual {v0}, Landroid/graphics/Rect;->setEmpty()V
 +
-+    .line 87
++    .line 98
 +    iget v0, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mLastSnapType:I
 +
 +    const/16 v1, 0x10
@@ -533,14 +585,14 @@ index 0000000..422d6e6
 +
 +    iget-object v0, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mView:Lcom/android/wm/shell/freeform/DexSnappingGuideView;
 +
-+    .line 88
++    .line 99
 +    invoke-virtual {v0}, Lcom/android/wm/shell/freeform/DexSnappingGuideView;->getVisibility()I
 +
 +    move-result v0
 +
 +    if-eqz v0, :cond_1
 +
-+    .line 89
++    .line 100
 +    :cond_0
 +    sget-object v0, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->sTarget:Landroid/graphics/Rect;
 +
@@ -548,41 +600,29 @@ index 0000000..422d6e6
 +
 +    invoke-virtual {v0, v2}, Landroid/graphics/Rect;->set(Landroid/graphics/Rect;)V
 +
-+    .line 90
-+    invoke-static {p0, p1, p2}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->outline(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;I)V
++    .line 101
++    invoke-static {p0, p1}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->outline(Lcom/android/wm/shell/freeform/DexSnappingGuide;Lcom/android/wm/shell/freeform/OnigiriZones;)V
 +
-+    .line 91
-+    new-instance p1, Landroid/graphics/Rect;
-+
-+    invoke-direct {p1, v0}, Landroid/graphics/Rect;-><init>(Landroid/graphics/Rect;)V
-+
-+    .line 92
-+    iget-object p2, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mView:Lcom/android/wm/shell/freeform/DexSnappingGuideView;
-+
-+    iget p2, p2, Lcom/android/wm/shell/freeform/DexSnappingGuideView;->mMargin:I
-+
-+    iget-object v0, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mView:Lcom/android/wm/shell/freeform/DexSnappingGuideView;
-+
-+    iget v0, v0, Lcom/android/wm/shell/freeform/DexSnappingGuideView;->mMargin:I
-+
-+    invoke-virtual {p1, p2, v0}, Landroid/graphics/Rect;->inset(II)V
-+
-+    .line 94
++    .line 103
 +    iget-object p0, p0, Lcom/android/wm/shell/freeform/DexSnappingGuide;->mView:Lcom/android/wm/shell/freeform/DexSnappingGuideView;
 +
-+    const/4 p2, 0x0
++    const/4 p1, 0x0
 +
-+    invoke-virtual {p0, p2, p1}, Lcom/android/wm/shell/freeform/DexSnappingGuideView;->show(ILandroid/graphics/Rect;)V
++    invoke-static {v0, p2}, Lcom/android/wm/shell/freeform/OnigiriZoneGuide;->grown(Landroid/graphics/Rect;I)Landroid/graphics/Rect;
++
++    move-result-object p2
++
++    invoke-virtual {p0, p1, p2}, Lcom/android/wm/shell/freeform/DexSnappingGuideView;->show(ILandroid/graphics/Rect;)V
 +
 +    :cond_1
 +    return v1
 +.end method
 diff --git a/smali_classes3/com/android/wm/shell/freeform/OnigiriZoneOverlay.smali b/smali_classes3/com/android/wm/shell/freeform/OnigiriZoneOverlay.smali
 new file mode 100644
-index 0000000..2b5e20a
+index 0000000..8ebe613
 --- /dev/null
 +++ b/smali_classes3/com/android/wm/shell/freeform/OnigiriZoneOverlay.smali
-@@ -0,0 +1,274 @@
+@@ -0,0 +1,254 @@
 +.class final Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;
 +.super Landroid/view/View;
 +.source "OnigiriZoneOverlay.java"
@@ -594,8 +634,6 @@ index 0000000..2b5e20a
 +.field private final mFrame:Landroid/graphics/Rect;
 +
 +.field private mGap:I
-+
-+.field private final mMargin:I
 +
 +.field private final mRadius:F
 +
@@ -613,14 +651,14 @@ index 0000000..2b5e20a
 +    .line 25
 +    invoke-direct {p0, p1}, Landroid/view/View;-><init>(Landroid/content/Context;)V
 +
-+    .line 15
++    .line 16
 +    new-instance v0, Landroid/graphics/Paint;
 +
 +    invoke-direct {v0}, Landroid/graphics/Paint;-><init>()V
 +
 +    iput-object v0, p0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mFill:Landroid/graphics/Paint;
 +
-+    .line 16
++    .line 17
 +    new-instance v1, Landroid/graphics/Paint;
 +
 +    const/4 v2, 0x1
@@ -629,14 +667,14 @@ index 0000000..2b5e20a
 +
 +    iput-object v1, p0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mStroke:Landroid/graphics/Paint;
 +
-+    .line 17
++    .line 18
 +    new-instance v2, Landroid/graphics/Rect;
 +
 +    invoke-direct {v2}, Landroid/graphics/Rect;-><init>()V
 +
 +    iput-object v2, p0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mFrame:Landroid/graphics/Rect;
 +
-+    .line 18
++    .line 19
 +    new-instance v2, Landroid/graphics/Rect;
 +
 +    invoke-direct {v2}, Landroid/graphics/Rect;-><init>()V
@@ -661,33 +699,22 @@ index 0000000..2b5e20a
 +    .line 28
 +    iput v2, p0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mRadius:F
 +
-+    const/high16 v2, 0x41200000    # 10.0f
-+
-+    mul-float/2addr v2, p1
-+
-+    .line 29
-+    invoke-static {v2}, Ljava/lang/Math;->round(F)I
-+
-+    move-result v2
-+
-+    iput v2, p0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mMargin:I
-+
 +    const p0, 0x14252525
 +
-+    .line 30
++    .line 29
 +    invoke-virtual {v0, p0}, Landroid/graphics/Paint;->setColor(I)V
 +
 +    const p0, 0x66fafafa
 +
-+    .line 31
++    .line 30
 +    invoke-virtual {v1, p0}, Landroid/graphics/Paint;->setColor(I)V
 +
-+    .line 32
++    .line 31
 +    sget-object p0, Landroid/graphics/Paint$Style;->STROKE:Landroid/graphics/Paint$Style;
 +
 +    invoke-virtual {v1, p0}, Landroid/graphics/Paint;->setStyle(Landroid/graphics/Paint$Style;)V
 +
-+    .line 33
++    .line 32
 +    invoke-virtual {v1, p1}, Landroid/graphics/Paint;->setStrokeWidth(F)V
 +
 +    return-void
@@ -702,7 +729,7 @@ index 0000000..2b5e20a
 +
 +    const/4 v1, 0x0
 +
-+    .line 49
++    .line 51
 +    :goto_0
 +    iget-object v2, v0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mZones:Lcom/android/wm/shell/freeform/OnigiriZones;
 +
@@ -714,7 +741,7 @@ index 0000000..2b5e20a
 +
 +    if-ge v1, v2, :cond_0
 +
-+    .line 50
++    .line 52
 +    iget-object v2, v0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mZones:Lcom/android/wm/shell/freeform/OnigiriZones;
 +
 +    iget-object v3, v0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mFrame:Landroid/graphics/Rect;
@@ -725,14 +752,7 @@ index 0000000..2b5e20a
 +
 +    invoke-virtual {v2, v3, v1, v4, v5}, Lcom/android/wm/shell/freeform/OnigiriZones;->zoneRect(Landroid/graphics/Rect;IILandroid/graphics/Rect;)V
 +
-+    .line 51
-+    iget-object v2, v0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mZone:Landroid/graphics/Rect;
-+
-+    iget v3, v0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mMargin:I
-+
-+    invoke-virtual {v2, v3, v3}, Landroid/graphics/Rect;->inset(II)V
-+
-+    .line 52
++    .line 53
 +    iget-object v2, v0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mZone:Landroid/graphics/Rect;
 +
 +    iget v2, v2, Landroid/graphics/Rect;->left:I
@@ -767,7 +787,7 @@ index 0000000..2b5e20a
 +
 +    invoke-virtual/range {v3 .. v10}, Landroid/graphics/Canvas;->drawRoundRect(FFFFFFLandroid/graphics/Paint;)V
 +
-+    .line 53
++    .line 54
 +    iget-object v2, v0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mZone:Landroid/graphics/Rect;
 +
 +    iget v2, v2, Landroid/graphics/Rect;->left:I
@@ -817,7 +837,7 @@ index 0000000..2b5e20a
 +.method show(Lcom/android/wm/shell/freeform/OnigiriZones;Landroid/graphics/Rect;I)V
 +    .locals 1
 +
-+    .line 38
++    .line 40
 +    iget-object v0, p0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mZones:Lcom/android/wm/shell/freeform/OnigiriZones;
 +
 +    if-ne p1, v0, :cond_0
@@ -834,41 +854,43 @@ index 0000000..2b5e20a
 +
 +    if-eq p3, v0, :cond_1
 +
-+    .line 39
++    .line 41
 +    :cond_0
 +    iput-object p1, p0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mZones:Lcom/android/wm/shell/freeform/OnigiriZones;
 +
-+    .line 40
++    .line 42
 +    iget-object p1, p0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mFrame:Landroid/graphics/Rect;
 +
 +    invoke-virtual {p1, p2}, Landroid/graphics/Rect;->set(Landroid/graphics/Rect;)V
 +
-+    .line 41
++    .line 43
 +    iput p3, p0, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->mGap:I
 +
-+    .line 42
++    .line 44
 +    invoke-virtual {p0}, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->invalidate()V
 +
 +    :cond_1
 +    const/4 p1, 0x0
 +
-+    .line 44
++    .line 46
 +    invoke-virtual {p0, p1}, Lcom/android/wm/shell/freeform/OnigiriZoneOverlay;->setVisibility(I)V
 +
 +    return-void
 +.end method
 diff --git a/smali_classes3/com/android/wm/shell/freeform/OnigiriZones.smali b/smali_classes3/com/android/wm/shell/freeform/OnigiriZones.smali
 new file mode 100644
-index 0000000..1c99002
+index 0000000..d807aea
 --- /dev/null
 +++ b/smali_classes3/com/android/wm/shell/freeform/OnigiriZones.smali
-@@ -0,0 +1,2021 @@
+@@ -0,0 +1,2062 @@
 +.class final Lcom/android/wm/shell/freeform/OnigiriZones;
 +.super Ljava/lang/Object;
 +.source "OnigiriZones.java"
 +
 +
 +# static fields
++.field static final GAP_PROP:Ljava/lang/String; = "persist.sys.onigiri.dex_zone_gap"
++
 +.field static final LAYOUT_PROP:Ljava/lang/String; = "persist.sys.onigiri.dex_zones"
 +
 +.field static final LINES_PROP:Ljava/lang/String; = "persist.sys.onigiri.dex_zone_lines."
@@ -900,7 +922,7 @@ index 0000000..1c99002
 +.method static constructor <clinit>()V
 +    .locals 6
 +
-+    .line 19
++    .line 25
 +    const-string v4, "grid"
 +
 +    const-string v5, "priority"
@@ -925,22 +947,22 @@ index 0000000..1c99002
 +.method private constructor <init>(Ljava/lang/String;I[I[I[I)V
 +    .locals 0
 +
-+    .line 38
++    .line 44
 +    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +
-+    .line 39
++    .line 45
 +    iput-object p1, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->name:Ljava/lang/String;
 +
-+    .line 40
++    .line 46
 +    iput p2, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->main:I
 +
-+    .line 41
++    .line 47
 +    iput-object p3, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
-+    .line 42
++    .line 48
 +    iput-object p4, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
-+    .line 43
++    .line 49
 +    iput-object p5, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cells:[I
 +
 +    return-void
@@ -949,7 +971,7 @@ index 0000000..1c99002
 +.method static current()Lcom/android/wm/shell/freeform/OnigiriZones;
 +    .locals 2
 +
-+    .line 48
++    .line 54
 +    const-string v0, "persist.sys.onigiri.dex_zones"
 +
 +    const-string v1, "off"
@@ -965,6 +987,21 @@ index 0000000..1c99002
 +    return-object v0
 +.end method
 +
++.method static gap(I)I
++    .locals 1
++
++    .line 72
++    invoke-static {}, Lcom/android/wm/shell/freeform/OnigiriZones;->space()I
++
++    move-result v0
++
++    mul-int/lit8 p0, p0, 0x2
++
++    add-int/2addr v0, p0
++
++    return v0
++.end method
++
 +.method private static line(III)I
 +    .locals 4
 +
@@ -976,7 +1013,7 @@ index 0000000..1c99002
 +
 +    mul-long/2addr v0, v2
 +
-+    .line 138
++    .line 154
 +    div-int/lit8 p0, p1, 0x2
 +
 +    int-to-long v2, p0
@@ -995,7 +1032,7 @@ index 0000000..1c99002
 +.method private load(Ljava/lang/String;)V
 +    .locals 4
 +
-+    .line 96
++    .line 112
 +    const-string v0, "/"
 +
 +    const/4 v1, -0x1
@@ -1004,7 +1041,7 @@ index 0000000..1c99002
 +
 +    move-result-object p1
 +
-+    .line 97
++    .line 113
 +    array-length v0, p1
 +
 +    const/4 v1, 0x2
@@ -1013,7 +1050,7 @@ index 0000000..1c99002
 +
 +    goto :goto_0
 +
-+    .line 100
++    .line 116
 +    :cond_0
 +    iget-object v0, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
@@ -1025,7 +1062,7 @@ index 0000000..1c99002
 +
 +    move-result-object v0
 +
-+    .line 101
++    .line 117
 +    iget-object v2, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
 +    const/4 v3, 0x1
@@ -1040,14 +1077,14 @@ index 0000000..1c99002
 +
 +    if-eqz p1, :cond_1
 +
-+    .line 103
++    .line 119
 +    iget-object v2, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
 +    array-length v3, v2
 +
 +    invoke-static {v0, v1, v2, v1, v3}, Ljava/lang/System;->arraycopy(Ljava/lang/Object;ILjava/lang/Object;II)V
 +
-+    .line 104
++    .line 120
 +    iget-object p0, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
 +    array-length v0, p0
@@ -1064,7 +1101,7 @@ index 0000000..1c99002
 +
 +    mul-int/lit16 p0, p0, 0xdc
 +
-+    .line 244
++    .line 259
 +    div-int/lit16 p0, p0, 0xa0
 +
 +    return p0
@@ -1089,7 +1126,7 @@ index 0000000..1c99002
 +
 +    sub-long/2addr v0, v4
 +
-+    .line 282
++    .line 299
 +    div-long/2addr v0, v2
 +
 +    long-to-int p6, v0
@@ -1102,14 +1139,14 @@ index 0000000..1c99002
 +
 +    add-int/lit8 v0, p1, -0x1
 +
-+    .line 283
++    .line 300
 +    aget v0, p0, v0
 +
 +    add-int/2addr v0, p6
 +
 +    add-int/lit8 v1, p1, 0x1
 +
-+    .line 284
++    .line 301
 +    aget v1, p0, v1
 +
 +    sub-int/2addr v1, p6
@@ -1118,7 +1155,7 @@ index 0000000..1c99002
 +
 +    add-int/2addr p4, p5
 +
-+    .line 286
++    .line 303
 +    invoke-static {p2, p3, p4}, Lcom/android/wm/shell/freeform/OnigiriZones;->line(III)I
 +
 +    move-result p4
@@ -1133,7 +1170,7 @@ index 0000000..1c99002
 +
 +    aput p4, p0, p1
 +
-+    .line 288
++    .line 305
 +    :cond_0
 +    aget p0, p0, p1
 +
@@ -1149,14 +1186,14 @@ index 0000000..1c99002
 +.method static named(Ljava/lang/String;)Lcom/android/wm/shell/freeform/OnigiriZones;
 +    .locals 3
 +
-+    .line 52
++    .line 58
 +    invoke-static {p0}, Lcom/android/wm/shell/freeform/OnigiriZones;->template(Ljava/lang/String;)Lcom/android/wm/shell/freeform/OnigiriZones;
 +
 +    move-result-object v0
 +
 +    if-eqz v0, :cond_0
 +
-+    .line 54
++    .line 60
 +    new-instance v1, Ljava/lang/StringBuilder;
 +
 +    const-string v2, "persist.sys.onigiri.dex_zone_lines."
@@ -1181,61 +1218,42 @@ index 0000000..1c99002
 +    return-object v0
 +.end method
 +
-+.method private static near([IIIII)I
-+    .locals 4
++.method private static near([IIII)I
++    .locals 3
 +
 +    const/4 v0, 0x0
 +
-+    move v1, v0
-+
-+    .line 168
++    .line 184
 +    :goto_0
-+    array-length v2, p0
++    array-length v1, p0
 +
-+    if-ge v1, v2, :cond_2
++    if-ge v0, v1, :cond_1
 +
-+    .line 169
-+    aget v2, p0, v1
++    .line 185
++    aget v1, p0, v0
 +
-+    invoke-static {p1, p2, v2}, Lcom/android/wm/shell/freeform/OnigiriZones;->px(III)I
++    invoke-static {p1, p2, v1}, Lcom/android/wm/shell/freeform/OnigiriZones;->px(III)I
 +
-+    move-result v2
++    move-result v1
 +
-+    array-length v3, p0
++    sub-int/2addr v1, p3
 +
-+    add-int/lit8 v3, v3, -0x1
++    invoke-static {v1}, Ljava/lang/Math;->abs(I)I
 +
-+    if-ge v1, v3, :cond_0
++    move-result v1
 +
-+    move v3, p4
++    const/16 v2, 0x20
 +
-+    goto :goto_1
++    if-gt v1, v2, :cond_0
++
++    return v0
 +
 +    :cond_0
-+    move v3, v0
-+
-+    :goto_1
-+    sub-int/2addr v2, v3
-+
-+    sub-int/2addr v2, p3
-+
-+    .line 170
-+    invoke-static {v2}, Ljava/lang/Math;->abs(I)I
-+
-+    move-result v2
-+
-+    const/16 v3, 0x20
-+
-+    if-gt v2, v3, :cond_1
-+
-+    return v1
-+
-+    :cond_1
-+    add-int/lit8 v1, v1, 0x1
++    add-int/lit8 v0, v0, 0x1
 +
 +    goto :goto_0
 +
-+    :cond_2
++    :cond_1
 +    const/4 p0, -0x1
 +
 +    return p0
@@ -1244,7 +1262,7 @@ index 0000000..1c99002
 +.method private static parse([ILjava/lang/String;)[I
 +    .locals 4
 +
-+    .line 109
++    .line 125
 +    invoke-virtual {p1}, Ljava/lang/String;->isEmpty()Z
 +
 +    move-result v0
@@ -1266,7 +1284,7 @@ index 0000000..1c99002
 +
 +    move-result-object p1
 +
-+    .line 110
++    .line 126
 +    :goto_0
 +    array-length v0, p1
 +
@@ -1280,7 +1298,7 @@ index 0000000..1c99002
 +
 +    return-object v3
 +
-+    .line 113
++    .line 129
 +    :cond_1
 +    invoke-virtual {p0}, [I->clone()Ljava/lang/Object;
 +
@@ -1288,7 +1306,7 @@ index 0000000..1c99002
 +
 +    check-cast p0, [I
 +
-+    .line 115
++    .line 131
 +    :goto_1
 +    :try_start_0
 +    array-length v0, p1
@@ -1297,7 +1315,7 @@ index 0000000..1c99002
 +
 +    add-int/lit8 v0, v1, 0x1
 +
-+    .line 116
++    .line 132
 +    aget-object v1, p1, v1
 +
 +    invoke-static {v1}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
@@ -1315,13 +1333,13 @@ index 0000000..1c99002
 +    :cond_2
 +    const/4 p1, 0x1
 +
-+    .line 121
++    .line 137
 +    :goto_2
 +    array-length v0, p0
 +
 +    if-ge p1, v0, :cond_4
 +
-+    .line 122
++    .line 138
 +    aget v0, p0, p1
 +
 +    add-int/lit8 v1, p1, -0x1
@@ -1363,7 +1381,7 @@ index 0000000..1c99002
 +
 +    const-wide/16 p1, 0x2ee0
 +
-+    .line 134
++    .line 150
 +    div-long/2addr v0, p1
 +
 +    long-to-int p1, v0
@@ -1373,6 +1391,33 @@ index 0000000..1c99002
 +    return p0
 +.end method
 +
++.method static space()I
++    .locals 2
++
++    .line 67
++    const-string v0, "persist.sys.onigiri.dex_zone_gap"
++
++    const/16 v1, 0x8
++
++    invoke-static {v0, v1}, Landroid/os/SystemProperties;->getInt(Ljava/lang/String;I)I
++
++    move-result v0
++
++    const/16 v1, 0x40
++
++    invoke-static {v1, v0}, Ljava/lang/Math;->min(II)I
++
++    move-result v0
++
++    const/4 v1, 0x0
++
++    invoke-static {v1, v0}, Ljava/lang/Math;->max(II)I
++
++    move-result v0
++
++    return v0
++.end method
++
 +.method static template(Ljava/lang/String;)Lcom/android/wm/shell/freeform/OnigiriZones;
 +    .locals 9
 +
@@ -1380,26 +1425,26 @@ index 0000000..1c99002
 +
 +    const/16 v1, 0x2ee0
 +
-+    .line 61
++    .line 77
 +    filled-new-array {v0, v1}, [I
 +
 +    move-result-object v6
 +
 +    const/16 v2, 0x8
 +
-+    .line 62
++    .line 78
 +    new-array v7, v2, [I
 +
 +    fill-array-data v7, :array_0
 +
 +    const/16 v2, 0xc
 +
-+    .line 63
++    .line 79
 +    new-array v2, v2, [I
 +
 +    fill-array-data v2, :array_1
 +
-+    .line 64
++    .line 80
 +    invoke-virtual {p0}, Ljava/lang/String;->hashCode()I
 +
 +    invoke-virtual {p0}, Ljava/lang/String;->hashCode()I
@@ -1501,7 +1546,7 @@ index 0000000..1c99002
 +
 +    return-object p0
 +
-+    .line 68
++    .line 84
 +    :pswitch_0
 +    new-instance v2, Lcom/android/wm/shell/freeform/OnigiriZones;
 +
@@ -1522,7 +1567,7 @@ index 0000000..1c99002
 +
 +    move-object v7, v2
 +
-+    .line 70
++    .line 86
 +    new-instance v2, Lcom/android/wm/shell/freeform/OnigiriZones;
 +
 +    move p0, v3
@@ -1542,7 +1587,7 @@ index 0000000..1c99002
 +    :pswitch_2
 +    move-object v3, p0
 +
-+    .line 66
++    .line 82
 +    new-instance v2, Lcom/android/wm/shell/freeform/OnigiriZones;
 +
 +    const/4 v4, 0x1
@@ -1558,7 +1603,7 @@ index 0000000..1c99002
 +    :pswitch_3
 +    move-object v3, p0
 +
-+    .line 72
++    .line 88
 +    new-instance p0, Lcom/android/wm/shell/freeform/OnigiriZones;
 +
 +    const/16 v2, 0x1770
@@ -1592,7 +1637,7 @@ index 0000000..1c99002
 +
 +    move-object v7, v2
 +
-+    .line 75
++    .line 91
 +    new-instance v2, Lcom/android/wm/shell/freeform/OnigiriZones;
 +
 +    const/16 p0, 0xbb8
@@ -1693,7 +1738,7 @@ index 0000000..1c99002
 +
 +    move v3, v2
 +
-+    .line 227
++    .line 242
 +    :goto_0
 +    iget-object v4, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cells:[I
 +
@@ -1707,7 +1752,7 @@ index 0000000..1c99002
 +
 +    add-int/lit8 v6, v2, 0x2
 +
-+    .line 228
++    .line 243
 +    aget v6, v4, v6
 +
 +    aget v7, v4, p1
@@ -1742,7 +1787,7 @@ index 0000000..1c99002
 +
 +    add-int/lit8 v6, v2, 0x3
 +
-+    .line 229
++    .line 244
 +    aget v6, v4, v6
 +
 +    add-int/lit8 v7, p1, 0x1
@@ -1769,7 +1814,7 @@ index 0000000..1c99002
 +    :goto_2
 +    if-eqz p2, :cond_4
 +
-+    .line 230
++    .line 245
 +    iget-object v7, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
 +    goto :goto_3
@@ -1790,7 +1835,7 @@ index 0000000..1c99002
 +
 +    add-int/lit8 v9, v8, 0x2
 +
-+    .line 232
++    .line 247
 +    aget v9, v4, v9
 +
 +    aget v9, v7, v9
@@ -1817,7 +1862,7 @@ index 0000000..1c99002
 +
 +    aget v5, v7, v5
 +
-+    .line 233
++    .line 248
 +    invoke-static {v8, v5}, Ljava/lang/Math;->max(II)I
 +
 +    move-result v5
@@ -1828,7 +1873,7 @@ index 0000000..1c99002
 +
 +    if-le v4, v3, :cond_6
 +
-+    .line 236
++    .line 251
 +    div-int/lit8 v0, v2, 0x4
 +
 +    move v3, v4
@@ -1845,7 +1890,7 @@ index 0000000..1c99002
 +.method count()I
 +    .locals 0
 +
-+    .line 130
++    .line 146
 +    iget-object p0, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cells:[I
 +
 +    array-length p0, p0
@@ -1858,7 +1903,7 @@ index 0000000..1c99002
 +.method fit(Lcom/android/wm/shell/freeform/OnigiriZones;Landroid/graphics/Rect;ILandroid/graphics/Rect;)Z
 +    .locals 11
 +
-+    .line 299
++    .line 316
 +    invoke-virtual {p0, p2, p3, p4}, Lcom/android/wm/shell/freeform/OnigiriZones;->span(Landroid/graphics/Rect;ILandroid/graphics/Rect;)[I
 +
 +    move-result-object v0
@@ -1869,13 +1914,13 @@ index 0000000..1c99002
 +
 +    return v1
 +
-+    .line 303
++    .line 320
 +    :cond_0
 +    new-instance v9, Landroid/graphics/Rect;
 +
 +    invoke-direct {v9}, Landroid/graphics/Rect;-><init>()V
 +
-+    .line 304
++    .line 321
 +    iget-object v2, p1, Lcom/android/wm/shell/freeform/OnigiriZones;->name:Ljava/lang/String;
 +
 +    iget-object v3, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->name:Ljava/lang/String;
@@ -1888,7 +1933,7 @@ index 0000000..1c99002
 +
 +    if-eqz v2, :cond_1
 +
-+    .line 305
++    .line 322
 +    aget v4, v0, v1
 +
 +    aget v5, v0, v10
@@ -1918,21 +1963,21 @@ index 0000000..1c99002
 +
 +    move v8, p3
 +
-+    .line 307
++    .line 324
 +    invoke-virtual {p0, v0}, Lcom/android/wm/shell/freeform/OnigiriZones;->zoneOf([I)I
 +
 +    move-result p0
 +
 +    if-ltz p0, :cond_2
 +
-+    .line 308
++    .line 325
 +    invoke-virtual {v2}, Lcom/android/wm/shell/freeform/OnigiriZones;->count()I
 +
 +    move-result p1
 +
 +    if-lt p0, p1, :cond_3
 +
-+    .line 309
++    .line 326
 +    :cond_2
 +    invoke-virtual {p4}, Landroid/graphics/Rect;->centerX()I
 +
@@ -1946,11 +1991,11 @@ index 0000000..1c99002
 +
 +    move-result p0
 +
-+    .line 311
++    .line 328
 +    :cond_3
 +    invoke-virtual {v2, v3, p0, v8, v9}, Lcom/android/wm/shell/freeform/OnigiriZones;->zoneRect(Landroid/graphics/Rect;IILandroid/graphics/Rect;)V
 +
-+    .line 313
++    .line 330
 +    :goto_0
 +    invoke-virtual {v9, p4}, Landroid/graphics/Rect;->equals(Ljava/lang/Object;)Z
 +
@@ -1960,7 +2005,7 @@ index 0000000..1c99002
 +
 +    return v1
 +
-+    .line 316
++    .line 333
 +    :cond_4
 +    invoke-virtual {p4, v9}, Landroid/graphics/Rect;->set(Landroid/graphics/Rect;)V
 +
@@ -1970,7 +2015,7 @@ index 0000000..1c99002
 +.method lines()Ljava/lang/String;
 +    .locals 6
 +
-+    .line 83
++    .line 99
 +    new-instance v0, Ljava/lang/StringBuilder;
 +
 +    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
@@ -1979,7 +2024,7 @@ index 0000000..1c99002
 +
 +    move v2, v1
 +
-+    .line 84
++    .line 100
 +    :goto_0
 +    iget-object v3, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
@@ -2000,7 +2045,7 @@ index 0000000..1c99002
 +    :cond_0
 +    move-object v4, v5
 +
-+    .line 85
++    .line 101
 +    :goto_1
 +    invoke-virtual {v0, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
@@ -2017,12 +2062,12 @@ index 0000000..1c99002
 +    :cond_1
 +    const/16 v2, 0x2f
 +
-+    .line 87
++    .line 103
 +    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(C)Ljava/lang/StringBuilder;
 +
 +    move v2, v1
 +
-+    .line 88
++    .line 104
 +    :goto_2
 +    iget-object v3, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
@@ -2041,7 +2086,7 @@ index 0000000..1c99002
 +    :cond_2
 +    move-object v3, v5
 +
-+    .line 89
++    .line 105
 +    :goto_3
 +    invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
@@ -2055,7 +2100,7 @@ index 0000000..1c99002
 +
 +    goto :goto_2
 +
-+    .line 91
++    .line 107
 +    :cond_3
 +    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 +
@@ -2067,12 +2112,16 @@ index 0000000..1c99002
 +.method rect(Landroid/graphics/Rect;IIIIILandroid/graphics/Rect;)V
 +    .locals 3
 +
-+    .line 147
++    .line 163
 +    iget v0, p1, Landroid/graphics/Rect;->left:I
++
++    add-int/2addr v0, p6
 +
 +    invoke-virtual {p1}, Landroid/graphics/Rect;->width()I
 +
 +    move-result v1
++
++    sub-int/2addr v1, p6
 +
 +    iget-object v2, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
@@ -2084,12 +2133,16 @@ index 0000000..1c99002
 +
 +    iput p2, p7, Landroid/graphics/Rect;->left:I
 +
-+    .line 148
++    .line 164
 +    iget p2, p1, Landroid/graphics/Rect;->top:I
++
++    add-int/2addr p2, p6
 +
 +    invoke-virtual {p1}, Landroid/graphics/Rect;->height()I
 +
 +    move-result v0
++
++    sub-int/2addr v0, p6
 +
 +    iget-object v1, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
@@ -2101,81 +2154,57 @@ index 0000000..1c99002
 +
 +    iput p2, p7, Landroid/graphics/Rect;->top:I
 +
-+    .line 149
++    .line 165
 +    iget p2, p1, Landroid/graphics/Rect;->left:I
++
++    add-int/2addr p2, p6
 +
 +    invoke-virtual {p1}, Landroid/graphics/Rect;->width()I
 +
 +    move-result p3
 +
++    sub-int/2addr p3, p6
++
 +    iget-object v0, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
-+    aget v0, v0, p4
++    aget p4, v0, p4
 +
-+    invoke-static {p2, p3, v0}, Lcom/android/wm/shell/freeform/OnigiriZones;->px(III)I
++    invoke-static {p2, p3, p4}, Lcom/android/wm/shell/freeform/OnigiriZones;->px(III)I
 +
 +    move-result p2
 +
-+    iget-object p3, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
-+
-+    array-length p3, p3
-+
-+    add-int/lit8 p3, p3, -0x1
-+
-+    const/4 v0, 0x0
-+
-+    if-ge p4, p3, :cond_0
-+
-+    move p3, p6
-+
-+    goto :goto_0
-+
-+    :cond_0
-+    move p3, v0
-+
-+    :goto_0
-+    sub-int/2addr p2, p3
++    sub-int/2addr p2, p6
 +
 +    iput p2, p7, Landroid/graphics/Rect;->right:I
 +
-+    .line 150
++    .line 166
 +    iget p2, p1, Landroid/graphics/Rect;->top:I
++
++    add-int/2addr p2, p6
 +
 +    invoke-virtual {p1}, Landroid/graphics/Rect;->height()I
 +
 +    move-result p1
 +
-+    iget-object p3, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
-+
-+    aget p3, p3, p5
-+
-+    invoke-static {p2, p1, p3}, Lcom/android/wm/shell/freeform/OnigiriZones;->px(III)I
-+
-+    move-result p1
++    sub-int/2addr p1, p6
 +
 +    iget-object p0, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
-+    array-length p0, p0
++    aget p0, p0, p5
 +
-+    add-int/lit8 p0, p0, -0x1
++    invoke-static {p2, p1, p0}, Lcom/android/wm/shell/freeform/OnigiriZones;->px(III)I
 +
-+    if-ge p5, p0, :cond_1
++    move-result p0
 +
-+    goto :goto_1
++    sub-int/2addr p0, p6
 +
-+    :cond_1
-+    move p6, v0
-+
-+    :goto_1
-+    sub-int/2addr p1, p6
-+
-+    iput p1, p7, Landroid/graphics/Rect;->bottom:I
++    iput p0, p7, Landroid/graphics/Rect;->bottom:I
 +
 +    return-void
 +.end method
 +
 +.method resize(Landroid/graphics/Rect;IILandroid/graphics/Rect;Landroid/graphics/Rect;)Z
-+    .locals 26
++    .locals 25
 +
 +    move-object/from16 v0, p0
 +
@@ -2183,109 +2212,109 @@ index 0000000..1c99002
 +
 +    move/from16 v5, p2
 +
-+    move-object/from16 v9, p4
++    move-object/from16 v8, p4
 +
-+    move-object/from16 v10, p5
++    move-object/from16 v9, p5
 +
-+    .line 255
-+    invoke-virtual {v0, v1, v5, v9}, Lcom/android/wm/shell/freeform/OnigiriZones;->span(Landroid/graphics/Rect;ILandroid/graphics/Rect;)[I
++    .line 270
++    invoke-virtual {v0, v1, v5, v8}, Lcom/android/wm/shell/freeform/OnigiriZones;->span(Landroid/graphics/Rect;ILandroid/graphics/Rect;)[I
 +
-+    move-result-object v11
++    move-result-object v10
 +
 +    const/4 v2, 0x0
 +
-+    if-nez v11, :cond_0
++    if-nez v10, :cond_0
 +
 +    return v2
 +
-+    .line 259
++    .line 274
 +    :cond_0
-+    iget v3, v10, Landroid/graphics/Rect;->left:I
++    iget v3, v9, Landroid/graphics/Rect;->left:I
 +
-+    iget v4, v9, Landroid/graphics/Rect;->left:I
++    iget v4, v8, Landroid/graphics/Rect;->left:I
 +
-+    const/4 v12, 0x1
++    const/4 v11, 0x1
 +
 +    if-eq v3, v4, :cond_1
 +
-+    aget v3, v11, v2
++    aget v3, v10, v2
 +
 +    if-lez v3, :cond_1
 +
-+    move v3, v12
++    move v3, v11
 +
 +    goto :goto_0
 +
 +    :cond_1
 +    move v3, v2
 +
-+    .line 260
++    .line 275
 +    :goto_0
-+    iget v4, v10, Landroid/graphics/Rect;->top:I
++    iget v4, v9, Landroid/graphics/Rect;->top:I
 +
-+    iget v6, v9, Landroid/graphics/Rect;->top:I
++    iget v6, v8, Landroid/graphics/Rect;->top:I
 +
 +    if-eq v4, v6, :cond_2
 +
-+    aget v4, v11, v12
++    aget v4, v10, v11
 +
 +    if-lez v4, :cond_2
 +
-+    move v4, v12
++    move v4, v11
 +
 +    goto :goto_1
 +
 +    :cond_2
 +    move v4, v2
 +
-+    .line 261
++    .line 276
 +    :goto_1
-+    iget v6, v10, Landroid/graphics/Rect;->right:I
++    iget v6, v9, Landroid/graphics/Rect;->right:I
 +
-+    iget v7, v9, Landroid/graphics/Rect;->right:I
++    iget v7, v8, Landroid/graphics/Rect;->right:I
 +
-+    const/4 v8, 0x2
++    const/4 v12, 0x2
 +
 +    if-eq v6, v7, :cond_3
 +
-+    aget v6, v11, v8
++    aget v6, v10, v12
 +
 +    iget-object v7, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
 +    array-length v7, v7
 +
-+    sub-int/2addr v7, v12
++    sub-int/2addr v7, v11
 +
 +    if-ge v6, v7, :cond_3
 +
-+    move v6, v12
++    move v6, v11
 +
 +    goto :goto_2
 +
 +    :cond_3
 +    move v6, v2
 +
-+    .line 262
++    .line 277
 +    :goto_2
-+    iget v7, v10, Landroid/graphics/Rect;->bottom:I
++    iget v7, v9, Landroid/graphics/Rect;->bottom:I
 +
-+    iget v13, v9, Landroid/graphics/Rect;->bottom:I
++    iget v13, v8, Landroid/graphics/Rect;->bottom:I
 +
 +    const/4 v14, 0x3
 +
 +    if-eq v7, v13, :cond_4
 +
-+    aget v7, v11, v14
++    aget v7, v10, v14
 +
 +    iget-object v13, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
 +    array-length v13, v13
 +
-+    sub-int/2addr v13, v12
++    sub-int/2addr v13, v11
 +
 +    if-ge v7, v13, :cond_4
 +
-+    move v13, v12
++    move v13, v11
 +
 +    goto :goto_3
 +
@@ -2303,132 +2332,144 @@ index 0000000..1c99002
 +
 +    return v2
 +
-+    .line 266
++    .line 281
 +    :cond_5
++    iget v7, v1, Landroid/graphics/Rect;->left:I
++
++    add-int v17, v7, v5
++
++    .line 282
++    iget v7, v1, Landroid/graphics/Rect;->top:I
++
++    add-int/2addr v7, v5
++
++    .line 283
 +    invoke-virtual {v1}, Landroid/graphics/Rect;->width()I
 +
-+    move-result v18
++    move-result v15
 +
-+    .line 267
++    sub-int v18, v15, v5
++
++    .line 284
 +    invoke-virtual {v1}, Landroid/graphics/Rect;->height()I
 +
-+    move-result v22
++    move-result v1
++
++    sub-int/2addr v1, v5
 +
 +    if-eqz v3, :cond_6
 +
-+    .line 268
++    .line 285
 +    iget-object v15, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
-+    aget v16, v11, v2
++    aget v16, v10, v2
 +
-+    iget v2, v1, Landroid/graphics/Rect;->left:I
-+
-+    iget v3, v10, Landroid/graphics/Rect;->left:I
++    iget v2, v9, Landroid/graphics/Rect;->left:I
 +
 +    const/16 v20, 0x0
 +
 +    add-int v21, p3, v5
 +
-+    move/from16 v17, v2
-+
-+    move/from16 v19, v3
++    move/from16 v19, v2
 +
 +    invoke-static/range {v15 .. v21}, Lcom/android/wm/shell/freeform/OnigiriZones;->move([IIIIIII)I
 +
 +    move-result v2
 +
++    move/from16 v15, v18
++
 +    goto :goto_4
 +
 +    :cond_6
-+    iget v2, v9, Landroid/graphics/Rect;->left:I
++    move/from16 v15, v18
++
++    iget v2, v8, Landroid/graphics/Rect;->left:I
 +
 +    :goto_4
-+    iput v2, v10, Landroid/graphics/Rect;->left:I
++    iput v2, v9, Landroid/graphics/Rect;->left:I
 +
 +    if-eqz v4, :cond_7
 +
-+    .line 269
++    .line 286
 +    iget-object v2, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
-+    aget v20, v11, v12
++    aget v19, v10, v11
 +
-+    iget v3, v1, Landroid/graphics/Rect;->top:I
++    iget v3, v9, Landroid/graphics/Rect;->top:I
 +
-+    iget v4, v10, Landroid/graphics/Rect;->top:I
++    const/16 v23, 0x0
 +
-+    const/16 v24, 0x0
++    add-int v24, p3, v5
 +
-+    add-int v25, p3, v5
++    move/from16 v21, v1
 +
-+    move-object/from16 v19, v2
++    move-object/from16 v18, v2
 +
-+    move/from16 v21, v3
++    move/from16 v22, v3
 +
-+    move/from16 v23, v4
++    move/from16 v20, v7
 +
-+    invoke-static/range {v19 .. v25}, Lcom/android/wm/shell/freeform/OnigiriZones;->move([IIIIIII)I
++    invoke-static/range {v18 .. v24}, Lcom/android/wm/shell/freeform/OnigiriZones;->move([IIIIIII)I
 +
-+    move-result v2
++    move-result v1
 +
 +    goto :goto_5
 +
 +    :cond_7
-+    iget v2, v9, Landroid/graphics/Rect;->top:I
++    move/from16 v21, v1
++
++    move/from16 v20, v7
++
++    iget v1, v8, Landroid/graphics/Rect;->top:I
 +
 +    :goto_5
-+    iput v2, v10, Landroid/graphics/Rect;->top:I
++    iput v1, v9, Landroid/graphics/Rect;->top:I
 +
 +    if-eqz v6, :cond_8
 +
-+    .line 270
-+    iget-object v2, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
++    .line 287
++    iget-object v1, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
-+    aget v3, v11, v8
++    aget v2, v10, v12
 +
-+    iget v4, v1, Landroid/graphics/Rect;->left:I
++    iget v5, v9, Landroid/graphics/Rect;->right:I
 +
-+    iget v6, v10, Landroid/graphics/Rect;->right:I
++    add-int v7, p3, p2
 +
-+    add-int v8, p3, v5
++    move/from16 v6, p2
 +
-+    move v7, v5
++    move v4, v15
 +
-+    move/from16 v5, v18
++    move/from16 v3, v17
 +
-+    invoke-static/range {v2 .. v8}, Lcom/android/wm/shell/freeform/OnigiriZones;->move([IIIIIII)I
++    invoke-static/range {v1 .. v7}, Lcom/android/wm/shell/freeform/OnigiriZones;->move([IIIIIII)I
 +
-+    move-result v2
++    move-result v1
 +
 +    goto :goto_6
 +
 +    :cond_8
-+    iget v2, v9, Landroid/graphics/Rect;->right:I
++    iget v1, v8, Landroid/graphics/Rect;->right:I
 +
 +    :goto_6
-+    iput v2, v10, Landroid/graphics/Rect;->right:I
++    iput v1, v9, Landroid/graphics/Rect;->right:I
 +
 +    if-eqz v13, :cond_9
 +
-+    .line 271
++    .line 288
 +    iget-object v0, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
-+    aget v2, v11, v14
++    aget v1, v10, v14
 +
-+    iget v1, v1, Landroid/graphics/Rect;->top:I
-+
-+    iget v4, v10, Landroid/graphics/Rect;->bottom:I
++    iget v4, v9, Landroid/graphics/Rect;->bottom:I
 +
 +    add-int v6, p3, p2
 +
-+    move v3, v2
-+
-+    move v2, v1
-+
-+    move v1, v3
-+
 +    move/from16 v5, p2
 +
-+    move/from16 v3, v22
++    move/from16 v2, v20
++
++    move/from16 v3, v21
 +
 +    invoke-static/range {v0 .. v6}, Lcom/android/wm/shell/freeform/OnigiriZones;->move([IIIIIII)I
 +
@@ -2437,76 +2478,94 @@ index 0000000..1c99002
 +    goto :goto_7
 +
 +    :cond_9
-+    iget v0, v9, Landroid/graphics/Rect;->bottom:I
++    iget v0, v8, Landroid/graphics/Rect;->bottom:I
 +
 +    :goto_7
-+    iput v0, v10, Landroid/graphics/Rect;->bottom:I
++    iput v0, v9, Landroid/graphics/Rect;->bottom:I
 +
-+    return v12
++    return v11
 +.end method
 +
 +.method span(Landroid/graphics/Rect;ILandroid/graphics/Rect;)[I
-+    .locals 7
++    .locals 6
 +
-+    .line 160
++    .line 176
 +    iget-object v0, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
 +    iget v1, p1, Landroid/graphics/Rect;->left:I
++
++    add-int/2addr v1, p2
 +
 +    invoke-virtual {p1}, Landroid/graphics/Rect;->width()I
 +
 +    move-result v2
 +
++    sub-int/2addr v2, p2
++
 +    iget v3, p3, Landroid/graphics/Rect;->left:I
 +
-+    const/4 v4, 0x0
-+
-+    invoke-static {v0, v1, v2, v3, v4}, Lcom/android/wm/shell/freeform/OnigiriZones;->near([IIIII)I
++    invoke-static {v0, v1, v2, v3}, Lcom/android/wm/shell/freeform/OnigiriZones;->near([IIII)I
 +
 +    move-result v0
 +
-+    .line 161
++    .line 177
 +    iget-object v1, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
 +    iget v2, p1, Landroid/graphics/Rect;->top:I
++
++    add-int/2addr v2, p2
 +
 +    invoke-virtual {p1}, Landroid/graphics/Rect;->height()I
 +
 +    move-result v3
 +
-+    iget v5, p3, Landroid/graphics/Rect;->top:I
++    sub-int/2addr v3, p2
 +
-+    invoke-static {v1, v2, v3, v5, v4}, Lcom/android/wm/shell/freeform/OnigiriZones;->near([IIIII)I
++    iget v4, p3, Landroid/graphics/Rect;->top:I
++
++    invoke-static {v1, v2, v3, v4}, Lcom/android/wm/shell/freeform/OnigiriZones;->near([IIII)I
 +
 +    move-result v1
 +
-+    .line 162
++    .line 178
 +    iget-object v2, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
 +
 +    iget v3, p1, Landroid/graphics/Rect;->left:I
 +
++    add-int/2addr v3, p2
++
 +    invoke-virtual {p1}, Landroid/graphics/Rect;->width()I
 +
-+    move-result v5
++    move-result v4
 +
-+    iget v6, p3, Landroid/graphics/Rect;->right:I
++    sub-int/2addr v4, p2
 +
-+    invoke-static {v2, v3, v5, v6, p2}, Lcom/android/wm/shell/freeform/OnigiriZones;->near([IIIII)I
++    iget v5, p3, Landroid/graphics/Rect;->right:I
++
++    add-int/2addr v5, p2
++
++    invoke-static {v2, v3, v4, v5}, Lcom/android/wm/shell/freeform/OnigiriZones;->near([IIII)I
 +
 +    move-result v2
 +
-+    .line 163
++    .line 179
 +    iget-object p0, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->rows:[I
 +
 +    iget v3, p1, Landroid/graphics/Rect;->top:I
++
++    add-int/2addr v3, p2
 +
 +    invoke-virtual {p1}, Landroid/graphics/Rect;->height()I
 +
 +    move-result p1
 +
++    sub-int/2addr p1, p2
++
 +    iget p3, p3, Landroid/graphics/Rect;->bottom:I
 +
-+    invoke-static {p0, v3, p1, p3, p2}, Lcom/android/wm/shell/freeform/OnigiriZones;->near([IIIII)I
++    add-int/2addr p3, p2
++
++    invoke-static {p0, v3, p1, p3}, Lcom/android/wm/shell/freeform/OnigiriZones;->near([IIII)I
 +
 +    move-result p0
 +
@@ -2523,10 +2582,12 @@ index 0000000..1c99002
 +    :cond_0
 +    const/4 p1, 0x4
 +
-+    .line 164
++    .line 180
 +    new-array p1, p1, [I
 +
-+    aput v0, p1, v4
++    const/4 p2, 0x0
++
++    aput v0, p1, p2
 +
 +    const/4 p2, 0x1
 +
@@ -2556,7 +2617,7 @@ index 0000000..1c99002
 +
 +    const/4 v1, 0x4
 +
-+    .line 207
++    .line 222
 +    new-array v2, v1, [I
 +
 +    iget-object v3, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->cols:[I
@@ -2603,7 +2664,7 @@ index 0000000..1c99002
 +
 +    move/from16 v16, p4
 +
-+    .line 208
++    .line 223
 +    filled-new-array/range {v7 .. v16}, [I
 +
 +    move-result-object v7
@@ -2615,7 +2676,7 @@ index 0000000..1c99002
 +
 +    if-ge v8, v9, :cond_0
 +
-+    .line 210
++    .line 225
 +    aget v9, v7, v8
 +
 +    add-int v9, p2, v9
@@ -2634,7 +2695,7 @@ index 0000000..1c99002
 +
 +    mul-int/2addr v9, v1
 +
-+    .line 211
++    .line 226
 +    aget v10, v2, v4
 +
 +    iget-object v12, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->cells:[I
@@ -2647,7 +2708,7 @@ index 0000000..1c99002
 +
 +    aput v10, v2, v4
 +
-+    .line 212
++    .line 227
 +    aget v10, v2, v5
 +
 +    iget-object v12, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->cells:[I
@@ -2662,7 +2723,7 @@ index 0000000..1c99002
 +
 +    aput v10, v2, v5
 +
-+    .line 213
++    .line 228
 +    aget v10, v2, v3
 +
 +    iget-object v12, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->cells:[I
@@ -2677,7 +2738,7 @@ index 0000000..1c99002
 +
 +    aput v10, v2, v3
 +
-+    .line 214
++    .line 229
 +    aget v10, v2, v6
 +
 +    iget-object v12, v0, Lcom/android/wm/shell/freeform/OnigiriZones;->cells:[I
@@ -2703,7 +2764,7 @@ index 0000000..1c99002
 +.method zoneAt(Landroid/graphics/Rect;II)I
 +    .locals 8
 +
-+    .line 190
++    .line 205
 +    new-instance v0, Landroid/graphics/Rect;
 +
 +    invoke-direct {v0}, Landroid/graphics/Rect;-><init>()V
@@ -2716,7 +2777,7 @@ index 0000000..1c99002
 +
 +    move v4, v3
 +
-+    .line 193
++    .line 208
 +    :goto_0
 +    invoke-virtual {p0}, Lcom/android/wm/shell/freeform/OnigiriZones;->count()I
 +
@@ -2724,10 +2785,10 @@ index 0000000..1c99002
 +
 +    if-ge v3, v5, :cond_1
 +
-+    .line 194
++    .line 209
 +    invoke-virtual {p0, p1, v3, v1, v0}, Lcom/android/wm/shell/freeform/OnigiriZones;->zoneRect(Landroid/graphics/Rect;IILandroid/graphics/Rect;)V
 +
-+    .line 195
++    .line 210
 +    iget v5, v0, Landroid/graphics/Rect;->left:I
 +
 +    sub-int/2addr v5, p2
@@ -2756,7 +2817,7 @@ index 0000000..1c99002
 +
 +    sub-int v7, p3, v7
 +
-+    .line 196
++    .line 211
 +    invoke-static {v6, v7}, Ljava/lang/Math;->max(II)I
 +
 +    move-result v6
@@ -2789,7 +2850,7 @@ index 0000000..1c99002
 +
 +    move v1, v0
 +
-+    .line 179
++    .line 194
 +    :goto_0
 +    iget-object v2, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cells:[I
 +
@@ -2797,7 +2858,7 @@ index 0000000..1c99002
 +
 +    if-ge v1, v3, :cond_1
 +
-+    .line 180
++    .line 195
 +    aget v3, v2, v1
 +
 +    aget v4, p1, v0
@@ -2834,7 +2895,7 @@ index 0000000..1c99002
 +
 +    if-ne v2, v3, :cond_0
 +
-+    .line 182
++    .line 197
 +    div-int/lit8 v1, v1, 0x4
 +
 +    return v1
@@ -2855,7 +2916,7 @@ index 0000000..1c99002
 +
 +    mul-int/lit8 p2, p2, 0x4
 +
-+    .line 155
++    .line 171
 +    iget-object v0, p0, Lcom/android/wm/shell/freeform/OnigiriZones;->cells:[I
 +
 +    aget v3, v0, p2
