@@ -193,32 +193,34 @@ public final class OnigiriZoneController implements Consumer<Task> {
             return false;
         }
         String name = OnigiriZones.NAMES[digit];
+        // init saves the properties: set them before taking the WM lock.
+        OnigiriZones from = OnigiriZones.current();
+        if (from != null && from.name.equals(name)) {
+            SystemProperties.set(OnigiriZones.LINES_PROP + name, "");
+        } else {
+            SystemProperties.set(OnigiriZones.LAYOUT_PROP, name);
+        }
+        OnigiriZones to = OnigiriZones.named(name);
+        if (to == null) {
+            return true;
+        }
         synchronized (wm.mGlobalLock) {
             DisplayContent display = wm.mRoot.getDisplayContent(displayId);
             if (display == null) {
-                return false;
+                return true;
             }
-            OnigiriZones from = OnigiriZones.current();
-            if (from != null && from.name.equals(name)) {
-                SystemProperties.set(OnigiriZones.LINES_PROP + name, "");
-            } else {
-                SystemProperties.set(OnigiriZones.LAYOUT_PROP, name);
+            TaskDisplayArea area = display.getDefaultTaskDisplayArea();
+            int outline = area.getFreeformThickness();
+            Rect shown = new Rect();
+            display.getStableRect(shown);
+            if (from != null) {
+                Rect frame = new Rect(shown);
+                frame.inset(-outline, -outline);
+                area.forAllRootTasks(new OnigiriZoneController(wm.mAtmService, from, to, frame,
+                        OnigiriZones.gap(outline), null));
             }
-            OnigiriZones to = OnigiriZones.named(name);
-            if (to != null) {
-                TaskDisplayArea area = display.getDefaultTaskDisplayArea();
-                int outline = area.getFreeformThickness();
-                Rect shown = new Rect();
-                display.getStableRect(shown);
-                if (from != null) {
-                    Rect frame = new Rect(shown);
-                    frame.inset(-outline, -outline);
-                    area.forAllRootTasks(new OnigiriZoneController(wm.mAtmService, from, to, frame,
-                            OnigiriZones.gap(outline), null));
-                }
-                UiThread.getHandler().post(new Flash(wm.mContext, display.mDisplay, to, shown,
-                        OnigiriZones.space()));
-            }
+            UiThread.getHandler().post(new Flash(wm.mContext, display.mDisplay, to, shown,
+                    OnigiriZones.space()));
         }
         return true;
     }
@@ -227,13 +229,16 @@ public final class OnigiriZoneController implements Consumer<Task> {
      * First in DexDockingController.resizeOtherTaskIfNeeded, which the DeX shell calls before it
      * applies a border drag of a tiled window (OnigiriZoneGuide.onResize): moves the lines under
      * the dragged edges, saves them, and fits the other tiled windows to them. False leaves the
-     * call to stock DeX: zones off, or a pair of stock docked halves.
+     * call to stock DeX, for a pair of stock docked halves only: the stock body undocks every
+     * docked window when it is given any other one (zones turned off since the drag began).
      */
     public static boolean onResize(ActivityTaskManagerService atm, Task task, Rect bounds) {
-        OnigiriZones from;
-        if (task == null || task.getDexTaskDockingState() != 0 || task.getDisplayContent() == null
-                || (from = OnigiriZones.current()) == null) {
+        if (task != null && task.getDexTaskDockingState() != 0) {
             return false;
+        }
+        OnigiriZones from = OnigiriZones.current();
+        if (task == null || task.getDisplayContent() == null || from == null) {
+            return true;
         }
         int outline = task.getFreeformThickness();
         Rect frame = new Rect();
