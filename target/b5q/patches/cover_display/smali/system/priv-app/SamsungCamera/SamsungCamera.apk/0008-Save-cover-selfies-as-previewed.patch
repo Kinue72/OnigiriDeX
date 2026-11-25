@@ -8,10 +8,12 @@ preview's axis the way stock QuickShot does: a sensor flip, which the HAL
 keeps off the preview and needs before it honors the pictures' scaler flip,
 and a MediaRecorder flip for videos. Where the flip lands sideways to the
 saved orientation it would read upside down, so turn the picture or video
-half a turn more, as stock does. Motion photo clips still save unflipped
-(stock only flips them for QuickShot and rear cam selfie), so they don't
-take that half turn. The sensor flip is a session key; Camera opens a new
-session when it comes back from its settings, so the switch applies there.
+half a turn more, as stock does. Motion photo clips take the motion photo
+maker's flip, as QuickShot's do. That flip is horizontal, so under a
+vertical one the clip turns half a turn more than the picture, as stock's
+processing path already does for a vertical scaler flip. The sensor flip
+is a session key; Camera opens a new session when it comes back from its
+settings, so the switch applies there.
 
 diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
 --- a/res/values-vi/strings.xml
@@ -36,7 +38,7 @@ diff --git a/res/values/strings.xml b/res/values/strings.xml
 diff --git a/smali_classes3/com/sec/android/app/camera/engine/OrientationManager.smali b/smali_classes3/com/sec/android/app/camera/engine/OrientationManager.smali
 --- a/smali_classes3/com/sec/android/app/camera/engine/OrientationManager.smali
 +++ b/smali_classes3/com/sec/android/app/camera/engine/OrientationManager.smali
-@@ -140,8 +140,16 @@
+@@ -140,8 +140,15 @@
      return p0
  
      :cond_0
@@ -44,16 +46,15 @@ diff --git a/smali_classes3/com/sec/android/app/camera/engine/OrientationManager
 +
      iget p0, p0, Lcom/sec/android/app/camera/engine/OrientationManager;->mLastOrientationForCapture:I
  
-+    # Onigiri: Motion photo clips save unflipped on the cover, so take back the
-+    # half turn the flipped picture got. A second call undoes the first.
-+    invoke-static {v0, p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->adjustSaveOrientation(Lcom/sec/android/app/camera/interfaces/CameraSettings;I)I
++    # Onigiri: the clip of a picture saved as previewed on the cover (see OnigiriCoverMirror).
++    invoke-static {v0, p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->getMotionPhotoOrientation(Lcom/sec/android/app/camera/interfaces/CameraSettings;I)I
 +
 +    move-result p0
 +
      return p0
  .end method
  
-@@ -443,6 +451,13 @@
+@@ -443,6 +450,13 @@
  
      rem-int/lit16 v0, v0, 0x168
  
@@ -67,6 +68,23 @@ diff --git a/smali_classes3/com/sec/android/app/camera/engine/OrientationManager
      iput v0, p0, Lcom/sec/android/app/camera/engine/OrientationManager;->mLastOrientationForCapture:I
  
      goto :goto_2
+diff --git a/smali_classes3/com/sec/android/app/camera/engine/capture/MotionPhotoManagerImpl.smali b/smali_classes3/com/sec/android/app/camera/engine/capture/MotionPhotoManagerImpl.smali
+--- a/smali_classes3/com/sec/android/app/camera/engine/capture/MotionPhotoManagerImpl.smali
++++ b/smali_classes3/com/sec/android/app/camera/engine/capture/MotionPhotoManagerImpl.smali
+@@ -1561,7 +1561,12 @@
+     goto :goto_2
+ 
+     :cond_4
+-    move v9, v5
++    # Onigiri: the mirrored cover saving as previewed flips the clip too, like QuickShot.
++    iget-object v9, p0, Lcom/sec/android/app/camera/engine/capture/MotionPhotoManagerImpl;->mCameraSettings:Lcom/sec/android/app/camera/interfaces/CameraSettings;
++
++    invoke-static {v9}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isSaveFlipped(Lcom/sec/android/app/camera/interfaces/CameraSettings;)Z
++
++    move-result v9
+ 
+     :goto_2
+     invoke-static {}, Lcom/samsung/android/motionphoto/MPOption;->newBuilder()Lcom/samsung/android/motionphoto/MPOption$Builder;
 diff --git a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareStartPreviewRequest.smali b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareStartPreviewRequest.smali
 --- a/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareStartPreviewRequest.smali
 +++ b/smali_classes3/com/sec/android/app/camera/engine/core/request/PrepareStartPreviewRequest.smali
@@ -171,7 +189,7 @@ diff --git a/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.s
      invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->updatePreviewMirror(Lcom/sec/android/app/camera/interfaces/CameraContext;)V
  
      sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
-@@ -304,10 +308,156 @@
+@@ -304,10 +308,182 @@
      :goto_0
      invoke-interface {p1, v0}, Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo;->setMirrorMode(Lcom/sec/android/app/camera/engine/core/interfaces/InternalConnectionInfo$MirrorOption;)V
  
@@ -257,7 +275,7 @@ diff --git a/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.s
 +    return v0
 +.end method
 +
-+.method private static isSaveFlipped(Lcom/sec/android/app/camera/interfaces/CameraSettings;)Z
++.method public static isSaveFlipped(Lcom/sec/android/app/camera/interfaces/CameraSettings;)Z
 +    .locals 2
 +
 +    # A mirrored cover preview with "Save selfies as previewed" on.
@@ -291,10 +309,7 @@ diff --git a/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.s
 +    # The flip (the sensor's for pictures, MediaRecorder's for videos) lands before a picture or
 +    # video is turned upright by p1 degrees. A horizontal flip reads left to right at 0 or 180, a
 +    # vertical one at 90 or 270; otherwise it reads top to bottom, and half a turn more makes that
-+    # left to right (stock QuickShot and rear cam selfie do the same). Calling it again undoes it.
-+    # An unknown orientation (-1) passes through.
-+    if-ltz p1, :cond_1
-+
++    # left to right (stock QuickShot and rear cam selfie do the same).
 +    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isSaveFlipped(Lcom/sec/android/app/camera/interfaces/CameraSettings;)Z
 +
 +    move-result p0
@@ -322,6 +337,35 @@ diff --git a/smali_classes4/com/sec/android/app/camera/util/OnigiriCoverMirror.s
 +    rem-int/lit16 p1, p1, 0x168
 +
 +    :cond_1
++    return p1
++.end method
++
++.method public static getMotionPhotoOrientation(Lcom/sec/android/app/camera/interfaces/CameraSettings;I)I
++    .locals 2
++
++    # A Motion photo clip saved as previewed takes the motion photo maker's horizontal flip, not
++    # the picture's, so under a vertical one it needs half a turn more than the picture (p1) to
++    # match it. Stock's processing path adds the same turn for a vertical scaler flip
++    # (ProcessingPhotoMakerBase$4.getJpegOrientation), and rear cam selfie does it here.
++    if-ltz p1, :cond_0
++
++    invoke-static {p0}, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->isSaveFlipped(Lcom/sec/android/app/camera/interfaces/CameraSettings;)Z
++
++    move-result p0
++
++    if-eqz p0, :cond_0
++
++    sget v0, Lcom/sec/android/app/camera/util/OnigiriCoverMirror;->sMirror:I
++
++    const/4 v1, 0x1
++
++    if-ne v0, v1, :cond_0
++
++    add-int/lit16 p1, p1, 0xb4
++
++    rem-int/lit16 p1, p1, 0x168
++
++    :cond_0
 +    return p1
 +.end method
 +
