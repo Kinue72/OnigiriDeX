@@ -12,8 +12,9 @@ import android.graphics.drawable.Drawable;
 
 /**
  * The picture above the Space around zones slider: the top left corner of a DeX desktop with
- * three snapped windows, in the colours of the zone layout pictures. Its level is the space in
- * pixels, drawn at the size it has on a DeX desktop at its usual 240 dpi.
+ * three snapped windows, in the colours of the zone layout pictures. The space is drawn at
+ * the size it has on a DeX desktop at its usual 240 dpi. It is not kept as the drawable level:
+ * an ImageView sets the level of every drawable it is given back to its own.
  */
 final class DexZoneGapDemo extends Drawable {
     private static final float DEX_DENSITY = 1.5f;
@@ -22,6 +23,7 @@ final class DexZoneGapDemo extends Drawable {
     private final Path mClip = new Path();
     private final float mDensity;
     private final boolean mNight;
+    private int mGap;
 
     DexZoneGapDemo(Context context) {
         mDensity = context.getResources().getDisplayMetrics().density;
@@ -29,17 +31,17 @@ final class DexZoneGapDemo extends Drawable {
                 == Configuration.UI_MODE_NIGHT_YES;
     }
 
-    @Override
-    protected boolean onLevelChange(int level) {
+    /** The space to show, in pixels. */
+    void setGap(int gap) {
+        mGap = gap;
         invalidateSelf();
-        return true;
     }
 
     @Override
     public void draw(Canvas canvas) {
         Rect box = getBounds();
         float radius = 12 * mDensity;
-        float gap = getLevel() * mDensity / DEX_DENSITY;
+        float gap = mGap * mDensity / DEX_DENSITY;
         // The lines between the windows; the windows run on past the right and bottom edges.
         float column = box.left + gap + box.width() * 0.4f;
         float row = box.top + gap + box.height() * 0.55f;

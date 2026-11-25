@@ -245,7 +245,8 @@ public final class OnigiriZoneController implements Consumer<Task> {
         task.getDisplayContent().getStableRect(frame);
         frame.inset(-outline, -outline);
         int gap = OnigiriZones.gap(outline);
-        OnigiriZones to = OnigiriZones.current();
+        // Not current() again: the layout can be turned off between the two reads.
+        OnigiriZones to = OnigiriZones.named(from.name);
         int min = OnigiriZones.minSize(task.getConfiguration().densityDpi);
         if (to.resize(frame, gap, min, task.getBounds(), new Rect(bounds))) {
             SystemProperties.set(OnigiriZones.LINES_PROP + to.name, to.lines());

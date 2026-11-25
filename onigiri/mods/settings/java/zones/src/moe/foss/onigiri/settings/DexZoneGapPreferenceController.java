@@ -89,7 +89,7 @@ public class DexZoneGapPreferenceController extends SliderPreferenceController
     private void show(Preference preference, int gap) {
         preference.setSummary(gap + " px");
         if (mDemo != null) {
-            mDemo.setLevel(gap);
+            mDemo.setGap(gap);
         }
     }
 

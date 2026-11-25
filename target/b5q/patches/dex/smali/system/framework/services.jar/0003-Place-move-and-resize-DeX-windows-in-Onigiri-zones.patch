@@ -91,7 +91,7 @@ index 220f85e..cdaa785 100644
      return-void
 diff --git a/smali_classes2/com/android/server/wm/OnigiriZoneController$Flash.smali b/smali_classes2/com/android/server/wm/OnigiriZoneController$Flash.smali
 new file mode 100644
-index 0000000..db521a9
+index 0000000..c4a1c5a
 --- /dev/null
 +++ b/smali_classes2/com/android/server/wm/OnigiriZoneController$Flash.smali
 @@ -0,0 +1,196 @@
@@ -140,22 +140,22 @@ index 0000000..db521a9
 +.method constructor <init>(Landroid/content/Context;Landroid/view/Display;Lcom/android/server/wm/OnigiriZones;Landroid/graphics/Rect;I)V
 +    .locals 0
 +
-+    .line 271
++    .line 272
 +    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +
-+    .line 272
++    .line 273
 +    iput-object p1, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mContext:Landroid/content/Context;
 +
-+    .line 273
++    .line 274
 +    iput-object p2, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mDisplay:Landroid/view/Display;
 +
-+    .line 274
++    .line 275
 +    iput-object p3, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mZones:Lcom/android/server/wm/OnigiriZones;
 +
-+    .line 275
++    .line 276
 +    iput-object p4, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mFrame:Landroid/graphics/Rect;
 +
-+    .line 276
++    .line 277
 +    iput p5, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mGap:I
 +
 +    return-void
@@ -166,12 +166,12 @@ index 0000000..db521a9
 +.method public run()V
 +    .locals 11
 +
-+    .line 281
++    .line 282
 +    iget-object v0, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mView:Lcom/android/server/wm/OnigiriZoneOverlay;
 +
 +    if-eqz v0, :cond_0
 +
-+    .line 282
++    .line 283
 +    invoke-virtual {v0}, Lcom/android/server/wm/OnigiriZoneOverlay;->getContext()Landroid/content/Context;
 +
 +    move-result-object v0
@@ -190,7 +190,7 @@ index 0000000..db521a9
 +
 +    return-void
 +
-+    .line 285
++    .line 286
 +    :cond_0
 +    iget-object v0, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mContext:Landroid/content/Context;
 +
@@ -204,12 +204,12 @@ index 0000000..db521a9
 +
 +    const/4 v2, 0x0
 +
-+    .line 286
++    .line 287
 +    invoke-virtual {v0, v1, v2}, Landroid/content/Context;->createWindowContext(ILandroid/os/Bundle;)Landroid/content/Context;
 +
 +    move-result-object v0
 +
-+    .line 287
++    .line 288
 +    const-class v1, Landroid/view/WindowManager;
 +
 +    invoke-virtual {v0, v1}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
@@ -218,14 +218,14 @@ index 0000000..db521a9
 +
 +    check-cast v1, Landroid/view/WindowManager;
 +
-+    .line 288
++    .line 289
 +    new-instance v2, Lcom/android/server/wm/OnigiriZoneOverlay;
 +
 +    invoke-direct {v2, v0}, Lcom/android/server/wm/OnigiriZoneOverlay;-><init>(Landroid/content/Context;)V
 +
 +    iput-object v2, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mView:Lcom/android/server/wm/OnigiriZoneOverlay;
 +
-+    .line 289
++    .line 290
 +    iget-object v0, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mZones:Lcom/android/server/wm/OnigiriZones;
 +
 +    iget-object v3, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mFrame:Landroid/graphics/Rect;
@@ -234,7 +234,7 @@ index 0000000..db521a9
 +
 +    invoke-virtual {v2, v0, v3, v4}, Lcom/android/server/wm/OnigiriZoneOverlay;->show(Lcom/android/server/wm/OnigiriZones;Landroid/graphics/Rect;I)V
 +
-+    .line 290
++    .line 291
 +    new-instance v5, Landroid/view/WindowManager$LayoutParams;
 +
 +    const/16 v9, 0x318
@@ -249,17 +249,17 @@ index 0000000..db521a9
 +
 +    invoke-direct/range {v5 .. v10}, Landroid/view/WindowManager$LayoutParams;-><init>(IIIII)V
 +
-+    .line 297
++    .line 298
 +    const-string v0, "OnigiriZones"
 +
 +    invoke-virtual {v5, v0}, Landroid/view/WindowManager$LayoutParams;->setTitle(Ljava/lang/CharSequence;)V
 +
 +    const/16 v0, 0x33
 +
-+    .line 298
++    .line 299
 +    iput v0, v5, Landroid/view/WindowManager$LayoutParams;->gravity:I
 +
-+    .line 299
++    .line 300
 +    iget v0, v5, Landroid/view/WindowManager$LayoutParams;->privateFlags:I
 +
 +    or-int/lit8 v0, v0, 0x10
@@ -268,10 +268,10 @@ index 0000000..db521a9
 +
 +    const/4 v0, 0x0
 +
-+    .line 301
++    .line 302
 +    invoke-virtual {v5, v0}, Landroid/view/WindowManager$LayoutParams;->setFitInsetsTypes(I)V
 +
-+    .line 303
++    .line 304
 +    :try_start_0
 +    iget-object v0, p0, Lcom/android/server/wm/OnigiriZoneController$Flash;->mView:Lcom/android/server/wm/OnigiriZoneOverlay;
 +
@@ -279,7 +279,7 @@ index 0000000..db521a9
 +    :try_end_0
 +    .catch Landroid/view/WindowManager$InvalidDisplayException; {:try_start_0 .. :try_end_0} :catch_0
 +
-+    .line 308
++    .line 309
 +    invoke-static {}, Lcom/android/server/UiThread;->getHandler()Landroid/os/Handler;
 +
 +    move-result-object v0
@@ -293,10 +293,10 @@ index 0000000..db521a9
 +.end method
 diff --git a/smali_classes2/com/android/server/wm/OnigiriZoneController.smali b/smali_classes2/com/android/server/wm/OnigiriZoneController.smali
 new file mode 100644
-index 0000000..3898dfa
+index 0000000..39ac483
 --- /dev/null
 +++ b/smali_classes2/com/android/server/wm/OnigiriZoneController.smali
-@@ -0,0 +1,1120 @@
+@@ -0,0 +1,1122 @@
 +.class public final Lcom/android/server/wm/OnigiriZoneController;
 +.super Ljava/lang/Object;
 +.source "OnigiriZoneController.java"
@@ -1163,12 +1163,14 @@ index 0000000..3898dfa
 +
 +    move-result v6
 +
-+    .line 248
-+    invoke-static {}, Lcom/android/server/wm/OnigiriZones;->current()Lcom/android/server/wm/OnigiriZones;
++    .line 249
++    iget-object v1, v3, Lcom/android/server/wm/OnigiriZones;->name:Ljava/lang/String;
++
++    invoke-static {v1}, Lcom/android/server/wm/OnigiriZones;->named(Ljava/lang/String;)Lcom/android/server/wm/OnigiriZones;
 +
 +    move-result-object v4
 +
-+    .line 249
++    .line 250
 +    invoke-virtual {p1}, Lcom/android/server/wm/Task;->getConfiguration()Landroid/content/res/Configuration;
 +
 +    move-result-object v1
@@ -1179,7 +1181,7 @@ index 0000000..3898dfa
 +
 +    move-result v7
 +
-+    .line 250
++    .line 251
 +    invoke-virtual {p1}, Lcom/android/server/wm/Task;->getBounds()Landroid/graphics/Rect;
 +
 +    move-result-object v8
@@ -1194,7 +1196,7 @@ index 0000000..3898dfa
 +
 +    if-eqz v1, :cond_2
 +
-+    .line 251
++    .line 252
 +    new-instance v1, Ljava/lang/StringBuilder;
 +
 +    const-string v2, "persist.sys.onigiri.dex_zone_lines."
@@ -1215,7 +1217,7 @@ index 0000000..3898dfa
 +
 +    invoke-static {v1, v2}, Landroid/os/SystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
 +
-+    .line 252
++    .line 253
 +    invoke-virtual {p1}, Lcom/android/server/wm/Task;->getDisplayContent()Lcom/android/server/wm/DisplayContent;
 +
 +    move-result-object v1
