@@ -9,6 +9,8 @@ public final class OnigiriZonesTest {
     // A 1920x1080 DeX desktop above its taskbar, and the freeform outline thickness.
     static final Rect FRAME = new Rect(0, 0, 1920, 1020);
     static final int GAP = 4;
+    // The smallest window on a 240 dpi desktop: 330 pixels.
+    static final int SMALLEST = OnigiriZones.minSize(240);
 
     static void same(Object expected, Object actual) {
         if (!String.valueOf(expected).equals(String.valueOf(actual))) {
@@ -46,7 +48,7 @@ public final class OnigiriZonesTest {
         // Dragging the border of a tiled window moves its line, and the neighbour fits to it.
         Rect dragged = new Rect(0, 0, 800, 1020);
         OnigiriZones moved = use("map_left");
-        same(true, moved.resize(FRAME, GAP, zone(map, 0), dragged));
+        same(true, moved.resize(FRAME, GAP, SMALLEST, zone(map, 0), dragged));
         same("0,0,800,1020", dragged);
         Rect neighbour = zone(map, 1);
         same(true, map.fit(moved, FRAME, GAP, neighbour));
@@ -59,31 +61,48 @@ public final class OnigiriZonesTest {
         SystemProperties.VALUES.put(OnigiriZones.LINES_PROP + "map_left", "11500/");
         same("640,0,1920,1020", zone(OnigiriZones.current(), 1));
 
-        // A line stops MIN short of the next one, and the dragged window stops with it.
+        // A line stops where the zone beside it could no longer hold the smallest window, on
+        // either side, and the dragged window stops with it.
         dragged.set(0, 0, 50, 1020);
         moved = use("map_left");
-        same(true, moved.resize(FRAME, GAP, zone(map, 0), dragged));
-        same("0,0,236,1020", dragged);
+        same(true, moved.resize(FRAME, GAP, SMALLEST, zone(map, 0), dragged));
+        same("0,0,331,1020", dragged);
+        dragged.set(0, 0, 1900, 1020);
+        moved = use("map_left");
+        same(true, moved.resize(FRAME, GAP, SMALLEST, zone(map, 0), dragged));
+        same(true, zone(moved, 1).width() >= SMALLEST);
 
         // A corner drag moves a column and a row line: all four grid windows follow.
         dragged.set(0, 0, 1196, 404);
         moved = use("grid");
-        same(true, moved.resize(FRAME, GAP, zone(grid, 0), dragged));
+        same(true, moved.resize(FRAME, GAP, SMALLEST, zone(grid, 0), dragged));
         same("1200,408,1920,1020", zone(moved, 3));
         same("7500/4800", moved.lines());
 
-        // Pulling an edge off the work area's edge, or resizing a loose window, moves nothing.
+        // A corner on the work area's edge: the inner line moves, the outer edge stays.
+        dragged.set(0, 30, 800, 1020);
+        moved = use("map_left");
+        same(true, moved.resize(FRAME, GAP, SMALLEST, zone(map, 0), dragged));
+        same("0,0,800,1020", dragged);
+
+        // Pulling only an edge off the work area's edge, or resizing a loose window, moves nothing.
         moved = use("grid");
-        same(false, moved.resize(FRAME, GAP, zone(grid, 0), new Rect(40, 0, 956, 506)));
-        same(false, moved.resize(FRAME, GAP, new Rect(100, 100, 500, 500), new Rect(100, 100, 600, 500)));
+        same(false, moved.resize(FRAME, GAP, SMALLEST, zone(grid, 0), new Rect(40, 0, 956, 506)));
+        same(false, moved.resize(FRAME, GAP, SMALLEST, new Rect(100, 100, 500, 500), new Rect(100, 100, 600, 500)));
         same("6000/6000", moved.lines());
 
-        // Swapping layouts keeps windows in the zone of the same number.
+        // Swapping layouts keeps windows in the zone of the same number. A window in a zone
+        // the new layout lacks, or across zones, goes to the zone under its middle.
         OnigiriZones columns = use("columns");
         Rect window = zone(map, 1);
         same(true, map.fit(columns, FRAME, GAP, window));
         same(zone(columns, 1), window);
-        same(false, grid.fit(columns, FRAME, GAP, zone(grid, 3)));
+        window = zone(grid, 3);
+        same(true, grid.fit(map, FRAME, GAP, window));
+        same(zone(map, 1), window);
+        window.set(0, 0, 1276, 1020);
+        same(true, columns.fit(map, FRAME, GAP, window));
+        same(zone(map, 0), window);
         same(false, map.fit(columns, FRAME, GAP, new Rect(100, 100, 500, 500)));
 
         // Meta+arrow: the zone across an edge, or none at the work area's edge.

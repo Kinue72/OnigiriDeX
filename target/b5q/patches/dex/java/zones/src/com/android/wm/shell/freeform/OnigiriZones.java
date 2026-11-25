@@ -23,6 +23,8 @@ final class OnigiriZones {
     static final int MIN = 1500;
     /** A window edge this many pixels from a line still sits on it. */
     static final int NEAR = 32;
+    /** Android's default smallest freeform window (default_minimal_size_resizable_task). */
+    private static final int MIN_WINDOW_DP = 220;
 
     final String name;
     /** The zone new windows open in. */
@@ -237,50 +239,57 @@ final class OnigiriZones {
         return best;
     }
 
+    /** The smallest zone to leave, in pixels, on a display of this density. */
+    static int minSize(int densityDpi) {
+        return MIN_WINDOW_DP * densityDpi / 160;
+    }
+
     /**
-     * A window went from one size to another by a border or corner drag. If it was tiled and
-     * its dragged edges sat on inner lines, those lines follow (never closer than MIN to the
-     * next) and to is moved onto them. False, with nothing changed, for a window that was not
-     * tiled or pulled an edge off the work area's edge.
+     * A window went from one size to another by a border or corner drag. If it was tiled, the
+     * inner lines under its dragged edges follow (no closer to the next line than MIN, or than
+     * leaves a zone min pixels) and to is moved onto them; an edge dragged off the work area's
+     * edge goes back, as a corner drag moves two. False, with nothing changed, when no inner
+     * line was dragged or the window was not tiled.
      */
-    boolean resize(Rect frame, int gap, Rect from, Rect to) {
+    boolean resize(Rect frame, int gap, int min, Rect from, Rect to) {
         int[] span = span(frame, gap, from);
-        boolean left = to.left != from.left;
-        boolean top = to.top != from.top;
-        boolean right = to.right != from.right;
-        boolean bottom = to.bottom != from.bottom;
-        if (span == null || !(left || top || right || bottom)
-                || left && span[0] == 0 || top && span[1] == 0
-                || right && span[2] == cols.length - 1 || bottom && span[3] == rows.length - 1) {
+        if (span == null) {
             return false;
         }
-        if (left) {
-            to.left = move(cols, span[0], frame.left, frame.width(), to.left, 0);
+        boolean left = to.left != from.left && span[0] > 0;
+        boolean top = to.top != from.top && span[1] > 0;
+        boolean right = to.right != from.right && span[2] < cols.length - 1;
+        boolean bottom = to.bottom != from.bottom && span[3] < rows.length - 1;
+        if (!(left || top || right || bottom)) {
+            return false;
         }
-        if (top) {
-            to.top = move(rows, span[1], frame.top, frame.height(), to.top, 0);
-        }
-        if (right) {
-            to.right = move(cols, span[2], frame.left, frame.width(), to.right, gap);
-        }
-        if (bottom) {
-            to.bottom = move(rows, span[3], frame.top, frame.height(), to.bottom, gap);
-        }
+        int width = frame.width();
+        int height = frame.height();
+        to.left = left ? move(cols, span[0], frame.left, width, to.left, 0, min + gap) : from.left;
+        to.top = top ? move(rows, span[1], frame.top, height, to.top, 0, min + gap) : from.top;
+        to.right = right ? move(cols, span[2], frame.left, width, to.right, gap, min + gap) : from.right;
+        to.bottom = bottom ? move(rows, span[3], frame.top, height, to.bottom, gap, min + gap) : from.bottom;
         return true;
     }
 
-    /** Moves an inner line to put its edge at px, and returns where the edge ended up. */
-    private static int move(int[] lines, int i, int start, int size, int px, int gap) {
-        lines[i] = Math.max(lines[i - 1] + MIN,
-                Math.min(lines[i + 1] - MIN, line(start, size, px + gap)));
+    /**
+     * Moves an inner line to put its edge at px, keeping it room pixels from the lines around
+     * it, and returns where the edge ended up.
+     */
+    private static int move(int[] lines, int i, int start, int size, int px, int gap, int room) {
+        // One more pixel covers the rounding of the two lines.
+        int apart = Math.max(MIN, (int) (((long) (room + 1) * UNIT + size - 1) / size));
+        lines[i] = Math.max(lines[i - 1] + apart,
+                Math.min(lines[i + 1] - apart, line(start, size, px + gap)));
         return px(start, size, lines[i]) - gap;
     }
 
     /**
      * Where a window tiled in this layout belongs in another: between the same lines when it
-     * is this layout with moved lines, in the zone of the same number otherwise. Moves bounds
-     * there and returns true, or false when the window is not tiled, spans zones the other
-     * layout doesn't have, or is already in place.
+     * is this layout with moved lines, in the zone of the same number otherwise. A window
+     * across several zones, or in a zone the other layout lacks, goes to the zone under its
+     * middle. Moves bounds there and returns true, or false when the window is not tiled or is
+     * already in place.
      */
     boolean fit(OnigiriZones other, Rect frame, int gap, Rect bounds) {
         int[] span = span(frame, gap, bounds);
@@ -293,7 +302,7 @@ final class OnigiriZones {
         } else {
             int zone = zoneOf(span);
             if (zone < 0 || zone >= other.count()) {
-                return false;
+                zone = other.zoneAt(frame, bounds.centerX(), bounds.centerY());
             }
             other.zoneRect(frame, zone, gap, fitted);
         }

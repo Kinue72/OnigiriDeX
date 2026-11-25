@@ -6,6 +6,7 @@ public class Task {
     public int mTaskId;
     public Rect getBounds() { return null; }
     public int getChildCount() { return 0; }
+    public android.content.res.Configuration getConfiguration() { return null; }
     public int getDexTaskDockingState() { return 0; }
     public DisplayContent getDisplayContent() { return null; }
     public int getFreeformThickness() { return 0; }

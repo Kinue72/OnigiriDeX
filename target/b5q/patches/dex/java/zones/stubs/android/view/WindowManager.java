@@ -4,6 +4,9 @@ package android.view;
 public interface WindowManager extends ViewManager {
     void removeViewImmediate(View view);
 
+    class InvalidDisplayException extends RuntimeException {
+    }
+
     class LayoutParams extends ViewGroup.LayoutParams {
         public static final int FLAG_NOT_FOCUSABLE = 0x8;
         public static final int FLAG_NOT_TOUCHABLE = 0x10;

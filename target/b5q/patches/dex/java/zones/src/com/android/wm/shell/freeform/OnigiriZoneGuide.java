@@ -120,6 +120,7 @@ public final class OnigiriZoneGuide {
         OnigiriZones zones;
         if (positioner.mWindowDecoration.mIsDexMode && (zones = OnigiriZones.current()) != null
                 && zones.resize(positioner.mStableBounds, positioner.getFreeformThickness$1(),
+                        OnigiriZones.minSize(positioner.mWindowDecoration.mTaskInfo.configuration.densityDpi),
                         positioner.mTaskBoundsAtDragStart, positioner.mRepositionTaskBounds)) {
             MultiWindowManager.getInstance().resizeOtherTaskIfNeeded(
                     positioner.mWindowDecoration.mTaskInfo.taskId, positioner.mRepositionTaskBounds);

@@ -34,6 +34,14 @@ public final class Rect {
         return bottom - top;
     }
 
+    public int centerX() {
+        return (left + right) >> 1;
+    }
+
+    public int centerY() {
+        return (top + bottom) >> 1;
+    }
+
     @Override
     public boolean equals(Object other) {
         return other instanceof Rect && toString().equals(other.toString());

@@ -117,8 +117,9 @@ public final class OnigiriZoneController implements Consumer<Task> {
     /**
      * First in DexMetaKeyPolicy.handleMetaKeyEvent. Meta+Left or Right moves the focused window
      * to the zone on that side (a window that is not tiled snaps in near where it is); Meta+Up
-     * or Down moves between stacked zones. False leaves the key to stock DeX: zones off, Shift
-     * held, or Up and Down with no zone that way (maximize, minimize).
+     * or Down moves a tiled window between stacked zones. False leaves the key to stock DeX:
+     * zones off, Shift held, or Up and Down with no zone that way or a window that is not tiled
+     * (maximize, minimize).
      */
     public static boolean onArrow(ActivityTaskManagerService atm, IBinder focus, KeyEvent event) {
         OnigiriZones zones;
@@ -142,20 +143,23 @@ public final class OnigiriZoneController implements Consumer<Task> {
         int gap = task.getFreeformThickness();
         Rect bounds = task.getBounds();
         int[] span = freeform ? zones.span(frame, gap, bounds) : null;
-        int zone = span != null ? zones.zoneOf(span) : -1;
-        if (zone >= 0) {
-            zone = zones.beside(zone, dx, dy);
-            if (zone < 0) {
-                return dx != 0;
-            }
-        } else if (dx != 0) {
-            // Not in one zone. A freeform window starts from the zone under it; a maximized one
-            // has no place of its own and goes beside the main zone, or in it.
-            int under = freeform ? zones.zoneAt(frame, bounds.centerX(), bounds.centerY()) : zones.main;
-            zone = zones.beside(under, dx, 0);
-            zone = zone < 0 ? under : zone;
-        } else {
+        if (span == null && dy != 0) {
             return false;
+        }
+        int tiled = span != null ? zones.zoneOf(span) : -1;
+        // Not in one zone: a freeform window starts from the zone under its middle; a maximized
+        // one has no place of its own and goes beside the main zone, or in it.
+        int from = tiled >= 0 ? tiled
+                : freeform ? zones.zoneAt(frame, bounds.centerX(), bounds.centerY()) : zones.main;
+        int zone = zones.beside(from, dx, dy);
+        if (zone < 0) {
+            if (dy != 0) {
+                return false;
+            }
+            if (tiled >= 0) {
+                return true;
+            }
+            zone = from;
         }
         Rect target = new Rect();
         zones.zoneRect(frame, zone, gap, target);
@@ -226,7 +230,8 @@ public final class OnigiriZoneController implements Consumer<Task> {
         task.getDisplayContent().getStableRect(frame);
         int gap = task.getFreeformThickness();
         OnigiriZones to = OnigiriZones.current();
-        if (to.resize(frame, gap, task.getBounds(), new Rect(bounds))) {
+        int min = OnigiriZones.minSize(task.getConfiguration().densityDpi);
+        if (to.resize(frame, gap, min, task.getBounds(), new Rect(bounds))) {
             SystemProperties.set(OnigiriZones.LINES_PROP + to.name, to.lines());
             task.getDisplayContent().getDefaultTaskDisplayArea().forAllRootTasks(
                     new OnigiriZoneController(atm, from, to, frame, gap, task));
@@ -278,7 +283,12 @@ public final class OnigiriZoneController implements Consumer<Task> {
             params.privateFlags |= SYSTEM_FLAG_SHOW_FOR_ALL_USERS;
             // The overlay draws in display pixels.
             params.setFitInsetsTypes(0);
-            windows.addView(mView, params);
+            try {
+                windows.addView(mView, params);
+            } catch (WindowManager.InvalidDisplayException e) {
+                // The monitor went away since the key press.
+                return;
+            }
             UiThread.getHandler().postDelayed(this, SHOWN_MS);
         }
     }
