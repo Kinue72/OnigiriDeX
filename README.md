@@ -214,7 +214,21 @@ side and other apps next to it. You can pick a map on the left or right, three
 columns, a grid, or a priority grid.
 
 - **Snap windows**: drag a window to the edge of the screen and it fills the
-  zone there.
+  zone there. Hold **Shift** while you drag to drop it in the zone under the
+  pointer instead. Near the border between zones it fills them all.
+- **Resize zones**: drag the border or corner of a snapped window. The zone
+  line moves with it and the windows next to it follow. Each layout remembers
+  its sizes.
+- **Space around zones**: snapped windows keep 8 pixels from each other and
+  from the edges of the screen. A slider picks anything from 0 to 32 pixels;
+  windows use the new space the next time they are snapped or moved.
+- **Move with the keyboard**: the **Windows key + an arrow** moves the window
+  to the zone on that side. Up and Down still maximize and minimize when
+  there is no zone that way.
+- **Swap layouts**: **Windows key + Ctrl + Alt + 1** to **5** picks Map left,
+  Map right, Columns, Grid or Priority grid, and **0** turns zones off.
+  Snapped windows move to the new zones. Press the number of the layout you
+  are on to put its zones back to their first sizes.
 - **New windows** open in the main zone.
 - **Zone apps**: pick an app for each zone. It opens in its zone every time it
   starts, even if you left it maximized, and all of them open by themselves

@@ -1,0 +1,674 @@
+From: Onigiri
+Subject: [PATCH] Add DeX zone spacing
+
+Zones gets a Space around zones slider (0 to 32 px, persist.sys.onigiri.dex_zone_gap) with the
+value on its title line and a picture of snapped windows that follows the slider. The classes are
+built from onigiri/mods/settings/java/zones.
+
+diff --git a/res/layout/onigiri_zone_gap_seekbar.xml b/res/layout/onigiri_zone_gap_seekbar.xml
+new file mode 100644
+index 0000000..78e3ab9
+--- /dev/null
++++ b/res/layout/onigiri_zone_gap_seekbar.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Space around zones: the title with the value at its end, a picture of snapped windows (the
++     preference icon, DexZoneGapDemo) and a plain slider. -->
++<LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="@dimen/sec_seekbar_preference_item_top_padding" android:paddingBottom="@dimen/sec_seekbar_preference_item_bottom_padding"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sec_widget_list_item_padding_start" android:layout_marginEnd="@dimen/sec_widget_list_item_padding_end">
++        <TextView android:id="@android:id/title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:layout_alignParentStart="true" android:layout_toStartOf="@android:id/summary" style="@style/list_title_text_style" />
++        <TextView android:id="@android:id/summary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignBaseline="@android:id/title" android:layout_alignParentEnd="true" android:textAppearance="?android:attr/textAppearanceSmall" />
++    </RelativeLayout>
++    <ImageView android:id="@android:id/icon" android:layout_width="match_parent" android:layout_height="120dp" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" android:layout_marginStart="@dimen/sec_widget_list_item_padding_start" android:layout_marginEnd="@dimen/sec_widget_list_item_padding_end" android:scaleType="fitXY" android:contentDescription="@null" />
++    <SeekBar android:id="@android:id/seekbar" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/sec_speech_rate_seekbar_height" android:paddingStart="@dimen/sec_seekbar_preference_seekbar_additional_side_padding" android:paddingEnd="@dimen/sec_seekbar_preference_seekbar_additional_side_padding" />
++</LinearLayout>
+diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
+index ed12ac7..17d5374 100644
+--- a/res/values-vi/strings.xml
++++ b/res/values-vi/strings.xml
+@@ -8033,6 +8033,7 @@ Trong Máy ảnh, bạn có thể sử dụng phím Trên cùng để chụp ả
+     <string name="onigiri_dex_zones_columns">Chia cột</string>
+     <string name="onigiri_dex_zones_grid">Lưới</string>
+     <string name="onigiri_dex_zones_priority">Lưới ưu tiên</string>
++    <string name="onigiri_dex_zone_gap_title">Khoảng trống quanh cửa sổ</string>
+     <string name="onigiri_dex_zone_apps">Ứng dụng gán cho vùng nào sẽ mở ở vùng đó. Tất cả tự mở mỗi khi DeX khởi động.</string>
+     <string name="onigiri_dex_zone_app_none">Không chọn</string>
+     <string name="onigiri_dex_zone_map">Vùng bản đồ</string>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 9a4b28f..e062c84 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -15394,6 +15394,7 @@ In Camera, you can use the Top button to take pictures."</string>
+     <string name="onigiri_dex_zones_columns">Columns</string>
+     <string name="onigiri_dex_zones_grid">Grid</string>
+     <string name="onigiri_dex_zones_priority">Priority grid</string>
++    <string name="onigiri_dex_zone_gap_title">Space around zones</string>
+     <string name="onigiri_dex_zone_apps">Apps given a zone open in it. They all open by themselves each time DeX starts.</string>
+     <string name="onigiri_dex_zone_app_none">None</string>
+     <string name="onigiri_dex_zone_map">Map zone</string>
+diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
+index e8d2d2e..796313c 100644
+--- a/res/xml/onigiri_settings.xml
++++ b/res/xml/onigiri_settings.xml
+@@ -42,6 +42,7 @@
+     <SecPreferenceCategory android:title="@string/onigiri_dex_zones_title">
+         <com.samsung.android.settings.widget.SecHorizontalRadioPreference android:key="onigiri_dex_zones_1" settings:viewType="image" settings:controller="moe.foss.onigiri.settings.DexZonesPreferenceController" />
+         <com.samsung.android.settings.widget.SecHorizontalRadioPreference android:key="onigiri_dex_zones_2" settings:viewType="image" />
++        <com.android.settings.widget.SeekBarPreference android:layout="@layout/onigiri_zone_gap_seekbar" android:title="@string/onigiri_dex_zone_gap_title" android:key="onigiri_dex_zone_gap" android:max="32" android:persistent="false" settings:controller="moe.foss.onigiri.settings.DexZoneGapPreferenceController" />
+         <com.samsung.android.settings.widget.SecUnclickablePreference android:title="@string/onigiri_dex_zone_apps" android:selectable="false" android:key="onigiri_dex_zone_apps" settings:controller="moe.foss.onigiri.settings.DexZoneAppPreferenceController" />
+         <ListPreference android:key="onigiri_dex_zone_app_0" android:persistent="false" settings:controller="moe.foss.onigiri.settings.DexZoneAppPreferenceController" />
+         <ListPreference android:key="onigiri_dex_zone_app_1" android:persistent="false" settings:controller="moe.foss.onigiri.settings.DexZoneAppPreferenceController" />
+diff --git a/smali_classes5/moe/foss/onigiri/settings/DexZoneGapDemo.smali b/smali_classes5/moe/foss/onigiri/settings/DexZoneGapDemo.smali
+new file mode 100644
+index 0000000..df975dc
+--- /dev/null
++++ b/smali_classes5/moe/foss/onigiri/settings/DexZoneGapDemo.smali
+@@ -0,0 +1,330 @@
++.class final Lmoe/foss/onigiri/settings/DexZoneGapDemo;
++.super Landroid/graphics/drawable/Drawable;
++.source "DexZoneGapDemo.java"
++
++
++# static fields
++.field private static final DEX_DENSITY:F = 1.5f
++
++
++# instance fields
++.field private final mClip:Landroid/graphics/Path;
++
++.field private final mDensity:F
++
++.field private mGap:I
++
++.field private final mNight:Z
++
++.field private final mPaint:Landroid/graphics/Paint;
++
++
++# direct methods
++.method constructor <init>(Landroid/content/Context;)V
++    .locals 2
++
++    .line 28
++    invoke-direct {p0}, Landroid/graphics/drawable/Drawable;-><init>()V
++
++    .line 22
++    new-instance v0, Landroid/graphics/Paint;
++
++    const/4 v1, 0x1
++
++    invoke-direct {v0, v1}, Landroid/graphics/Paint;-><init>(I)V
++
++    iput-object v0, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mPaint:Landroid/graphics/Paint;
++
++    .line 23
++    new-instance v0, Landroid/graphics/Path;
++
++    invoke-direct {v0}, Landroid/graphics/Path;-><init>()V
++
++    iput-object v0, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mClip:Landroid/graphics/Path;
++
++    .line 29
++    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;
++
++    move-result-object v0
++
++    iget v0, v0, Landroid/util/DisplayMetrics;->density:F
++
++    iput v0, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mDensity:F
++
++    .line 30
++    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object p1
++
++    invoke-virtual {p1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
++
++    move-result-object p1
++
++    iget p1, p1, Landroid/content/res/Configuration;->uiMode:I
++
++    and-int/lit8 p1, p1, 0x30
++
++    const/16 v0, 0x20
++
++    if-ne p1, v0, :cond_0
++
++    goto :goto_0
++
++    :cond_0
++    const/4 v1, 0x0
++
++    :goto_0
++    iput-boolean v1, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mNight:Z
++
++    return-void
++.end method
++
++
++# virtual methods
++.method public draw(Landroid/graphics/Canvas;)V
++    .locals 14
++
++    .line 42
++    invoke-virtual {p0}, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->getBounds()Landroid/graphics/Rect;
++
++    move-result-object v0
++
++    .line 43
++    iget v1, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mDensity:F
++
++    const/high16 v2, 0x41400000    # 12.0f
++
++    mul-float v8, v1, v2
++
++    .line 44
++    iget v2, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mGap:I
++
++    int-to-float v2, v2
++
++    mul-float/2addr v2, v1
++
++    const/high16 v1, 0x3fc00000    # 1.5f
++
++    div-float/2addr v2, v1
++
++    .line 46
++    iget v1, v0, Landroid/graphics/Rect;->left:I
++
++    int-to-float v1, v1
++
++    add-float/2addr v1, v2
++
++    invoke-virtual {v0}, Landroid/graphics/Rect;->width()I
++
++    move-result v3
++
++    int-to-float v3, v3
++
++    const v4, 0x3ecccccd    # 0.4f
++
++    mul-float/2addr v3, v4
++
++    add-float/2addr v1, v3
++
++    .line 47
++    iget v3, v0, Landroid/graphics/Rect;->top:I
++
++    int-to-float v3, v3
++
++    add-float/2addr v3, v2
++
++    invoke-virtual {v0}, Landroid/graphics/Rect;->height()I
++
++    move-result v4
++
++    int-to-float v4, v4
++
++    const v5, 0x3f0ccccd    # 0.55f
++
++    mul-float/2addr v4, v5
++
++    add-float v11, v3, v4
++
++    .line 48
++    iget v3, v0, Landroid/graphics/Rect;->right:I
++
++    int-to-float v3, v3
++
++    add-float v12, v3, v8
++
++    .line 49
++    iget v3, v0, Landroid/graphics/Rect;->bottom:I
++
++    int-to-float v3, v3
++
++    add-float v13, v3, v8
++
++    .line 50
++    invoke-virtual {p1}, Landroid/graphics/Canvas;->save()I
++
++    .line 51
++    iget-object v3, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mClip:Landroid/graphics/Path;
++
++    invoke-virtual {v3}, Landroid/graphics/Path;->rewind()V
++
++    .line 52
++    iget-object v3, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mClip:Landroid/graphics/Path;
++
++    iget v4, v0, Landroid/graphics/Rect;->left:I
++
++    int-to-float v4, v4
++
++    iget v5, v0, Landroid/graphics/Rect;->top:I
++
++    int-to-float v5, v5
++
++    iget v6, v0, Landroid/graphics/Rect;->right:I
++
++    int-to-float v6, v6
++
++    iget v7, v0, Landroid/graphics/Rect;->bottom:I
++
++    int-to-float v7, v7
++
++    sget-object v10, Landroid/graphics/Path$Direction;->CW:Landroid/graphics/Path$Direction;
++
++    move v9, v8
++
++    invoke-virtual/range {v3 .. v10}, Landroid/graphics/Path;->addRoundRect(FFFFFFLandroid/graphics/Path$Direction;)V
++
++    .line 53
++    iget-object v3, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mClip:Landroid/graphics/Path;
++
++    invoke-virtual {p1, v3}, Landroid/graphics/Canvas;->clipPath(Landroid/graphics/Path;)Z
++
++    .line 54
++    iget-boolean v3, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mNight:Z
++
++    if-eqz v3, :cond_0
++
++    const v3, -0xc5c5c3
++
++    goto :goto_0
++
++    :cond_0
++    const v3, -0x111110
++
++    :goto_0
++    invoke-virtual {p1, v3}, Landroid/graphics/Canvas;->drawColor(I)V
++
++    .line 55
++    iget-object v3, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mPaint:Landroid/graphics/Paint;
++
++    iget-boolean v4, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mNight:Z
++
++    if-eqz v4, :cond_1
++
++    const v4, -0xa3a39f
++
++    goto :goto_1
++
++    :cond_1
++    const v4, -0x30302c
++
++    :goto_1
++    invoke-virtual {v3, v4}, Landroid/graphics/Paint;->setColor(I)V
++
++    .line 56
++    iget v3, v0, Landroid/graphics/Rect;->left:I
++
++    int-to-float v3, v3
++
++    add-float v4, v3, v2
++
++    iget v3, v0, Landroid/graphics/Rect;->top:I
++
++    int-to-float v3, v3
++
++    add-float v5, v3, v2
++
++    sub-float v6, v1, v2
++
++    iget-object v10, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mPaint:Landroid/graphics/Paint;
++
++    move v9, v8
++
++    move-object v3, p1
++
++    move v7, v13
++
++    invoke-virtual/range {v3 .. v10}, Landroid/graphics/Canvas;->drawRoundRect(FFFFFFLandroid/graphics/Paint;)V
++
++    .line 57
++    iget-object v10, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mPaint:Landroid/graphics/Paint;
++
++    move v4, v1
++
++    move v5, v11
++
++    move v6, v12
++
++    invoke-virtual/range {v3 .. v10}, Landroid/graphics/Canvas;->drawRoundRect(FFFFFFLandroid/graphics/Paint;)V
++
++    .line 58
++    iget-object p1, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mPaint:Landroid/graphics/Paint;
++
++    const v1, -0xc78501
++
++    invoke-virtual {p1, v1}, Landroid/graphics/Paint;->setColor(I)V
++
++    .line 59
++    iget p1, v0, Landroid/graphics/Rect;->top:I
++
++    int-to-float p1, p1
++
++    add-float/2addr p1, v2
++
++    sub-float v7, v5, v2
++
++    iget-object v10, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mPaint:Landroid/graphics/Paint;
++
++    move v5, p1
++
++    invoke-virtual/range {v3 .. v10}, Landroid/graphics/Canvas;->drawRoundRect(FFFFFFLandroid/graphics/Paint;)V
++
++    .line 60
++    invoke-virtual {v3}, Landroid/graphics/Canvas;->restore()V
++
++    return-void
++.end method
++
++.method public getOpacity()I
++    .locals 0
++
++    const/4 p0, -0x3
++
++    return p0
++.end method
++
++.method public setAlpha(I)V
++    .locals 0
++
++    return-void
++.end method
++
++.method public setColorFilter(Landroid/graphics/ColorFilter;)V
++    .locals 0
++
++    return-void
++.end method
++
++.method setGap(I)V
++    .locals 0
++
++    .line 36
++    iput p1, p0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->mGap:I
++
++    .line 37
++    invoke-virtual {p0}, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->invalidateSelf()V
++
++    return-void
++.end method
+diff --git a/smali_classes5/moe/foss/onigiri/settings/DexZoneGapPreferenceController.smali b/smali_classes5/moe/foss/onigiri/settings/DexZoneGapPreferenceController.smali
+new file mode 100644
+index 0000000..05559d2
+--- /dev/null
++++ b/smali_classes5/moe/foss/onigiri/settings/DexZoneGapPreferenceController.smali
+@@ -0,0 +1,271 @@
++.class public Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;
++.super Lcom/android/settings/core/SliderPreferenceController;
++.source "DexZoneGapPreferenceController.java"
++
++# interfaces
++.implements Landroid/widget/SeekBar$OnSeekBarChangeListener;
++
++
++# static fields
++.field private static final DEFAULT:I = 0x8
++
++.field private static final MAX:I = 0x20
++
++.field private static final PROP:Ljava/lang/String; = "persist.sys.onigiri.dex_zone_gap"
++
++
++# instance fields
++.field private mDemo:Lmoe/foss/onigiri/settings/DexZoneGapDemo;
++
++.field private mDragging:Z
++
++
++# direct methods
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .locals 0
++
++    .line 27
++    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/SliderPreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++
++    return-void
++.end method
++
++.method private show(Landroidx/preference/Preference;I)V
++    .locals 2
++
++    .line 90
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    invoke-virtual {v0, p2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    const-string v1, " px"
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-virtual {p1, v0}, Landroidx/preference/Preference;->setSummary(Ljava/lang/CharSequence;)V
++
++    .line 91
++    iget-object p0, p0, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->mDemo:Lmoe/foss/onigiri/settings/DexZoneGapDemo;
++
++    if-eqz p0, :cond_0
++
++    .line 92
++    invoke-virtual {p0, p2}, Lmoe/foss/onigiri/settings/DexZoneGapDemo;->setGap(I)V
++
++    :cond_0
++    return-void
++.end method
++
++
++# virtual methods
++.method public displayPreference(Landroidx/preference/PreferenceScreen;)V
++    .locals 2
++
++    .line 47
++    invoke-super {p0, p1}, Lcom/android/settings/core/SliderPreferenceController;->displayPreference(Landroidx/preference/PreferenceScreen;)V
++
++    .line 48
++    invoke-virtual {p0}, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->getPreferenceKey()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-virtual {p1, v0}, Landroidx/preference/PreferenceScreen;->findPreference(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
++
++    move-result-object p1
++
++    .line 49
++    instance-of v0, p1, Lcom/android/settings/widget/SeekBarPreference;
++
++    if-eqz v0, :cond_0
++
++    .line 50
++    check-cast p1, Lcom/android/settings/widget/SeekBarPreference;
++
++    .line 51
++    new-instance v0, Lmoe/foss/onigiri/settings/DexZoneGapDemo;
++
++    iget-object v1, p0, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->mContext:Landroid/content/Context;
++
++    invoke-direct {v0, v1}, Lmoe/foss/onigiri/settings/DexZoneGapDemo;-><init>(Landroid/content/Context;)V
++
++    iput-object v0, p0, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->mDemo:Lmoe/foss/onigiri/settings/DexZoneGapDemo;
++
++    .line 53
++    invoke-virtual {p1, v0}, Lcom/android/settings/widget/SeekBarPreference;->setIcon(Landroid/graphics/drawable/Drawable;)V
++
++    const/4 v0, 0x1
++
++    .line 54
++    iput-boolean v0, p1, Lcom/android/settings/widget/SeekBarPreference;->mContinuousUpdates:Z
++
++    .line 55
++    iput-object p0, p1, Lcom/android/settings/widget/SeekBarPreference;->mOnSeekBarChangeListener:Landroid/widget/SeekBar$OnSeekBarChangeListener;
++
++    :cond_0
++    return-void
++.end method
++
++.method public getAvailabilityStatus()I
++    .locals 0
++
++    const/4 p0, 0x0
++
++    return p0
++.end method
++
++.method public getMax()I
++    .locals 0
++
++    const/16 p0, 0x20
++
++    return p0
++.end method
++
++.method public getMin()I
++    .locals 0
++
++    const/4 p0, 0x0
++
++    return p0
++.end method
++
++.method public getSliderPosition()I
++    .locals 1
++
++    .line 63
++    :try_start_0
++    const-string p0, "persist.sys.onigiri.dex_zone_gap"
++
++    const-string v0, ""
++
++    invoke-static {p0, v0}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
++
++    move-result p0
++
++    const/16 v0, 0x20
++
++    invoke-static {v0, p0}, Ljava/lang/Math;->min(II)I
++
++    move-result p0
++
++    const/4 v0, 0x0
++
++    invoke-static {v0, p0}, Ljava/lang/Math;->max(II)I
++
++    move-result p0
++    :try_end_0
++    .catch Ljava/lang/NumberFormatException; {:try_start_0 .. :try_end_0} :catch_0
++
++    return p0
++
++    :catch_0
++    const/16 p0, 0x8
++
++    return p0
++.end method
++
++.method public onPreferenceChange(Landroidx/preference/Preference;Ljava/lang/Object;)Z
++    .locals 1
++
++    .line 79
++    move-object v0, p2
++
++    check-cast v0, Ljava/lang/Integer;
++
++    invoke-virtual {v0}, Ljava/lang/Integer;->intValue()I
++
++    move-result v0
++
++    invoke-direct {p0, p1, v0}, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->show(Landroidx/preference/Preference;I)V
++
++    .line 80
++    invoke-super {p0, p1, p2}, Lcom/android/settings/core/SliderPreferenceController;->onPreferenceChange(Landroidx/preference/Preference;Ljava/lang/Object;)Z
++
++    move-result p0
++
++    return p0
++.end method
++
++.method public onProgressChanged(Landroid/widget/SeekBar;IZ)V
++    .locals 0
++
++    return-void
++.end method
++
++.method public onStartTrackingTouch(Landroid/widget/SeekBar;)V
++    .locals 0
++
++    const/4 p1, 0x1
++
++    .line 102
++    iput-boolean p1, p0, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->mDragging:Z
++
++    return-void
++.end method
++
++.method public onStopTrackingTouch(Landroid/widget/SeekBar;)V
++    .locals 1
++
++    const/4 v0, 0x0
++
++    .line 107
++    iput-boolean v0, p0, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->mDragging:Z
++
++    .line 108
++    invoke-virtual {p1}, Landroid/widget/SeekBar;->getProgress()I
++
++    move-result p1
++
++    invoke-virtual {p0, p1}, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->setSliderPosition(I)Z
++
++    return-void
++.end method
++
++.method public setSliderPosition(I)Z
++    .locals 0
++
++    .line 71
++    iget-boolean p0, p0, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->mDragging:Z
++
++    if-nez p0, :cond_0
++
++    .line 72
++    const-string p0, "persist.sys.onigiri.dex_zone_gap"
++
++    invoke-static {p1}, Ljava/lang/String;->valueOf(I)Ljava/lang/String;
++
++    move-result-object p1
++
++    invoke-static {p0, p1}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++
++    :cond_0
++    const/4 p0, 0x1
++
++    return p0
++.end method
++
++.method public updateState(Landroidx/preference/Preference;)V
++    .locals 1
++
++    .line 85
++    invoke-super {p0, p1}, Lcom/android/settings/core/SliderPreferenceController;->updateState(Landroidx/preference/Preference;)V
++
++    .line 86
++    invoke-virtual {p0}, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->getSliderPosition()I
++
++    move-result v0
++
++    invoke-direct {p0, p1, v0}, Lmoe/foss/onigiri/settings/DexZoneGapPreferenceController;->show(Landroidx/preference/Preference;I)V
++
++    return-void
++.end method
