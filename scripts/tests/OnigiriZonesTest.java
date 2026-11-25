@@ -41,6 +41,8 @@ public final class OnigiriZonesTest {
         same(8, OnigiriZones.space());
         SystemProperties.VALUES.put(OnigiriZones.GAP_PROP, "16");
         same(16, OnigiriZones.space());
+        SystemProperties.VALUES.put(OnigiriZones.GAP_PROP, "64");
+        same(32, OnigiriZones.space());
         Rect touching = new Rect();
         map.zoneRect(FRAME, 0, 0, touching);
         same("0,0,640,1020", touching);
@@ -69,6 +71,12 @@ public final class OnigiriZonesTest {
         same(true, map.fit(moved, FRAME, GAP, neighbour));
         same("808,8,1912,1012", neighbour);
         same("5021/", moved.lines());
+
+        // A window tiled before the space changed (here with none) lands on its lines whole.
+        dragged.set(0, 0, 800, 1020);
+        moved = use("map_left");
+        same(true, moved.resize(FRAME, GAP, SMALLEST, new Rect(0, 0, 640, 1020), dragged));
+        same("8,8,800,1012", dragged);
 
         // The moved line is what the layout loads next time; lines that don't fit it are dropped.
         SystemProperties.VALUES.put(OnigiriZones.LINES_PROP + "map_left", moved.lines());

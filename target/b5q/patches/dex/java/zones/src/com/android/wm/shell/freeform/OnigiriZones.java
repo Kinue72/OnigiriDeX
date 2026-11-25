@@ -62,9 +62,12 @@ final class OnigiriZones {
         return zones;
     }
 
-    /** The space around every tiled window as it shows, in pixels. */
+    /**
+     * The space around every tiled window as it shows, in pixels. No more than NEAR, so a
+     * window tiled with another space still counts as tiled.
+     */
     static int space() {
-        return Math.max(0, Math.min(64, SystemProperties.getInt(GAP_PROP, 8)));
+        return Math.max(0, Math.min(NEAR, SystemProperties.getInt(GAP_PROP, 8)));
     }
 
     /** The gap between the bounds of tiled windows: the space, and the outline of each. */
@@ -262,9 +265,10 @@ final class OnigiriZones {
     /**
      * A window went from one size to another by a border or corner drag. If it was tiled, the
      * inner lines under its dragged edges follow (no closer to the next line than MIN, or than
-     * leaves a zone min pixels) and to is moved onto them; an edge dragged off the work area's
-     * edge goes back, as a corner drag moves two. False, with nothing changed, when no inner
-     * line was dragged or the window was not tiled.
+     * leaves a zone min pixels) and to is moved onto its lines: an edge dragged off the work
+     * area's edge goes back, as a corner drag moves two, and the other edges take the gap in
+     * use now. False, with nothing changed, when no inner line was dragged or the window was
+     * not tiled.
      */
     boolean resize(Rect frame, int gap, int min, Rect from, Rect to) {
         int[] span = span(frame, gap, from);
@@ -282,27 +286,35 @@ final class OnigiriZones {
         int y = frame.top + gap;
         int width = frame.width() - gap;
         int height = frame.height() - gap;
-        to.left = left ? move(cols, span[0], x, width, to.left, 0, min + gap) : from.left;
-        to.top = top ? move(rows, span[1], y, height, to.top, 0, min + gap) : from.top;
-        to.right = right ? move(cols, span[2], x, width, to.right, gap, min + gap) : from.right;
-        to.bottom = bottom ? move(rows, span[3], y, height, to.bottom, gap, min + gap) : from.bottom;
+        if (left) {
+            move(cols, span[0], x, width, to.left, min + gap);
+        }
+        if (top) {
+            move(rows, span[1], y, height, to.top, min + gap);
+        }
+        if (right) {
+            move(cols, span[2], x, width, to.right + gap, min + gap);
+        }
+        if (bottom) {
+            move(rows, span[3], y, height, to.bottom + gap, min + gap);
+        }
+        rect(frame, span[0], span[1], span[2], span[3], gap, to);
         return true;
     }
 
     /**
-     * Moves an inner line to put its edge at px, keeping it room pixels from the lines around
-     * it, and returns where the edge ended up. The line stays put when the two zones beside it
-     * cannot both have that room (lines saved on a larger monitor).
+     * Moves an inner line to px, keeping it room pixels from the lines around it. The line
+     * stays put when the two zones beside it cannot both have that room (lines saved on a
+     * larger monitor).
      */
-    private static int move(int[] lines, int i, int start, int size, int px, int gap, int room) {
+    private static void move(int[] lines, int i, int start, int size, int px, int room) {
         // One more pixel covers the rounding of the two lines.
         int apart = Math.max(MIN, (int) (((long) (room + 1) * UNIT + size - 1) / size));
         int low = lines[i - 1] + apart;
         int high = lines[i + 1] - apart;
         if (low <= high) {
-            lines[i] = Math.max(low, Math.min(high, line(start, size, px + gap)));
+            lines[i] = Math.max(low, Math.min(high, line(start, size, px)));
         }
-        return px(start, size, lines[i]) - gap;
     }
 
     /**
