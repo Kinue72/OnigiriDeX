@@ -274,13 +274,17 @@ final class OnigiriZones {
 
     /**
      * Moves an inner line to put its edge at px, keeping it room pixels from the lines around
-     * it, and returns where the edge ended up.
+     * it, and returns where the edge ended up. The line stays put when the two zones beside it
+     * cannot both have that room (lines saved on a larger monitor).
      */
     private static int move(int[] lines, int i, int start, int size, int px, int gap, int room) {
         // One more pixel covers the rounding of the two lines.
         int apart = Math.max(MIN, (int) (((long) (room + 1) * UNIT + size - 1) / size));
-        lines[i] = Math.max(lines[i - 1] + apart,
-                Math.min(lines[i + 1] - apart, line(start, size, px + gap)));
+        int low = lines[i - 1] + apart;
+        int high = lines[i + 1] - apart;
+        if (low <= high) {
+            lines[i] = Math.max(low, Math.min(high, line(start, size, px + gap)));
+        }
         return px(start, size, lines[i]) - gap;
     }
 

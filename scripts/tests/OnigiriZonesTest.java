@@ -72,6 +72,15 @@ public final class OnigiriZonesTest {
         same(true, moved.resize(FRAME, GAP, SMALLEST, zone(map, 0), dragged));
         same(true, zone(moved, 1).width() >= SMALLEST);
 
+        // On a desktop too small for two such zones the line stays where it is.
+        Rect small = new Rect(0, 0, 600, 1020);
+        Rect before = new Rect();
+        moved = use("map_left");
+        moved.zoneRect(small, 0, GAP, before);
+        dragged.set(0, 0, 150, 1020);
+        same(true, moved.resize(small, GAP, SMALLEST, before, dragged));
+        same(before, dragged);
+
         // A corner drag moves a column and a row line: all four grid windows follow.
         dragged.set(0, 0, 1196, 404);
         moved = use("grid");
