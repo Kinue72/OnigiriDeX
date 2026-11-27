@@ -28,15 +28,6 @@ GET_WORK_DIR_HASH()
         sort -z | xargs -0 sha1sum | sha1sum | cut -d " " -f 1
 }
 
-# A keybox that expired after its tree was completed keeps the same work-dir hash, so the
-# cache would package a dead key. Rebuild instead.
-KEYBOX_CURRENT()
-{
-    EXPIRES="$(sed -n 's/^keybox_expires=//p' \
-        "$WORK_DIR/system/system/framework/onigiri-essential/tee/version.properties" 2>/dev/null)"
-    [ -z "$EXPIRES" ] || [[ "$EXPIRES" > "$(date -u +%Y-%m-%dT%H:%M:%SZ)" ]]
-}
-
 PREPARE_SCRIPT()
 {
     while [ "$#" != 0 ]; do
@@ -85,9 +76,6 @@ else
     if [ -f "$WORK_DIR/.completed" ]; then
         if [[ "$(cat "$WORK_DIR/.completed")" != "$(GET_WORK_DIR_HASH)" ]]; then
             LOGW "Changes detected in the build environment"
-            BUILD_ROM=true
-        elif ! KEYBOX_CURRENT; then
-            LOGW "The shipped keybox expired after this tree was built"
             BUILD_ROM=true
         else
             LOGW "No changes have been detected in the build environment"

@@ -15,7 +15,8 @@ R8_SHA256 = 'f24d7ae8332eecd5329906656aa687022c111b1e31992c04a154f649377be3f2'
 # intermediate expired in January 2026, which fails every verdict on a fresh install. A
 # third-party keybox is not published in this repository; keep it at
 # onigiri/mods/essential/tee-keybox.xml (git-ignored) and update both values below with it.
-# This is that file's leaf notAfter, in UTC.
+# This is that file's leaf notAfter, in UTC. The image only needs a live key for an offline
+# first boot: a connected device refreshes it after boot (see KeyboxUpdate).
 TEE_KEYBOX_EXPIRES = datetime(2026, 12, 4, 10, 54, 20, tzinfo=timezone.utc)
 TEE_KEYBOX_REFRESH_WINDOW = timedelta(days=14)
 
@@ -29,8 +30,9 @@ def supplied_keybox(module):
         return None
     remaining = TEE_KEYBOX_EXPIRES - datetime.now(timezone.utc)
     if remaining <= timedelta(0):
-        raise ValueError('tee-keybox.xml has expired; refresh the keybox and TEE_KEYBOX_EXPIRES')
-    if remaining < TEE_KEYBOX_REFRESH_WINDOW:
+        print('warning: tee-keybox.xml has expired; devices refresh theirs after boot, but a '
+              'fresh offline install fails integrity checks', file=sys.stderr)
+    elif remaining < TEE_KEYBOX_REFRESH_WINDOW:
         print(f'warning: tee-keybox.xml expires in {remaining.days} days; refresh it before release',
               file=sys.stderr)
     return path
@@ -89,9 +91,6 @@ public final class PayloadPackager {
                 shipped.write_bytes(archive.read('keybox.xml'))
         else:
             shutil.copyfile(supplied, shipped)
-            # Lets make_rom.sh rebuild a cached tree whose keybox expired since it was built.
-            tee = dest / 'tee/version.properties'
-            tee.write_text(tee.read_text() + f'keybox_expires={TEE_KEYBOX_EXPIRES:%Y-%m-%dT%H:%M:%SZ}\n')
         shipped.chmod(0o644)
         (dest / 'tee/version.properties').chmod(0o644)
         java_home = Path(shutil.which('javac')).resolve().parent.parent

@@ -151,6 +151,8 @@ prepare() {
         fi
     done
     restorecon -RF "$DATA"
+    # Shared keys are revoked every few days; refresh the shipped one over the network.
+    [ -n "$(getprop persist.sys.onigiri.keybox_update)" ] || setprop persist.sys.onigiri.keybox_update true
     setprop sys.onigiri.essential.prepared true
 }
 
@@ -198,8 +200,19 @@ tee() {
             if [ "$NAME" = keybox.xml ]; then SHIPPED="$ROM/tee/keybox.xml"; else SHIPPED="$PAYLOAD/$NAME"; fi
             (umask 077; cp "$SHIPPED" "/data/adb/tricky_store/$NAME.new") &&
                 mv "/data/adb/tricky_store/$NAME.new" "/data/adb/tricky_store/$NAME" || return 1
+            if [ "$NAME" = keybox.xml ]; then
+                # Records what this ROM installed, so the refresh knows the file is its own.
+                mkdir -p "$DATA/keybox" && sha256sum "/data/adb/tricky_store/$NAME" |
+                    cut -d " " -f 1 > "$DATA/keybox/shipped"
+            fi
         fi
     done
+    # Shared keys die within days: take the newest working one before the daemon reads it.
+    # A keybox somebody put there themselves is left alone, and a failed fetch keeps this one.
+    if [ "$(getprop persist.sys.onigiri.keybox_update)" != false ]; then
+        timeout -k 5 20 /system/bin/app_process -Djava.class.path=/system/framework/onigiri-essential.jar \
+            /system/bin moe.foss.onigiri.KeyboxUpdate > /dev/null 2>&1
+    fi
     touch "$DATA/tee/guard" || return 1
     sync
     cd "$PAYLOAD" || return 1
@@ -246,6 +259,14 @@ boot_complete() {
         fi
     fi
     # Require 60 consecutive active seconds after boot before accepting a trial update.
+    if [ "$(getprop sys.onigiri.keybox.state)" = unavailable ] &&
+            [ "$(getprop persist.sys.onigiri.keybox_update)" != false ]; then
+        # The mirror occasionally drops the first connection; one more try that same boot.
+        (
+            timeout -k 5 20 /system/bin/app_process -Djava.class.path=/system/framework/onigiri-essential.jar \
+                /system/bin moe.foss.onigiri.KeyboxUpdate > /dev/null 2>&1
+        ) &
+    fi
     for ID in hma tee brene; do
         (
             STABLE=0
@@ -275,6 +296,12 @@ case "$1" in
         setprop "sys.onigiri.$2.update" checking || exit 1
         exec /system/bin/app_process -Djava.class.path=/system/framework/onigiri-essential.jar \
             /system/bin moe.foss.onigiri.EssentialUpdate "$2"
+        ;;
+    keybox)
+        # Newest shared keybox, verified before it replaces the one the ROM installed.
+        [ "$(getprop persist.sys.onigiri.keybox_update)" = false ] && exit 0
+        exec /system/bin/app_process -Djava.class.path=/system/framework/onigiri-essential.jar \
+            /system/bin moe.foss.onigiri.KeyboxUpdate
         ;;
     *) exit 2;;
 esac

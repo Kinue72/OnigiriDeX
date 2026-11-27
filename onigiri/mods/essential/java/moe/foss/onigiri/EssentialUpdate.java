@@ -60,13 +60,17 @@ public final class EssentialUpdate {
     }
 
     static void download(String address, Path dest, long limit) throws IOException {
+        download(address, dest, limit, Arrays.asList("github.com", "raw.githubusercontent.com",
+                "release-assets.githubusercontent.com", "objects.githubusercontent.com"));
+    }
+
+    static void download(String address, Path dest, long limit, Collection<String> hosts) throws IOException {
         URL url = new URL(address);
         for (int hop = 0; hop < 5; hop++) {
             String host = url.getHost();
             if (!url.getProtocol().equals("https") || url.getUserInfo() != null ||
                     (url.getPort() != -1 && url.getPort() != 443) ||
-                    !Arrays.asList("github.com", "raw.githubusercontent.com", "release-assets.githubusercontent.com",
-                            "objects.githubusercontent.com").contains(host)) throw new IOException("Unexpected download host");
+                    !hosts.contains(host)) throw new IOException("Unexpected download host");
             HttpURLConnection c = (HttpURLConnection) url.openConnection();
             c.setConnectTimeout(15000);
             c.setReadTimeout(20000);

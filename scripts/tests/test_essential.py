@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Focused host tests. Android loading, Binder hooks and device SELinux still need hardware."""
 from pathlib import Path
+import hashlib
 import os
 import re
 import shutil
@@ -219,6 +220,19 @@ class BootStateTest(unittest.TestCase):
         store = self.root / 'data/adb/tricky_store'
         self.assertEqual((store / 'keybox.xml').read_text(), 'rom-key\n')
         self.assertEqual((store / 'target.txt').read_text(), 'com.example\n')
+        # The refresh may replace this file later, so the seed is recorded as ours.
+        self.assertEqual((self.data / 'keybox/shipped').read_text().strip(),
+                         hashlib.sha256(b'rom-key\n').hexdigest())
+        # A keybox already in the store is neither replaced nor claimed.
+        for name in ('keybox.xml', 'target.txt'):
+            (store / name).unlink()
+        (self.data / 'keybox/shipped').unlink()
+        store.mkdir(parents=True, exist_ok=True)
+        (store / 'keybox.xml').write_text('user-key\n')
+        self.prop('sys.onigiri.tee.state', 'ready')
+        subprocess.run(['bash', str(self.script), 'tee'], env=self.env, check=True, capture_output=True)
+        self.assertEqual((store / 'keybox.xml').read_text(), 'user-key\n')
+        self.assertFalse((self.data / 'keybox/shipped').exists())
 
     def assert_manager_rollback(self, previous):
         component = self.data / 'hma'
@@ -323,6 +337,32 @@ esac
             self.assertFalse((self.data / name / 'guard').exists())
             self.assertFalse((self.data / name / 'trial').exists())
 
+    def test_keybox_refresh_is_skipped_when_switched_off(self):
+        launcher = self.root / 'system/bin/app_process'
+        launcher.write_text('#!/bin/sh\ntouch "$PROPS/app_process.ran"\nexit 0\n')
+        launcher.chmod(0o755)
+        self.prepare()
+        self.prop('persist.sys.onigiri.keybox_update', 'false')
+        result = subprocess.run(['bash', str(self.script), 'keybox'], env=self.env, capture_output=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertFalse((self.props / 'app_process.ran').exists())
+        self.prop('persist.sys.onigiri.keybox_update', 'true')
+        result = subprocess.run(['bash', str(self.script), 'keybox'], env=self.env, capture_output=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue((self.props / 'app_process.ran').exists())
+
+    def test_boot_retries_a_failed_keybox_fetch(self):
+        launcher = self.root / 'system/bin/app_process'
+        launcher.write_text('#!/bin/sh\ntouch "$PROPS/app_process.ran"\n')
+        launcher.chmod(0o755)
+        (self.bin / 'sleep').write_text('#!/bin/sh\nexit 0\n')
+        (self.bin / 'sleep').chmod(0o755)
+        self.prepare()
+        self.prop('sys.onigiri.keybox.state', 'unavailable')
+        subprocess.run(['bash', str(self.script), 'boot-complete'], env=self.env, check=True,
+                       capture_output=True, timeout=30)
+        self.assertTrue((self.props / 'app_process.ran').exists())
+
     def test_update_marks_checking_even_when_java_cannot_start(self):
         launcher = self.root / 'system/bin/app_process'
         launcher.write_text('#!/bin/sh\n[ "$(getprop sys.onigiri.hma.update)" = checking ] || exit 99\nexit 41\n')
@@ -345,7 +385,9 @@ if __name__ == '__main__':
         subprocess.run(['javac', '--release', '8', '-Xlint:-options', '-d', classes, *map(str, sources),
                         str(virtual_loader), str(ROOT / 'scripts/tests/SystemProperties.java'),
                         str(ROOT / 'scripts/tests/HmaLoaderWaitTest.java'),
-                        str(ROOT / 'scripts/tests/EssentialUpdateTest.java')], check=True)
+                        str(ROOT / 'scripts/tests/EssentialUpdateTest.java'),
+                        str(ROOT / 'scripts/tests/KeyboxUpdateTest.java')], check=True)
         subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.EssentialUpdateTest', str(ROOT)], check=True)
+        subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.KeyboxUpdateTest'], check=True)
         subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.HmaLoaderWaitTest'], check=True)
     unittest.main()

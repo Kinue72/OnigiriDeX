@@ -15,14 +15,40 @@ current status, component-specific controls, and a PIF-style version/update row.
 The build verifies the original archives against `prebuilts/rootmods/manifest.json`
 and `bundled.properties`. It never executes their installers. The HMA manager keeps
 its upstream signing certificate. PIF's existing certificate handling remains
-in place. Nothing here fetches keys at runtime or guarantees an app's integrity
-result. TEESimulator's expired bundled keybox is replaced by the keybox supplied in
+in place. TEESimulator's expired bundled keybox is replaced by the keybox supplied in
 `onigiri/mods/essential/tee-keybox.xml`, which is deliberately not in this
-repository (see [releasing.md](releasing.md)); without it the build warns and keeps
-the archive's expired key. The build warns inside `TEE_KEYBOX_REFRESH_WINDOW` and
-fails past `TEE_KEYBOX_EXPIRES`, and a cached tree whose keybox expired is rebuilt
-rather than packaged. A keybox already in `/data/adb/tricky_store` is never
-replaced, so an existing install keeps its own key until that file is deleted.
+repository (see [releasing.md](releasing.md); without it the build warns and keeps the
+archive's expired key). The build warns inside `TEE_KEYBOX_REFRESH_WINDOW` and once
+past `TEE_KEYBOX_EXPIRES`: the shipped key is only a bootstrap, replaced at TEE startup,
+so a dead one costs the first boot of a fresh install that is offline.
+
+## Keybox refresh
+
+A shared attestation key dies within days: Google revokes it once it circulates. The
+mirror's own index lists every key old enough to matter as revoked, so an image can
+only carry a bootstrap key. `moe.foss.onigiri.KeyboxUpdate` refreshes it during TEE
+startup, after the payload key is seeded and before TEESimulator reads it, so a
+bootstrap key that was revoked after the build never serves a request. Each fetch is
+bounded to 20 seconds, and a failed one is retried once after boot completes. The TEE
+and boot services carry the `inet` group the fetch needs.
+
+It fetches `https://evoker.qzz.io/key`, overridable with
+`persist.sys.onigiri.keybox.url` (base64 as the mirror serves it, or the XML itself),
+and only accepts HTTPS on github.com, raw.githubusercontent.com,
+release-assets.githubusercontent.com, objects.githubusercontent.com or evoker.qzz.io.
+A keybox is accepted only when the XML parses, every certificate in the embedded chain
+verifies against the next, and the leaf has more than two days left. A rejected key
+leaves the current one in place, and an offline boot simply keeps the shipped key.
+
+`/data/adb/tricky_store/keybox.xml` is replaced when it is a file this module
+installed, when it is the keybox in the ROM payload, or when it is unusable —
+unreadable, not a keybox, or past its leaf expiry. The checksum recorded at seed time
+in `/data/system/onigiri-essential/keybox/shipped` identifies what this module
+installed. A working keybox supplied by hand or by another module reports `custom` and
+is never touched. States appear in `sys.onigiri.keybox.state` (`updated`, `current`,
+`custom`, `unavailable`, `busy`) with the leaf expiry in
+`sys.onigiri.keybox.expires`. `persist.sys.onigiri.keybox_update false` switches the
+refresh off, and `onigiri-essential.sh keybox` runs it by hand.
 
 Bundled payloads live under `/system/framework/onigiri-essential`, which is
 permitted by keystore's linker namespace. Updates use the root-owned

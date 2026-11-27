@@ -17,14 +17,14 @@ service onigiri-brene /system/bin/sh /system/bin/onigiri-essential.sh brene
 
 service onigiri-tee /system/bin/sh /system/bin/onigiri-essential.sh tee
     user root
-    group root
+    group root inet
     seclabel u:r:ksu:s0
     disabled
     oneshot
 
 service onigiri-essential-boot /system/bin/sh /system/bin/onigiri-essential.sh boot-complete
     user root
-    group root
+    group root inet
     seclabel u:r:ksu:s0
     disabled
     oneshot
