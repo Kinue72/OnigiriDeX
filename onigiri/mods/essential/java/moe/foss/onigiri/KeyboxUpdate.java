@@ -8,6 +8,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -274,11 +275,22 @@ public final class KeyboxUpdate {
             // Label the keybox before it is published; the daemon reads it from another domain.
             if (new ProcessBuilder("/system/bin/restorecon", staged.toString()).start().waitFor() != 0)
                 throw new IOException("Labeling the keybox failed");
-            // Nothing else installed a keybox while this one was downloading.
-            if (!Objects.equals(Files.isRegularFile(STORE) ? EssentialUpdate.sha256(STORE) : null, expected))
-                throw new IOException("Keybox changed during refresh");
-            EssentialUpdate.atomicText(NEXT, sha);
-            Files.move(staged, STORE, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            if (expected == null) {
+                // Nothing was there: create rather than replace, and let link(2) lose the race
+                // against any writer that got there first.
+                try { Files.createLink(STORE, staged); }
+                catch (FileAlreadyExistsException e) { throw new IOException("Keybox appeared during refresh"); }
+            } else {
+                // Nothing else installed a keybox while this one was downloading.
+                if (!Objects.equals(Files.isRegularFile(STORE) ? EssentialUpdate.sha256(STORE) : null, expected))
+                    throw new IOException("Keybox changed during refresh");
+                EssentialUpdate.atomicText(NEXT, sha);
+                Files.move(staged, STORE, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                // The rename has to be durable before the marker claims it happened.
+                try (FileChannel directory = FileChannel.open(STORE.getParent(), StandardOpenOption.READ)) {
+                    directory.force(true);
+                } catch (IOException ignored) { }
+            }
             EssentialUpdate.atomicText(SHIPPED, sha);
         } finally { Files.deleteIfExists(staged); }
     }
