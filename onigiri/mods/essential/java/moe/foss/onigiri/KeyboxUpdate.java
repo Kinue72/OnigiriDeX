@@ -82,12 +82,13 @@ public final class KeyboxUpdate {
 
     /**
      * An element and the text it carries, as group 1. A start tag ends at the first {@code >}
-     * outside quotes, so an attribute value may hold one; a self-closing tag carries no text and
-     * is not matched, rather than borrowing the next element's.
+     * outside quotes, so an attribute value may hold one. A {@code /} outside quotes can only be
+     * the self-closing marker, so such a tag is not matched rather than borrowing the next
+     * element's text.
      */
     static Pattern element(String name) {
         return Pattern.compile("<" + name
-                + "(?:\\s(?:[^>\"']|\"[^\"]*\"|'[^']*')*)?>([\\s\\S]*?)</" + name + ">");
+                + "(?:\\s(?:[^>\"'/]|\"[^\"]*\"|'[^']*')*)?>([\\s\\S]*?)</" + name + ">");
     }
 
     /** One {@code <Key>}: its certificate chain and its private key. */

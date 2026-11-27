@@ -196,14 +196,20 @@ public final class KeyboxUpdateTest {
                 assert expected.getMessage().toLowerCase().contains("key") : expected.toString();
             }
         }
-        // A self-closing element carries nothing, so it must not borrow the next one's key.
-        String borrowed = "<AndroidAttestation><Keybox><Key algorithm=\"ecdsa\"><PrivateKey/>"
-                + "<Note>" + rsaKey + "</Note>" + chain + "</Key></Keybox></AndroidAttestation>";
-        try {
-            KeyboxUpdate.entries(borrowed.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            assert false : "a self-closing element supplied a private key";
-        } catch (java.io.IOException expected) {
-            assert expected.getMessage().contains("private key") : expected.toString();
+        // A self-closing element carries nothing, so it must not borrow the next one's key, with
+        // or without whitespace or attributes before the slash.
+        for (String tag : new String[]{"<PrivateKey/>", "<PrivateKey />", "<PrivateKey format=\"pem\"/>"}) {
+            String borrowed = "<AndroidAttestation><Keybox><Key algorithm=\"ecdsa\">" + tag
+                    + "<Note>" + ec + "</Note><PrivateKey>" + rsaKey + "</PrivateKey>" + chain
+                    + "</Key></Keybox></AndroidAttestation>";
+            KeyboxUpdate.Entry borrowedEntry = KeyboxUpdate.entries(
+                    borrowed.getBytes(java.nio.charset.StandardCharsets.UTF_8)).get(0);
+            try {
+                KeyboxUpdate.match(borrowedEntry.leaf(), borrowedEntry.key);
+                assert false : "a self-closing element supplied a private key: " + tag;
+            } catch (java.io.IOException expected) {
+                assert expected.getMessage().toLowerCase().contains("key") : expected.toString();
+            }
         }
 
         // A link belongs to whoever made it, even when it points at bytes we would recognise:
