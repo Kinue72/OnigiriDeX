@@ -182,17 +182,28 @@ public final class KeyboxUpdateTest {
         java.util.regex.Matcher certificates = java.util.regex.Pattern
                 .compile("<Certificate\\b[^>]*>[\\s\\S]*?</Certificate>").matcher(keys.get(0));
         while (certificates.find()) chain.append(certificates.group());
-        String disguised = "<AndroidAttestation><Keybox><Key algorithm=\"ecdsa\" x=\"" + ec
-                + "\"><PrivateKey>" + rsaKey + "</PrivateKey>" + chain
-                + "</Key></Keybox></AndroidAttestation>";
-        KeyboxUpdate.Entry hidden = KeyboxUpdate.entries(
-                disguised.getBytes(java.nio.charset.StandardCharsets.UTF_8)).get(0);
+        for (String note : new String[]{ec, ">" + ec}) {
+            // A quoted attribute may hold '>' as well as a key; neither may end the element early.
+            String disguised = "<AndroidAttestation><Keybox><Key algorithm=\"ecdsa\">"
+                    + "<PrivateKey format=\"pem\" note=\"" + note + "\">" + rsaKey + "</PrivateKey>"
+                    + chain + "</Key></Keybox></AndroidAttestation>";
+            KeyboxUpdate.Entry hidden = KeyboxUpdate.entries(
+                    disguised.getBytes(java.nio.charset.StandardCharsets.UTF_8)).get(0);
+            try {
+                KeyboxUpdate.match(hidden.leaf(), hidden.key);
+                assert false : "accepted a key hidden in an attribute";
+            } catch (java.io.IOException expected) {
+                assert expected.getMessage().toLowerCase().contains("key") : expected.toString();
+            }
+        }
+        // A self-closing element carries nothing, so it must not borrow the next one's key.
+        String borrowed = "<AndroidAttestation><Keybox><Key algorithm=\"ecdsa\"><PrivateKey/>"
+                + "<Note>" + rsaKey + "</Note>" + chain + "</Key></Keybox></AndroidAttestation>";
         try {
-            KeyboxUpdate.match(hidden.leaf(), hidden.key);
-            assert false : "accepted a key hidden in an attribute";
+            KeyboxUpdate.entries(borrowed.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            assert false : "a self-closing element supplied a private key";
         } catch (java.io.IOException expected) {
-            assert expected.getMessage().toLowerCase().contains("key")
-                    : expected.toString();
+            assert expected.getMessage().contains("private key") : expected.toString();
         }
 
         // A link belongs to whoever made it, even when it points at bytes we would recognise:

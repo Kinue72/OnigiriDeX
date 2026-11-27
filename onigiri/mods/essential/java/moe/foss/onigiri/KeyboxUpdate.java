@@ -71,14 +71,24 @@ public final class KeyboxUpdate {
     static final long MIN_LIFE = TimeUnit.DAYS.toMillis(2);
     // The daemon reads one <Key> at a time, wherever it sits, and ignores <Keybox> and
     // NumberOfKeyboxes. One <Keybox> may hold several, typically an EC and an RSA key.
-    static final Pattern KEY = Pattern.compile("<Key(?:\\s[^>]*)?>[\\s\\S]*?</Key>");
+    static final Pattern KEY = element("Key");
     // The daemon reads element content, so text elsewhere in the file is not a key or a
     // certificate, however much it looks like one.
-    static final Pattern PRIVATE = Pattern.compile("<PrivateKey\\b[^>]*>([\\s\\S]*?)</PrivateKey>");
-    static final Pattern CERTIFICATE = Pattern.compile("<Certificate\\b[^>]*>([\\s\\S]*?)</Certificate>");
+    static final Pattern PRIVATE = element("PrivateKey");
+    static final Pattern CERTIFICATE = element("Certificate");
     static final Pattern PEM = Pattern.compile("-----BEGIN (?:EC |RSA )?PRIVATE KEY-----([\\s\\S]*?)-{5}END");
     static final Pattern CERT_PEM =
             Pattern.compile("-----BEGIN CERTIFICATE-----([\\s\\S]*?)-----END CERTIFICATE-----");
+
+    /**
+     * An element and the text it carries, as group 1. A start tag ends at the first {@code >}
+     * outside quotes, so an attribute value may hold one; a self-closing tag carries no text and
+     * is not matched, rather than borrowing the next element's.
+     */
+    static Pattern element(String name) {
+        return Pattern.compile("<" + name
+                + "(?:\\s(?:[^>\"']|\"[^\"]*\"|'[^']*')*)?>([\\s\\S]*?)</" + name + ">");
+    }
 
     /** One {@code <Key>}: its certificate chain and its private key. */
     static final class Entry {
