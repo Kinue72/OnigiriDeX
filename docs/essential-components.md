@@ -30,7 +30,7 @@ A shared attestation key dies within days: Google revokes it once it circulates.
 mirror's own index lists every key old enough to matter as revoked, so an image can
 only carry a bootstrap key. `moe.foss.onigiri.KeyboxUpdate` fetches the newest one
 once TEESimulator is active, off the startup path the trial guard measures; the daemon
-watches `keybox.xml` and reloads it when the file changes. The first fetch is bounded
+watches the store directory and reloads `keybox.xml` when the file changes. The first fetch is bounded
 to 20 seconds. When it fails, the TEE service asks init to run `onigiri-keybox` once
 more, which waits 90 seconds for data and then gets 90 of its own. Both services carry
 the `inet` group, and the delayed run rechecks the toggle before it starts.
@@ -54,15 +54,17 @@ other device.
 
 `/data/adb/tricky_store/keybox.xml` is replaced only when this module installed it: its
 checksum must match what the seeder recorded in
-`/data/system/onigiri-essential/keybox/shipped` when it copied the keybox in, the file
-in flight in `installing`, the ROM's own `tee/keybox.xml`, or the archive keybox that
-releases before the marker installed. `installing` is removed once the new file is
-committed, so it can only ever vouch for the install it was written for. A keybox supplied by hand or by another module reports `custom` and is never
-touched, even when it has expired, and a symlink is someone else's file likewise. States appear in `sys.onigiri.keybox.state` (`updated`, `current`, `custom`,
-`unavailable`, `busy`) with the leaf expiry in `sys.onigiri.keybox.expires`, which is
-cleared whenever the file is not one this module installed and on every failed attempt,
-so an offline boot shows no expiry rather than a stale one. `persist.sys.onigiri.keybox_update
-false` switches the refresh off, and `onigiri-essential.sh keybox` runs it by hand.
+`/data/system/onigiri-essential/keybox/shipped` when it copied the keybox in, the record
+of an install in flight in `installing`, the ROM's own `tee/keybox.xml`, or the archive
+keybox that releases before the marker installed. `installing` is removed once the new
+file is committed, so it can only ever vouch for the install it was written for. A
+keybox supplied by hand or by another module reports `custom` and is left alone, even
+when it has expired, and a symlink is someone else's file likewise. States appear in
+`sys.onigiri.keybox.state` (`updated`, `current`, `custom`, `unavailable`, `busy`) with
+the leaf expiry in `sys.onigiri.keybox.expires`, which is cleared whenever the file is
+not one this module installed and on every failed attempt, so an offline boot shows no
+expiry rather than a stale one. `persist.sys.onigiri.keybox_update false` switches the
+refresh off, and `onigiri-essential.sh keybox` runs it by hand.
 
 Publication is ordered: the file is staged under the store's own label, a first install
 is a hard link so it can only create, and a replacement is a rename after the checksum is

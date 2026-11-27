@@ -176,6 +176,37 @@ public final class KeyboxUpdateTest {
         }
         assert java.util.Arrays.equals(two, java.nio.file.Files.readAllBytes(store));
         assert KeyboxUpdate.read(records.resolve("installing")) == null;
+        // A link belongs to whoever made it, even when it points at bytes we would recognise:
+        // following it would replace the link itself.
+        Path target = temp.resolve("target.xml");
+        Path link = temp.resolve("link.xml");
+        java.nio.file.Files.write(target, two);
+        java.nio.file.Files.createSymbolicLink(link, target);
+        try {
+            KeyboxUpdate.install(link, records, one, sha(one), sha(two));
+            assert false : "replaced a symlinked keybox";
+        } catch (java.io.IOException expected) {
+            assert expected.getMessage().contains("symlink") : expected.toString();
+        }
+        assert java.nio.file.Files.isSymbolicLink(link) : "the link itself was replaced";
+        assert java.util.Arrays.equals(two, java.nio.file.Files.readAllBytes(target));
+
+        // A run killed after publishing, or whose marker write failed, leaves the pending record
+        // as the only thing naming the store. The next attempt must finish that install before it
+        // overwrites the record, even when that attempt is then rejected.
+        KeyboxUpdate.install(store, records, one, sha(one), sha(two));
+        java.nio.file.Files.deleteIfExists(records.resolve("shipped"));
+        java.nio.file.Files.write(records.resolve("installing"),
+                sha(one).getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        try {
+            KeyboxUpdate.install(store, records, three, sha(three), sha("other".getBytes()));
+            assert false : "replaced a keybox that changed during the refresh";
+        } catch (java.io.IOException expected) {
+            assert expected.getMessage().contains("changed") : expected.toString();
+        }
+        assert sha(one).equals(KeyboxUpdate.read(records.resolve("shipped")))
+                : "the record naming the installed keybox was lost";
+        assert java.util.Arrays.equals(one, java.nio.file.Files.readAllBytes(store));
 
         System.out.println("Keybox refresh policy passed");
     }

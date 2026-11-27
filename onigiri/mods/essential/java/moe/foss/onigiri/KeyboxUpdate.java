@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -313,6 +314,8 @@ public final class KeyboxUpdate {
         Path next = records.resolve("installing");
         Files.createDirectories(dir);
         Files.createDirectories(records);
+        if (Files.isSymbolicLink(store)) throw new IOException("Keybox is a symlink, not ours");
+        reconcile(store, records);
         // Named so a run killed mid-install leaves only something this module will clean up.
         Path staged = Files.createTempFile(dir, ".onigiri-keybox-", ".tmp");
         try {
@@ -328,7 +331,8 @@ public final class KeyboxUpdate {
                     && new ProcessBuilder(RESTORECON.toString(), staged.toString()).start().waitFor() != 0)
                 throw new IOException("Labeling the keybox failed");
             // Written before the swap, so an install interrupted anywhere after this is still
-            // recognisable as this module's.
+            // recognisable as this module's. reconcile() already promoted a record that matched
+            // the store, so this only overwrites a record that names some other attempt.
             EssentialUpdate.atomicText(next, sha);
             if (expected == null) {
                 // Nothing was there: create rather than replace, and let link(2) lose the race
@@ -340,7 +344,8 @@ public final class KeyboxUpdate {
                 }
                 // The daemon reloads on a write that closes, not on a create. Open it for writing
                 // and close it untouched, so a first install is read without a restart.
-                try (FileChannel notice = FileChannel.open(store, StandardOpenOption.WRITE)) { }
+                try (FileChannel notice = FileChannel.open(
+                        store, StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS)) { }
             } else {
                 // Nothing else installed a keybox while this one was downloading.
                 if (!Objects.equals(Files.isRegularFile(store) ? EssentialUpdate.sha256(store) : null, expected)) {
@@ -351,14 +356,37 @@ public final class KeyboxUpdate {
             }
             // Published, and on disk before a marker claims it is: a power cut between the two
             // must not leave the old key beside a digest of the new one.
-            try (FileChannel directory = FileChannel.open(dir, StandardOpenOption.READ)) {
-                directory.force(true);
-            } catch (IOException e) { throw new IOException("Keybox is not durable", e); }
+            try { sync(dir); } catch (IOException e) { throw new IOException("Keybox is not durable", e); }
             EssentialUpdate.atomicText(shipped, sha);
             // The pending record only covers the moment before publication; left behind, an old
             // digest would keep vouching for a file this module no longer installed.
             Files.deleteIfExists(next);
         } finally { Files.deleteIfExists(staged); }
+    }
+
+    /**
+     * A run killed after publishing the store, or after its marker write failed, leaves the
+     * pending record as the only thing naming the file that is actually there. Promote it before
+     * another install overwrites it, or the file becomes someone else's by accident and its own
+     * digest stops being able to vouch for it.
+     */
+    static void reconcile(Path store, Path records) throws Exception {
+        Path shipped = records.resolve("shipped");
+        Path next = records.resolve("installing");
+        // A link is not this module's file, whatever it points at.
+        if (Files.isSymbolicLink(store)) return;
+        String current = Files.isRegularFile(store) ? EssentialUpdate.sha256(store) : null;
+        if (current == null || current.equals(read(shipped)) || !current.equals(read(next))) return;
+        // The store was published without this; make it durable before calling it recorded.
+        sync(store.getParent());
+        EssentialUpdate.atomicText(shipped, current);
+        Files.deleteIfExists(next);
+    }
+
+    static void sync(Path dir) throws IOException {
+        try (FileChannel channel = FileChannel.open(dir, StandardOpenOption.READ)) {
+            channel.force(true);
+        }
     }
 
     static void clearExpiry() {
@@ -379,6 +407,8 @@ public final class KeyboxUpdate {
             try (DirectoryStream<Path> stale = Files.newDirectoryStream(DIR, "fetch-*")) {
                 for (Path path : stale) EssentialUpdate.removeTree(path);
             } catch (IOException ignored) { }
+            // Finish an install a killed run published but never recorded, before reading state.
+            reconcile(STORE, DIR);
             // Check ownership before touching the network: a keybox someone else installed is
             // final, and no boot should phone home for it.
             String current = Files.isRegularFile(STORE) ? EssentialUpdate.sha256(STORE) : null;
