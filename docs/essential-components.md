@@ -48,17 +48,20 @@ sign for its own certificate: the public values are not compared, because a key 
 cannot sign is useless to the daemon whatever it claims. That rejects the AOSP software
 key upstream ships, so the refresh cannot quietly install one. Keys and certificates are
 read from the elements that carry them, so text anywhere else, an attribute included, is
-neither. Comments and character data are dropped first, which also refuses a key wrapped
-in one, a DTD is refused, and a file that stops before its closing tag is not a keybox. A rejected or unreachable key leaves
-the file exactly as it was: the shipped key on a fresh install, whatever was there on any
-other device.
+neither: a start tag ends at the first `>` outside quotes, and a self-closing tag carries
+nothing. Comments and character data are dropped first, which also refuses a key wrapped
+in one, a DTD is refused, and a file that stops before its closing tag is not a keybox. A
+rejected or unreachable key leaves the file exactly as it was: the shipped key on a fresh
+install, whatever was there on any other device.
 
 `/data/adb/tricky_store/keybox.xml` is replaced only when this module installed it: its
 checksum must match what the seeder recorded in
 `/data/system/onigiri-essential/keybox/shipped` when it copied the keybox in, the record
 of an install in flight in `installing`, the ROM's own `tee/keybox.xml`, or the archive
 keybox that releases before the marker installed. `installing` is removed once the new
-file is committed, so it can only ever vouch for the install it was written for. A
+file is committed, so it can only ever vouch for the install it was written for; a run
+killed between publishing and recording leaves it as the only name for the file that is
+there, and the next run promotes it rather than overwriting it. A
 keybox supplied by hand or by another module reports `custom` and is left alone, even
 when it has expired, and a symlink is someone else's file likewise. States appear in
 `sys.onigiri.keybox.state` (`updated`, `current`, `custom`, `unavailable`, `busy`) with
