@@ -176,6 +176,25 @@ public final class KeyboxUpdateTest {
         }
         assert java.util.Arrays.equals(two, java.nio.file.Files.readAllBytes(store));
         assert KeyboxUpdate.read(records.resolve("installing")) == null;
+        // A key or a certificate is only what its own element carries: a valid key hidden in an
+        // attribute, beside a damaged one the daemon would actually read, must not vouch for it.
+        StringBuilder chain = new StringBuilder();
+        java.util.regex.Matcher certificates = java.util.regex.Pattern
+                .compile("<Certificate\\b[^>]*>[\\s\\S]*?</Certificate>").matcher(keys.get(0));
+        while (certificates.find()) chain.append(certificates.group());
+        String disguised = "<AndroidAttestation><Keybox><Key algorithm=\"ecdsa\" x=\"" + ec
+                + "\"><PrivateKey>" + rsaKey + "</PrivateKey>" + chain
+                + "</Key></Keybox></AndroidAttestation>";
+        KeyboxUpdate.Entry hidden = KeyboxUpdate.entries(
+                disguised.getBytes(java.nio.charset.StandardCharsets.UTF_8)).get(0);
+        try {
+            KeyboxUpdate.match(hidden.leaf(), hidden.key);
+            assert false : "accepted a key hidden in an attribute";
+        } catch (java.io.IOException expected) {
+            assert expected.getMessage().toLowerCase().contains("key")
+                    : expected.toString();
+        }
+
         // A link belongs to whoever made it, even when it points at bytes we would recognise:
         // following it would replace the link itself.
         Path target = temp.resolve("target.xml");

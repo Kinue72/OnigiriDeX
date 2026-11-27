@@ -71,8 +71,14 @@ public final class KeyboxUpdate {
     static final long MIN_LIFE = TimeUnit.DAYS.toMillis(2);
     // The daemon reads one <Key> at a time, wherever it sits, and ignores <Keybox> and
     // NumberOfKeyboxes. One <Keybox> may hold several, typically an EC and an RSA key.
-    static final Pattern KEY = Pattern.compile("<Key\\b[^>]*>[\\s\\S]*?</Key>");
+    static final Pattern KEY = Pattern.compile("<Key(?:\\s[^>]*)?>[\\s\\S]*?</Key>");
+    // The daemon reads element content, so text elsewhere in the file is not a key or a
+    // certificate, however much it looks like one.
+    static final Pattern PRIVATE = Pattern.compile("<PrivateKey\\b[^>]*>([\\s\\S]*?)</PrivateKey>");
+    static final Pattern CERTIFICATE = Pattern.compile("<Certificate\\b[^>]*>([\\s\\S]*?)</Certificate>");
     static final Pattern PEM = Pattern.compile("-----BEGIN (?:EC |RSA )?PRIVATE KEY-----([\\s\\S]*?)-{5}END");
+    static final Pattern CERT_PEM =
+            Pattern.compile("-----BEGIN CERTIFICATE-----([\\s\\S]*?)-----END CERTIFICATE-----");
 
     /** One {@code <Key>}: its certificate chain and its private key. */
     static final class Entry {
@@ -95,14 +101,17 @@ public final class KeyboxUpdate {
         } catch (IOException e) { return null; }
     }
 
-    static List<X509Certificate> certificates(String text) throws Exception {
-        Matcher pem = Pattern.compile("-----BEGIN CERTIFICATE-----([\\s\\S]*?)-----END CERTIFICATE-----")
-                .matcher(text);
+    /** The certificates a {@code <Key>} carries, in document order, as the daemon reads them. */
+    static List<X509Certificate> certificates(String block) throws Exception {
+        Matcher element = CERTIFICATE.matcher(block);
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         List<X509Certificate> chain = new ArrayList<>();
-        while (pem.find()) {
-            chain.add((X509Certificate) factory.generateCertificate(
-                    new ByteArrayInputStream(Base64.getMimeDecoder().decode(pem.group(1)))));
+        while (element.find()) {
+            Matcher pem = CERT_PEM.matcher(element.group(1));
+            while (pem.find()) {
+                chain.add((X509Certificate) factory.generateCertificate(
+                        new ByteArrayInputStream(Base64.getMimeDecoder().decode(pem.group(1)))));
+            }
         }
         return chain;
     }
@@ -140,8 +149,10 @@ public final class KeyboxUpdate {
     static Entry entry(String block) throws Exception {
         List<X509Certificate> chain = certificates(block);
         if (chain.isEmpty()) throw new IOException("Key without a certificate");
-        Matcher pem = PEM.matcher(block);
+        Matcher element = PRIVATE.matcher(block);
         // A key without its private key cannot attest, and must not ride along with one that can.
+        if (!element.find()) throw new IOException("Key without a private key");
+        Matcher pem = PEM.matcher(element.group(1));
         if (!pem.find()) throw new IOException("Key without a private key");
         return new Entry(chain, Base64.getMimeDecoder().decode(pem.group(1)));
     }
@@ -407,6 +418,13 @@ public final class KeyboxUpdate {
             try (DirectoryStream<Path> stale = Files.newDirectoryStream(DIR, "fetch-*")) {
                 for (Path path : stale) EssentialUpdate.removeTree(path);
             } catch (IOException ignored) { }
+            // Only a regular file can be ours: a link (even a dangling one) or a directory is
+            // someone else's, and a boot must not phone home for it.
+            if (Files.exists(STORE, LinkOption.NOFOLLOW_LINKS)
+                    && !Files.isRegularFile(STORE, LinkOption.NOFOLLOW_LINKS)) {
+                clearExpiry();
+                return "custom";
+            }
             // Finish an install a killed run published but never recorded, before reading state.
             reconcile(STORE, DIR);
             // Check ownership before touching the network: a keybox someone else installed is

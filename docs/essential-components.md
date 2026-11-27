@@ -46,9 +46,10 @@ leaf must have more than two days left, the chain must end at a pinned Google at
 root (`Key Attestation CA1` or the hardware attestation root), and the private key must
 sign for its own certificate: the public values are not compared, because a key that
 cannot sign is useless to the daemon whatever it claims. That rejects the AOSP software
-key upstream ships, so the refresh cannot quietly install one. The document is read as
-XML would be: comments and character data are dropped first, a DTD is refused, and a file
-that stops before its closing tag is not a keybox. A rejected or unreachable key leaves
+key upstream ships, so the refresh cannot quietly install one. Keys and certificates are
+read from the elements that carry them, so text anywhere else, an attribute included, is
+neither. Comments and character data are dropped first, which also refuses a key wrapped
+in one, a DTD is refused, and a file that stops before its closing tag is not a keybox. A rejected or unreachable key leaves
 the file exactly as it was: the shipped key on a fresh install, whatever was there on any
 other device.
 

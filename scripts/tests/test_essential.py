@@ -338,6 +338,21 @@ esac
             self.assertFalse((self.data / name / 'guard').exists())
             self.assertFalse((self.data / name / 'trial').exists())
 
+    def test_a_broken_supplied_keybox_stops_the_build(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('build_essential', ROOT / 'scripts/build_essential.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory(prefix='keybox-') as temp:
+            supplied = Path(temp) / 'tee-keybox.xml'
+            supplied.write_text('<AndroidAttestation>')
+            with self.assertRaises(ValueError):
+                module.supplied_keybox(Path(temp))
+            # Shaped like a keybox but with nothing to attest with.
+            supplied.write_text('<AndroidAttestation><Keybox><Key algorithm="ecdsa"/></Keybox></AndroidAttestation>')
+            with self.assertRaises(ValueError):
+                module.supplied_keybox(Path(temp))
+
     def test_keybox_refresh_is_skipped_when_switched_off(self):
         launcher = self.root / 'system/bin/app_process'
         launcher.write_text('#!/bin/sh\ntouch "$PROPS/app_process.ran"\nexit 0\n')
