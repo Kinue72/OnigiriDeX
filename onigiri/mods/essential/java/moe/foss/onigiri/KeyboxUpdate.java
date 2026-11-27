@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -41,9 +43,8 @@ public final class KeyboxUpdate {
     // Written before the store is replaced, so an interrupted install is still recognisable.
     static final Path NEXT = DIR.resolve("installing");
     static final String MIRROR = "https://evoker.qzz.io/key";
-    static final Collection<String> HOSTS = Arrays.asList("evoker.qzz.io", "github.com",
-            "raw.githubusercontent.com", "release-assets.githubusercontent.com",
-            "objects.githubusercontent.com");
+    // The one host this module is allowed to talk to; a redirect anywhere else fails closed.
+    static final Collection<String> HOSTS = Collections.singletonList("evoker.qzz.io");
     // SHA-256 of the SubjectPublicKeyInfo of the roots Google issues attestation keys under:
     // Key Attestation CA1 (RKP) and the hardware attestation root. Anything else is not a key
     // Google will accept, including the AOSP software key upstream ships.
@@ -69,9 +70,12 @@ public final class KeyboxUpdate {
         X509Certificate leaf() { return chain.get(0); }
     }
 
+    /** A marker's value, or null when the file is missing or empty. */
     static String read(Path path) {
-        try { return new String(Files.readAllBytes(path), StandardCharsets.US_ASCII).trim(); }
-        catch (IOException e) { return null; }
+        try {
+            String value = new String(Files.readAllBytes(path), StandardCharsets.US_ASCII).trim();
+            return value.isEmpty() ? null : value;
+        } catch (IOException e) { return null; }
     }
 
     static List<X509Certificate> certificates(String text) throws Exception {
@@ -123,9 +127,11 @@ public final class KeyboxUpdate {
     static X509Certificate valid(Entry entry) throws Exception {
         List<X509Certificate> chain = entry.chain;
         if (chain.size() < 2) throw new IOException("Incomplete certificate chain");
+        // Signatures first: it also keeps each chain's certificates separate, since one entry
+        // never signs for another.
+        for (int i = 0; i + 1 < chain.size(); i++) chain.get(i).verify(chain.get(i + 1).getPublicKey());
         if (!ROOTS.contains(spki(chain.get(chain.size() - 1))))
             throw new IOException("Chain does not end at a Google attestation root");
-        for (int i = 0; i + 1 < chain.size(); i++) chain.get(i).verify(chain.get(i + 1).getPublicKey());
         for (X509Certificate certificate : chain) certificate.checkValidity();
         // The attestation leaf is itself a CA — it signs device certificates — so only its chain,
         // its remaining life and the key it claims are checked here.
@@ -212,13 +218,9 @@ public final class KeyboxUpdate {
         return current.equals(tracked) || current.equals(next) || current.equals(builtin);
     }
 
-    /** The mirror serves base64; an operator-pinned URL may serve the XML itself. */
     static byte[] decode(byte[] raw) throws IOException {
-        int start = 0;
-        while (start < raw.length && Character.isWhitespace(raw[start])) start++;
-        if (start < raw.length && raw[start] == '<') return raw;
         try { return Base64.getMimeDecoder().decode(raw); }
-        catch (IllegalArgumentException e) { throw new IOException("Keybox is neither XML nor base64"); }
+        catch (IllegalArgumentException e) { throw new IOException("Keybox is not base64"); }
     }
 
     static void install(byte[] xml, String sha, String expected) throws Exception {
@@ -251,6 +253,10 @@ public final class KeyboxUpdate {
                 StandardOpenOption.CREATE, StandardOpenOption.WRITE);
              FileLock lock = lockFile.tryLock()) {
             if (lock == null) return "busy";
+            // A run killed by its timeout leaves a partial download behind.
+            try (DirectoryStream<Path> stale = Files.newDirectoryStream(DIR, "fetch-*")) {
+                for (Path path : stale) EssentialUpdate.removeTree(path);
+            } catch (IOException ignored) { }
             // Check ownership before touching the network: a keybox someone else installed is
             // final, and no boot should phone home for it.
             String current = Files.isRegularFile(STORE) ? EssentialUpdate.sha256(STORE) : null;
@@ -258,12 +264,10 @@ public final class KeyboxUpdate {
             if (!replaceable(current, read(SHIPPED), read(NEXT),
                     Files.isReadable(builtin) ? EssentialUpdate.sha256(builtin) : null))
                 return "custom";
-            String address = EssentialUpdate.prop("persist.sys.onigiri.keybox.url");
-            if (address == null || address.isEmpty()) address = MIRROR;
             Path temp = Files.createTempDirectory(DIR, "fetch-");
             try {
                 Path encoded = temp.resolve("key");
-                EssentialUpdate.download(address, encoded, MAX_KEYBOX, HOSTS);
+                EssentialUpdate.download(MIRROR, encoded, MAX_KEYBOX, HOSTS);
                 byte[] xml = decode(Files.readAllBytes(encoded));
                 X509Certificate leaf = verify(xml);
                 Path next = temp.resolve("keybox.xml");

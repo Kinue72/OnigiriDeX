@@ -29,12 +29,11 @@ mirror's own index lists every key old enough to matter as revoked, so an image 
 only carry a bootstrap key. `moe.foss.onigiri.KeyboxUpdate` fetches the newest one
 during TEE startup, after the payload key is seeded and before TEESimulator reads it.
 Each fetch is bounded to 20 seconds; when it fails, the TEE service asks init to run
-`onigiri-keybox` once more after boot settles. Both services carry the `inet` group.
+`onigiri-keybox` once more, 90 seconds later, when data is usually up. Both services
+carry the `inet` group.
 
-It fetches `https://evoker.qzz.io/key`, overridable with
-`persist.sys.onigiri.keybox.url` (base64 as the mirror serves it, or the XML itself),
-and only accepts HTTPS on github.com, raw.githubusercontent.com,
-release-assets.githubusercontent.com, objects.githubusercontent.com or evoker.qzz.io.
+It fetches base64 from `https://evoker.qzz.io/key`, the only host it will talk to, and a
+redirect anywhere else fails closed.
 
 A keybox is accepted only when each `Keybox` entry it holds is a real Google
 attestation chain. The mirror's files carry one entry; upstream's archive carries an EC
@@ -42,8 +41,9 @@ and an RSA chain. Every certificate must verify against the next and be valid no
 leaf must have more than two days left, the chain must end at a pinned Google
 attestation root (`Key Attestation CA1` or the hardware attestation root), and the
 entry's private key must match its certificate. That rejects the AOSP software key
-upstream ships, so the refresh cannot quietly install one. A rejected key leaves the
-current one in place, and an offline boot simply keeps the shipped key.
+upstream ships, so the refresh cannot quietly install one. A rejected or unreachable
+key leaves the file exactly as it was: the shipped key on a fresh install, whatever was
+there on any other device.
 
 `/data/adb/tricky_store/keybox.xml` is replaced only when this module installed it: its
 checksum must match what the seeder recorded in

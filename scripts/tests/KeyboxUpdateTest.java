@@ -26,13 +26,14 @@ public final class KeyboxUpdateTest {
         // A file it never installed is someone else's, whatever state it is in.
         assert !KeyboxUpdate.replaceable("bbb", null, null, "aaa");
         assert !KeyboxUpdate.replaceable("bbb", "aaa", "ccc", "ddd");
-        // The mirror serves base64; a pinned URL may serve the XML directly.
+        // The mirror serves base64, with line breaks the decoder must ignore.
         byte[] xml = "<AndroidAttestation/>".getBytes();
-        assert java.util.Arrays.equals(KeyboxUpdate.decode(xml), xml);
         assert java.util.Arrays.equals(KeyboxUpdate.decode(
-                java.util.Base64.getMimeEncoder().encode(xml)), xml);
-        assert java.util.Arrays.equals(KeyboxUpdate.decode(("  \n" + new String(xml)).getBytes()),
-                ("  \n" + new String(xml)).getBytes());
+                java.util.Base64.getMimeEncoder(16, new byte[]{'\n'}).encode(xml)), xml);
+        try {
+            KeyboxUpdate.decode("not base64".getBytes());
+            assert false : "non-base64 download accepted";
+        } catch (java.io.IOException expected) { }
 
         byte[] archive = archivedKeybox(Paths.get(args[0]));
         List<KeyboxUpdate.Entry> entries = KeyboxUpdate.entries(archive);
@@ -45,11 +46,14 @@ public final class KeyboxUpdateTest {
             checked = true;
         }
         assert checked : "no entry published a public point to check";
-        // The archive's key is the AOSP software key, not a chain Google accepts for attestation.
+        // Both entries' signatures verify within their own chain, and the file is then refused
+        // because it ends at the AOSP software root rather than a Google attestation root.
         try {
             KeyboxUpdate.verify(archive);
             assert false : "software keybox accepted";
-        } catch (Exception expected) { }
+        } catch (Exception expected) {
+            assert expected.getMessage().contains("attestation root") : expected.toString();
+        }
         System.out.println("Keybox refresh policy passed");
     }
 

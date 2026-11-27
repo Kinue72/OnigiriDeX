@@ -375,7 +375,8 @@ and component updates take effect after a restart.
   standalone key-attestation service. Existing keys and app targets are kept.
   New installations use the keybox the build supplies, not upstream's expired
   AOSP software key, which fails Play Integrity checks. The key is refreshed from the
-  shared mirror at TEE startup, and a keybox you put there yourself is left alone.
+  shared mirror at TEE startup; that contacts a third-party host on every boot, and a
+  keybox you put there yourself is left alone.
 - **[BRENE](https://github.com/rrr333nnn333/BRENE)**: provides its essential
   **Hide custom ROM paths** and **Hide /system/addon.d** features through susFS.
   Both default to on. Its other features are not ported; developer options

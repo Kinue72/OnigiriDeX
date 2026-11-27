@@ -31,13 +31,13 @@ service onigiri-essential-boot /system/bin/sh /system/bin/onigiri-essential.sh b
 
 # A second keybox attempt for the boot where TEE could not reach the mirror, started by the TEE
 # service rather than by a timer. Network access needs the inet group.
-service onigiri-keybox /system/bin/sh /system/bin/onigiri-essential.sh keybox
+service onigiri-keybox /system/bin/sh /system/bin/onigiri-essential.sh keybox delayed
     user root
     group root inet
     seclabel u:r:ksu:s0
     disabled
     oneshot
-    timeout_period 120
+    timeout_period 300
 
 on post-fs-data
     exec_start onigiri-essential-prepare

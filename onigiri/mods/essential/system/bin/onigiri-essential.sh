@@ -305,6 +305,8 @@ case "$1" in
         # Newest shared keybox, verified before it replaces the one the ROM installed.
         [ "$(getprop persist.sys.onigiri.keybox_update)" = false ] && exit 0
         setprop sys.onigiri.keybox.retry ""
+        # The retry runs long after boot, when data is usually up; a manual run does not wait.
+        [ "$2" = delayed ] && sleep 90
         exec timeout -k 5 90 /system/bin/app_process -Djava.class.path=/system/framework/onigiri-essential.jar \
             /system/bin moe.foss.onigiri.KeyboxUpdate
         ;;
