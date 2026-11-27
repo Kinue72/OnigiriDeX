@@ -373,8 +373,11 @@ and component updates take effect after a restart.
   Its backend loads directly in Android without Vector or Zygisk.
 - **[TEESimulator](https://github.com/JingMatrix/TEESimulator)**: runs its
   standalone key-attestation service. Existing keys and app targets are kept.
-  New installations use upstream's AOSP software key, which does not
-  guarantee passing Play Integrity or any particular app's checks.
+  New installations use the keybox the build supplies, not upstream's expired
+  AOSP software key, which fails Play Integrity checks. Once TEE is active, a boot
+  replaces that key from a shared mirror, and only while the keybox on disk is one this
+  ROM installed; that contacts a third-party host, and a keybox you put there yourself is
+  left alone.
 - **[BRENE](https://github.com/rrr333nnn333/BRENE)**: provides its essential
   **Hide custom ROM paths** and **Hide /system/addon.d** features through susFS.
   Both default to on. Its other features are not ported; developer options

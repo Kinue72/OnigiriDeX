@@ -109,6 +109,36 @@ Back the keys up as well. Without the platform key, updates can't be installed o
 install; without the OTA key, every phone needs a recovery with the new certificate flashed with
 Odin before it can update again. Without the secret a release stops before building.
 
+**Keybox.** TEESimulator needs a key-attestation keybox, and this repository deliberately does
+not track one: a key committed to git is a key anyone can copy, which gets it revoked and breaks
+the feature for every install. Keep it at `onigiri/mods/essential/tee-keybox.xml` (git-ignored)
+and set the same file as a secret, so release builds use it:
+
+```sh
+base64 -w0 onigiri/mods/essential/tee-keybox.xml | gh secret set TEE_KEYBOX --repo Kinue72/OnigiriDeX
+```
+
+The secret keeps the key out of this repository's history and PRs, not out of the image: a
+released ROM contains it, so anyone who unpacks one has it, the same as any module that ships a
+keybox. Passing Play Integrity on a fresh install requires that. Rotate the key if it stops
+working.
+
+A local build uses the file when it is present. Without it, the build warns and keeps the
+expired keybox from the TEESimulator archive, so a fresh install fails Play Integrity. A supplied
+file has to pass the verification a device would apply: every key's chain, a pinned Google root
+and a private key that signs for its certificate. `scripts/build_essential.py` refuses the build
+otherwise, so a bad secret cannot reach an image. Only the dates are advisory: the same script
+reads the leaf through `openssl` and warns inside 14 days or once it has expired.
+
+The shipped file only seeds a fresh install. Once TEE is active, the ROM replaces it from
+`https://evoker.qzz.io/key` (see
+[essential-components.md](essential-components.md#keybox-refresh)), so a revoked key costs no
+release. Check `getprop sys.onigiri.keybox.state` and `sys.onigiri.keybox.expires` to see what a
+device is actually using. A keybox installed by hand or by another module is left alone, except
+for one window: a writer that publishes between the final checksum and the rename can lose that
+write. A device seeded before the marker existed is still recognised, because the archive keybox
+it carries has a fixed digest.
+
 **Firmware.** Samsung's servers no longer serve the pinned firmware, so the workflow downloads
 `out/fw` (what `onigiri extract_fw` produces) from a draft release named `firmware`. Drafts are
 only visible to people with push access; never publish it (or `build-cache`). After changing the firmware pins in

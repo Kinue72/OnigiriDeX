@@ -16,6 +16,7 @@ public final class EssentialUpdate {
     static final Path DATA = Paths.get("/data/system/onigiri-essential");
     static final Path ROM = Paths.get("/system/framework/onigiri-essential");
     static final String FEED = "https://raw.githubusercontent.com/Kinue72/OnigiriDeX/main/prebuilts/rootmods/updates.properties";
+    static final String ROM_NAME = "onigiri";
     static final long MAX_ZIP = 64L * 1024 * 1024;
 
     static String prop(String key) throws Exception {
@@ -59,13 +60,17 @@ public final class EssentialUpdate {
     }
 
     static void download(String address, Path dest, long limit) throws IOException {
+        download(address, dest, limit, Arrays.asList("github.com", "raw.githubusercontent.com",
+                "release-assets.githubusercontent.com", "objects.githubusercontent.com"));
+    }
+
+    static void download(String address, Path dest, long limit, Collection<String> hosts) throws IOException {
         URL url = new URL(address);
         for (int hop = 0; hop < 5; hop++) {
             String host = url.getHost();
             if (!url.getProtocol().equals("https") || url.getUserInfo() != null ||
                     (url.getPort() != -1 && url.getPort() != 443) ||
-                    !Arrays.asList("github.com", "raw.githubusercontent.com", "release-assets.githubusercontent.com",
-                            "objects.githubusercontent.com").contains(host)) throw new IOException("Unexpected download host");
+                    !hosts.contains(host)) throw new IOException("Unexpected download host");
             HttpURLConnection c = (HttpURLConnection) url.openConnection();
             c.setConnectTimeout(15000);
             c.setReadTimeout(20000);
@@ -166,15 +171,22 @@ public final class EssentialUpdate {
                     elf(bytes);
                     write(output.resolve(name.equals("libinject.so") ? "inject" : name), bytes, true);
                 }
-                for (String name : Arrays.asList("keybox.xml", "target.txt")) write(output.resolve(name), member(zip, name), false);
+                // The keybox is not a payload artifact: it is the one build_essential.py placed
+                // in the ROM payload, and onigiri-essential.sh installs that one. A payload
+                // staged from the feed can therefore never bring its own key.
+                write(output.resolve("target.txt"), member(zip, "target.txt"), false);
             } else {
                 byte[] bytes = member(zip, "tools/susfs");
                 elf(bytes);
                 write(output.resolve("susfs"), bytes, true);
                 String script = new String(member(zip, "post-fs-data.sh"), StandardCharsets.UTF_8);
-                Matcher names = Pattern.compile("(?m)^CUSTOM_ROM_NAMES=\"([a-z|]+)\"\\r?$").matcher(script);
+                Matcher names = Pattern.compile("(?m)^CUSTOM_ROM_NAMES=\"([a-z]+(?:\\|[a-z]+)*)\"\\r?$").matcher(script);
                 if (!names.find()) throw new IOException("Unsupported BRENE path list");
-                write(output.resolve("rom-names"), (names.group(1).replace('|', '\n') + "\n").getBytes(StandardCharsets.US_ASCII), false);
+                // Upstream only lists other ROMs. Without this build's own name the scan finds
+                // nothing on Onigiri and "hide custom ROM paths" is silently a no-op.
+                String list = names.group(1);
+                if (!Arrays.asList(list.split("\\|")).contains(ROM_NAME)) list = list + "|" + ROM_NAME;
+                write(output.resolve("rom-names"), (list.replace('|', '\n') + "\n").getBytes(StandardCharsets.US_ASCII), false);
             }
         }
         Properties version = new Properties();

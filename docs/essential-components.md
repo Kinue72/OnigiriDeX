@@ -9,14 +9,77 @@ current status, component-specific controls, and a PIF-style version/update row.
 | Component | Bundled release | Built-in integration |
 | --- | --- | --- |
 | HMA-OSS | oss-173 | Original signed manager and backend with the hook-installation race and preset-scan GC fixes below; a guarded services.jar entry loads it without Vector or Zygisk. Config schema remains 93. |
-| TEESimulator | v3.2, code 67 | Original arm64 injector, native library and dex run through an init service. |
-| BRENE | v0.0.72 | Original susfs CLI and ROM-name list; only custom-ROM path, addon.d and module-mount hiding are ported. |
+| TEESimulator | v3.2, code 67 | Original arm64 injector, native library and dex run through an init service. The keybox is the one supplied at `onigiri/mods/essential/tee-keybox.xml`, never the expired copy in the upstream archive. |
+| BRENE | v0.0.72 | Original susfs CLI and ROM-name list, with `onigiri` appended, so custom-ROM path hiding covers this build's own files. Only custom-ROM path, addon.d and module-mount hiding are ported. |
 
 The build verifies the original archives against `prebuilts/rootmods/manifest.json`
 and `bundled.properties`. It never executes their installers. The HMA manager keeps
 its upstream signing certificate. PIF's existing certificate handling remains
-in place. This does not provide new keys, download keys, or guarantee an app's
-integrity result.
+in place. TEESimulator's expired bundled keybox is replaced by the keybox supplied in
+`onigiri/mods/essential/tee-keybox.xml`, which is deliberately not in this
+repository (see [releasing.md](releasing.md); without it the build warns and keeps the
+archive's expired key). A supplied key must pass the same chain, root and private-key
+checks a device applies before it may enter an image; only its dates are advisory, since
+it has to last until a boot that has network, and an offline install keeps using
+whatever the image carried. The build warns when the leaf is inside
+`TEE_KEYBOX_REFRESH_WINDOW` or already expired rather than failing.
+
+## Keybox refresh
+
+A shared attestation key dies within days: Google revokes it once it circulates. The
+mirror's own index lists every key old enough to matter as revoked, so an image can
+only carry a bootstrap key. `moe.foss.onigiri.KeyboxUpdate` fetches the newest one
+once TEESimulator is active, off the startup path the trial guard measures; the daemon
+watches the store directory and reloads `keybox.xml` when the file changes. The first fetch is bounded
+to 20 seconds. When it fails, the TEE service asks init to run `onigiri-keybox` once
+more, which waits 90 seconds for data and then gets 90 of its own. Both services carry
+the `inet` group, and the delayed run rechecks the toggle before it starts.
+
+It fetches base64 from `https://evoker.qzz.io/key`, the only host it will talk to, and a
+redirect anywhere else fails closed.
+
+A keybox is accepted only when every key it holds is a real Google attestation chain;
+one good key does not vouch for the rest of the file. Keys are read one at a time, as the
+daemon reads them, so a `<Keybox>` that holds an EC and an RSA key side by side is two
+chains and not one. Every certificate must verify against the next and be valid now, the
+leaf must have more than two days left, the chain must end at a pinned Google attestation
+root (`Key Attestation CA1` or the hardware attestation root), and the private key must
+sign for its own certificate: the public values are not compared, because a key that
+cannot sign is useless to the daemon whatever it claims. That rejects the AOSP software
+key upstream ships, so the refresh cannot quietly install one. Keys and certificates are
+read from the elements that carry them, so text anywhere else, an attribute included, is
+neither: a start tag ends at the first `>` outside quotes, and a self-closing tag carries
+nothing. Comments and character data are dropped first, which also refuses a key wrapped
+in one, a DTD is refused, and a file that stops before its closing tag is not a keybox. A
+rejected or unreachable key leaves the file exactly as it was: the shipped key on a fresh
+install, whatever was there on any other device.
+
+`/data/adb/tricky_store/keybox.xml` is replaced only when this module installed it: its
+checksum must match what the seeder recorded in
+`/data/system/onigiri-essential/keybox/shipped` when it copied the keybox in, the record
+of an install in flight in `installing`, the ROM's own `tee/keybox.xml`, or the archive
+keybox that releases before the marker installed. `installing` is removed once the new
+file is committed, so it can only ever vouch for the install it was written for; a run
+killed between publishing and recording leaves it as the only name for the file that is
+there, and the next run promotes it rather than overwriting it. A
+keybox supplied by hand or by another module reports `custom` and is left alone, even
+when it has expired, and a symlink is someone else's file likewise. States appear in
+`sys.onigiri.keybox.state` (`updated`, `current`, `custom`, `unavailable`, `busy`) with
+the leaf expiry in `sys.onigiri.keybox.expires`, which is cleared whenever the file is
+not one this module installed and on every failed attempt, so an offline boot shows no
+expiry rather than a stale one. `persist.sys.onigiri.keybox_update false` switches the
+refresh off, and `onigiri-essential.sh keybox` runs it by hand.
+
+Publication is ordered: the file is staged under the store's own label, a first install
+is a hard link so it can only create, and a replacement is a rename after the checksum is
+rechecked. The new file and its directory are synced before the marker that claims it
+exists, so a power cut cannot leave the old key beside the new digest. The daemon reloads
+on a close for write or a rename, never on a create, so the first install also closes the
+file it just created. One window stays open by construction: a writer that publishes
+between that checksum recheck and the rename loses its file. POSIX has no
+compare-and-swap rename, and the other writers are upstream modules that do not take this
+lock, so the guarantee is "only a file whose bytes this module recorded", not "never
+replaced whatever happens".
 
 Bundled payloads live under `/system/framework/onigiri-essential`, which is
 permitted by keystore's linker namespace. Updates use the root-owned
@@ -109,8 +172,9 @@ The feed's `adapter` is a compatibility contract, not an upstream version:
 - TEE adapter 1 requires the v3.2 entry point, current-directory injector
   layout, and `/data/adb/tricky_store` configuration. TEESimulator v4 changes
   these and is explicitly reported as requiring a ROM update.
-- BRENE adapter 1 imports the ROM-name list and susfs binary; it does not
-  start following the rest of BRENE's evolving scripts or settings.
+- BRENE adapter 1 imports the ROM-name list (with `onigiri` appended) and susfs
+  binary; it does not start following the rest of BRENE's evolving scripts or
+  settings.
 
 To approve an upstream bump, review its entry points, config schema, native
 dependencies and policy needs. Update the feed's source, digest, size and
@@ -168,7 +232,8 @@ bash -n onigiri/mods/essential/system/bin/onigiri-essential.sh
 
 `scripts/build_essential.py` builds Java adapters with the checksum-pinned R8
 compiler installed by `build_dependencies`, then applies the verified HMA hook
-fix and packages the other upstream payloads unchanged. Tests cover payload identity, invalid inputs,
+fix, the supplied keybox for TEESimulator and the `onigiri` entry for BRENE's path
+list. Every other upstream payload is packaged unchanged. Tests cover payload identity, invalid inputs,
 archive boundaries, migration, desired/current state, and interrupted update
 recovery. Also apply and assemble the services.jar and Settings patches against
 the matching ROM and compile the policy additions.

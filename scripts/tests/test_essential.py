@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Focused host tests. Android loading, Binder hooks and device SELinux still need hardware."""
 from pathlib import Path
+import hashlib
 import os
+import time
 import re
 import shutil
 import subprocess
@@ -201,6 +203,38 @@ class BootStateTest(unittest.TestCase):
         self.assertFalse((component / 'guard').exists())
         self.assertEqual(self.prop('sys.onigiri.brene.enabled'), 'false')
 
+    def test_tee_seeds_the_rom_keybox_not_the_payload_one(self):
+        (self.rom / 'tee/keybox.xml').write_text('rom-key\n')
+        release = self.data / 'tee/releases' / ('c' * 64)
+        release.mkdir()
+        (release / 'version.properties').write_text('version=next\ncode=2\nadapter=1\n')
+        (release / 'target.txt').write_text('com.example\n')
+        (release / 'keybox.xml').write_text('feed-key\n')
+        (self.data / 'tee/active').write_text('c' * 64)
+        for name, body in {'app_process': '#!/bin/sh\nsleep 1\n',
+                           'logcat': '#!/bin/sh\necho "Interceptors initialized successfully."\n'}.items():
+            stub = self.bin / name
+            stub.write_text(body)
+            stub.chmod(0o755)
+        self.prepare()
+        subprocess.run(['bash', str(self.script), 'tee'], env=self.env, check=True, capture_output=True)
+        store = self.root / 'data/adb/tricky_store'
+        self.assertEqual((store / 'keybox.xml').read_text(), 'rom-key\n')
+        self.assertEqual((store / 'target.txt').read_text(), 'com.example\n')
+        # The refresh may replace this file later, so the seed is recorded as ours.
+        self.assertEqual((self.data / 'keybox/shipped').read_text().strip(),
+                         hashlib.sha256(b'rom-key\n').hexdigest())
+        # A keybox already in the store is neither replaced nor claimed.
+        for name in ('keybox.xml', 'target.txt'):
+            (store / name).unlink()
+        (self.data / 'keybox/shipped').unlink()
+        store.mkdir(parents=True, exist_ok=True)
+        (store / 'keybox.xml').write_text('user-key\n')
+        self.prop('sys.onigiri.tee.state', 'ready')
+        subprocess.run(['bash', str(self.script), 'tee'], env=self.env, check=True, capture_output=True)
+        self.assertEqual((store / 'keybox.xml').read_text(), 'user-key\n')
+        self.assertFalse((self.data / 'keybox/shipped').exists())
+
     def assert_manager_rollback(self, previous):
         component = self.data / 'hma'
         old, new = 'a' * 64, 'b' * 64
@@ -304,6 +338,75 @@ esac
             self.assertFalse((self.data / name / 'guard').exists())
             self.assertFalse((self.data / name / 'trial').exists())
 
+    def test_a_broken_supplied_keybox_stops_the_build(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('build_essential', ROOT / 'scripts/build_essential.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory(prefix='keybox-') as temp:
+            supplied = Path(temp) / 'tee-keybox.xml'
+            supplied.write_text('<AndroidAttestation>')
+            with self.assertRaises(ValueError):
+                module.supplied_keybox(Path(temp))
+            # Shaped like a keybox but with nothing to attest with.
+            supplied.write_text('<AndroidAttestation><Keybox><Key algorithm="ecdsa"/></Keybox></AndroidAttestation>')
+            with self.assertRaises(ValueError):
+                module.supplied_keybox(Path(temp))
+
+    def test_keybox_refresh_is_skipped_when_switched_off(self):
+        launcher = self.root / 'system/bin/app_process'
+        launcher.write_text('#!/bin/sh\ntouch "$PROPS/app_process.ran"\nexit 0\n')
+        launcher.chmod(0o755)
+        self.prepare()
+        self.prop('persist.sys.onigiri.keybox_update', 'false')
+        result = subprocess.run(['bash', str(self.script), 'keybox'], env=self.env, capture_output=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertFalse((self.props / 'app_process.ran').exists())
+        self.prop('persist.sys.onigiri.keybox_update', 'true')
+        result = subprocess.run(['bash', str(self.script), 'keybox'], env=self.env, capture_output=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue((self.props / 'app_process.ran').exists())
+
+    def test_a_failed_fetch_asks_for_one_more_attempt(self):
+        launcher = self.root / 'system/bin/app_process'
+        # The daemon reports itself active; the fetcher reports failure through its property,
+        # which is what a killed or unlaunchable fetcher would never do.
+        launcher.write_text('#!/bin/sh\n'
+                            'case "$*" in\n'
+                            '  *TEESimulator*) printf active > "$PROPS/sys.onigiri.tee.state"; exit 0;;\n'
+                            'esac\n'
+                            'printf unavailable > "$PROPS/sys.onigiri.keybox.state"\n')
+        launcher.chmod(0o755)
+        (self.bin / 'logcat').write_text('#!/bin/sh\necho "Interceptors initialized successfully."\n')
+        (self.bin / 'logcat').chmod(0o755)
+        (self.rom / 'tee/keybox.xml').write_text('rom-key\n')
+        (self.rom / 'tee/target.txt').write_text('com.example\n')
+        self.prepare()
+        self.prop('sys.onigiri.tee.state', 'ready')
+        subprocess.run(['bash', str(self.script), 'tee'], env=self.env, check=True, capture_output=True)
+        # The refresh runs beside the daemon, so give it a moment to finish.
+        for _ in range(50):
+            if self.prop('sys.onigiri.keybox.retry') == 'requested':
+                break
+            time.sleep(0.1)
+        self.assertEqual(self.prop('sys.onigiri.keybox.retry'), 'requested')
+        # A run that starts from the retry clears the flag, so it cannot loop.
+        self.prop('sys.onigiri.keybox.state', 'updated')
+        subprocess.run(['bash', str(self.script), 'keybox'], env=self.env, check=True, capture_output=True)
+        self.assertEqual(self.prop('sys.onigiri.keybox.retry'), '')
+
+    def test_a_pending_retry_honours_the_switch(self):
+        launcher = self.root / 'system/bin/app_process'
+        launcher.write_text('#!/bin/sh\ntouch "$PROPS/app_process.ran"\n')
+        launcher.chmod(0o755)
+        # The user turns the refresh off while the retry waits for data.
+        (self.bin / 'sleep').write_text('#!/bin/sh\nprintf false > "$PROPS/persist.sys.onigiri.keybox_update"\n')
+        (self.bin / 'sleep').chmod(0o755)
+        self.prepare()
+        subprocess.run(['bash', str(self.script), 'keybox', 'delayed'], env=self.env,
+                       check=True, capture_output=True)
+        self.assertFalse((self.props / 'app_process.ran').exists())
+
     def test_update_marks_checking_even_when_java_cannot_start(self):
         launcher = self.root / 'system/bin/app_process'
         launcher.write_text('#!/bin/sh\n[ "$(getprop sys.onigiri.hma.update)" = checking ] || exit 99\nexit 41\n')
@@ -326,7 +429,9 @@ if __name__ == '__main__':
         subprocess.run(['javac', '--release', '8', '-Xlint:-options', '-d', classes, *map(str, sources),
                         str(virtual_loader), str(ROOT / 'scripts/tests/SystemProperties.java'),
                         str(ROOT / 'scripts/tests/HmaLoaderWaitTest.java'),
-                        str(ROOT / 'scripts/tests/EssentialUpdateTest.java')], check=True)
+                        str(ROOT / 'scripts/tests/EssentialUpdateTest.java'),
+                        str(ROOT / 'scripts/tests/KeyboxUpdateTest.java')], check=True)
         subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.EssentialUpdateTest', str(ROOT)], check=True)
+        subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.KeyboxUpdateTest', str(ROOT)], check=True)
         subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.HmaLoaderWaitTest'], check=True)
     unittest.main()

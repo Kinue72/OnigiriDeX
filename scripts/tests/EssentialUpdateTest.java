@@ -50,10 +50,14 @@ public final class EssentialUpdateTest {
                     rejects(() -> HmaHookPatch.apply(fixedDex));
                     assert Arrays.equals(zipMember(archive, "manager.apk"), Files.readAllBytes(dest.resolve("manager.apk")));
                 } else if (id.equals("tee")) {
-                    assert Arrays.equals(zipMember(archive, "keybox.xml"), Files.readAllBytes(dest.resolve("keybox.xml")));
+                    // A payload staged from the feed must never carry a key of its own.
+                    assert !Files.exists(dest.resolve("keybox.xml"));
+                    assert Arrays.equals(zipMember(archive, "target.txt"), Files.readAllBytes(dest.resolve("target.txt")));
                     assert Arrays.equals(zipMember(archive, "classes.dex"), Files.readAllBytes(dest.resolve("classes.dex")));
                 } else {
                     assert new String(Files.readAllBytes(dest.resolve("rom-names")), "UTF-8").contains("lineage\n");
+                    // Upstream's list omits this ROM, so the scan would otherwise find nothing.
+                    assert new String(Files.readAllBytes(dest.resolve("rom-names")), "UTF-8").contains("onigiri\n");
                     assert Arrays.equals(zipMember(archive, "tools/susfs"), Files.readAllBytes(dest.resolve("susfs")));
                 }
                 assert !Files.exists(dest.resolve("service.sh"));

@@ -74,12 +74,12 @@ if $FORCE; then
     BUILD_ROM=true
 else
     if [ -f "$WORK_DIR/.completed" ]; then
-        if [[ "$(cat "$WORK_DIR/.completed")" == "$(GET_WORK_DIR_HASH)" ]]; then
-            LOGW "No changes have been detected in the build environment"
-            BUILD_ROM=false
-        else
+        if [[ "$(cat "$WORK_DIR/.completed")" != "$(GET_WORK_DIR_HASH)" ]]; then
             LOGW "Changes detected in the build environment"
             BUILD_ROM=true
+        else
+            LOGW "No changes have been detected in the build environment"
+            BUILD_ROM=false
         fi
     else
         BUILD_ROM=true

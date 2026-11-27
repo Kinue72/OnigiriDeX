@@ -17,7 +17,7 @@ service onigiri-brene /system/bin/sh /system/bin/onigiri-essential.sh brene
 
 service onigiri-tee /system/bin/sh /system/bin/onigiri-essential.sh tee
     user root
-    group root
+    group root inet
     seclabel u:r:ksu:s0
     disabled
     oneshot
@@ -29,6 +29,16 @@ service onigiri-essential-boot /system/bin/sh /system/bin/onigiri-essential.sh b
     disabled
     oneshot
 
+# A second keybox attempt for the boot where TEE could not reach the mirror, started by the TEE
+# service rather than by a timer. Network access needs the inet group.
+service onigiri-keybox /system/bin/sh /system/bin/onigiri-essential.sh keybox delayed
+    user root
+    group root inet
+    seclabel u:r:ksu:s0
+    disabled
+    oneshot
+    timeout_period 300
+
 on post-fs-data
     exec_start onigiri-essential-prepare
     exec_start onigiri-brene
@@ -36,6 +46,9 @@ on post-fs-data
 on property:sys.boot_completed=1
     start onigiri-tee
     start onigiri-essential-boot
+
+on property:sys.onigiri.keybox.retry=requested
+    start onigiri-keybox
 
 service onigiri-update-hma /system/bin/sh /system/bin/onigiri-essential.sh update hma
     user root
