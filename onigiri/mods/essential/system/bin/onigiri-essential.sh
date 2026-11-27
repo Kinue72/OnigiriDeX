@@ -194,7 +194,9 @@ tee() {
     mkdir -p /data/adb/tricky_store || return 1
     for NAME in keybox.xml target.txt; do
         if [ ! -e "/data/adb/tricky_store/$NAME" ]; then
-            (umask 077; cp "$PAYLOAD/$NAME" "/data/adb/tricky_store/$NAME.new") &&
+            # The keybox only ever comes from the ROM payload; an update payload never carries one.
+            if [ "$NAME" = keybox.xml ]; then SHIPPED="$ROM/tee/keybox.xml"; else SHIPPED="$PAYLOAD/$NAME"; fi
+            (umask 077; cp "$SHIPPED" "/data/adb/tricky_store/$NAME.new") &&
                 mv "/data/adb/tricky_store/$NAME.new" "/data/adb/tricky_store/$NAME" || return 1
         fi
     done

@@ -16,6 +16,7 @@ public final class EssentialUpdate {
     static final Path DATA = Paths.get("/data/system/onigiri-essential");
     static final Path ROM = Paths.get("/system/framework/onigiri-essential");
     static final String FEED = "https://raw.githubusercontent.com/Kinue72/OnigiriDeX/main/prebuilts/rootmods/updates.properties";
+    static final String ROM_NAME = "onigiri";
     static final long MAX_ZIP = 64L * 1024 * 1024;
 
     static String prop(String key) throws Exception {
@@ -166,15 +167,22 @@ public final class EssentialUpdate {
                     elf(bytes);
                     write(output.resolve(name.equals("libinject.so") ? "inject" : name), bytes, true);
                 }
-                for (String name : Arrays.asList("keybox.xml", "target.txt")) write(output.resolve(name), member(zip, name), false);
+                // The keybox is not a payload artifact: it is the one build_essential.py placed
+                // in the ROM payload, and onigiri-essential.sh installs that one. A payload
+                // staged from the feed can therefore never bring its own key.
+                write(output.resolve("target.txt"), member(zip, "target.txt"), false);
             } else {
                 byte[] bytes = member(zip, "tools/susfs");
                 elf(bytes);
                 write(output.resolve("susfs"), bytes, true);
                 String script = new String(member(zip, "post-fs-data.sh"), StandardCharsets.UTF_8);
-                Matcher names = Pattern.compile("(?m)^CUSTOM_ROM_NAMES=\"([a-z|]+)\"\\r?$").matcher(script);
+                Matcher names = Pattern.compile("(?m)^CUSTOM_ROM_NAMES=\"([a-z]+(?:\\|[a-z]+)*)\"\\r?$").matcher(script);
                 if (!names.find()) throw new IOException("Unsupported BRENE path list");
-                write(output.resolve("rom-names"), (names.group(1).replace('|', '\n') + "\n").getBytes(StandardCharsets.US_ASCII), false);
+                // Upstream only lists other ROMs. Without this build's own name the scan finds
+                // nothing on Onigiri and "hide custom ROM paths" is silently a no-op.
+                String list = names.group(1);
+                if (!Arrays.asList(list.split("\\|")).contains(ROM_NAME)) list = list + "|" + ROM_NAME;
+                write(output.resolve("rom-names"), (list.replace('|', '\n') + "\n").getBytes(StandardCharsets.US_ASCII), false);
             }
         }
         Properties version = new Properties();

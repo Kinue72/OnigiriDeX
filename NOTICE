@@ -34,5 +34,10 @@ TEESimulator's original dex and arm64 binaries, and BRENE's susfs binary and ROM
 Their original licenses still apply. Onigiri's adapters and build code are
 available in onigiri/mods/essential and scripts/build_essential.py.
 
+onigiri/mods/essential/tee-keybox.xml is not from any upstream project and is not tracked
+in this repository: it is an externally supplied software-attestation keybox, read from
+that path at build time and kept out of the pinned TEESimulator archive so the archive
+stays byte-identical. See docs/releasing.md for supplying it and for its expiry.
+
 R8 9.4.24 (build-time Java-to-dex compiler): BSD-3-Clause,
 https://r8.googlesource.com/r8/+/refs/tags/9.4.24

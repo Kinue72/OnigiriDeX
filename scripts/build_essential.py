@@ -2,6 +2,7 @@
 """Build the small adapters and extract checksum-pinned upstream payloads."""
 import hashlib
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import shutil
 import subprocess
@@ -10,12 +11,36 @@ import tempfile
 import zipfile
 
 R8_SHA256 = 'f24d7ae8332eecd5329906656aa687022c111b1e31992c04a154f649377be3f2'
+# The upstream TEESimulator archive carries an AOSP software attestation keybox whose
+# intermediate expired in January 2026, which fails every verdict on a fresh install. A
+# third-party keybox is not published in this repository; keep it at
+# onigiri/mods/essential/tee-keybox.xml (git-ignored) and update both values below with it.
+# This is that file's leaf notAfter, in UTC.
+TEE_KEYBOX_EXPIRES = datetime(2026, 12, 4, 10, 54, 20, tzinfo=timezone.utc)
+TEE_KEYBOX_REFRESH_WINDOW = timedelta(days=14)
+
+
+def supplied_keybox(module):
+    """The supplied keybox, or None when this checkout has none."""
+    path = module / 'tee-keybox.xml'
+    if not path.is_file():
+        print('warning: no tee-keybox.xml; keeping the archive keybox, so fresh installs fail '
+              'integrity checks', file=sys.stderr)
+        return None
+    remaining = TEE_KEYBOX_EXPIRES - datetime.now(timezone.utc)
+    if remaining <= timedelta(0):
+        raise ValueError('tee-keybox.xml has expired; refresh the keybox and TEE_KEYBOX_EXPIRES')
+    if remaining < TEE_KEYBOX_REFRESH_WINDOW:
+        print(f'warning: tee-keybox.xml expires in {remaining.days} days; refresh it before release',
+              file=sys.stderr)
+    return path
 
 
 def build(src, work, r8):
     if hashlib.sha256(r8.read_bytes()).hexdigest() != R8_SHA256:
         raise ValueError('Unexpected R8 compiler; run build_dependencies')
     module = src / 'onigiri/mods/essential'
+    supplied = supplied_keybox(module)
     root = src / 'prebuilts/rootmods'
     feed = dict(line.split('=', 1) for line in (root / 'bundled.properties').read_text().splitlines()
                 if line and not line.startswith('#'))
@@ -54,6 +79,21 @@ public final class PayloadPackager {
             version.chmod(0o644)
             version.write_text('\n'.join(sorted(line for line in version.read_text().splitlines()
                                                if line and not line.startswith('#'))) + '\n')
+        # The payload always carries a keybox, because extract() never writes one from the
+        # archive: a payload staged from the feed must not bring its own key. Without a
+        # supplied file, the archive's expired key is all there is, as supplied_keybox warned.
+        shipped = dest / 'tee/keybox.xml'
+        if supplied is None:
+            tee_archive = root / [a for a in assets if a['url'] == feed['tee.url']][0]['path']
+            with zipfile.ZipFile(tee_archive) as archive:
+                shipped.write_bytes(archive.read('keybox.xml'))
+        else:
+            shutil.copyfile(supplied, shipped)
+            # Lets make_rom.sh rebuild a cached tree whose keybox expired since it was built.
+            tee = dest / 'tee/version.properties'
+            tee.write_text(tee.read_text() + f'keybox_expires={TEE_KEYBOX_EXPIRES:%Y-%m-%dT%H:%M:%SZ}\n')
+        shipped.chmod(0o644)
+        (dest / 'tee/version.properties').chmod(0o644)
         java_home = Path(shutil.which('javac')).resolve().parent.parent
         runtime_classes = [p for p in classes.rglob('*.class') if p.name != 'PayloadPackager.class']
         subprocess.run(['java', '-cp', str(r8), 'com.android.tools.r8.D8', '--release', '--min-api', '35',

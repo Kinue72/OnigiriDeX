@@ -11,3 +11,6 @@ __pycache__/
 *.log
 .superpowers/
 /security/.signing.*/
+
+# Third-party attestation keybox. Not published: see docs/releasing.md.
+onigiri/mods/essential/tee-keybox.xml

@@ -9,14 +9,20 @@ current status, component-specific controls, and a PIF-style version/update row.
 | Component | Bundled release | Built-in integration |
 | --- | --- | --- |
 | HMA-OSS | oss-173 | Original signed manager and backend with the hook-installation race and preset-scan GC fixes below; a guarded services.jar entry loads it without Vector or Zygisk. Config schema remains 93. |
-| TEESimulator | v3.2, code 67 | Original arm64 injector, native library and dex run through an init service. |
-| BRENE | v0.0.72 | Original susfs CLI and ROM-name list; only custom-ROM path, addon.d and module-mount hiding are ported. |
+| TEESimulator | v3.2, code 67 | Original arm64 injector, native library and dex run through an init service. The keybox is the one supplied at `onigiri/mods/essential/tee-keybox.xml`, never the expired copy in the upstream archive. |
+| BRENE | v0.0.72 | Original susfs CLI and ROM-name list, with `onigiri` appended, so custom-ROM path hiding covers this build's own files. Only custom-ROM path, addon.d and module-mount hiding are ported. |
 
 The build verifies the original archives against `prebuilts/rootmods/manifest.json`
 and `bundled.properties`. It never executes their installers. The HMA manager keeps
 its upstream signing certificate. PIF's existing certificate handling remains
-in place. This does not provide new keys, download keys, or guarantee an app's
-integrity result.
+in place. Nothing here fetches keys at runtime or guarantees an app's integrity
+result. TEESimulator's expired bundled keybox is replaced by the keybox supplied in
+`onigiri/mods/essential/tee-keybox.xml`, which is deliberately not in this
+repository (see [releasing.md](releasing.md)); without it the build warns and keeps
+the archive's expired key. The build warns inside `TEE_KEYBOX_REFRESH_WINDOW` and
+fails past `TEE_KEYBOX_EXPIRES`, and a cached tree whose keybox expired is rebuilt
+rather than packaged. A keybox already in `/data/adb/tricky_store` is never
+replaced, so an existing install keeps its own key until that file is deleted.
 
 Bundled payloads live under `/system/framework/onigiri-essential`, which is
 permitted by keystore's linker namespace. Updates use the root-owned
@@ -109,8 +115,9 @@ The feed's `adapter` is a compatibility contract, not an upstream version:
 - TEE adapter 1 requires the v3.2 entry point, current-directory injector
   layout, and `/data/adb/tricky_store` configuration. TEESimulator v4 changes
   these and is explicitly reported as requiring a ROM update.
-- BRENE adapter 1 imports the ROM-name list and susfs binary; it does not
-  start following the rest of BRENE's evolving scripts or settings.
+- BRENE adapter 1 imports the ROM-name list (with `onigiri` appended) and susfs
+  binary; it does not start following the rest of BRENE's evolving scripts or
+  settings.
 
 To approve an upstream bump, review its entry points, config schema, native
 dependencies and policy needs. Update the feed's source, digest, size and
@@ -168,7 +175,8 @@ bash -n onigiri/mods/essential/system/bin/onigiri-essential.sh
 
 `scripts/build_essential.py` builds Java adapters with the checksum-pinned R8
 compiler installed by `build_dependencies`, then applies the verified HMA hook
-fix and packages the other upstream payloads unchanged. Tests cover payload identity, invalid inputs,
+fix, the supplied keybox for TEESimulator and the `onigiri` entry for BRENE's path
+list. Every other upstream payload is packaged unchanged. Tests cover payload identity, invalid inputs,
 archive boundaries, migration, desired/current state, and interrupted update
 recovery. Also apply and assemble the services.jar and Settings patches against
 the matching ROM and compile the policy additions.

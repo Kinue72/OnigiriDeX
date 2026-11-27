@@ -201,6 +201,25 @@ class BootStateTest(unittest.TestCase):
         self.assertFalse((component / 'guard').exists())
         self.assertEqual(self.prop('sys.onigiri.brene.enabled'), 'false')
 
+    def test_tee_seeds_the_rom_keybox_not_the_payload_one(self):
+        (self.rom / 'tee/keybox.xml').write_text('rom-key\n')
+        release = self.data / 'tee/releases' / ('c' * 64)
+        release.mkdir()
+        (release / 'version.properties').write_text('version=next\ncode=2\nadapter=1\n')
+        (release / 'target.txt').write_text('com.example\n')
+        (release / 'keybox.xml').write_text('feed-key\n')
+        (self.data / 'tee/active').write_text('c' * 64)
+        for name, body in {'app_process': '#!/bin/sh\nsleep 1\n',
+                           'logcat': '#!/bin/sh\necho "Interceptors initialized successfully."\n'}.items():
+            stub = self.bin / name
+            stub.write_text(body)
+            stub.chmod(0o755)
+        self.prepare()
+        subprocess.run(['bash', str(self.script), 'tee'], env=self.env, check=True, capture_output=True)
+        store = self.root / 'data/adb/tricky_store'
+        self.assertEqual((store / 'keybox.xml').read_text(), 'rom-key\n')
+        self.assertEqual((store / 'target.txt').read_text(), 'com.example\n')
+
     def assert_manager_rollback(self, previous):
         component = self.data / 'hma'
         old, new = 'a' * 64, 'b' * 64

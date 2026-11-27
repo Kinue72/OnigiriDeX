@@ -47,8 +47,12 @@ jobs:
       - name: Preflight
         env:
           KEYS: ${{ secrets.ONIGIRI_SIGNING_KEYS }}
+          KEYBOX: ${{ secrets.TEE_KEYBOX }}
         run: |
           [ -n "$KEYS" ] || { echo "::error::Set the ONIGIRI_SIGNING_KEYS secret (docs/releasing.md)."; exit 1; }
+          # Without it the image keeps the expired keybox from the TEESimulator archive and every
+          # fresh install fails Play Integrity.
+          [ -n "$KEYBOX" ] || { echo "::error::Set the TEE_KEYBOX secret (docs/releasing.md)."; exit 1; }
           PARTS="$(gh release view firmware --repo "$ONIGIRI_REPO" --json assets --jq '[.assets[] | select(.name | startswith("onigiri-fw.tar.zst."))] | length')" || PARTS=0
           [ "$PARTS" -gt 0 ] || { echo "::error::The firmware draft release is missing (docs/releasing.md)."; exit 1; }
           if gh release view "$RELEASE_TAG" --repo "$ONIGIRI_REPO" --json isDraft --jq 'select(.isDraft | not)' | grep -q .; then
@@ -174,10 +178,13 @@ jobs:
 
       - uses: actions/checkout@v7
 
-      - name: Signing keys
+      - name: Signing keys and keybox
         env:
           KEYS: ${{ secrets.ONIGIRI_SIGNING_KEYS }}
-        run: mkdir -p security && echo "$KEYS" | base64 -d | tar -xz -C security
+          KEYBOX: ${{ secrets.TEE_KEYBOX }}
+        run: |
+          mkdir -p security && echo "$KEYS" | base64 -d | tar -xz -C security
+          echo "$KEYBOX" | base64 -d > onigiri/mods/essential/tee-keybox.xml
 
       # Samsung's servers won't serve the pinned firmware any more, so it comes pre-extracted from
       # a draft release, which only people with push access can see: one split archive per

@@ -109,6 +109,21 @@ Back the keys up as well. Without the platform key, updates can't be installed o
 install; without the OTA key, every phone needs a recovery with the new certificate flashed with
 Odin before it can update again. Without the secret a release stops before building.
 
+**Keybox.** TEESimulator needs a key-attestation keybox, and this repository deliberately does
+not ship or publish one: a key that is committed is a key anyone can use, which gets it revoked
+and breaks the feature for every install. Keep it at
+`onigiri/mods/essential/tee-keybox.xml` (git-ignored) and set the same file as a secret, so
+release builds use it:
+
+```sh
+base64 -w0 onigiri/mods/essential/tee-keybox.xml | gh secret set TEE_KEYBOX --repo Kinue72/OnigiriDeX
+```
+
+A local build uses the file when it is present. Without it, the build warns and keeps the
+expired keybox from the TEESimulator archive, so a fresh install fails Play Integrity. The key
+dies with its leaf certificate: `scripts/build_essential.py` warns 14 days before
+`TEE_KEYBOX_EXPIRES` and fails after it, so replace the file and that constant together.
+
 **Firmware.** Samsung's servers no longer serve the pinned firmware, so the workflow downloads
 `out/fw` (what `onigiri extract_fw` produces) from a draft release named `firmware`. Drafts are
 only visible to people with push access; never publish it (or `build-cache`). After changing the firmware pins in
