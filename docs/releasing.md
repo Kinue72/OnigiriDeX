@@ -124,17 +124,20 @@ keybox. Passing Play Integrity on a fresh install requires that. Rotate the key 
 working.
 
 A local build uses the file when it is present. Without it, the build warns and keeps the
-expired keybox from the TEESimulator archive, so a fresh install fails Play Integrity. The file's
-own leaf certificate decides the warning: `scripts/build_essential.py` reads it (through
-`openssl`) and warns inside 14 days or once it has expired, which never blocks a build.
+expired keybox from the TEESimulator archive, so a fresh install fails Play Integrity. A supplied
+file has to pass the verification a device would apply: every key's chain, a pinned Google root
+and a private key that signs for its certificate. `scripts/build_essential.py` refuses the build
+otherwise, so a bad secret cannot reach an image. Only the dates are advisory: the same script
+reads the leaf through `openssl` and warns inside 14 days or once it has expired.
 
-The shipped file only seeds a fresh install. With the built-in TEE adapter active, the ROM
-replaces it at TEE startup from `https://evoker.qzz.io/key` (see
+The shipped file only seeds a fresh install. Once TEE is active, the ROM replaces it from
+`https://evoker.qzz.io/key` (see
 [essential-components.md](essential-components.md#keybox-refresh)), so a revoked key costs no
 release. Check `getprop sys.onigiri.keybox.state` and `sys.onigiri.keybox.expires` to see what a
-device is actually using. A keybox installed by hand or by another module is left alone; an
-install whose keybox was seeded by a build from before the seed marker existed reads `custom`,
-and deleting `/data/adb/tricky_store/keybox.xml` once hands it back to the ROM.
+device is actually using. A keybox installed by hand or by another module is left alone, except
+for one window: a writer that publishes between the final checksum and the rename can lose that
+write. A device seeded before the marker existed is still recognised, because the archive keybox
+it carries has a fixed digest.
 
 **Firmware.** Samsung's servers no longer serve the pinned firmware, so the workflow downloads
 `out/fw` (what `onigiri extract_fw` produces) from a draft release named `firmware`. Drafts are

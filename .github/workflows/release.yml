@@ -53,8 +53,12 @@ jobs:
           # Without it the image keeps the expired keybox from the TEESimulator archive and every
           # fresh install fails Play Integrity.
           [ -n "$KEYBOX" ] || { echo "::error::Set the TEE_KEYBOX secret (docs/releasing.md)."; exit 1; }
-          echo "$KEYBOX" | base64 -d | grep -q '<AndroidAttestation' ||
-            { echo "::error::TEE_KEYBOX does not decode to a keybox."; exit 1; }
+          echo "$KEYBOX" | base64 -d > "$RUNNER_TEMP/keybox.xml"
+          for MARK in '<AndroidAttestation' '</AndroidAttestation>' 'BEGIN CERTIFICATE' 'PRIVATE KEY'; do
+            grep -q "$MARK" "$RUNNER_TEMP/keybox.xml" ||
+              { echo "::error::TEE_KEYBOX does not decode to a keybox ($MARK missing)."; exit 1; }
+          done
+          # A shape check only: build_essential.py verifies every chain, the root and the keys.
           PARTS="$(gh release view firmware --repo "$ONIGIRI_REPO" --json assets --jq '[.assets[] | select(.name | startswith("onigiri-fw.tar.zst."))] | length')" || PARTS=0
           [ "$PARTS" -gt 0 ] || { echo "::error::The firmware draft release is missing (docs/releasing.md)."; exit 1; }
           if gh release view "$RELEASE_TAG" --repo "$ONIGIRI_REPO" --json isDraft --jq 'select(.isDraft | not)' | grep -q .; then

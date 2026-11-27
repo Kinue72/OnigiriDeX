@@ -15,8 +15,8 @@ R8_SHA256 = 'f24d7ae8332eecd5329906656aa687022c111b1e31992c04a154f649377be3f2'
 # The upstream TEESimulator archive carries an AOSP software attestation keybox whose
 # intermediate expired in January 2026, which fails every verdict on a fresh install. A
 # third-party keybox is not published in this repository; keep it at
-# onigiri/mods/essential/tee-keybox.xml (git-ignored). It only has to survive the first boot of
-# a fresh offline install: a connected device replaces it at boot (see KeyboxUpdate).
+# onigiri/mods/essential/tee-keybox.xml (git-ignored). It has to last until a boot with network:
+# a connected device replaces it, and an offline one keeps running whatever the image carried.
 TEE_KEYBOX_REFRESH_WINDOW = timedelta(days=14)
 
 
@@ -86,8 +86,25 @@ public final class PayloadPackager {
  }
 }
 ''')
+        checker = temp / 'KeyboxCheck.java'
+        checker.write_text('''package moe.foss.onigiri;
+import java.nio.file.*;
+public final class KeyboxCheck {
+ public static void main(String[] a) throws Exception {
+  KeyboxUpdate.verify(Files.readAllBytes(Paths.get(a[0])), false);
+ }
+}
+''')
         sources = sorted(module.glob('java/**/*.java'))
-        subprocess.run(['javac', '--release', '8', '-d', str(classes), *map(str, sources), str(runner)], check=True)
+        subprocess.run(['javac', '--release', '8', '-d', str(classes), *map(str, sources),
+                        str(runner), str(checker)], check=True)
+        if supplied is not None:
+            # The image must not carry a key the device's own rules would refuse. Expiry stays
+            # advisory here; the chains, the pinned root and the private keys do not.
+            checked = subprocess.run(['java', '-cp', str(classes), 'moe.foss.onigiri.KeyboxCheck',
+                                      str(supplied)], capture_output=True, text=True)
+            if checked.returncode != 0:
+                raise ValueError(f'{supplied.name} is not a usable keybox:\n{checked.stderr.strip()}')
         for component in ('hma', 'tee', 'brene'):
             url = feed[f'{component}.url']
             asset, = [a for a in assets if a['url'] == url]
@@ -116,7 +133,8 @@ public final class PayloadPackager {
         shipped.chmod(0o644)
         (dest / 'tee/version.properties').chmod(0o644)
         java_home = Path(shutil.which('javac')).resolve().parent.parent
-        runtime_classes = [p for p in classes.rglob('*.class') if p.name != 'PayloadPackager.class']
+        host_only = ('PayloadPackager.class', 'KeyboxCheck.class')
+        runtime_classes = [p for p in classes.rglob('*.class') if p.name not in host_only]
         subprocess.run(['java', '-cp', str(r8), 'com.android.tools.r8.D8', '--release', '--min-api', '35',
                         '--lib', str(java_home), '--output', str(dex), *map(str, runtime_classes)], check=True)
         jar = work / 'system/system/framework/onigiri-essential.jar'

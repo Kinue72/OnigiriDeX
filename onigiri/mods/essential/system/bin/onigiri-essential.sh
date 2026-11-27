@@ -191,9 +191,14 @@ brene() {
 
 refresh_keybox() {
     [ "$(getprop persist.sys.onigiri.keybox_update)" = false ] && return 0
+    ERR="$DATA/keybox.stderr"
     timeout -k 5 20 /system/bin/app_process -Djava.class.path=/system/framework/onigiri-essential.jar \
-        /system/bin moe.foss.onigiri.KeyboxUpdate > /dev/null 2>&1
-    if [ "$?" != 0 ] || [ "$(getprop sys.onigiri.keybox.state)" = unavailable ]; then
+        /system/bin moe.foss.onigiri.KeyboxUpdate > /dev/null 2>"$ERR"
+    RESULT=$?
+    # The state property says what happened; this says why, which a mirror outage needs.
+    [ -s "$ERR" ] && log "$(cat "$ERR")"
+    rm -f "$ERR"
+    if [ "$RESULT" != 0 ] || [ "$(getprop sys.onigiri.keybox.state)" = unavailable ]; then
         # One more attempt once boot settles; init runs onigiri-keybox for it.
         setprop sys.onigiri.keybox.retry requested
     fi
@@ -206,14 +211,18 @@ tee() {
     mkdir -p /data/adb/tricky_store || return 1
     for NAME in keybox.xml target.txt; do
         DEST="/data/adb/tricky_store/$NAME"
-        if [ ! -e "$DEST" ]; then
+        # A link counts as present even when it dangles: it is the owner's, not ours to replace.
+        if [ ! -e "$DEST" ] && [ ! -L "$DEST" ]; then
             # The keybox only ever comes from the ROM payload; an update payload never carries one.
             if [ "$NAME" = keybox.xml ]; then SHIPPED="$ROM/tee/keybox.xml"; else SHIPPED="$PAYLOAD/$NAME"; fi
             (umask 077; cp "$SHIPPED" "$DEST.new") || return 1
             if [ "$NAME" = keybox.xml ]; then
                 # Recorded before publishing, so a seed interrupted after the link is still ours.
-                mkdir -p "$DATA/keybox" && restorecon -RF "$DATA/keybox" &&
-                    sha256sum "$DEST.new" | cut -d " " -f 1 > "$DATA/keybox/shipped" || return 1
+                if ! { mkdir -p "$DATA/keybox" && restorecon -RF "$DATA/keybox" &&
+                    sha256sum "$DEST.new" | cut -d " " -f 1 > "$DATA/keybox/shipped"; }; then
+                    # Only an OTA that changes the built-in key needs it; TEE starting matters more.
+                    log "could not record the seeded keybox digest"
+                fi
             fi
             # link(2) fails when the destination appeared meanwhile, so nobody's file is replaced.
             if ln "$DEST.new" "$DEST" 2>/dev/null; then :; elif [ ! -e "$DEST" ]; then

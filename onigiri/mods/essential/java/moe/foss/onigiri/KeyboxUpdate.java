@@ -1,9 +1,9 @@
 package moe.foss.onigiri;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
@@ -15,11 +15,15 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.security.KeyFactory;
 import java.security.MessageDigest;
+import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Signature;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -37,12 +41,15 @@ import java.util.regex.Pattern;
  *
  * <p>Shared attestation keys are revoked every few days, so a keybox baked into an image is stale
  * long before the next release. This fetches the newest one the mirror publishes, checks that its
- * entries form real Google attestation chains with a matching private key, and only then replaces
- * the one the ROM seeded. A keybox put there by hand, or by another module, is never touched.
+ * keys form real Google attestation chains with a matching private key, and only then replaces
+ * the one the ROM seeded. A keybox put there by hand, or by another module, is left alone: only a
+ * file whose bytes this module recorded can be replaced, and a writer that skips its lock and
+ * publishes between the final check and the rename can lose that write.
  */
 public final class KeyboxUpdate {
     static final Path STORE = Paths.get("/data/adb/tricky_store/keybox.xml");
     static final Path DIR = EssentialUpdate.DATA.resolve("keybox");
+    static final Path RESTORECON = Paths.get("/system/bin/restorecon");
     static final Path SHIPPED = DIR.resolve("shipped");
     // Written before the store is replaced, so an interrupted install is still recognisable.
     static final Path NEXT = DIR.resolve("installing");
@@ -52,16 +59,21 @@ public final class KeyboxUpdate {
     // SHA-256 of the SubjectPublicKeyInfo of the roots Google issues attestation keys under:
     // Key Attestation CA1 (RKP) and the hardware attestation root. Anything else is not a key
     // Google will accept, including the AOSP software key upstream ships.
-    static final Collection<String> ROOTS = Arrays.asList(
+    static final List<String> ROOTS = new ArrayList<>(Arrays.asList(
             "3ee44512a1af2beb39c889490c60ea3f82e43f5d5a5532f5ab9419f676cd07ec",
-            "feb2ea7551ee316ed4bb443c8293b884dbfdea40b603ee3e4f4a897e4580fbae");
+            "feb2ea7551ee316ed4bb443c8293b884dbfdea40b603ee3e4f4a897e4580fbae"));
+    // SHA-256 of the archive keybox that releases before the seed marker installed. That file came
+    // from this ROM, so it is this module's to replace even though no marker names it.
+    static final String ARCHIVE = "773abeca64bdb537bde8ca37ee6071674cc1409f940b70ec8119a563e2867164";
     static final long MAX_KEYBOX = 1024L * 1024;
     // A key with days left is not worth replacing a working one with.
     static final long MIN_LIFE = TimeUnit.DAYS.toMillis(2);
-    static final Pattern BOX = Pattern.compile("<Keybox\\b[\\s\\S]*?</Keybox>");
+    // The daemon reads one <Key> at a time, wherever it sits, and ignores <Keybox> and
+    // NumberOfKeyboxes. One <Keybox> may hold several, typically an EC and an RSA key.
+    static final Pattern KEY = Pattern.compile("<Key\\b[^>]*>[\\s\\S]*?</Key>");
     static final Pattern PEM = Pattern.compile("-----BEGIN (?:EC |RSA )?PRIVATE KEY-----([\\s\\S]*?)-{5}END");
 
-    /** One {@code <Keybox>} entry: its certificate chain and its private key. */
+    /** One {@code <Key>}: its certificate chain and its private key. */
     static final class Entry {
         final List<X509Certificate> chain;
         final byte[] key;
@@ -95,40 +107,65 @@ public final class KeyboxUpdate {
     }
 
     /**
-     * Every entry a keybox holds. A keybox may carry several, one per key type (typically an EC
-     * chain and an RSA chain), and each has its own separate chain.
+     * Every key a keybox holds, in document order. Each carries its own certificate chain, and one
+     * keybox may group an EC key and an RSA key side by side, so they are never merged.
      */
     static List<Entry> entries(byte[] xml) throws Exception {
-        String text = new String(xml, StandardCharsets.UTF_8);
-        if (!text.contains("<AndroidAttestation")) throw new IOException("Not a keybox");
+        String text = plain(new String(xml, StandardCharsets.UTF_8));
+        // The daemon parses real XML, so a file that stops early is not guessed at either.
+        if (!text.contains("<AndroidAttestation") || !text.trim().endsWith("</AndroidAttestation>"))
+            throw new IOException("Not a keybox");
         List<Entry> entries = new ArrayList<>();
-        Matcher box = BOX.matcher(text);
-        while (box.find()) {
-            List<X509Certificate> chain = certificates(box.group());
-            if (chain.isEmpty()) throw new IOException("Keybox entry without a certificate");
-            Matcher pem = PEM.matcher(box.group());
-            // An entry without its key cannot attest, so it must not ride along with one that can.
-            if (!pem.find()) throw new IOException("Keybox entry without a private key");
-            entries.add(new Entry(chain, Base64.getMimeDecoder().decode(pem.group(1))));
-        }
-        if (entries.isEmpty()) throw new IOException("No keybox entries");
+        Matcher key = KEY.matcher(text);
+        while (key.find()) entries.add(entry(key.group()));
+        if (entries.isEmpty()) throw new IOException("No keys in the keybox");
         return entries;
     }
 
     /**
-     * The first certificate this keybox signs with, once every entry in it checks out. One good
-     * entry is not enough: the file is published whole, so the whole file has to be sound.
+     * The document with its comments and character data removed, so text a pattern would read as
+     * markup cannot pass for it. Mirrors carry a banner comment, so this drops them instead of
+     * refusing the file; a key shared inside one is simply not read, and fails as an empty entry.
      */
-    static X509Certificate verify(byte[] xml) throws Exception {
+    static String plain(String text) throws IOException {
+        if (text.contains("<!DOCTYPE")) throw new IOException("Keybox declares a DTD");
+        String stripped = text.replaceAll("(?s)<!--.*?-->", "")
+                .replaceAll("(?s)<!\\[CDATA\\[.*?\\]\\]>", "");
+        if (stripped.contains("<!--") || stripped.contains("<![CDATA["))
+            throw new IOException("Keybox carries an unclosed comment");
+        return stripped;
+    }
+
+    static Entry entry(String block) throws Exception {
+        List<X509Certificate> chain = certificates(block);
+        if (chain.isEmpty()) throw new IOException("Key without a certificate");
+        Matcher pem = PEM.matcher(block);
+        // A key without its private key cannot attest, and must not ride along with one that can.
+        if (!pem.find()) throw new IOException("Key without a private key");
+        return new Entry(chain, Base64.getMimeDecoder().decode(pem.group(1)));
+    }
+
+    /**
+     * The first certificate this keybox signs with, once every key in it checks out. One good key
+     * is not enough: the file is published whole, so all of it has to be sound.
+     */
+    static X509Certificate verify(byte[] xml) throws Exception { return verify(xml, true); }
+
+    /**
+     * @param dates whether to hold the certificates to the clock. The image may carry a key that
+     *     is already old, because a connected device replaces it at boot; a key published onto a
+     *     device may not.
+     */
+    static X509Certificate verify(byte[] xml, boolean dates) throws Exception {
         X509Certificate first = null;
         for (Entry entry : entries(xml)) {
-            X509Certificate leaf = valid(entry);
+            X509Certificate leaf = valid(entry, dates);
             if (first == null) first = leaf;
         }
         return first;
     }
 
-    static X509Certificate valid(Entry entry) throws Exception {
+    static X509Certificate valid(Entry entry, boolean dates) throws Exception {
         List<X509Certificate> chain = entry.chain;
         if (chain.size() < 2) throw new IOException("Incomplete certificate chain");
         // Signatures first: it also keeps each chain's certificates separate, since one entry
@@ -136,10 +173,12 @@ public final class KeyboxUpdate {
         for (int i = 0; i + 1 < chain.size(); i++) chain.get(i).verify(chain.get(i + 1).getPublicKey());
         if (!ROOTS.contains(spki(chain.get(chain.size() - 1))))
             throw new IOException("Chain does not end at a Google attestation root");
-        for (X509Certificate certificate : chain) certificate.checkValidity();
-        // The attestation leaf is itself a CA — it signs device certificates — so only its chain,
-        // its remaining life and the key it claims are checked here.
-        entry.leaf().checkValidity(new Date(System.currentTimeMillis() + MIN_LIFE));
+        if (dates) {
+            for (X509Certificate certificate : chain) certificate.checkValidity();
+            // The attestation leaf is itself a CA — it signs device certificates — so only its
+            // chain, its remaining life and the key it claims are checked here.
+            entry.leaf().checkValidity(new Date(System.currentTimeMillis() + MIN_LIFE));
+        }
         match(entry.leaf(), entry.key);
         return entry.leaf();
     }
@@ -152,40 +191,55 @@ public final class KeyboxUpdate {
     }
 
     /**
-     * The public point an EC private key carries, when it carries one. Used to tell whether the
-     * key can actually sign for the certificate next to it.
+     * Fails unless the private key can sign for the certificate beside it. Reading the public
+     * values out of the key would accept a damaged private half; a signature is the only thing
+     * that proves the key works, which is what the daemon needs from it.
      */
-    static byte[] publicPoint(byte[] der) throws IOException {
+    static void match(X509Certificate leaf, byte[] key) throws Exception {
+        PublicKey published = leaf.getPublicKey();
+        String algorithm = published.getAlgorithm();
+        String scheme = "RSA".equals(algorithm) ? "SHA256withRSA"
+                : "EC".equals(algorithm) ? "SHA256withECDSA" : null;
+        if (scheme == null) throw new IOException("Unsupported key type");
+        PrivateKey privateKey;
+        try {
+            privateKey = KeyFactory.getInstance(algorithm)
+                    .generatePrivate(new PKCS8EncodedKeySpec(pkcs8(key, published)));
+        } catch (Exception e) { throw new IOException("Cannot read the private key", e); }
+        byte[] challenge = new byte[32];
+        new SecureRandom().nextBytes(challenge);
+        Signature signer = Signature.getInstance(scheme);
+        signer.initSign(privateKey);
+        signer.update(challenge);
+        byte[] proof = signer.sign();
+        Signature check = Signature.getInstance(scheme);
+        check.initVerify(published);
+        check.update(challenge);
+        if (!check.verify(proof)) throw new IOException("Private key does not match the certificate");
+    }
+
+    /**
+     * PKCS#8 for a key that may be stored bare, which is how keyboxes usually carry them: RSA as
+     * PKCS#1 and EC as SEC1. The algorithm identifier is copied from the certificate's own public
+     * key, so a named curve needs no table here.
+     */
+    static byte[] pkcs8(byte[] der, PublicKey published) throws IOException {
         int[] top = tlv(der, 0);
         if (top[0] != 0x30) throw new IOException("Not a private key");
-        int at = top[1];
         int end = top[1] + top[2];
-        int[] first = tlv(der, at);
+        int[] first = tlv(der, top[1]);
         if (first[0] == 0x02) {
-            // PKCS#8 continues with an algorithm identifier, then the key in an OCTET STRING;
-            // a bare SEC1 key continues with the private scalar instead.
             int after = first[1] + first[2];
-            int[] second = after < end ? tlv(der, after) : null;
-            if (second != null && second[0] == 0x30) {
-                int wrapped = second[1] + second[2];
-                int[] third = wrapped < end ? tlv(der, wrapped) : null;
-                if (third != null && third[0] == 0x04) {
-                    try { return publicPoint(Arrays.copyOfRange(der, third[1], third[1] + third[2])); }
-                    catch (IOException ignored) { }
-                }
-                return null;
-            }
+            // PKCS#8 puts an algorithm identifier where the bare forms keep their second integer.
+            if (after < end && tlv(der, after)[0] == 0x30) return Arrays.copyOfRange(der, 0, end);
         }
-        while (at < end) {
-            int[] field = tlv(der, at);
-            if (field[0] == 0xa1) {
-                int[] bits = tlv(der, field[1]);
-                if (bits[0] != 0x03 || der[bits[1]] != 0) throw new IOException("Bad public key");
-                return Arrays.copyOfRange(der, bits[1] + 1, bits[1] + bits[2]);
-            }
-            at = field[1] + field[2];
-        }
-        return null;
+        byte[] spki = published.getEncoded();
+        int[] outer = tlv(spki, 0);
+        int[] algorithm = tlv(spki, outer[1]);
+        if (algorithm[0] != 0x30) throw new IOException("Unsupported public key");
+        return der(0x30, concat(new byte[]{0x02, 0x01, 0x00}, concat(
+                Arrays.copyOfRange(spki, outer[1], algorithm[1] + algorithm[2]),
+                der(0x04, der))));
     }
 
     private static int[] tlv(byte[] der, int at) throws IOException {
@@ -204,56 +258,38 @@ public final class KeyboxUpdate {
         return new int[]{tag, start, length};
     }
 
-    /** Fails when the entry's private key is not the one its certificate was issued for. */
-    static void match(X509Certificate leaf, byte[] key) throws Exception {
-        PublicKey published = leaf.getPublicKey();
-        if (published instanceof RSAPublicKey) {
-            BigInteger[] parts = rsaKey(key);
-            RSAPublicKey rsa = (RSAPublicKey) published;
-            if (!rsa.getModulus().equals(parts[0]) || !rsa.getPublicExponent().equals(parts[1]))
-                throw new IOException("Private key does not match the certificate");
-            return;
+    /** One DER element: the tag, its length and its content. */
+    static byte[] der(int tag, byte[] content) {
+        int size = content.length;
+        ByteArrayOutputStream out = new ByteArrayOutputStream(size + 5);
+        out.write(tag);
+        if (size < 0x80) {
+            out.write(size);
+        } else {
+            int bytes = 0;
+            for (int left = size; left > 0; left >>>= 8) bytes++;
+            out.write(0x80 | bytes);
+            for (int i = bytes - 1; i >= 0; i--) out.write(size >>> (8 * i));
         }
-        byte[] point = publicPoint(key);
-        if (point == null) throw new IOException("Cannot check the private key");
-        byte[] encoded = published.getEncoded();
-        if (encoded.length < point.length || !Arrays.equals(
-                Arrays.copyOfRange(encoded, encoded.length - point.length, encoded.length), point))
-            throw new IOException("Private key does not match the certificate");
+        out.write(content, 0, size);
+        return out.toByteArray();
     }
 
-    /** The modulus and public exponent of an RSA private key, PKCS#1 or wrapped in PKCS#8. */
-    static BigInteger[] rsaKey(byte[] der) throws IOException {
-        int[] top = tlv(der, 0);
-        if (top[0] != 0x30) throw new IOException("Not a private key");
-        int at = top[1];
-        int end = top[1] + top[2];
-        int[] first = tlv(der, at);
-        if (first[0] == 0x02) {
-            int after = first[1] + first[2];
-            int[] second = after < end ? tlv(der, after) : null;
-            if (second != null && second[0] == 0x30) {
-                int wrapped = second[1] + second[2];
-                int[] third = wrapped < end ? tlv(der, wrapped) : null;
-                if (third != null && third[0] == 0x04)
-                    return rsaKey(Arrays.copyOfRange(der, third[1], third[1] + third[2]));
-            }
-        }
-        int[] version = tlv(der, at);
-        int[] modulus = tlv(der, version[1] + version[2]);
-        int[] exponent = tlv(der, modulus[1] + modulus[2]);
-        return new BigInteger[]{
-                new BigInteger(Arrays.copyOfRange(der, modulus[1], modulus[1] + modulus[2])),
-                new BigInteger(Arrays.copyOfRange(der, exponent[1], exponent[1] + exponent[2]))};
+    static byte[] concat(byte[] first, byte[] second) {
+        byte[] out = Arrays.copyOf(first, first.length + second.length);
+        System.arraycopy(second, 0, out, first.length, second.length);
+        return out;
     }
 
     /**
      * Whether the keybox in place can be replaced: nothing is installed, or this module installed
-     * it. A keybox supplied by hand or by another module belongs to them and is never touched.
+     * it. A keybox supplied by hand or by another module belongs to them and is left alone, so
+     * this is the only gate that decides whether a boot may fetch and swap the file.
      */
     static boolean replaceable(String current, String tracked, String next, String builtin) {
         if (current == null) return true;
-        return current.equals(tracked) || current.equals(next) || current.equals(builtin);
+        return current.equals(tracked) || current.equals(next) || current.equals(builtin)
+                || current.equals(ARCHIVE);
     }
 
     static byte[] decode(byte[] raw) throws IOException {
@@ -262,9 +298,23 @@ public final class KeyboxUpdate {
     }
 
     static void install(byte[] xml, String sha, String expected) throws Exception {
-        Path dir = STORE.getParent();
+        install(STORE, DIR, xml, sha, expected);
+    }
+
+    /**
+     * Publishes {@code xml} at {@code store}, recording it in {@code records}. A writer that
+     * skips this lock and replaces the store between the final checksum and the rename can still
+     * lose its file: POSIX has no compare-and-swap rename, and no other writer takes this lock.
+     */
+    static void install(Path store, Path records, byte[] xml, String sha, String expected)
+            throws Exception {
+        Path dir = store.getParent();
+        Path shipped = records.resolve("shipped");
+        Path next = records.resolve("installing");
         Files.createDirectories(dir);
-        Path staged = Files.createTempFile(dir, "keybox-", ".tmp");
+        Files.createDirectories(records);
+        // Named so a run killed mid-install leaves only something this module will clean up.
+        Path staged = Files.createTempFile(dir, ".onigiri-keybox-", ".tmp");
         try {
             Files.setPosixFilePermissions(staged, PosixFilePermissions.fromString("rw-------"));
             try (OutputStream out = Files.newOutputStream(staged)) {
@@ -273,25 +323,41 @@ public final class KeyboxUpdate {
             }
             try (FileChannel file = FileChannel.open(staged, StandardOpenOption.WRITE)) { file.force(true); }
             // Label the keybox before it is published; the daemon reads it from another domain.
-            if (new ProcessBuilder("/system/bin/restorecon", staged.toString()).start().waitFor() != 0)
+            // The host has no restorecon; a device always does.
+            if (Files.isExecutable(RESTORECON)
+                    && new ProcessBuilder(RESTORECON.toString(), staged.toString()).start().waitFor() != 0)
                 throw new IOException("Labeling the keybox failed");
+            // Written before the swap, so an install interrupted anywhere after this is still
+            // recognisable as this module's.
+            EssentialUpdate.atomicText(next, sha);
             if (expected == null) {
                 // Nothing was there: create rather than replace, and let link(2) lose the race
                 // against any writer that got there first.
-                try { Files.createLink(STORE, staged); }
-                catch (FileAlreadyExistsException e) { throw new IOException("Keybox appeared during refresh"); }
+                try { Files.createLink(store, staged); }
+                catch (FileAlreadyExistsException e) {
+                    Files.deleteIfExists(next);
+                    throw new IOException("Keybox appeared during refresh");
+                }
+                // The daemon reloads on a write that closes, not on a create. Open it for writing
+                // and close it untouched, so a first install is read without a restart.
+                try (FileChannel notice = FileChannel.open(store, StandardOpenOption.WRITE)) { }
             } else {
                 // Nothing else installed a keybox while this one was downloading.
-                if (!Objects.equals(Files.isRegularFile(STORE) ? EssentialUpdate.sha256(STORE) : null, expected))
+                if (!Objects.equals(Files.isRegularFile(store) ? EssentialUpdate.sha256(store) : null, expected)) {
+                    Files.deleteIfExists(next);
                     throw new IOException("Keybox changed during refresh");
-                EssentialUpdate.atomicText(NEXT, sha);
-                Files.move(staged, STORE, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-                // The rename has to be durable before the marker claims it happened.
-                try (FileChannel directory = FileChannel.open(STORE.getParent(), StandardOpenOption.READ)) {
-                    directory.force(true);
-                } catch (IOException ignored) { }
+                }
+                Files.move(staged, store, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             }
-            EssentialUpdate.atomicText(SHIPPED, sha);
+            // Published, and on disk before a marker claims it is: a power cut between the two
+            // must not leave the old key beside a digest of the new one.
+            try (FileChannel directory = FileChannel.open(dir, StandardOpenOption.READ)) {
+                directory.force(true);
+            } catch (IOException e) { throw new IOException("Keybox is not durable", e); }
+            EssentialUpdate.atomicText(shipped, sha);
+            // The pending record only covers the moment before publication; left behind, an old
+            // digest would keep vouching for a file this module no longer installed.
+            Files.deleteIfExists(next);
         } finally { Files.deleteIfExists(staged); }
     }
 
@@ -306,7 +372,10 @@ public final class KeyboxUpdate {
                 StandardOpenOption.CREATE, StandardOpenOption.WRITE);
              FileLock lock = lockFile.tryLock()) {
             if (lock == null) return "busy";
-            // A run killed by its timeout leaves a partial download behind.
+            // A run killed by its timeout leaves a partial download, or a staged key, behind.
+            try (DirectoryStream<Path> stale = Files.newDirectoryStream(STORE.getParent(), ".onigiri-keybox-*.tmp")) {
+                for (Path path : stale) Files.deleteIfExists(path);
+            } catch (IOException ignored) { }
             try (DirectoryStream<Path> stale = Files.newDirectoryStream(DIR, "fetch-*")) {
                 for (Path path : stale) EssentialUpdate.removeTree(path);
             } catch (IOException ignored) { }

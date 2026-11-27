@@ -18,9 +18,11 @@ its upstream signing certificate. PIF's existing certificate handling remains
 in place. TEESimulator's expired bundled keybox is replaced by the keybox supplied in
 `onigiri/mods/essential/tee-keybox.xml`, which is deliberately not in this
 repository (see [releasing.md](releasing.md); without it the build warns and keeps the
-archive's expired key). The shipped key only has to survive the first boot of a fresh
-install that is offline: it is replaced at TEE startup, so the build warns when its own
-certificate is inside `TEE_KEYBOX_REFRESH_WINDOW` or already expired instead of failing.
+archive's expired key). A supplied key must pass the same chain, root and private-key
+checks a device applies before it may enter an image; only its dates are advisory, since
+it has to last until a boot that has network, and an offline install keeps using
+whatever the image carried. The build warns when the leaf is inside
+`TEE_KEYBOX_REFRESH_WINDOW` or already expired rather than failing.
 
 ## Keybox refresh
 
@@ -36,26 +38,42 @@ the `inet` group, and the delayed run rechecks the toggle before it starts.
 It fetches base64 from `https://evoker.qzz.io/key`, the only host it will talk to, and a
 redirect anywhere else fails closed.
 
-A keybox is accepted only when every `Keybox` entry it holds is a real Google
-attestation chain; one good entry does not vouch for the rest of the file. The mirror's
-files carry one entry; upstream's archive carries an EC and an RSA chain. Every
-certificate must verify against the next and be valid now, the leaf must have more than
-two days left, the chain must end at a pinned Google attestation root (`Key Attestation
-CA1` or the hardware attestation root), and the entry's private key must match its
-certificate. That rejects the AOSP software key
-upstream ships, so the refresh cannot quietly install one. A rejected or unreachable
-key leaves the file exactly as it was: the shipped key on a fresh install, whatever was
-there on any other device.
+A keybox is accepted only when every key it holds is a real Google attestation chain;
+one good key does not vouch for the rest of the file. Keys are read one at a time, as the
+daemon reads them, so a `<Keybox>` that holds an EC and an RSA key side by side is two
+chains and not one. Every certificate must verify against the next and be valid now, the
+leaf must have more than two days left, the chain must end at a pinned Google attestation
+root (`Key Attestation CA1` or the hardware attestation root), and the private key must
+sign for its own certificate: the public values are not compared, because a key that
+cannot sign is useless to the daemon whatever it claims. That rejects the AOSP software
+key upstream ships, so the refresh cannot quietly install one. The document is read as
+XML would be: comments and character data are dropped first, a DTD is refused, and a file
+that stops before its closing tag is not a keybox. A rejected or unreachable key leaves
+the file exactly as it was: the shipped key on a fresh install, whatever was there on any
+other device.
 
 `/data/adb/tricky_store/keybox.xml` is replaced only when this module installed it: its
 checksum must match what the seeder recorded in
 `/data/system/onigiri-essential/keybox/shipped` when it copied the keybox in, the file
-in flight in `installing`, or the keybox the current payload carries. A keybox supplied
-by hand or by another module reports `custom` and is never touched, even when it has
-expired. States appear in `sys.onigiri.keybox.state` (`updated`, `current`, `custom`,
+in flight in `installing`, the ROM's own `tee/keybox.xml`, or the archive keybox that
+releases before the marker installed. `installing` is removed once the new file is
+committed, so it can only ever vouch for the install it was written for. A keybox supplied by hand or by another module reports `custom` and is never
+touched, even when it has expired, and a symlink is someone else's file likewise. States appear in `sys.onigiri.keybox.state` (`updated`, `current`, `custom`,
 `unavailable`, `busy`) with the leaf expiry in `sys.onigiri.keybox.expires`, which is
-cleared whenever the file is not one this module installed. `persist.sys.onigiri.keybox_update
+cleared whenever the file is not one this module installed and on every failed attempt,
+so an offline boot shows no expiry rather than a stale one. `persist.sys.onigiri.keybox_update
 false` switches the refresh off, and `onigiri-essential.sh keybox` runs it by hand.
+
+Publication is ordered: the file is staged under the store's own label, a first install
+is a hard link so it can only create, and a replacement is a rename after the checksum is
+rechecked. The new file and its directory are synced before the marker that claims it
+exists, so a power cut cannot leave the old key beside the new digest. The daemon reloads
+on a close for write or a rename, never on a create, so the first install also closes the
+file it just created. One window stays open by construction: a writer that publishes
+between that checksum recheck and the rename loses its file. POSIX has no
+compare-and-swap rename, and the other writers are upstream modules that do not take this
+lock, so the guarantee is "only a file whose bytes this module recorded", not "never
+replaced whatever happens".
 
 Bundled payloads live under `/system/framework/onigiri-essential`, which is
 permitted by keystore's linker namespace. Updates use the root-owned
