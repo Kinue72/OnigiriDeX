@@ -110,14 +110,18 @@ install; without the OTA key, every phone needs a recovery with the new certific
 Odin before it can update again. Without the secret a release stops before building.
 
 **Keybox.** TEESimulator needs a key-attestation keybox, and this repository deliberately does
-not ship or publish one: a key that is committed is a key anyone can use, which gets it revoked
-and breaks the feature for every install. Keep it at
-`onigiri/mods/essential/tee-keybox.xml` (git-ignored) and set the same file as a secret, so
-release builds use it:
+not track one: a key committed to git is a key anyone can copy, which gets it revoked and breaks
+the feature for every install. Keep it at `onigiri/mods/essential/tee-keybox.xml` (git-ignored)
+and set the same file as a secret, so release builds use it:
 
 ```sh
 base64 -w0 onigiri/mods/essential/tee-keybox.xml | gh secret set TEE_KEYBOX --repo Kinue72/OnigiriDeX
 ```
+
+The secret keeps the key out of this repository's history and PRs, not out of the image: a
+released ROM contains it, so anyone who unpacks one has it, the same as any module that ships a
+keybox. Passing Play Integrity on a fresh install requires that. Rotate the key if it stops
+working.
 
 A local build uses the file when it is present. Without it, the build warns and keeps the
 expired keybox from the TEESimulator archive, so a fresh install fails Play Integrity. The key
