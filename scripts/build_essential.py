@@ -4,6 +4,7 @@ import hashlib
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -14,11 +15,25 @@ R8_SHA256 = 'f24d7ae8332eecd5329906656aa687022c111b1e31992c04a154f649377be3f2'
 # The upstream TEESimulator archive carries an AOSP software attestation keybox whose
 # intermediate expired in January 2026, which fails every verdict on a fresh install. A
 # third-party keybox is not published in this repository; keep it at
-# onigiri/mods/essential/tee-keybox.xml (git-ignored) and update both values below with it.
-# This is that file's leaf notAfter, in UTC. The image only needs a live key for an offline
-# first boot: a connected device refreshes it after boot (see KeyboxUpdate).
-TEE_KEYBOX_EXPIRES = datetime(2026, 12, 4, 10, 54, 20, tzinfo=timezone.utc)
+# onigiri/mods/essential/tee-keybox.xml (git-ignored). It only has to survive the first boot of
+# a fresh offline install: a connected device replaces it at boot (see KeyboxUpdate).
 TEE_KEYBOX_REFRESH_WINDOW = timedelta(days=14)
+
+
+def keybox_expiry(path):
+    """The leaf's notAfter, read from the file so it cannot drift from the key itself."""
+    pem = re.search(rb'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----',
+                    path.read_bytes(), re.S)
+    if pem is None:
+        print(f'warning: {path.name} carries no certificate', file=sys.stderr)
+        return None
+    try:
+        listed = subprocess.run(['openssl', 'x509', '-noout', '-enddate'],
+                                input=pem.group(0), capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    value = ' '.join(listed.decode().strip().split('=', 1)[-1].split())
+    return datetime.strptime(value, '%b %d %H:%M:%S %Y %Z').replace(tzinfo=timezone.utc)
 
 
 def supplied_keybox(module):
@@ -28,13 +43,15 @@ def supplied_keybox(module):
         print('warning: no tee-keybox.xml; keeping the archive keybox, so fresh installs fail '
               'integrity checks', file=sys.stderr)
         return None
-    remaining = TEE_KEYBOX_EXPIRES - datetime.now(timezone.utc)
-    if remaining <= timedelta(0):
-        print('warning: tee-keybox.xml has expired; devices refresh theirs after boot, but a '
-              'fresh offline install fails integrity checks', file=sys.stderr)
-    elif remaining < TEE_KEYBOX_REFRESH_WINDOW:
-        print(f'warning: tee-keybox.xml expires in {remaining.days} days; refresh it before release',
-              file=sys.stderr)
+    expiry = keybox_expiry(path)
+    if expiry is not None:
+        remaining = expiry - datetime.now(timezone.utc)
+        if remaining <= timedelta(0):
+            print('warning: tee-keybox.xml has expired; devices refresh theirs at boot, but a '
+                  'fresh offline install fails integrity checks', file=sys.stderr)
+        elif remaining < TEE_KEYBOX_REFRESH_WINDOW:
+            print(f'warning: tee-keybox.xml expires in {remaining.days} days; refresh it before '
+                  'release', file=sys.stderr)
     return path
 
 

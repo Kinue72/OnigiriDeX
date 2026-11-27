@@ -195,16 +195,23 @@ tee() {
     PAYLOAD=$(payload tee) || return 1
     mkdir -p /data/adb/tricky_store || return 1
     for NAME in keybox.xml target.txt; do
-        if [ ! -e "/data/adb/tricky_store/$NAME" ]; then
+        DEST="/data/adb/tricky_store/$NAME"
+        if [ ! -e "$DEST" ]; then
             # The keybox only ever comes from the ROM payload; an update payload never carries one.
             if [ "$NAME" = keybox.xml ]; then SHIPPED="$ROM/tee/keybox.xml"; else SHIPPED="$PAYLOAD/$NAME"; fi
-            (umask 077; cp "$SHIPPED" "/data/adb/tricky_store/$NAME.new") &&
-                mv "/data/adb/tricky_store/$NAME.new" "/data/adb/tricky_store/$NAME" || return 1
-            if [ "$NAME" = keybox.xml ]; then
-                # Records what this ROM installed, so the refresh knows the file is its own.
-                mkdir -p "$DATA/keybox" && sha256sum "/data/adb/tricky_store/$NAME" |
-                    cut -d " " -f 1 > "$DATA/keybox/shipped"
+            (umask 077; cp "$SHIPPED" "$DEST.new") || return 1
+            # link(2) fails when the destination appeared meanwhile, so nobody's file is replaced.
+            if ln "$DEST.new" "$DEST" 2>/dev/null; then
+                if [ "$NAME" = keybox.xml ]; then
+                    # Records what this ROM installed, so the refresh knows the file is its own.
+                    mkdir -p "$DATA/keybox" && restorecon -RF "$DATA/keybox" &&
+                        sha256sum "$DEST.new" | cut -d " " -f 1 > "$DATA/keybox/shipped" || return 1
+                fi
+            elif [ ! -e "$DEST" ]; then
+                rm -f "$DEST.new"
+                return 1
             fi
+            rm -f "$DEST.new"
         fi
     done
     # Shared keys die within days: take the newest working one before the daemon reads it.
@@ -212,6 +219,11 @@ tee() {
     if [ "$(getprop persist.sys.onigiri.keybox_update)" != false ]; then
         timeout -k 5 20 /system/bin/app_process -Djava.class.path=/system/framework/onigiri-essential.jar \
             /system/bin moe.foss.onigiri.KeyboxUpdate > /dev/null 2>&1
+        RC=$?
+        if [ "$RC" != 0 ] || [ "$(getprop sys.onigiri.keybox.state)" = unavailable ]; then
+            # One more attempt once boot settles; init runs onigiri-keybox for it.
+            setprop sys.onigiri.keybox.retry requested
+        fi
     fi
     touch "$DATA/tee/guard" || return 1
     sync
@@ -259,14 +271,6 @@ boot_complete() {
         fi
     fi
     # Require 60 consecutive active seconds after boot before accepting a trial update.
-    if [ "$(getprop sys.onigiri.keybox.state)" = unavailable ] &&
-            [ "$(getprop persist.sys.onigiri.keybox_update)" != false ]; then
-        # The mirror occasionally drops the first connection; one more try that same boot.
-        (
-            timeout -k 5 20 /system/bin/app_process -Djava.class.path=/system/framework/onigiri-essential.jar \
-                /system/bin moe.foss.onigiri.KeyboxUpdate > /dev/null 2>&1
-        ) &
-    fi
     for ID in hma tee brene; do
         (
             STABLE=0
@@ -300,7 +304,8 @@ case "$1" in
     keybox)
         # Newest shared keybox, verified before it replaces the one the ROM installed.
         [ "$(getprop persist.sys.onigiri.keybox_update)" = false ] && exit 0
-        exec /system/bin/app_process -Djava.class.path=/system/framework/onigiri-essential.jar \
+        setprop sys.onigiri.keybox.retry ""
+        exec timeout -k 5 90 /system/bin/app_process -Djava.class.path=/system/framework/onigiri-essential.jar \
             /system/bin moe.foss.onigiri.KeyboxUpdate
         ;;
     *) exit 2;;

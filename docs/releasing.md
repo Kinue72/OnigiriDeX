@@ -124,15 +124,17 @@ keybox. Passing Play Integrity on a fresh install requires that. Rotate the key 
 working.
 
 A local build uses the file when it is present. Without it, the build warns and keeps the
-expired keybox from the TEESimulator archive, so a fresh install fails Play Integrity. The key
-dies with its leaf certificate: `scripts/build_essential.py` warns 14 days before
-`TEE_KEYBOX_EXPIRES` and again after it, which never blocks a build.
+expired keybox from the TEESimulator archive, so a fresh install fails Play Integrity. The file's
+own leaf certificate decides the warning: `scripts/build_essential.py` reads it (through
+`openssl`) and warns inside 14 days or once it has expired, which never blocks a build.
 
 The shipped file only seeds a fresh install. With the built-in TEE adapter active, the ROM
-refreshes it when TEE starts from `https://evoker.qzz.io/key` (see
+replaces it at TEE startup from `https://evoker.qzz.io/key` (see
 [essential-components.md](essential-components.md#keybox-refresh)), so a revoked key costs no
 release. Check `getprop sys.onigiri.keybox.state` and `sys.onigiri.keybox.expires` to see what a
-device is actually using; a keybox installed by hand or by another module is left alone.
+device is actually using. A keybox installed by hand or by another module is left alone; an
+install whose keybox was seeded by a build from before the seed marker existed reads `custom`,
+and deleting `/data/adb/tricky_store/keybox.xml` once hands it back to the ROM.
 
 **Firmware.** Samsung's servers no longer serve the pinned firmware, so the workflow downloads
 `out/fw` (what `onigiri extract_fw` produces) from a draft release named `firmware`. Drafts are

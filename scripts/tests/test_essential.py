@@ -351,17 +351,22 @@ esac
         self.assertEqual(result.returncode, 0)
         self.assertTrue((self.props / 'app_process.ran').exists())
 
-    def test_boot_retries_a_failed_keybox_fetch(self):
+    def test_a_failed_fetch_asks_for_one_more_attempt(self):
         launcher = self.root / 'system/bin/app_process'
-        launcher.write_text('#!/bin/sh\ntouch "$PROPS/app_process.ran"\n')
+        launcher.write_text('#!/bin/sh\nexit 0\n')
         launcher.chmod(0o755)
-        (self.bin / 'sleep').write_text('#!/bin/sh\nexit 0\n')
-        (self.bin / 'sleep').chmod(0o755)
+        (self.rom / 'tee/keybox.xml').write_text('rom-key\n')
+        (self.rom / 'tee/target.txt').write_text('com.example\n')
         self.prepare()
-        self.prop('sys.onigiri.keybox.state', 'unavailable')
-        subprocess.run(['bash', str(self.script), 'boot-complete'], env=self.env, check=True,
-                       capture_output=True, timeout=30)
-        self.assertTrue((self.props / 'app_process.ran').exists())
+        self.prop('sys.onigiri.tee.state', 'ready')
+        # The fetcher reports failure through its property, not its exit code.
+        launcher.write_text('#!/bin/sh\nprintf unavailable > "$PROPS/sys.onigiri.keybox.state"\n')
+        subprocess.run(['bash', str(self.script), 'tee'], env=self.env, check=True, capture_output=True)
+        self.assertEqual(self.prop('sys.onigiri.keybox.retry'), 'requested')
+        # A run that starts from the retry clears the flag, so it cannot loop.
+        self.prop('sys.onigiri.keybox.state', 'updated')
+        subprocess.run(['bash', str(self.script), 'keybox'], env=self.env, check=True, capture_output=True)
+        self.assertEqual(self.prop('sys.onigiri.keybox.retry'), '')
 
     def test_update_marks_checking_even_when_java_cannot_start(self):
         launcher = self.root / 'system/bin/app_process'
@@ -388,6 +393,6 @@ if __name__ == '__main__':
                         str(ROOT / 'scripts/tests/EssentialUpdateTest.java'),
                         str(ROOT / 'scripts/tests/KeyboxUpdateTest.java')], check=True)
         subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.EssentialUpdateTest', str(ROOT)], check=True)
-        subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.KeyboxUpdateTest'], check=True)
+        subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.KeyboxUpdateTest', str(ROOT)], check=True)
         subprocess.run(['java', '-ea', '-cp', classes, 'moe.foss.onigiri.HmaLoaderWaitTest'], check=True)
     unittest.main()
