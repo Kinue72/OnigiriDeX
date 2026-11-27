@@ -12,7 +12,7 @@ diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
      <string name="onigiri_update_local_invalid">Tệp này không phải gói cập nhật Onigiri.</string>
      <string name="onigiri_update_local_title">Cài đặt %1$s?</string>
      <string name="onigiri_update_local_body">Gói chỉ được cài nếu dành cho phiên bản bạn đang dùng (%1$s); nếu không, điện thoại khởi động lại mà không thay đổi gì. Điện thoại sẽ khởi động lại và không dùng được trong khoảng một phút. Dữ liệu của bạn vẫn được giữ.</string>
-+    <string name="onigiri_mirror_fit_title">Phản chiếu vừa màn hình ngoài</string>
++    <string name="onigiri_mirror_fit_title">Phản chiếu vừa màn hình rời</string>
  </resources>
 diff --git a/res/values/strings.xml b/res/values/strings.xml
 --- a/res/values/strings.xml
@@ -34,10 +34,10 @@ diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
          <SecSwitchPreference android:title="@string/onigiri_mirror_high_refresh_title" android:key="onigiri_mirror_high_refresh" settings:controller="moe.foss.onigiri.settings.MirrorHighRefreshPreferenceController" />
          <ListPreference android:title="@string/onigiri_external_mode_title" android:key="onigiri_external_mode" android:persistent="false" settings:controller="moe.foss.onigiri.settings.ExternalDisplayModePreferenceController" />
          <ListPreference android:title="@string/onigiri_external_rotation_title" android:key="onigiri_external_rotation" android:persistent="false" android:entries="@array/onigiri_external_rotation_entries" android:entryValues="@array/onigiri_external_rotation_values" settings:controller="moe.foss.onigiri.settings.ExternalDisplayRotationPreferenceController" />
-diff --git a/smali_classes4/moe/foss/onigiri/settings/MirrorFitPreferenceController.smali b/smali_classes4/moe/foss/onigiri/settings/MirrorFitPreferenceController.smali
+diff --git a/smali_classes5/moe/foss/onigiri/settings/MirrorFitPreferenceController.smali b/smali_classes5/moe/foss/onigiri/settings/MirrorFitPreferenceController.smali
 new file mode 100644
 --- /dev/null
-+++ b/smali_classes4/moe/foss/onigiri/settings/MirrorFitPreferenceController.smali
++++ b/smali_classes5/moe/foss/onigiri/settings/MirrorFitPreferenceController.smali
 @@ -0,0 +1,48 @@
 +.class public Lmoe/foss/onigiri/settings/MirrorFitPreferenceController;
 +.super Lcom/android/settings/core/TogglePreferenceController;

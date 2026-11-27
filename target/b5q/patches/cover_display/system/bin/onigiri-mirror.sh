@@ -5,14 +5,14 @@
 # turns. "Fit mirroring to monitor" (on by default) turns the fit off: some apps and games refuse
 # the fitted size, so the screen then mirrors at its own size and density. The cover goes back to
 # its own size and density as soon as the monitor goes away or DeX starts. With "Mirroring high
-# refresh rate" on, opening the phone while it
-# mirrors shows the 120 Hz inner panel instead (device state 5), fitted the same way, so the
-# mirror is no longer held to the cover's 60 Hz. With "Use inner screen" on, the open phone shows
-# the inner panel by itself, and the fit follows whichever panel shows; while a monitor runs
-# with the matching high refresh switch on, that panel is then held at 120 Hz too, since it leads
-# the monitor's pace. Each time DeX starts, it
-# also opens the zone apps (Settings > Onigiri Software > Zones). It also keeps power saving,
-# which holds every screen to 60 Hz, off while the phone charges. Started by onigiri-mirror.rc.
+# refresh rate" on, opening the phone while it mirrors shows the 120 Hz inner panel instead
+# (device state 5), in landscape and fitted the same way (or at its own size with the fit off),
+# so the mirror is no longer held to the cover's 60 Hz. With "Use inner screen" on, the open
+# phone shows the inner panel by itself, and the fit follows whichever panel shows; while a
+# monitor runs with the matching high refresh switch on, that panel is then held at 120 Hz too,
+# since it leads the monitor's pace. Each time DeX starts, it also opens the zone apps (Settings >
+# Onigiri Software > Zones). It also keeps power saving, which holds every screen to 60 Hz, off
+# while the phone charges. Started by onigiri-mirror.rc.
 
 DP=/sys/class/drm/card0-DP-1/status
 DPI=240
@@ -262,6 +262,8 @@ while :; do
         want=$now
     fi
     # The fit to apply: $want, unless the switch is off. $want still times entering state 5.
+    # State 5 has no SAVED, so no $applied to hold $want through a restart or a new monitor size:
+    # its fit below follows the switch and $now directly.
     fit_to=$want
     fit_on || fit_to=
     fitting=
@@ -282,7 +284,7 @@ while :; do
                 valid "$own" && echo "$own $panel" > $OWN
             }; } && rm -f $SAVED && applied= &&
                 { [ -e $MIN_RATE ] || settings get system min_refresh_rate > $MIN_RATE; } &&
-                settings put system min_refresh_rate 120 && setprop $LAYOUT 1 &&
+                settings put system min_refresh_rate 120 && setprop $FIT 1 && setprop $LAYOUT 1 &&
                 cmd device_state state $INNER >/dev/null 2>&1 && inner=1 &&
                 log "inner screen shows the mirror"
             # Fit as soon as the panel shows: the switch drops the override, and apps would lay out
@@ -296,7 +298,7 @@ while :; do
         # Density counts too, so a failed density write is retried. With the fit off, the panel
         # gets its own size and density back (setting the physical values clears the overrides).
         if [ -n "$inner" ] && [ "$(state)" = $INNER ]; then
-            if [ -n "$fit_to" ]; then
+            if fit_on; then
                 size=$(shape $now) density=$DPI
             else
                 size=$(current size) density=$(current density)
