@@ -305,11 +305,18 @@ USB-C port by itself. USB devices and charging drop out for a moment.
   monitor runs faster. Starting DeX right after mirroring on the inside screen
   runs about 100 instead; plug the cable back in for the full rate. Some apps
   may still run slower. Overheating protection still works as usual.
+- **Fit mirroring to monitor** (on by default): while the phone mirrors a
+  monitor (DeX off), the screen takes the monitor's shape, turned to
+  landscape, so the mirror fills the monitor instead of a square in the
+  middle. Some apps and games refuse that size; turn this off to mirror the
+  screen at its own size. With **Mirroring high refresh rate**, the inside
+  screen still turns to landscape. It changes right away.
 - **Mirroring high refresh rate** (experimental, off by default): the outside
   screen only runs at 60 Hz, which holds a mirrored monitor to 60 frames per
   second too. With this on, opening the phone while it mirrors a monitor (DeX
   off) shows the 120 Hz inside screen instead, turned to landscape and shaped
-  to fill the monitor, and turns the outside one off. Plug the cable back in
+  to fill the monitor (unless **Fit mirroring to monitor** is off), and turns
+  the outside one off. Plug the cable back in
   after turning it on, so the monitor switches to its fastest refresh rate.
   Closing the phone goes back to the outside screen. In testing, scrolling
   reached about 118 frames per second on a 144 Hz monitor, the most the

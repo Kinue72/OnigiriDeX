@@ -2,15 +2,17 @@
 # Mirroring fit, like the SecondScreen app: while a wired monitor mirrors the phone (DeX off),
 # give the cover the monitor's shape at 240 dpi, so the mirror fills the monitor instead of a
 # square in the middle. Display 0 is held in landscape meanwhile, so the portrait inner panel
-# turns. The cover goes back to its own size and density as soon as the monitor goes away or DeX
-# starts. With "Mirroring high refresh rate" on, opening the phone while it
-# mirrors shows the 120 Hz inner panel instead (device state 5), fitted the same way, so the
-# mirror is no longer held to the cover's 60 Hz. With "Use inner screen" on, the open phone shows
-# the inner panel by itself, and the fit follows whichever panel shows; while a monitor runs
-# with the matching high refresh switch on, that panel is then held at 120 Hz too, since it leads
-# the monitor's pace. Each time DeX starts, it
-# also opens the zone apps (Settings > Onigiri Software > Zones). It also keeps power saving,
-# which holds every screen to 60 Hz, off while the phone charges. Started by onigiri-mirror.rc.
+# turns. "Fit mirroring to monitor" (on by default) turns the fit off: some apps and games refuse
+# the fitted size, so the screen then mirrors at its own size and density. The cover goes back to
+# its own size and density as soon as the monitor goes away or DeX starts. With "Mirroring high
+# refresh rate" on, opening the phone while it mirrors shows the 120 Hz inner panel instead
+# (device state 5), in landscape and fitted the same way (or at its own size with the fit off),
+# so the mirror is no longer held to the cover's 60 Hz. With "Use inner screen" on, the open
+# phone shows the inner panel by itself, and the fit follows whichever panel shows; while a
+# monitor runs with the matching high refresh switch on, that panel is then held at 120 Hz too,
+# since it leads the monitor's pace. Each time DeX starts, it also opens the zone apps (Settings >
+# Onigiri Software > Zones). It also keeps power saving, which holds every screen to 60 Hz, off
+# while the phone charges. Started by onigiri-mirror.rc.
 
 DP=/sys/class/drm/card0-DP-1/status
 DPI=240
@@ -77,6 +79,11 @@ current() {
 # Whether display 0 shows the cover: 748 px wide, 720 tall, or 654 with "Hide camera cutout" on.
 on_cover() {
     case $(current size) in 748x*) ;; *) return 1 ;; esac
+}
+
+# Whether "Fit mirroring to monitor" is on (unset counts as on).
+fit_on() {
+    [ "$(getprop persist.sys.onigiri.mirror_fit_monitor)" != false ]
 }
 
 # Whether "$1" is a "WxH DENSITY" pair worth handing to wm.
@@ -254,8 +261,13 @@ while :; do
     elif [ -n "$had_dex" ] || [ $count -ge $STEADY ]; then
         want=$now
     fi
+    # The fit to apply: $want, unless the switch is off. $want still times entering state 5.
+    # State 5 has no SAVED, so no $applied to hold $want through a restart or a new monitor size:
+    # its fit below follows the switch and $now directly.
+    fit_to=$want
+    fit_on || fit_to=
     fitting=
-    { [ -n "$want" ] || [ -n "$inner" ]; } && fitting=1
+    { [ -n "$fit_to" ] || [ -n "$inner" ]; } && fitting=1
     [ "$(getprop $FIT)" = "$fitting" ] || setprop $FIT "$fitting"
     # The inner panel takes over display 0, and with it display 0's size and density overrides:
     # the cover's own values go to OWN (moved from SAVED while a cover fit is on; kept if already
@@ -272,7 +284,7 @@ while :; do
                 valid "$own" && echo "$own $panel" > $OWN
             }; } && rm -f $SAVED && applied= &&
                 { [ -e $MIN_RATE ] || settings get system min_refresh_rate > $MIN_RATE; } &&
-                settings put system min_refresh_rate 120 && setprop $LAYOUT 1 &&
+                settings put system min_refresh_rate 120 && setprop $FIT 1 && setprop $LAYOUT 1 &&
                 cmd device_state state $INNER >/dev/null 2>&1 && inner=1 &&
                 log "inner screen shows the mirror"
             # Fit as soon as the panel shows: the switch drops the override, and apps would lay out
@@ -283,12 +295,20 @@ while :; do
                 sleep 0.3
             done
         fi
-        # Density counts too, so a failed density write is retried.
-        if [ -n "$inner" ] && [ "$(state)" = $INNER ] && fitted=$(shape $now) &&
-                { [ "$(current size override)" != "$fitted" ] ||
-                    [ "$(current density override)" != $DPI ]; }; then
-            wm size $fitted -d 0 && wm density $DPI -d 0 &&
-                log "inner screen fit to the monitor: $now"
+        # Density counts too, so a failed density write is retried. With the fit off, the panel
+        # gets its own size and density back (setting the physical values clears the overrides).
+        if [ -n "$inner" ] && [ "$(state)" = $INNER ]; then
+            if fit_on; then
+                size=$(shape $now) density=$DPI
+            else
+                size=$(current size) density=$(current density)
+            fi
+            if [ -n "$size" ] && [ -n "$density" ] &&
+                    { [ "$(current size override)" != "$size" ] ||
+                        [ "$(current density override)" != "$density" ]; }; then
+                wm size $size -d 0 && wm density $density -d 0 &&
+                    log "inner screen set to $size at $density dpi for the monitor: $now"
+            fi
         fi
         sleep 2
         continue
@@ -303,7 +323,7 @@ while :; do
         setprop $LAYOUT ""
         if [ -e $OWN ] && ! on_cover; then
             :  # "Use inner screen" went on meanwhile and keeps the inner panel: wait for the cover
-        elif [ -e $OWN ] && [ -n "$want" ] && [ ! -e $SAVED ]; then
+        elif [ -e $OWN ] && [ -n "$fit_to" ] && [ ! -e $SAVED ]; then
             mv $OWN $SAVED  # the cover fit below applies directly; it puts these back when it ends
         elif [ -e $OWN ]; then
             restore $OWN
@@ -320,10 +340,10 @@ while :; do
     # Only a change that went through counts as applied: a failed one is retried next poll. A
     # saved file means the cover may be off its own size (even after a half-done fit), so it is
     # put back whenever no fit is wanted.
-    if [ -n "$want" ]; then
+    if [ -n "$fit_to" ]; then
         panel=$(current size)
-        { [ "$want" != "$applied" ] || [ "$panel" != "$fit_panel" ]; } && fit $want &&
-            applied=$want && fit_panel=$panel && log "fit to the monitor: $want on $panel"
+        { [ "$fit_to" != "$applied" ] || [ "$panel" != "$fit_panel" ]; } && fit $fit_to &&
+            applied=$fit_to && fit_panel=$panel && log "fit to the monitor: $fit_to on $panel"
     elif [ -e $SAVED ]; then
         restore && applied= && log "display 0 restored"
     fi

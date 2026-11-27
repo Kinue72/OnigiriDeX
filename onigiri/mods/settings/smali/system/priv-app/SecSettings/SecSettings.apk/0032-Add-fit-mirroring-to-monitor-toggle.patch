@@ -1,0 +1,89 @@
+From: Onigiri
+Subject: [PATCH] Add a default-on Fit mirroring to monitor toggle
+
+The switch stores persist.sys.onigiri.mirror_fit_monitor (unset counts as on). With it off,
+onigiri-mirror leaves the screen at its own size and density while a monitor mirrors the phone,
+for apps and games that refuse the fitted size.
+
+diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
+--- a/res/values-vi/strings.xml
++++ b/res/values-vi/strings.xml
+@@ -8110,4 +8110,5 @@ Trong Máy ảnh, bạn có thể sử dụng phím Trên cùng để chụp ả
+     <string name="onigiri_update_local_invalid">Tệp này không phải gói cập nhật Onigiri.</string>
+     <string name="onigiri_update_local_title">Cài đặt %1$s?</string>
+     <string name="onigiri_update_local_body">Gói chỉ được cài nếu dành cho phiên bản bạn đang dùng (%1$s); nếu không, điện thoại khởi động lại mà không thay đổi gì. Điện thoại sẽ khởi động lại và không dùng được trong khoảng một phút. Dữ liệu của bạn vẫn được giữ.</string>
++    <string name="onigiri_mirror_fit_title">Phản chiếu vừa màn hình rời</string>
+ </resources>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -15479,4 +15479,5 @@ In Camera, you can use the Top button to take pictures."</string>
+     <string name="onigiri_update_local_invalid">This file isn\'t an Onigiri update package.</string>
+     <string name="onigiri_update_local_title">Install %1$s?</string>
+     <string name="onigiri_update_local_body">It installs only if it was made for the version you have (%1$s); if not, the phone starts again unchanged. The phone restarts and can\'t be used for about a minute. Your data stays.</string>
++    <string name="onigiri_mirror_fit_title">Fit mirroring to monitor</string>
+ </resources>
+diff --git a/res/xml/onigiri_settings.xml b/res/xml/onigiri_settings.xml
+--- a/res/xml/onigiri_settings.xml
++++ b/res/xml/onigiri_settings.xml
+@@ -32,6 +32,7 @@
+         <SecSwitchPreference android:title="@string/full_screen_apps_hide_camera_title" android:key="onigiri_cover_camera_cutout" settings:controller="moe.foss.onigiri.settings.CoverCameraCutoutPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_max_refresh_rate_title" android:key="onigiri_max_refresh_rate" settings:controller="moe.foss.onigiri.settings.ForceMaxRefreshRatePreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_dex_high_refresh_title" android:key="onigiri_dex_high_refresh" settings:controller="moe.foss.onigiri.settings.DexHighRefreshPreferenceController" />
++        <SecSwitchPreference android:title="@string/onigiri_mirror_fit_title" android:key="onigiri_mirror_fit" settings:controller="moe.foss.onigiri.settings.MirrorFitPreferenceController" />
+         <SecSwitchPreference android:title="@string/onigiri_mirror_high_refresh_title" android:key="onigiri_mirror_high_refresh" settings:controller="moe.foss.onigiri.settings.MirrorHighRefreshPreferenceController" />
+         <ListPreference android:title="@string/onigiri_external_mode_title" android:key="onigiri_external_mode" android:persistent="false" settings:controller="moe.foss.onigiri.settings.ExternalDisplayModePreferenceController" />
+         <ListPreference android:title="@string/onigiri_external_rotation_title" android:key="onigiri_external_rotation" android:persistent="false" android:entries="@array/onigiri_external_rotation_entries" android:entryValues="@array/onigiri_external_rotation_values" settings:controller="moe.foss.onigiri.settings.ExternalDisplayRotationPreferenceController" />
+diff --git a/smali_classes5/moe/foss/onigiri/settings/MirrorFitPreferenceController.smali b/smali_classes5/moe/foss/onigiri/settings/MirrorFitPreferenceController.smali
+new file mode 100644
+--- /dev/null
++++ b/smali_classes5/moe/foss/onigiri/settings/MirrorFitPreferenceController.smali
+@@ -0,0 +1,48 @@
++.class public Lmoe/foss/onigiri/settings/MirrorFitPreferenceController;
++.super Lcom/android/settings/core/TogglePreferenceController;
++.source "MirrorFitPreferenceController.java"
++
++.method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
++    .locals 0
++    invoke-direct {p0, p1, p2}, Lcom/android/settings/core/TogglePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
++    return-void
++.end method
++
++.method public getAvailabilityStatus()I
++    .locals 0
++    const/4 p0, 0x0
++    return p0
++.end method
++
++.method public getSliceHighlightMenuRes()I
++    .locals 0
++    sget p0, Lcom/android/settings/R$string;->menu_key_onigiri_settings:I
++    return p0
++.end method
++
++.method public isChecked()Z
++    .locals 1
++    const-string p0, "persist.sys.onigiri.mirror_fit_monitor"
++    const/4 v0, 0x1
++    invoke-static {p0, v0}, Landroid/os/SemSystemProperties;->getBoolean(Ljava/lang/String;Z)Z
++    move-result p0
++    return p0
++.end method
++
++.method public setChecked(Z)Z
++    .locals 1
++    :try_start
++    const-string p0, "persist.sys.onigiri.mirror_fit_monitor"
++    invoke-static {p1}, Ljava/lang/Boolean;->toString(Z)Ljava/lang/String;
++    move-result-object v0
++    invoke-static {p0, v0}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
++    :try_end
++    .catch Ljava/lang/IllegalArgumentException; {:try_start .. :try_end} :failed
++    .catch Ljava/lang/SecurityException; {:try_start .. :try_end} :failed
++    const/4 p0, 0x1
++    return p0
++    :failed
++    move-exception p0
++    const/4 p0, 0x0
++    return p0
++.end method
