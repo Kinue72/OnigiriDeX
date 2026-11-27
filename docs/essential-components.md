@@ -27,20 +27,22 @@ certificate is inside `TEE_KEYBOX_REFRESH_WINDOW` or already expired instead of 
 A shared attestation key dies within days: Google revokes it once it circulates. The
 mirror's own index lists every key old enough to matter as revoked, so an image can
 only carry a bootstrap key. `moe.foss.onigiri.KeyboxUpdate` fetches the newest one
-during TEE startup, after the payload key is seeded and before TEESimulator reads it.
-Each fetch is bounded to 20 seconds; when it fails, the TEE service asks init to run
-`onigiri-keybox` once more, 90 seconds later, when data is usually up. Both services
-carry the `inet` group.
+once TEESimulator is active, off the startup path the trial guard measures; the daemon
+watches `keybox.xml` and reloads it when the file changes. The first fetch is bounded
+to 20 seconds. When it fails, the TEE service asks init to run `onigiri-keybox` once
+more, which waits 90 seconds for data and then gets 90 of its own. Both services carry
+the `inet` group, and the delayed run rechecks the toggle before it starts.
 
 It fetches base64 from `https://evoker.qzz.io/key`, the only host it will talk to, and a
 redirect anywhere else fails closed.
 
-A keybox is accepted only when each `Keybox` entry it holds is a real Google
-attestation chain. The mirror's files carry one entry; upstream's archive carries an EC
-and an RSA chain. Every certificate must verify against the next and be valid now, the
-leaf must have more than two days left, the chain must end at a pinned Google
-attestation root (`Key Attestation CA1` or the hardware attestation root), and the
-entry's private key must match its certificate. That rejects the AOSP software key
+A keybox is accepted only when every `Keybox` entry it holds is a real Google
+attestation chain; one good entry does not vouch for the rest of the file. The mirror's
+files carry one entry; upstream's archive carries an EC and an RSA chain. Every
+certificate must verify against the next and be valid now, the leaf must have more than
+two days left, the chain must end at a pinned Google attestation root (`Key Attestation
+CA1` or the hardware attestation root), and the entry's private key must match its
+certificate. That rejects the AOSP software key
 upstream ships, so the refresh cannot quietly install one. A rejected or unreachable
 key leaves the file exactly as it was: the shipped key on a fresh install, whatever was
 there on any other device.
@@ -51,9 +53,9 @@ checksum must match what the seeder recorded in
 in flight in `installing`, or the keybox the current payload carries. A keybox supplied
 by hand or by another module reports `custom` and is never touched, even when it has
 expired. States appear in `sys.onigiri.keybox.state` (`updated`, `current`, `custom`,
-`unavailable`, `busy`) with the leaf expiry in `sys.onigiri.keybox.expires`.
-`persist.sys.onigiri.keybox_update false` switches the refresh off, and
-`onigiri-essential.sh keybox` runs it by hand.
+`unavailable`, `busy`) with the leaf expiry in `sys.onigiri.keybox.expires`, which is
+cleared whenever the file is not one this module installed. `persist.sys.onigiri.keybox_update
+false` switches the refresh off, and `onigiri-essential.sh keybox` runs it by hand.
 
 Bundled payloads live under `/system/framework/onigiri-essential`, which is
 permitted by keystore's linker namespace. Updates use the root-owned

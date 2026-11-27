@@ -22,16 +22,21 @@ TEE_KEYBOX_REFRESH_WINDOW = timedelta(days=14)
 
 def keybox_expiry(path):
     """The leaf's notAfter, read from the file so it cannot drift from the key itself."""
-    pem = re.search(rb'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----',
-                    path.read_bytes(), re.S)
+    data = path.read_bytes()
+    # Structure is not advisory: a secret that is not a keybox must never reach an image.
+    if b'<AndroidAttestation' not in data or b'<Keybox' not in data:
+        raise ValueError(f'{path.name} is not a keybox')
+    pem = re.search(rb'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----', data, re.S)
     if pem is None:
-        print(f'warning: {path.name} carries no certificate', file=sys.stderr)
-        return None
+        raise ValueError(f'{path.name} carries no certificate')
     try:
         listed = subprocess.run(['openssl', 'x509', '-noout', '-enddate'],
                                 input=pem.group(0), capture_output=True, check=True).stdout
-    except (OSError, subprocess.CalledProcessError):
+    except OSError:
+        print('warning: openssl missing; cannot date-check tee-keybox.xml', file=sys.stderr)
         return None
+    except subprocess.CalledProcessError:
+        raise ValueError(f'{path.name} has a certificate openssl cannot read') from None
     value = ' '.join(listed.decode().strip().split('=', 1)[-1].split())
     return datetime.strptime(value, '%b %d %H:%M:%S %Y %Z').replace(tzinfo=timezone.utc)
 

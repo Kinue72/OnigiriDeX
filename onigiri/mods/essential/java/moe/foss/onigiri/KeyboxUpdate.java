@@ -3,6 +3,7 @@ package moe.foss.onigiri;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
@@ -14,8 +15,10 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.security.MessageDigest;
+import java.security.PublicKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -57,14 +60,14 @@ public final class KeyboxUpdate {
     static final Pattern BOX = Pattern.compile("<Keybox\\b[\\s\\S]*?</Keybox>");
     static final Pattern PEM = Pattern.compile("-----BEGIN (?:EC |RSA )?PRIVATE KEY-----([\\s\\S]*?)-{5}END");
 
-    /** One {@code <Keybox>} entry: its certificate chain and the public point its key carries. */
+    /** One {@code <Keybox>} entry: its certificate chain and its private key. */
     static final class Entry {
         final List<X509Certificate> chain;
-        final byte[] point;
+        final byte[] key;
 
-        Entry(List<X509Certificate> chain, byte[] point) {
+        Entry(List<X509Certificate> chain, byte[] key) {
             this.chain = chain;
-            this.point = point;
+            this.key = key;
         }
 
         X509Certificate leaf() { return chain.get(0); }
@@ -101,27 +104,27 @@ public final class KeyboxUpdate {
         Matcher box = BOX.matcher(text);
         while (box.find()) {
             List<X509Certificate> chain = certificates(box.group());
-            if (chain.isEmpty()) continue;
+            if (chain.isEmpty()) throw new IOException("Keybox entry without a certificate");
             Matcher pem = PEM.matcher(box.group());
-            byte[] point = null;
-            if (pem.find()) {
-                try { point = publicPoint(Base64.getMimeDecoder().decode(pem.group(1))); }
-                catch (IOException ignored) { }
-            }
-            entries.add(new Entry(chain, point));
+            // An entry without its key cannot attest, so it must not ride along with one that can.
+            if (!pem.find()) throw new IOException("Keybox entry without a private key");
+            entries.add(new Entry(chain, Base64.getMimeDecoder().decode(pem.group(1))));
         }
         if (entries.isEmpty()) throw new IOException("No keybox entries");
         return entries;
     }
 
-    /** The certificate this entry signs with, once its chain and private key check out. */
+    /**
+     * The first certificate this keybox signs with, once every entry in it checks out. One good
+     * entry is not enough: the file is published whole, so the whole file has to be sound.
+     */
     static X509Certificate verify(byte[] xml) throws Exception {
-        Exception failure = null;
+        X509Certificate first = null;
         for (Entry entry : entries(xml)) {
-            try { return valid(entry); }
-            catch (Exception e) { failure = e; }
+            X509Certificate leaf = valid(entry);
+            if (first == null) first = leaf;
         }
-        throw failure != null ? failure : new IOException("No usable keybox entry");
+        return first;
     }
 
     static X509Certificate valid(Entry entry) throws Exception {
@@ -136,7 +139,7 @@ public final class KeyboxUpdate {
         // The attestation leaf is itself a CA — it signs device certificates — so only its chain,
         // its remaining life and the key it claims are checked here.
         entry.leaf().checkValidity(new Date(System.currentTimeMillis() + MIN_LIFE));
-        match(entry.leaf(), entry.point);
+        match(entry.leaf(), entry.key);
         return entry.leaf();
     }
 
@@ -201,12 +204,46 @@ public final class KeyboxUpdate {
     }
 
     /** Fails when the entry's private key is not the one its certificate was issued for. */
-    static void match(X509Certificate leaf, byte[] point) throws IOException {
-        if (point == null) return;
-        byte[] encoded = leaf.getPublicKey().getEncoded();
+    static void match(X509Certificate leaf, byte[] key) throws Exception {
+        PublicKey published = leaf.getPublicKey();
+        if (published instanceof RSAPublicKey) {
+            BigInteger[] parts = rsaKey(key);
+            RSAPublicKey rsa = (RSAPublicKey) published;
+            if (!rsa.getModulus().equals(parts[0]) || !rsa.getPublicExponent().equals(parts[1]))
+                throw new IOException("Private key does not match the certificate");
+            return;
+        }
+        byte[] point = publicPoint(key);
+        if (point == null) throw new IOException("Cannot check the private key");
+        byte[] encoded = published.getEncoded();
         if (encoded.length < point.length || !Arrays.equals(
                 Arrays.copyOfRange(encoded, encoded.length - point.length, encoded.length), point))
             throw new IOException("Private key does not match the certificate");
+    }
+
+    /** The modulus and public exponent of an RSA private key, PKCS#1 or wrapped in PKCS#8. */
+    static BigInteger[] rsaKey(byte[] der) throws IOException {
+        int[] top = tlv(der, 0);
+        if (top[0] != 0x30) throw new IOException("Not a private key");
+        int at = top[1];
+        int end = top[1] + top[2];
+        int[] first = tlv(der, at);
+        if (first[0] == 0x02) {
+            int after = first[1] + first[2];
+            int[] second = after < end ? tlv(der, after) : null;
+            if (second != null && second[0] == 0x30) {
+                int wrapped = second[1] + second[2];
+                int[] third = wrapped < end ? tlv(der, wrapped) : null;
+                if (third != null && third[0] == 0x04)
+                    return rsaKey(Arrays.copyOfRange(der, third[1], third[1] + third[2]));
+            }
+        }
+        int[] version = tlv(der, at);
+        int[] modulus = tlv(der, version[1] + version[2]);
+        int[] exponent = tlv(der, modulus[1] + modulus[2]);
+        return new BigInteger[]{
+                new BigInteger(Arrays.copyOfRange(der, modulus[1], modulus[1] + modulus[2])),
+                new BigInteger(Arrays.copyOfRange(der, exponent[1], exponent[1] + exponent[2]))};
     }
 
     /**
@@ -246,6 +283,10 @@ public final class KeyboxUpdate {
         } finally { Files.deleteIfExists(staged); }
     }
 
+    static void clearExpiry() {
+        try { EssentialUpdate.prop("sys.onigiri.keybox.expires", ""); } catch (Exception ignored) { }
+    }
+
     static String refresh() throws Exception {
         Files.createDirectories(DIR);
         Files.setPosixFilePermissions(DIR, PosixFilePermissions.fromString("rwx------"));
@@ -262,8 +303,10 @@ public final class KeyboxUpdate {
             String current = Files.isRegularFile(STORE) ? EssentialUpdate.sha256(STORE) : null;
             Path builtin = EssentialUpdate.ROM.resolve("tee/keybox.xml");
             if (!replaceable(current, read(SHIPPED), read(NEXT),
-                    Files.isReadable(builtin) ? EssentialUpdate.sha256(builtin) : null))
+                    Files.isReadable(builtin) ? EssentialUpdate.sha256(builtin) : null)) {
+                clearExpiry();
                 return "custom";
+            }
             Path temp = Files.createTempDirectory(DIR, "fetch-");
             try {
                 Path encoded = temp.resolve("key");
@@ -289,6 +332,7 @@ public final class KeyboxUpdate {
         try { result = refresh(); }
         catch (Exception e) {
             System.err.println("Onigiri keybox: " + e);
+            clearExpiry();
             result = "unavailable";
         }
         try { EssentialUpdate.prop("sys.onigiri.keybox.state", result); } catch (Exception ignored) { }

@@ -3,6 +3,7 @@
 from pathlib import Path
 import hashlib
 import os
+import time
 import re
 import shutil
 import subprocess
@@ -353,20 +354,43 @@ esac
 
     def test_a_failed_fetch_asks_for_one_more_attempt(self):
         launcher = self.root / 'system/bin/app_process'
-        launcher.write_text('#!/bin/sh\nexit 0\n')
+        # The daemon reports itself active; the fetcher reports failure through its property,
+        # which is what a killed or unlaunchable fetcher would never do.
+        launcher.write_text('#!/bin/sh\n'
+                            'case "$*" in\n'
+                            '  *TEESimulator*) printf active > "$PROPS/sys.onigiri.tee.state"; exit 0;;\n'
+                            'esac\n'
+                            'printf unavailable > "$PROPS/sys.onigiri.keybox.state"\n')
         launcher.chmod(0o755)
+        (self.bin / 'logcat').write_text('#!/bin/sh\necho "Interceptors initialized successfully."\n')
+        (self.bin / 'logcat').chmod(0o755)
         (self.rom / 'tee/keybox.xml').write_text('rom-key\n')
         (self.rom / 'tee/target.txt').write_text('com.example\n')
         self.prepare()
         self.prop('sys.onigiri.tee.state', 'ready')
-        # The fetcher reports failure through its property, not its exit code.
-        launcher.write_text('#!/bin/sh\nprintf unavailable > "$PROPS/sys.onigiri.keybox.state"\n')
         subprocess.run(['bash', str(self.script), 'tee'], env=self.env, check=True, capture_output=True)
+        # The refresh runs beside the daemon, so give it a moment to finish.
+        for _ in range(50):
+            if self.prop('sys.onigiri.keybox.retry') == 'requested':
+                break
+            time.sleep(0.1)
         self.assertEqual(self.prop('sys.onigiri.keybox.retry'), 'requested')
         # A run that starts from the retry clears the flag, so it cannot loop.
         self.prop('sys.onigiri.keybox.state', 'updated')
         subprocess.run(['bash', str(self.script), 'keybox'], env=self.env, check=True, capture_output=True)
         self.assertEqual(self.prop('sys.onigiri.keybox.retry'), '')
+
+    def test_a_pending_retry_honours_the_switch(self):
+        launcher = self.root / 'system/bin/app_process'
+        launcher.write_text('#!/bin/sh\ntouch "$PROPS/app_process.ran"\n')
+        launcher.chmod(0o755)
+        # The user turns the refresh off while the retry waits for data.
+        (self.bin / 'sleep').write_text('#!/bin/sh\nprintf false > "$PROPS/persist.sys.onigiri.keybox_update"\n')
+        (self.bin / 'sleep').chmod(0o755)
+        self.prepare()
+        subprocess.run(['bash', str(self.script), 'keybox', 'delayed'], env=self.env,
+                       check=True, capture_output=True)
+        self.assertFalse((self.props / 'app_process.ran').exists())
 
     def test_update_marks_checking_even_when_java_cannot_start(self):
         launcher = self.root / 'system/bin/app_process'

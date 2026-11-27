@@ -38,14 +38,11 @@ public final class KeyboxUpdateTest {
         byte[] archive = archivedKeybox(Paths.get(args[0]));
         List<KeyboxUpdate.Entry> entries = KeyboxUpdate.entries(archive);
         assert entries.size() == 2 : "expected an EC and an RSA chain, got " + entries.size();
-        boolean checked = false;
         for (KeyboxUpdate.Entry entry : entries) {
-            if (entry.point == null) continue;
-            // The EC entry's private key belongs to its own certificate, checked off-device.
-            KeyboxUpdate.match(entry.leaf(), entry.point);
-            checked = true;
+            // Every entry's private key belongs to its own certificate: EC by point, RSA by
+            // modulus and exponent.
+            KeyboxUpdate.match(entry.leaf(), entry.key);
         }
-        assert checked : "no entry published a public point to check";
         // Both entries' signatures verify within their own chain, and the file is then refused
         // because it ends at the AOSP software root rather than a Google attestation root.
         try {
@@ -53,6 +50,29 @@ public final class KeyboxUpdateTest {
             assert false : "software keybox accepted";
         } catch (Exception expected) {
             assert expected.getMessage().contains("attestation root") : expected.toString();
+        }
+        // A key that cannot be checked is refused, and so is an entry with no key at all, because
+        // the whole file gets published and the daemon will try every entry in it.
+        String text = new String(archive, java.nio.charset.StandardCharsets.UTF_8);
+        String keyless = text.replaceFirst("(?s)-----BEGIN RSA PRIVATE KEY-----.*?-{5}END RSA PRIVATE KEY-----", "");
+        assert !keyless.equals(text);
+        try {
+            KeyboxUpdate.entries(keyless.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            assert false : "entry without a private key accepted";
+        } catch (java.io.IOException expected) {
+            assert expected.getMessage().contains("private key") : expected.toString();
+        }
+        java.util.regex.Matcher rsa = java.util.regex.Pattern
+                .compile("-----BEGIN RSA PRIVATE KEY-----.*?-{5}END RSA PRIVATE KEY-----",
+                        java.util.regex.Pattern.DOTALL)
+                .matcher(text);
+        assert rsa.find();
+        String certless = "<AndroidAttestation><Keybox>" + rsa.group() + "</Keybox></AndroidAttestation>";
+        try {
+            KeyboxUpdate.entries(certless.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            assert false : "entry without a certificate accepted";
+        } catch (Exception expected) {
+            assert expected.getMessage().contains("certificate") : expected.toString();
         }
         System.out.println("Keybox refresh policy passed");
     }
